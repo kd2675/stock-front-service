@@ -103,7 +103,7 @@ export default function StockHomePage() {
             <p className="text-xs font-black tracking-[0.18em] text-[#8b95a1]">ACCOUNT GATE</p>
             <p className="mt-2 text-lg font-black">실제 주문 화면은 모의투자 계좌 확인 후 진입합니다.</p>
           </div>
-          <Link href="/account-required?next=/" className="rounded-md bg-white px-4 py-3 text-center text-sm font-black text-[#191f28]">
+          <Link href="/account-required?next=/virtual-price" className="rounded-md bg-white px-4 py-3 text-center text-sm font-black text-[#191f28]">
             계좌 확인
           </Link>
         </div>

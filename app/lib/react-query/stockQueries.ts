@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import {
   getAccountStatus,
+  getAutoParticipantOverviews,
   getAutoMarketStatus,
   getCorporateActionEntitlements,
   getCorporateActions,
@@ -95,6 +96,15 @@ export function autoMarketStatusQueryOptions() {
   return queryOptions({
     queryKey: stockKeys.autoMarketStatus(),
     queryFn: async () => unwrapStockResult(await getAutoMarketStatus(), "자동장 상태를 조회하지 못했습니다."),
+    refetchInterval: FAST_MARKET_REFETCH_MS,
+  });
+}
+
+export function autoParticipantOverviewsQueryOptions(token: string | null) {
+  return queryOptions({
+    queryKey: stockKeys.autoParticipantOverviews(),
+    queryFn: async () => unwrapStockResult(await getAutoParticipantOverviews(token ?? ""), "자동 참여자 현황을 조회하지 못했습니다."),
+    enabled: Boolean(token),
     refetchInterval: FAST_MARKET_REFETCH_MS,
   });
 }

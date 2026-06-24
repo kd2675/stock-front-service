@@ -131,9 +131,10 @@ export type OrderType = "LIMIT" | "MARKET";
 export type OrderStatus = "PENDING" | "PARTIALLY_FILLED" | "FILLED" | "CANCELLED" | "REJECTED";
 export type MarketType = "VIRTUAL_PRICE" | "ORDER_BOOK";
 export type MarketSessionStatus = "OPEN" | "CLOSED" | "HALTED";
-export type CorporateActionType = "INITIAL_ISSUE" | "PAID_IN_CAPITAL_INCREASE" | "ADDITIONAL_ISSUE" | "STOCK_SPLIT" | "CASH_DIVIDEND" | "BONUS_ISSUE" | "STOCK_DIVIDEND";
-export type CorporateActionStatus = "ANNOUNCED" | "EX_RIGHTS_APPLIED" | "PAID" | "LISTED";
+export type CorporateActionType = "INITIAL_ISSUE" | "PAID_IN_CAPITAL_INCREASE" | "ADDITIONAL_ISSUE" | "STOCK_SPLIT" | "CASH_DIVIDEND" | "BONUS_ISSUE" | "STOCK_DIVIDEND" | "DELISTING";
+export type CorporateActionStatus = "ANNOUNCED" | "EX_RIGHTS_APPLIED" | "PAID" | "LISTED" | "DELISTED";
 export type CorporateActionEntitlementStatus = "ANNOUNCED" | "PAID";
+export type ListingAutoPosition = "SELL_ONLY" | "BUY_ONLY";
 
 export type CorporateAction = {
   id: number;
@@ -148,6 +149,8 @@ export type CorporateAction = {
   exRightsDate?: string | null;
   paymentDate?: string | null;
   listingDate?: string | null;
+  delistingDate?: string | null;
+  delistingTreatment?: "ZERO_VALUE" | null;
   appliedAt?: string | null;
   paidAt?: string | null;
   listedAt?: string | null;
@@ -239,14 +242,80 @@ export type AutoMarketConfig = {
   orderTtlSeconds: number;
 };
 
+export type AutoParticipantProfileType =
+  | "NEWS_REACTIVE"
+  | "MOMENTUM_FOLLOWER"
+  | "CONTRARIAN"
+  | "LOSS_AVERSE"
+  | "OVERCONFIDENT"
+  | "HERD_FOLLOWER"
+  | "MARKET_MAKER"
+  | "NOISE_TRADER"
+  | "VALUE_ANCHOR"
+  | "SCALPER"
+  | "PANIC_SELLER"
+  | "DIP_BUYER"
+  | "LIQUIDITY_AVOIDANT"
+  | "WHALE"
+  | "SMALL_DIVERSIFIER"
+  | "OBSERVER";
+
 export type AutoParticipant = {
   userKey: string;
   displayName: string;
   enabled: boolean;
+  profileType: AutoParticipantProfileType;
   cashBalance?: number | null;
   createdAt: string;
   updatedAt: string;
   withdrawnAt?: string | null;
+};
+
+export type AutoParticipantOverview = {
+  userKey: string;
+  displayName: string;
+  enabled: boolean;
+  profileType: AutoParticipantProfileType;
+  accountId?: number | null;
+  accountStatus?: string | null;
+  availableCash: number;
+  reservedBuyCash: number;
+  holdingMarketValue: number;
+  estimatedTotalAsset: number;
+  netCashFlow: number;
+  totalProfit: number;
+  returnRate: number;
+  holdingCount: number;
+  totalHoldingQuantity: number;
+  reservedSellQuantity: number;
+  holdings: AutoParticipantHolding[];
+  openOrderCount: number;
+  openBuyOrderCount: number;
+  openSellOrderCount: number;
+  openBuyQuantity: number;
+  openSellQuantity: number;
+  todayExecutionCount: number;
+  todayBuyQuantity: number;
+  todaySellQuantity: number;
+  todayGrossAmount: number;
+  strategyCount: number;
+  enabledStrategyCount: number;
+  lastOrderAt?: string | null;
+  lastExecutionAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  withdrawnAt?: string | null;
+};
+
+export type AutoParticipantHolding = {
+  symbol: string;
+  quantity: number;
+  reservedQuantity: number;
+  availableQuantity: number;
+  averagePrice: number;
+  currentPrice: number;
+  marketValue: number;
+  unrealizedProfit: number;
 };
 
 export type AutoParticipantCashAdjustment = {
@@ -262,6 +331,27 @@ export type AutoParticipantSymbolConfig = {
   symbol: string;
   enabled: boolean;
   intensity: number;
+  updatedAt: string;
+};
+
+export type ListingAutoAccount = {
+  symbol: string;
+  userKey: string;
+  displayName: string;
+  enabled: boolean;
+  positionSide: ListingAutoPosition;
+  accountId: number | null;
+  cashBalance: number;
+  holdingQuantity: number;
+  reservedQuantity: number;
+  availableQuantity: number;
+  averagePrice: number;
+  currentPrice: number;
+  marketValue: number;
+  maxOrderQuantity: number;
+  orderTtlSeconds: number;
+  priceOffsetTicks: number;
+  createdAt: string;
   updatedAt: string;
 };
 
@@ -293,4 +383,5 @@ export type AutoMarketStatus = {
   configs: AutoMarketConfig[];
   participants: AutoParticipant[];
   participantSymbolConfigs: AutoParticipantSymbolConfig[];
+  listingAutoAccounts: ListingAutoAccount[];
 };

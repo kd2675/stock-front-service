@@ -91,53 +91,58 @@ function LoginContent() {
 
     setSubmitting(true);
     setMessage(null);
-    if (mode === "signup") {
-      const signed = await signup(trimmedUsername, password, trimmedEmail);
-      if (!signed.ok) {
-        setMessage(signed.message ?? "회원가입에 실패했습니다. 입력값 또는 중복 계정을 확인해 주세요.");
+    try {
+      if (mode === "signup") {
+        const signed = await signup(trimmedUsername, password, trimmedEmail);
+        if (!signed.ok) {
+          setMessage(signed.message ?? "회원가입에 실패했습니다. 입력값 또는 중복 계정을 확인해 주세요.");
+          setSubmitting(false);
+          return;
+        }
+      }
+
+      const loginResult = await login(trimmedUsername, password);
+      if (!loginResult.ok) {
+        setMessage(loginResult.message ?? "로그인에 실패했습니다.");
         setSubmitting(false);
         return;
       }
-    }
-
-    const loginResult = await login(trimmedUsername, password);
-    if (!loginResult.ok) {
-      setMessage(loginResult.message ?? "로그인에 실패했습니다.");
+      if (!isStockAccountRole(loginResult.user?.role)) {
+        clearAccessToken();
+        setMessage(UNSUPPORTED_ROLE_MESSAGE);
+        setSubmitting(false);
+        return;
+      }
+      router.replace("/");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "로그인 처리 중 오류가 발생했습니다.");
       setSubmitting(false);
-      return;
     }
-    if (!isStockAccountRole(loginResult.user?.role)) {
-      clearAccessToken();
-      setMessage(UNSUPPORTED_ROLE_MESSAGE);
-      setSubmitting(false);
-      return;
-    }
-    router.replace("/");
   };
 
   return (
-    <main className="min-h-screen bg-[#f4f0e8] px-5 py-8 text-[#161616]">
+    <main className="min-h-screen bg-[#f6f7f9] px-5 py-8 text-[#191f28]">
       <section className="mx-auto grid min-h-[calc(100vh-4rem)] w-full max-w-6xl items-center gap-8 lg:grid-cols-[1fr_420px]">
         <div>
-          <p className="text-xs font-bold text-[#427d65]">STOCK MOCK TRADING</p>
+          <p className="text-xs font-bold text-[#3182f6]">STOCK MOCK TRADING</p>
           <h1 className="mt-3 max-w-2xl text-4xl font-black leading-tight md:text-6xl">
             실제 시세 흐름으로 연습하는 모의투자
           </h1>
-          <p className="mt-5 max-w-xl text-base leading-7 text-[#5d5a52]">
+          <p className="mt-5 max-w-xl text-base leading-7 text-[#4e5968]">
             주문은 DB 원장에 남기고, batch 서버가 가격 갱신과 체결을 담당합니다.
             지금은 외부 가격 기반 가상 체결로 시작하고, 이후 내부 오더북 매칭으로 확장할 수 있게 설계했습니다.
           </p>
         </div>
 
-        <div className="rounded-lg border border-[#27231c] bg-white p-5 shadow-[0_18px_44px_rgba(35,31,25,0.12)]">
-          <div className="grid grid-cols-2 rounded-md bg-[#f4f0e8] p-1">
+        <div className="rounded-lg border border-[#e5e8eb] bg-white p-5 shadow-[0_16px_40px_rgba(25,31,40,0.08)]">
+          <div className="grid grid-cols-2 rounded-md bg-[#f2f4f6] p-1">
             <button
               type="button"
               onClick={() => {
                 setMode("login");
                 setMessage(null);
               }}
-              className={mode === "login" ? "rounded bg-[#27231c] px-3 py-2 text-sm font-bold text-white" : "px-3 py-2 text-sm font-bold text-[#5d5a52]"}
+              className={mode === "login" ? "rounded-md bg-white px-3 py-2 text-sm font-black text-[#191f28] shadow-[0_1px_2px_rgba(0,0,0,0.06)]" : "px-3 py-2 text-sm font-bold text-[#6b7684]"}
             >
               로그인
             </button>
@@ -147,7 +152,7 @@ function LoginContent() {
                 setMode("signup");
                 setMessage(null);
               }}
-              className={mode === "signup" ? "rounded bg-[#27231c] px-3 py-2 text-sm font-bold text-white" : "px-3 py-2 text-sm font-bold text-[#5d5a52]"}
+              className={mode === "signup" ? "rounded-md bg-white px-3 py-2 text-sm font-black text-[#191f28] shadow-[0_1px_2px_rgba(0,0,0,0.06)]" : "px-3 py-2 text-sm font-bold text-[#6b7684]"}
             >
               회원가입
             </button>
@@ -197,7 +202,7 @@ function LoginContent() {
             type="button"
             onClick={() => void submit()}
             disabled={submitting}
-            className="mt-5 w-full rounded-md bg-[#d38b2c] px-4 py-3 text-sm font-black text-[#161616] disabled:opacity-60"
+            className="mt-5 w-full rounded-md bg-[#3182f6] px-4 py-3 text-sm font-black text-white disabled:cursor-wait disabled:opacity-60"
           >
             {submitting ? "처리 중" : mode === "login" ? "로그인" : "가입 후 시작"}
           </button>
@@ -243,13 +248,13 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="text-xs font-bold text-[#68635a]">{label}</span>
+      <span className="text-xs font-bold text-[#6b7684]">{label}</span>
       <input
         type={type}
         value={value}
         autoComplete={autoComplete}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-1 w-full rounded-md border border-[#d9d1c1] bg-[#fffaf0] px-3 py-3 text-sm outline-none focus:border-[#427d65]"
+        className="mt-1 w-full rounded-md border border-[#d1d6db] bg-white px-3 py-3 text-sm font-bold text-[#191f28] outline-none focus:border-[#3182f6]"
       />
     </label>
   );
@@ -257,7 +262,7 @@ function Field({
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<main className="min-h-screen bg-[#f4f0e8]" />}>
+    <Suspense fallback={<main className="min-h-screen bg-[#f6f7f9]" />}>
       <LoginContent />
     </Suspense>
   );

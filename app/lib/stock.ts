@@ -1,6 +1,6 @@
 import { STOCK_API_BASE, deleteJson, getJson, patchJson, postJson, type ApiResult } from "@/app/lib/api";
 import { clearAccessToken, getUserFromToken, notifyAuthExpired, refreshAccessToken } from "@/app/lib/auth";
-import type { Account, AccountStatus, AutoMarketStatus, AutoParticipantCashAdjustment, CorporateAction, CorporateActionEntitlement, CorporateActionType, Execution, Holding, Instrument, InstrumentReport, MarketSessionStatus, MarketType, Order, OrderBook, OrderBookInstrument, OrderBookMarketStatus, OrderSide, OrderType, Portfolio, PortfolioSnapshot, Price, PriceTick, ProfitSummary, Ranking, StockUserProfile, SymbolMarketConfig, VirtualMarketStatus } from "@/app/types/stock";
+import type { Account, AccountStatus, AutoMarketStatus, AutoParticipantCashAdjustment, AutoParticipantOverview, AutoParticipantProfileType, CorporateAction, CorporateActionEntitlement, CorporateActionType, Execution, Holding, Instrument, InstrumentReport, ListingAutoPosition, MarketSessionStatus, MarketType, Order, OrderBook, OrderBookInstrument, OrderBookMarketStatus, OrderSide, OrderType, Portfolio, PortfolioSnapshot, Price, PriceTick, ProfitSummary, Ranking, StockUserProfile, SymbolMarketConfig, VirtualMarketStatus } from "@/app/types/stock";
 
 function authHeaders(token: string): Record<string, string> {
   const user = getUserFromToken(token);
@@ -59,6 +59,14 @@ export function createOrderBookInstrument(
     issuedShares: number;
     tickSize?: number;
     priceLimitRate?: number;
+    listingAutoAccount?: {
+      displayName?: string;
+      enabled?: boolean;
+      positionSide?: ListingAutoPosition;
+      maxOrderQuantity?: number;
+      orderTtlSeconds?: number;
+      priceOffsetTicks?: number;
+    };
   },
 ) {
   return withAuthRefresh(token, (nextToken) =>
@@ -78,6 +86,7 @@ export function applyCorporateAction(
     exRightsDate?: string;
     paymentDate?: string;
     listingDate?: string;
+    delistingDate?: string;
     dividendAmount?: number;
     description?: string;
   },
@@ -102,8 +111,8 @@ export function publishInstrumentReport(
     title: string;
     summary: string;
     score: number;
-    riseReason: string;
-    fallReason: string;
+    riseReason?: string | null;
+    fallReason?: string | null;
   },
 ) {
   return withAuthRefresh(token, (nextToken) =>
@@ -118,8 +127,8 @@ export function updateInstrumentReport(
     title: string;
     summary: string;
     score: number;
-    riseReason: string;
-    fallReason: string;
+    riseReason?: string | null;
+    fallReason?: string | null;
   },
 ) {
   return withAuthRefresh(token, (nextToken) =>
@@ -183,6 +192,29 @@ export function getAutoMarketStatus() {
   return getJson<AutoMarketStatus>("/api/stock/v1/markets/auto-market");
 }
 
+export function getAutoParticipantOverviews(token: string) {
+  return withAuthRefresh(token, (nextToken) =>
+    getJson<AutoParticipantOverview[]>("/api/stock/v1/markets/auto-market/participants/overviews", authHeaders(nextToken)),
+  );
+}
+
+export function updateListingAutoAccountConfig(
+  token: string,
+  symbol: string,
+  payload: {
+    displayName?: string;
+    enabled?: boolean;
+    positionSide?: ListingAutoPosition;
+    maxOrderQuantity?: number;
+    orderTtlSeconds?: number;
+    priceOffsetTicks?: number;
+  },
+) {
+  return withAuthRefresh(token, (nextToken) =>
+    patchJson<AutoMarketStatus["listingAutoAccounts"][number]>(`/api/stock/v1/markets/auto-market/listing-accounts/${encodeURIComponent(symbol)}`, payload, authHeaders(nextToken)),
+  );
+}
+
 export function updateAutoMarketConfig(
   token: string,
   symbol: string,
@@ -204,6 +236,7 @@ export function upsertAutoParticipant(
   payload: {
     displayName: string;
     enabled?: boolean;
+    profileType?: AutoParticipantProfileType;
   },
 ) {
   return withAuthRefresh(token, (nextToken) =>

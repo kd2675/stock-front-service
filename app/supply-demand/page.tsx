@@ -315,7 +315,7 @@ export default function SupplyDemandPage() {
           <div className="rounded-lg border border-[#e5e8eb] bg-white p-4">
             <h3 className="text-base font-black">종목별 자동장</h3>
             <div className="mt-3 divide-y divide-[#eef0f2]">
-              {(autoMarket?.configs ?? []).map((config) => (
+              {(autoMarket?.configs ?? []).length ? (autoMarket?.configs ?? []).map((config) => (
                 <button
                   key={config.symbol}
                   type="button"
@@ -327,7 +327,9 @@ export default function SupplyDemandPage() {
                     {config.enabled ? `강도 ${config.intensity}` : "정지"}
                   </span>
                 </button>
-              ))}
+              )) : (
+                <p className="rounded-md bg-[#f7f8fa] px-3 py-4 text-sm font-bold text-[#8b95a1]">관리자 설정에서 자동장 대상 종목을 먼저 등록하세요.</p>
+              )}
             </div>
           </div>
 

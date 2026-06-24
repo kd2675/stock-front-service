@@ -19,7 +19,7 @@ import {
   withdrawAutoParticipant,
 } from "@/app/lib/stock";
 import { requireAccessToken, unwrapStockResult } from "@/app/lib/react-query/stockResult";
-import type { Account, AutoMarketStatus, CorporateActionType, InstrumentReport, MarketSessionStatus, MarketType, OrderSide, OrderType, SymbolMarketConfig } from "@/app/types/stock";
+import type { Account, AutoMarketStatus, CorporateActionType, InstrumentReport, ListingAutoPosition, MarketSessionStatus, MarketType, OrderSide, OrderType, SymbolMarketConfig } from "@/app/types/stock";
 
 export type PlaceOrderVariables = {
   symbol: string;
@@ -86,6 +86,14 @@ export function createOrderBookInstrumentMutationOptions() {
       issuedShares: number;
       tickSize?: number;
       priceLimitRate?: number;
+      listingAutoAccount?: {
+        displayName?: string;
+        enabled?: boolean;
+        positionSide?: ListingAutoPosition;
+        maxOrderQuantity?: number;
+        orderTtlSeconds?: number;
+        priceOffsetTicks?: number;
+      };
     }) => unwrapStockResult(await createOrderBookInstrument(await requireAccessToken(), payload), "주문장 종목 생성에 실패했습니다."),
   });
 }
@@ -103,6 +111,7 @@ export function applyCorporateActionMutationOptions() {
         exRightsDate?: string;
         paymentDate?: string;
         listingDate?: string;
+        delistingDate?: string;
         dividendAmount?: number;
         description?: string;
       };
@@ -181,8 +190,8 @@ export function saveInstrumentReportMutationOptions(mode: "publish" | "update") 
         title: string;
         summary: string;
         score: number;
-        riseReason: string;
-        fallReason: string;
+        riseReason?: string | null;
+        fallReason?: string | null;
       };
     }): Promise<InstrumentReport> => {
       const token = await requireAccessToken();

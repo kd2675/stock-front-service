@@ -12,6 +12,7 @@ export const stockKeys = {
   virtualMarketStatus: () => [...stockKeys.market(), "virtual-market"] as const,
   orderBookMarketStatus: () => [...stockKeys.market(), "order-book-market"] as const,
   autoMarketStatus: () => [...stockKeys.market(), "auto-market"] as const,
+  autoParticipantOverviews: () => [...stockKeys.autoMarketStatus(), "participants", "overviews"] as const,
   corporateActions: (symbol: string) => [...stockKeys.orderBookInstruments(), symbol, "corporate-actions"] as const,
   instrumentReports: (symbol: string) => [...stockKeys.orderBookInstruments(), symbol, "reports"] as const,
   account: () => [...stockKeys.all, "account"] as const,

@@ -8,12 +8,14 @@ import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { useForm, type UseFormRegisterReturn } from "react-hook-form";
 
+import TradingTopBar from "@/app/components/TradingTopBar";
+import { AUTO_PARTICIPANT_PROFILE_OPTIONS, formatAutoParticipantProfile, formatAutoParticipantProfileDescription } from "@/app/lib/autoParticipantProfiles";
 import { bootstrapAccessToken, ensureAccessToken, getUserFromToken, isAdminRole } from "@/app/lib/auth";
 import { createOrderBookInstrumentMutationOptions } from "@/app/lib/react-query/stockMutations";
 import { stockKeys } from "@/app/lib/react-query/stockKeys";
-import { adjustAutoParticipantCash, applyCorporateAction, deleteInstrumentReport, getAutoMarketStatus, getCorporateActions, getInstrumentReports, getOrderBookInstruments, getOrderBookMarketStatus, getVirtualMarketStatus, publishInstrumentReport, updateAutoMarketConfig, updateAutoParticipantSymbolConfig, updateInstrumentReport, updateMarketStatus, upsertAutoParticipant, withdrawAutoParticipant } from "@/app/lib/stock";
+import { adjustAutoParticipantCash, applyCorporateAction, deleteInstrumentReport, getAutoMarketStatus, getCorporateActions, getInstrumentReports, getOrderBookInstruments, getOrderBookMarketStatus, getVirtualMarketStatus, publishInstrumentReport, updateAutoMarketConfig, updateAutoParticipantSymbolConfig, updateInstrumentReport, updateListingAutoAccountConfig, updateMarketStatus, upsertAutoParticipant, withdrawAutoParticipant } from "@/app/lib/stock";
 import { createInstrumentSchema, type CreateInstrumentFormValues } from "@/app/lib/validation/adminSchemas";
-import type { AutoMarketConfig, AutoMarketStatus, AutoParticipant, AutoParticipantSymbolConfig, CorporateAction, CorporateActionStatus, CorporateActionType, InstrumentReport, MarketSessionStatus, OrderBookInstrument, OrderBookMarketStatus, VirtualMarketStatus } from "@/app/types/stock";
+import type { AutoMarketConfig, AutoMarketStatus, AutoParticipant, AutoParticipantProfileType, AutoParticipantSymbolConfig, CorporateAction, CorporateActionStatus, CorporateActionType, InstrumentReport, ListingAutoAccount, ListingAutoPosition, MarketSessionStatus, OrderBookInstrument, OrderBookMarketStatus, VirtualMarketStatus } from "@/app/types/stock";
 
 export default function SupplyDemandAdminPage() {
   const router = useRouter();
@@ -36,16 +38,23 @@ export default function SupplyDemandAdminPage() {
       issuedShares: "",
       tickSize: "1",
       priceLimitRate: "30",
+      listingAutoDisplayName: "",
+      listingAutoEnabled: "true",
+      listingAutoPositionSide: "SELL_ONLY",
+      listingAutoMaxOrderQuantity: "100",
+      listingAutoOrderTtlSeconds: "30",
+      listingAutoPriceOffsetTicks: "3",
     },
   });
   const [actionSymbol, setActionSymbol] = useState("");
-  const [actionType, setActionType] = useState<CorporateActionType>("PAID_IN_CAPITAL_INCREASE");
+  const [actionType, setActionType] = useState<CorporateActionType>("INITIAL_ISSUE");
   const [actionShares, setActionShares] = useState("");
   const [actionIssuePrice, setActionIssuePrice] = useState("");
   const [actionDividendAmount, setActionDividendAmount] = useState("");
   const [exRightsDate, setExRightsDate] = useState("");
   const [paymentDate, setPaymentDate] = useState("");
   const [listingDate, setListingDate] = useState("");
+  const [delistingDate, setDelistingDate] = useState("");
   const [splitFrom, setSplitFrom] = useState("1");
   const [splitTo, setSplitTo] = useState("5");
   const [actionDescription, setActionDescription] = useState("");
@@ -66,10 +75,19 @@ export default function SupplyDemandAdminPage() {
   const [autoOrderTtlSeconds, setAutoOrderTtlSeconds] = useState("15");
   const [updatingAutoConfig, setUpdatingAutoConfig] = useState(false);
   const [togglingAutoConfigSymbol, setTogglingAutoConfigSymbol] = useState<string | null>(null);
+  const [listingAutoSymbol, setListingAutoSymbol] = useState("");
+  const [listingAutoDisplayName, setListingAutoDisplayName] = useState("");
+  const [listingAutoEnabled, setListingAutoEnabled] = useState(true);
+  const [listingAutoPositionSide, setListingAutoPositionSide] = useState<ListingAutoPosition>("SELL_ONLY");
+  const [listingAutoMaxOrderQuantity, setListingAutoMaxOrderQuantity] = useState("100");
+  const [listingAutoOrderTtlSeconds, setListingAutoOrderTtlSeconds] = useState("30");
+  const [listingAutoPriceOffsetTicks, setListingAutoPriceOffsetTicks] = useState("3");
+  const [updatingListingAutoAccount, setUpdatingListingAutoAccount] = useState(false);
   const [editingAutoParticipantUserKey, setEditingAutoParticipantUserKey] = useState<string | null>(null);
   const [autoParticipantUserKey, setAutoParticipantUserKey] = useState("");
   const [autoParticipantDisplayName, setAutoParticipantDisplayName] = useState("");
   const [autoParticipantEnabled, setAutoParticipantEnabled] = useState(true);
+  const [autoParticipantProfileType, setAutoParticipantProfileType] = useState<AutoParticipantProfileType>("NOISE_TRADER");
   const [savingAutoParticipant, setSavingAutoParticipant] = useState(false);
   const [togglingAutoParticipantUserKey, setTogglingAutoParticipantUserKey] = useState<string | null>(null);
   const [withdrawingAutoParticipantUserKey, setWithdrawingAutoParticipantUserKey] = useState<string | null>(null);
@@ -122,6 +140,16 @@ export default function SupplyDemandAdminPage() {
           setAutoMaxOrderQuantity(String(firstConfig.maxOrderQuantity));
           setAutoOrderTtlSeconds(String(firstConfig.orderTtlSeconds));
         }
+        if (!listingAutoSymbol && autoResult.data.listingAutoAccounts.length > 0) {
+          const firstListingAutoAccount = autoResult.data.listingAutoAccounts[0];
+          setListingAutoSymbol(firstListingAutoAccount.symbol);
+          setListingAutoDisplayName(firstListingAutoAccount.displayName);
+          setListingAutoEnabled(firstListingAutoAccount.enabled);
+          setListingAutoPositionSide(firstListingAutoAccount.positionSide);
+          setListingAutoMaxOrderQuantity(String(firstListingAutoAccount.maxOrderQuantity));
+          setListingAutoOrderTtlSeconds(String(firstListingAutoAccount.orderTtlSeconds));
+          setListingAutoPriceOffsetTicks(String(firstListingAutoAccount.priceOffsetTicks));
+        }
         const firstStrategy = autoResult.data.participantSymbolConfigs[0];
         if (!strategyUserKey && firstStrategy) {
           setStrategyUserKey(firstStrategy.userKey);
@@ -157,7 +185,7 @@ export default function SupplyDemandAdminPage() {
     return () => {
       cancelled = true;
     };
-  }, [autoConfigSymbol, reportSymbol, strategySymbol, strategyUserKey]);
+  }, [autoConfigSymbol, listingAutoSymbol, reportSymbol, strategySymbol, strategyUserKey]);
 
   const createInstrumentMutation = useMutation({
     ...createOrderBookInstrumentMutationOptions(),
@@ -170,12 +198,18 @@ export default function SupplyDemandAdminPage() {
         issuedShares: "",
         tickSize: "1",
         priceLimitRate: "30",
+        listingAutoDisplayName: "",
+        listingAutoEnabled: "true",
+        listingAutoPositionSide: "SELL_ONLY",
+        listingAutoMaxOrderQuantity: "100",
+        listingAutoOrderTtlSeconds: "30",
+        listingAutoPriceOffsetTicks: "3",
       });
       setActionSymbol(instrument.symbol);
       setReportSymbol(instrument.symbol);
       setCorporateActions([]);
       setInstrumentReports([]);
-      setMessage("주문장 종목을 생성하고 초기 상장 매도 호가를 공급했습니다.");
+      setMessage("주식 이벤트를 적용했습니다. 신규 상장과 상장주관사 자동계정을 생성했습니다.");
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: stockKeys.orderBookInstruments() }),
         queryClient.invalidateQueries({ queryKey: stockKeys.orderBook(instrument.symbol) }),
@@ -240,10 +274,31 @@ export default function SupplyDemandAdminPage() {
       return;
     }
     createInstrumentMutation.mutate({
-      ...parsed.data,
+      symbol: parsed.data.symbol,
+      name: parsed.data.name,
       market: parsed.data.market || "ORDERBOOK",
+      initialPrice: parsed.data.initialPrice,
+      issuedShares: parsed.data.issuedShares,
+      tickSize: parsed.data.tickSize,
+      priceLimitRate: parsed.data.priceLimitRate,
+      listingAutoAccount: {
+        displayName: optionalText(parsed.data.listingAutoDisplayName ?? "") ?? undefined,
+        enabled: parsed.data.listingAutoEnabled === "true",
+        positionSide: parsed.data.listingAutoPositionSide,
+        maxOrderQuantity: parsed.data.listingAutoMaxOrderQuantity,
+        orderTtlSeconds: parsed.data.listingAutoOrderTtlSeconds,
+        priceOffsetTicks: parsed.data.listingAutoPriceOffsetTicks,
+      },
     });
   });
+
+  const submitStockEvent = () => {
+    if (actionType === "INITIAL_ISSUE") {
+      void submitInstrument();
+      return;
+    }
+    void submitCorporateAction();
+  };
 
   const fillReportDraft = (report: InstrumentReport) => {
     if (report.eventType === "DELETE") {
@@ -263,8 +318,8 @@ export default function SupplyDemandAdminPage() {
     }
     const normalizedSymbol = reportSymbol.trim().toUpperCase();
     const parsedScore = Number.parseInt(reportScore, 10);
-    if (!normalizedSymbol || !reportTitle.trim() || !reportSummary.trim() || !Number.isInteger(parsedScore) || parsedScore < 1 || parsedScore > 10 || !reportRiseReason.trim() || !reportFallReason.trim()) {
-      setMessage("보고서 종목, 제목, 요약, 점수 1-10, 상승/하락 이유를 모두 입력해 주세요.");
+    if (!normalizedSymbol || !reportTitle.trim() || !reportSummary.trim() || !Number.isInteger(parsedScore) || parsedScore < 1 || parsedScore > 10) {
+      setMessage("보고서 종목, 제목, 요약, 점수 1-10을 입력해 주세요.");
       return;
     }
     setSavingReport(true);
@@ -278,8 +333,8 @@ export default function SupplyDemandAdminPage() {
         title: reportTitle.trim(),
         summary: reportSummary.trim(),
         score: parsedScore,
-        riseReason: reportRiseReason.trim(),
-        fallReason: reportFallReason.trim(),
+        riseReason: optionalText(reportRiseReason),
+        fallReason: optionalText(reportFallReason),
       };
       const result = mode === "publish"
         ? await publishInstrumentReport(token, normalizedSymbol, payload)
@@ -345,11 +400,18 @@ export default function SupplyDemandAdminPage() {
       exRightsDate?: string;
       paymentDate?: string;
       listingDate?: string;
+      delistingDate?: string;
       dividendAmount?: number;
       description?: string;
     } = { actionType };
 
-    if (actionType === "STOCK_SPLIT") {
+    if (actionType === "DELISTING") {
+      if (!delistingDate) {
+        setMessage("상장폐지는 상장폐지일이 필요합니다.");
+        return;
+      }
+      payload.delistingDate = delistingDate;
+    } else if (actionType === "STOCK_SPLIT") {
       const parsedSplitFrom = Number.parseInt(splitFrom, 10);
       const parsedSplitTo = Number.parseInt(splitTo, 10);
       if (!Number.isInteger(parsedSplitFrom) || !Number.isInteger(parsedSplitTo) || parsedSplitFrom <= 0 || parsedSplitTo <= parsedSplitFrom) {
@@ -454,6 +516,7 @@ export default function SupplyDemandAdminPage() {
       setExRightsDate("");
       setPaymentDate("");
       setListingDate("");
+      setDelistingDate("");
       setActionDescription("");
       setMessage("주식 이벤트를 적용했습니다.");
       loadStatus();
@@ -565,11 +628,60 @@ export default function SupplyDemandAdminPage() {
     }
   };
 
+  const selectListingAutoAccountDraft = (config: ListingAutoAccount) => {
+    setListingAutoSymbol(config.symbol);
+    setListingAutoDisplayName(config.displayName);
+    setListingAutoEnabled(config.enabled);
+    setListingAutoPositionSide(config.positionSide);
+    setListingAutoMaxOrderQuantity(String(config.maxOrderQuantity));
+    setListingAutoOrderTtlSeconds(String(config.orderTtlSeconds));
+    setListingAutoPriceOffsetTicks(String(config.priceOffsetTicks));
+  };
+
+  const submitListingAutoAccountConfig = async () => {
+    if (updatingListingAutoAccount) {
+      return;
+    }
+    const normalizedSymbol = listingAutoSymbol.trim().toUpperCase();
+    const parsedMaxOrderQuantity = Number.parseInt(listingAutoMaxOrderQuantity, 10);
+    const parsedOrderTtlSeconds = Number.parseInt(listingAutoOrderTtlSeconds, 10);
+    const parsedPriceOffsetTicks = Number.parseInt(listingAutoPriceOffsetTicks, 10);
+    if (!normalizedSymbol || !Number.isInteger(parsedMaxOrderQuantity) || parsedMaxOrderQuantity <= 0 || !Number.isInteger(parsedOrderTtlSeconds) || parsedOrderTtlSeconds <= 0 || !Number.isInteger(parsedPriceOffsetTicks) || parsedPriceOffsetTicks < 0) {
+      setMessage("상장주관사 종목, 최대 수량, TTL, 가격 분산 틱을 올바르게 입력해 주세요.");
+      return;
+    }
+    setUpdatingListingAutoAccount(true);
+    try {
+      const token = await ensureAccessToken();
+      if (!token) {
+        setMessage("관리자 로그인 후 상장주관사 자동계정을 변경할 수 있습니다.");
+        return;
+      }
+      const result = await updateListingAutoAccountConfig(token, normalizedSymbol, {
+        displayName: optionalText(listingAutoDisplayName) ?? undefined,
+        enabled: listingAutoEnabled,
+        positionSide: listingAutoPositionSide,
+        maxOrderQuantity: parsedMaxOrderQuantity,
+        orderTtlSeconds: parsedOrderTtlSeconds,
+        priceOffsetTicks: parsedPriceOffsetTicks,
+      });
+      if (!result.ok) {
+        setMessage(result.message ?? "상장주관사 자동계정 설정 변경에 실패했습니다.");
+        return;
+      }
+      setMessage("상장주관사 자동계정 설정을 변경했습니다.");
+      loadStatus();
+    } finally {
+      setUpdatingListingAutoAccount(false);
+    }
+  };
+
   const selectAutoParticipantDraft = (participant: AutoParticipant) => {
     setEditingAutoParticipantUserKey(participant.userKey);
     setAutoParticipantUserKey(participant.userKey);
     setAutoParticipantDisplayName(participant.displayName);
     setAutoParticipantEnabled(participant.enabled);
+    setAutoParticipantProfileType(participant.profileType);
     setCashAdjustmentAmount("");
   };
 
@@ -578,6 +690,7 @@ export default function SupplyDemandAdminPage() {
     setAutoParticipantUserKey("");
     setAutoParticipantDisplayName("");
     setAutoParticipantEnabled(true);
+    setAutoParticipantProfileType("NOISE_TRADER");
     setCashAdjustmentAmount("");
   };
 
@@ -608,6 +721,7 @@ export default function SupplyDemandAdminPage() {
       const result = await upsertAutoParticipant(token, normalizedUserKey, {
         displayName,
         enabled: autoParticipantEnabled,
+        profileType: autoParticipantProfileType,
       });
       if (!result.ok) {
         setMessage(result.message ?? "자동 참여자 저장에 실패했습니다.");
@@ -647,6 +761,7 @@ export default function SupplyDemandAdminPage() {
       }
       setCashAdjustmentAmount("");
       setMessage(adjustmentType === "DEPOSIT" ? "자동 참여자 계좌에 입금했습니다." : "자동 참여자 계좌에서 회수했습니다.");
+      await queryClient.invalidateQueries({ queryKey: stockKeys.autoParticipantOverviews() });
       loadStatus();
     } finally {
       setAdjustingCashType(null);
@@ -668,6 +783,7 @@ export default function SupplyDemandAdminPage() {
       const result = await upsertAutoParticipant(token, participant.userKey, {
         displayName: participant.displayName,
         enabled: nextEnabled,
+        profileType: participant.profileType,
       });
       if (!result.ok) {
         setMessage(result.message ?? "자동 참여자 상태 변경에 실패했습니다.");
@@ -782,6 +898,7 @@ export default function SupplyDemandAdminPage() {
   const autoConfigBySymbol = new Map((status?.configs ?? []).map((config) => [config.symbol, config]));
   const selectedAutoParticipant = editingAutoParticipantUserKey ? autoParticipantByUserKey.get(editingAutoParticipantUserKey) : undefined;
   const isEditingAutoParticipant = editingAutoParticipantUserKey !== null;
+  const selectedListingAutoAccount = status?.listingAutoAccounts.find((item) => item.symbol === listingAutoSymbol) ?? null;
 
   if (adminStatus === "checking") {
     return (
@@ -806,15 +923,25 @@ export default function SupplyDemandAdminPage() {
 
   return (
     <main className="min-h-screen bg-[#101418] text-white">
+      <TradingTopBar
+        active="order-book"
+        actions={(
+          <div className="flex flex-wrap items-center gap-2">
+            <Link href="/supply-demand/admin/participants" className="inline-flex h-11 items-center rounded-md bg-[#f2f4f6] px-3 text-sm font-bold text-[#333d4b]">
+              참여자 현황
+            </Link>
+            <Link href="/supply-demand" className="inline-flex h-11 items-center rounded-md bg-[#f2f4f6] px-3 text-sm font-bold text-[#333d4b]">
+              자동장
+            </Link>
+          </div>
+        )}
+      />
       <section className="border-b border-white/10">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-5 sm:px-6 lg:px-8">
           <div>
             <p className="text-xs font-bold text-[#64a8ff]">AUTO MARKET CONFIG</p>
             <h1 className="mt-1 text-2xl font-black">자동장 설정 현황</h1>
           </div>
-          <Link href="/supply-demand" className="rounded-md bg-white px-3 py-2 text-sm font-black text-[#101418]">
-            자동장
-          </Link>
         </div>
       </section>
 
@@ -829,6 +956,8 @@ export default function SupplyDemandAdminPage() {
           <DarkMetric label="주문장 대기 주문" value={orderBookMarket ? `${orderBookMarket.openOrderCount}건` : "-"} />
           <DarkMetric label="자동 참여자" value={status ? `${status.enabledParticipantCount}명` : "-"} />
         </div>
+
+        <AutoSignalGuide />
 
         <section className="mt-5 rounded-lg border border-white/10 bg-white/[0.06] p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -911,6 +1040,117 @@ export default function SupplyDemandAdminPage() {
         <section className="mt-5 rounded-lg border border-white/10 bg-white/[0.06] p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
+              <h2 className="text-base font-black">상장주관사 자동계정</h2>
+              <p className="mt-1 text-xs font-bold text-[#8b95a1]">상장 때 받은 물량을 소량 매도하거나, 매수 전용으로 바꿔 자사주 매입 흐름처럼 운용합니다.</p>
+            </div>
+            <span className="text-xs font-bold text-[#64a8ff]">{status?.listingAutoAccounts.length ?? 0}개 계정</span>
+          </div>
+          <div className="mt-4 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1.4fr_0.8fr_0.9fr_0.8fr_0.8fr_0.8fr_auto]">
+            <DarkSelect label="종목" value={listingAutoSymbol} onChange={(value) => {
+              const config = status?.listingAutoAccounts.find((item) => item.symbol === value);
+              if (config) {
+                selectListingAutoAccountDraft(config);
+                return;
+              }
+              setListingAutoSymbol(value);
+            }}>
+              <option value="">선택</option>
+              {(status?.listingAutoAccounts ?? []).map((config) => (
+                <option key={config.symbol} value={config.symbol}>{config.symbol}</option>
+              ))}
+            </DarkSelect>
+            <DarkInput label="표시명" value={listingAutoDisplayName} onChange={setListingAutoDisplayName} placeholder="상장주관사" />
+            <DarkSelect label="상태" value={listingAutoEnabled ? "true" : "false"} onChange={(value) => setListingAutoEnabled(value === "true")}>
+              <option value="true">가동</option>
+              <option value="false">정지</option>
+            </DarkSelect>
+            <DarkSelect label="포지션" value={listingAutoPositionSide} onChange={(value) => setListingAutoPositionSide(value as ListingAutoPosition)}>
+              <option value="SELL_ONLY">매도 전용</option>
+              <option value="BUY_ONLY">매수 전용</option>
+            </DarkSelect>
+            <DarkInput label="최대 수량" value={listingAutoMaxOrderQuantity} onChange={setListingAutoMaxOrderQuantity} placeholder="100" />
+            <DarkInput label="TTL(초)" value={listingAutoOrderTtlSeconds} onChange={setListingAutoOrderTtlSeconds} placeholder="30" />
+            <DarkInput label="분산 틱" value={listingAutoPriceOffsetTicks} onChange={setListingAutoPriceOffsetTicks} placeholder="3" />
+            <button type="button" onClick={submitListingAutoAccountConfig} disabled={updatingListingAutoAccount} className="min-h-11 min-w-0 self-end rounded-md bg-white px-3 py-3 text-sm font-black text-[#101418] disabled:opacity-50 sm:col-span-2 lg:col-span-1">
+              {updatingListingAutoAccount ? "저장 중" : "저장"}
+            </button>
+          </div>
+          {selectedListingAutoAccount ? (
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <DarkMetric label="주관사 보유 주식" value={`${formatNumber(selectedListingAutoAccount.holdingQuantity)}주`} />
+              <DarkMetric label="예약 매도 수량" value={`${formatNumber(selectedListingAutoAccount.reservedQuantity)}주`} />
+              <DarkMetric label="가용 매도 수량" value={`${formatNumber(selectedListingAutoAccount.availableQuantity)}주`} />
+              <DarkMetric label="주관사 현금" value={formatWon(selectedListingAutoAccount.cashBalance)} />
+              <DarkMetric label="평균단가" value={formatWon(selectedListingAutoAccount.averagePrice)} />
+              <DarkMetric label="현재가" value={formatWon(selectedListingAutoAccount.currentPrice)} />
+              <DarkMetric label="보유 평가액" value={formatWon(selectedListingAutoAccount.marketValue)} />
+            </div>
+          ) : (
+            <div className="mt-4 rounded-md border border-white/10 bg-black/20 px-3 py-3 text-xs font-bold text-[#8b95a1]">
+              종목을 선택하면 상장주관사 자동계정의 실제 보유 주식, 예약 수량, 가용 수량, 현금, 평가액을 확인할 수 있습니다.
+            </div>
+          )}
+          <div className="mt-4 overflow-x-auto rounded-md border border-white/10">
+            <table className="min-w-[1180px] w-full border-collapse text-sm">
+              <thead className="bg-white/10 text-left text-[#b8c2cc]">
+                <tr>
+                  <th className="px-3 py-2">종목</th>
+                  <th className="px-3 py-2">계정</th>
+                  <th className="px-3 py-2">상태</th>
+                  <th className="px-3 py-2">보유/예약</th>
+                  <th className="px-3 py-2">가용</th>
+                  <th className="px-3 py-2">현금</th>
+                  <th className="px-3 py-2">평가액</th>
+                  <th className="px-3 py-2">운용 설정</th>
+                  <th className="px-3 py-2">수정</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/10">
+                {(status?.listingAutoAccounts ?? []).map((config) => (
+                  <tr key={config.symbol}>
+                    <td className="px-3 py-2 font-black">{config.symbol}</td>
+                    <td className="px-3 py-2">
+                      <p className="font-black">{config.displayName}</p>
+                      <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">{config.userKey}</p>
+                      <p className="mt-0.5 text-xs font-bold text-[#5f6b76]">계좌 ID {config.accountId ?? "-"}</p>
+                    </td>
+                    <td className="px-3 py-2">{config.enabled ? "가동" : "정지"}</td>
+                    <td className="px-3 py-2 tabular-nums">
+                      <p className="font-black">{formatNumber(config.holdingQuantity)}주</p>
+                      <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">예약 {formatNumber(config.reservedQuantity)}주</p>
+                    </td>
+                    <td className="px-3 py-2 tabular-nums">{formatNumber(config.availableQuantity)}주</td>
+                    <td className="px-3 py-2 tabular-nums">{formatWon(config.cashBalance)}</td>
+                    <td className="px-3 py-2 tabular-nums">
+                      <p className="font-black">{formatWon(config.marketValue)}</p>
+                      <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">현재가 {formatWon(config.currentPrice)}</p>
+                    </td>
+                    <td className="px-3 py-2">
+                      <p className="font-black">{formatListingAutoPosition(config.positionSide)}</p>
+                      <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">
+                        최대 {formatNumber(config.maxOrderQuantity)}주 · {config.orderTtlSeconds}초 · {config.priceOffsetTicks}틱
+                      </p>
+                    </td>
+                    <td className="px-3 py-2">
+                      <button type="button" onClick={() => selectListingAutoAccountDraft(config)} className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-white">
+                        선택
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {(status?.listingAutoAccounts ?? []).length === 0 ? (
+                  <tr>
+                    <td colSpan={9} className="px-3 py-4 text-[#8b95a1]">상장주관사 자동계정이 없습니다. 상장 이벤트를 먼저 적용하세요.</td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section className="mt-5 rounded-lg border border-white/10 bg-white/[0.06] p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
               <h2 className="text-base font-black">참여자별 종목 전략</h2>
               <p className="mt-1 text-xs font-bold text-[#8b95a1]">같은 종목이라도 참여자마다 강도 1-10을 다르게 설정합니다.</p>
             </div>
@@ -952,10 +1192,10 @@ export default function SupplyDemandAdminPage() {
                 <tr>
                   <th className="px-3 py-2">참여자</th>
                   <th className="px-3 py-2">종목</th>
-	                  <th className="px-3 py-2">상태</th>
-	                  <th className="px-3 py-2">가격 방향</th>
-	                  <th className="px-3 py-2">강도</th>
-	                  <th className="px-3 py-2">수정</th>
+                  <th className="px-3 py-2">상태</th>
+                  <th className="px-3 py-2">가격 방향</th>
+                  <th className="px-3 py-2">강도</th>
+                  <th className="px-3 py-2">수정</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/10">
@@ -973,11 +1213,11 @@ export default function SupplyDemandAdminPage() {
                           enabled={config.enabled}
                           disabled={togglingStrategyKey === `${config.userKey}:${config.symbol}`}
                           onToggle={() => void toggleAutoStrategyEnabled(config)}
-                        />
-	                      </td>
-	                      <td className="px-3 py-2">{formatAutoIntensityDirection(config.intensity)}</td>
-	                      <td className="px-3 py-2 tabular-nums">{config.intensity}/10</td>
-	                      <td className="px-3 py-2">
+                      />
+                      </td>
+                      <td className="px-3 py-2">{formatAutoIntensityDirection(config.intensity)}</td>
+                      <td className="px-3 py-2 tabular-nums">{config.intensity}/10</td>
+                      <td className="px-3 py-2">
                         <button type="button" onClick={() => selectAutoStrategyDraft(config)} className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-white">
                           선택
                         </button>
@@ -1014,9 +1254,14 @@ export default function SupplyDemandAdminPage() {
               <span className="text-xs font-bold text-[#64a8ff]">{status?.participants.length ?? 0}명 등록</span>
             </div>
           </div>
-          <div className="mt-4 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[1.1fr_1.2fr_0.8fr_auto]">
+          <div className="mt-4 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[1.1fr_1.2fr_1.1fr_0.8fr_auto]">
             <DarkInput label="참여자 키" value={autoParticipantUserKey} onChange={setAutoParticipantUserKey} placeholder="stock-auto-001" disabled={isEditingAutoParticipant} />
             <DarkInput label="표시명" value={autoParticipantDisplayName} onChange={setAutoParticipantDisplayName} placeholder="자동 참여자 1" />
+            <DarkSelect label="심리 프로필" value={autoParticipantProfileType} onChange={(value) => setAutoParticipantProfileType(value as AutoParticipantProfileType)}>
+              {AUTO_PARTICIPANT_PROFILE_OPTIONS.map((profile) => (
+                <option key={profile.value} value={profile.value}>{profile.label}</option>
+              ))}
+            </DarkSelect>
             <DarkSelect label="상태" value={autoParticipantEnabled ? "true" : "false"} onChange={(value) => setAutoParticipantEnabled(value === "true")}>
               <option value="true">가동</option>
               <option value="false">정지</option>
@@ -1036,7 +1281,7 @@ export default function SupplyDemandAdminPage() {
                 </div>
                 <p className="mt-1 break-all text-sm font-black text-white">{selectedAutoParticipant.displayName} · {selectedAutoParticipant.userKey}</p>
                 <p className="mt-1 text-xs font-bold text-[#b8c2cc]">
-                  현재 현금 {selectedAutoParticipant.cashBalance == null ? "계좌 미개설" : formatWon(selectedAutoParticipant.cashBalance)}
+                  {formatAutoParticipantProfile(selectedAutoParticipant.profileType)} · 현재 현금 {selectedAutoParticipant.cashBalance == null ? "계좌 미개설" : formatWon(selectedAutoParticipant.cashBalance)}
                 </p>
               </div>
               <DarkInput label="입금/회수 금액" value={cashAdjustmentAmount} onChange={setCashAdjustmentAmount} placeholder="1000000" />
@@ -1059,10 +1304,11 @@ export default function SupplyDemandAdminPage() {
             </div>
           ) : null}
           <div className="mt-4 overflow-x-auto rounded-md border border-white/10">
-            <table className="min-w-[880px] w-full border-collapse text-sm">
+            <table className="min-w-[980px] w-full border-collapse text-sm">
               <thead className="bg-white/10 text-left text-[#b8c2cc]">
                 <tr>
                   <th className="px-3 py-2">참여자</th>
+                  <th className="px-3 py-2">프로필</th>
                   <th className="px-3 py-2">상태</th>
                   <th className="px-3 py-2">현재 현금</th>
                   <th className="px-3 py-2">수정일</th>
@@ -1076,6 +1322,10 @@ export default function SupplyDemandAdminPage() {
                     <td className="px-3 py-2">
                       <p className="font-black">{participant.displayName}</p>
                       <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">{participant.userKey}</p>
+                    </td>
+                    <td className="px-3 py-2">
+                      <p className="font-black">{formatAutoParticipantProfile(participant.profileType)}</p>
+                      <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">{formatAutoParticipantProfileDescription(participant.profileType)}</p>
                     </td>
                     <td className="px-3 py-2">
                       <EnabledToggleButton
@@ -1105,7 +1355,7 @@ export default function SupplyDemandAdminPage() {
                 ))}
                 {(status?.participants ?? []).length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-3 py-4 text-[#8b95a1]">등록된 자동 참여자가 없습니다.</td>
+                    <td colSpan={7} className="px-3 py-4 text-[#8b95a1]">등록된 자동 참여자가 없습니다.</td>
                   </tr>
                 ) : null}
               </tbody>
@@ -1114,100 +1364,146 @@ export default function SupplyDemandAdminPage() {
         </section>
 
         <section className="mt-5 rounded-lg border border-white/10 bg-white/[0.06] p-4">
-          <h2 className="text-base font-black">수요와 공급 종목 생성</h2>
-          <div className="mt-4 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <DarkFormInput label="종목 코드" registration={createInstrumentForm.register("symbol")} placeholder="예: ZQ001" error={createInstrumentForm.formState.errors.symbol?.message} />
-            <DarkFormInput label="종목명" registration={createInstrumentForm.register("name")} placeholder="예: 제로큐 주문장" error={createInstrumentForm.formState.errors.name?.message} className="sm:col-span-2 lg:col-span-2" />
-            <DarkFormInput label="시장" registration={createInstrumentForm.register("market")} placeholder="ORDERBOOK" error={createInstrumentForm.formState.errors.market?.message} />
-            <DarkFormInput label="초기 가격" registration={createInstrumentForm.register("initialPrice")} placeholder="70000" error={createInstrumentForm.formState.errors.initialPrice?.message} />
-            <DarkFormInput label="발행주식수" registration={createInstrumentForm.register("issuedShares")} placeholder="100000" error={createInstrumentForm.formState.errors.issuedShares?.message} />
-            <DarkFormInput label="호가 단위" registration={createInstrumentForm.register("tickSize")} placeholder="1" error={createInstrumentForm.formState.errors.tickSize?.message} />
-            <DarkFormInput label="가격제한폭(%)" registration={createInstrumentForm.register("priceLimitRate")} placeholder="30" error={createInstrumentForm.formState.errors.priceLimitRate?.message} />
-            <button type="button" onClick={() => void submitInstrument()} disabled={createInstrumentMutation.isPending} className="min-h-11 min-w-0 self-end rounded-md bg-white px-3 py-3 text-sm font-black text-[#101418] disabled:opacity-50 sm:col-span-2 lg:col-span-1">
-              {createInstrumentMutation.isPending ? "생성 중" : "생성"}
-            </button>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-base font-black">주식 이벤트 발생</h2>
+              <p className="mt-1 text-xs font-bold text-[#8b95a1]">신규 상장과 상장 후 이벤트를 같은 흐름에서 적용합니다.</p>
+            </div>
+            <span className="text-xs font-bold text-[#64a8ff]">{actionType === "INITIAL_ISSUE" ? "신규 종목" : "기존 종목"}</span>
           </div>
-        </section>
 
-        <section className="mt-5 rounded-lg border border-white/10 bg-white/[0.06] p-4">
-          <h2 className="text-base font-black">주식 이벤트 적용</h2>
-          <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_1.2fr_1fr_1fr_1fr_1.4fr_auto]">
-            <DarkSelect label="종목" value={actionSymbol} onChange={(value) => {
-              setActionSymbol(value);
-              if (!value) {
-                setCorporateActions([]);
-              }
-            }}>
-              <option value="">선택</option>
-              {instruments.map((instrument) => (
-                <option key={instrument.symbol} value={instrument.symbol}>{instrument.symbol}</option>
-              ))}
-            </DarkSelect>
-            <DarkSelect label="이벤트" value={actionType} onChange={(value) => setActionType(value as CorporateActionType)}>
+          <div className="mt-4 grid gap-3 lg:grid-cols-[1.2fr_1fr_2fr]">
+            <DarkSelect label="이벤트 종류" value={actionType} onChange={(value) => setActionType(value as CorporateActionType)}>
+              <option value="INITIAL_ISSUE">신규 상장</option>
               <option value="PAID_IN_CAPITAL_INCREASE">유상증자</option>
               <option value="ADDITIONAL_ISSUE">추가발행</option>
               <option value="STOCK_SPLIT">액면분할</option>
               <option value="CASH_DIVIDEND">현금배당</option>
               <option value="BONUS_ISSUE">무상증자</option>
               <option value="STOCK_DIVIDEND">주식배당</option>
+              <option value="DELISTING">상장폐지</option>
             </DarkSelect>
-            {actionType === "STOCK_SPLIT" ? (
-              <>
-                <DarkInput label="분할 전" value={splitFrom} onChange={setSplitFrom} placeholder="1" />
-                <DarkInput label="분할 후" value={splitTo} onChange={setSplitTo} placeholder="5" />
-                <div />
-              </>
-            ) : actionType === "CASH_DIVIDEND" ? (
-              <>
-                <DarkInput label="1주당 배당금" value={actionDividendAmount} onChange={setActionDividendAmount} placeholder="1000" />
-                <div />
-                <div />
-              </>
-            ) : actionType === "BONUS_ISSUE" || actionType === "STOCK_DIVIDEND" ? (
-              <>
-                <DarkInput label="배정 주식수" value={actionShares} onChange={setActionShares} placeholder="10000" />
-                <div />
-                <div />
-              </>
+            {actionType === "INITIAL_ISSUE" ? (
+              <div className="rounded-md border border-white/10 bg-black/20 px-3 py-2 text-xs font-bold text-[#8b95a1]">
+                종목과 INITIAL_ISSUE 원장, 상장주관사 자동계정을 함께 생성합니다.
+              </div>
             ) : (
-              <>
-                <DarkInput label="발행수" value={actionShares} onChange={setActionShares} placeholder="50000" />
-                <DarkInput label="발행가" value={actionIssuePrice} onChange={setActionIssuePrice} placeholder="50000" />
-                <div />
-              </>
+              <DarkSelect label="종목" value={actionSymbol} onChange={(value) => {
+                setActionSymbol(value);
+                if (!value) {
+                  setCorporateActions([]);
+                }
+              }}>
+                <option value="">선택</option>
+                {instruments.map((instrument) => (
+                  <option key={instrument.symbol} value={instrument.symbol}>{instrument.symbol}</option>
+                ))}
+              </DarkSelect>
             )}
-            <DarkInput label="메모" value={actionDescription} onChange={setActionDescription} placeholder="선택 입력" />
-            <button type="button" onClick={submitCorporateAction} disabled={applyingAction} className="rounded-md bg-white px-3 py-3 text-sm font-black text-[#101418] disabled:opacity-50">
-              {applyingAction ? "적용 중" : "적용"}
-            </button>
+            {actionType === "DELISTING" ? (
+              <div className="rounded-md border border-[#f04452]/30 bg-[#3a1f1b] px-3 py-2 text-xs font-bold text-[#ffb4a8]">
+                ZERO_VALUE: 상장폐지일에 거래를 중단하고 보유 평가금액을 0원으로 반영합니다.
+              </div>
+            ) : (
+              <div className="rounded-md border border-white/10 bg-black/20 px-3 py-2 text-xs font-bold text-[#8b95a1]">
+                {actionType === "INITIAL_ISSUE" ? "초기 전량 매도벽 없이 주관사 자동계정이 호가를 공급합니다." : "가격과 수량을 조정하는 이벤트는 열린 주문 정책을 먼저 검증합니다."}
+              </div>
+            )}
           </div>
-          <div className="mt-3 grid gap-3 md:grid-cols-3">
-            {actionType === "PAID_IN_CAPITAL_INCREASE" ? (
-              <>
-                <DarkInput label="권리락일" value={exRightsDate} onChange={setExRightsDate} placeholder="2026-06-22" type="date" />
-                <DarkInput label="납입일" value={paymentDate} onChange={setPaymentDate} placeholder="2026-06-24" type="date" />
-                <DarkInput label="신주상장일" value={listingDate} onChange={setListingDate} placeholder="2026-06-26" type="date" />
-              </>
-            ) : null}
-            {actionType === "ADDITIONAL_ISSUE" ? (
-              <DarkInput label="신주상장일" value={listingDate} onChange={setListingDate} placeholder="2026-06-26" type="date" />
-            ) : null}
-            {actionType === "STOCK_SPLIT" ? (
-              <DarkInput label="효력일" value={listingDate} onChange={setListingDate} placeholder="2026-06-26" type="date" />
-            ) : null}
-            {actionType === "CASH_DIVIDEND" ? (
-              <>
-                <DarkInput label="배당락일" value={exRightsDate} onChange={setExRightsDate} placeholder="2026-06-22" type="date" />
-                <DarkInput label="지급일" value={paymentDate} onChange={setPaymentDate} placeholder="2026-06-26" type="date" />
-              </>
-            ) : null}
-            {actionType === "BONUS_ISSUE" || actionType === "STOCK_DIVIDEND" ? (
-              <>
-                <DarkInput label="권리락일" value={exRightsDate} onChange={setExRightsDate} placeholder="2026-06-22" type="date" />
-                <DarkInput label="신주상장일" value={listingDate} onChange={setListingDate} placeholder="2026-06-26" type="date" />
-              </>
-            ) : null}
-          </div>
+
+          {actionType === "INITIAL_ISSUE" ? (
+            <div className="mt-4 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <DarkFormInput label="종목 코드" registration={createInstrumentForm.register("symbol")} placeholder="예: ZQ001" error={createInstrumentForm.formState.errors.symbol?.message} />
+              <DarkFormInput label="종목명" registration={createInstrumentForm.register("name")} placeholder="예: 제로큐 주문장" error={createInstrumentForm.formState.errors.name?.message} className="sm:col-span-2 lg:col-span-2" />
+              <DarkFormInput label="시장" registration={createInstrumentForm.register("market")} placeholder="ORDERBOOK" error={createInstrumentForm.formState.errors.market?.message} />
+              <DarkFormInput label="초기 가격" registration={createInstrumentForm.register("initialPrice")} placeholder="70000" error={createInstrumentForm.formState.errors.initialPrice?.message} />
+              <DarkFormInput label="발행주식수" registration={createInstrumentForm.register("issuedShares")} placeholder="100000" error={createInstrumentForm.formState.errors.issuedShares?.message} />
+              <DarkFormInput label="호가 단위" registration={createInstrumentForm.register("tickSize")} placeholder="1" error={createInstrumentForm.formState.errors.tickSize?.message} />
+              <DarkFormInput label="가격제한폭(%)" registration={createInstrumentForm.register("priceLimitRate")} placeholder="30" error={createInstrumentForm.formState.errors.priceLimitRate?.message} />
+              <DarkFormInput label="주관사 표시명" registration={createInstrumentForm.register("listingAutoDisplayName")} placeholder="미입력 시 자동 생성" error={createInstrumentForm.formState.errors.listingAutoDisplayName?.message} className="sm:col-span-2" />
+              <DarkFormSelect label="주관사 상태" registration={createInstrumentForm.register("listingAutoEnabled")}>
+                <option value="true">가동</option>
+                <option value="false">정지</option>
+              </DarkFormSelect>
+              <DarkFormSelect label="주관사 포지션" registration={createInstrumentForm.register("listingAutoPositionSide")}>
+                <option value="SELL_ONLY">매도 전용</option>
+                <option value="BUY_ONLY">매수 전용</option>
+              </DarkFormSelect>
+              <DarkFormInput label="주관사 최대 수량" registration={createInstrumentForm.register("listingAutoMaxOrderQuantity")} placeholder="100" error={createInstrumentForm.formState.errors.listingAutoMaxOrderQuantity?.message} />
+              <DarkFormInput label="주관사 호가 TTL(초)" registration={createInstrumentForm.register("listingAutoOrderTtlSeconds")} placeholder="30" error={createInstrumentForm.formState.errors.listingAutoOrderTtlSeconds?.message} />
+              <DarkFormInput label="가격 분산 틱" registration={createInstrumentForm.register("listingAutoPriceOffsetTicks")} placeholder="3" error={createInstrumentForm.formState.errors.listingAutoPriceOffsetTicks?.message} />
+              <button type="button" onClick={submitStockEvent} disabled={createInstrumentMutation.isPending} className="min-h-11 min-w-0 self-end rounded-md bg-white px-3 py-3 text-sm font-black text-[#101418] disabled:opacity-50 sm:col-span-2 lg:col-span-1">
+                {createInstrumentMutation.isPending ? "적용 중" : "이벤트 적용"}
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_1fr_1fr_1.4fr_auto]">
+                {actionType === "STOCK_SPLIT" ? (
+                  <>
+                    <DarkInput label="분할 전" value={splitFrom} onChange={setSplitFrom} placeholder="1" />
+                    <DarkInput label="분할 후" value={splitTo} onChange={setSplitTo} placeholder="5" />
+                    <div />
+                  </>
+                ) : actionType === "CASH_DIVIDEND" ? (
+                  <>
+                    <DarkInput label="1주당 배당금" value={actionDividendAmount} onChange={setActionDividendAmount} placeholder="1000" />
+                    <div />
+                    <div />
+                  </>
+                ) : actionType === "BONUS_ISSUE" || actionType === "STOCK_DIVIDEND" ? (
+                  <>
+                    <DarkInput label="배정 주식수" value={actionShares} onChange={setActionShares} placeholder="10000" />
+                    <div />
+                    <div />
+                  </>
+                ) : actionType === "DELISTING" ? (
+                  <>
+                    <DarkInput label="상장폐지일" value={delistingDate} onChange={setDelistingDate} placeholder="2026-06-26" type="date" />
+                    <div />
+                    <div />
+                  </>
+                ) : (
+                  <>
+                    <DarkInput label="발행수" value={actionShares} onChange={setActionShares} placeholder="50000" />
+                    <DarkInput label="발행가" value={actionIssuePrice} onChange={setActionIssuePrice} placeholder="50000" />
+                    <div />
+                  </>
+                )}
+                <DarkInput label="메모" value={actionDescription} onChange={setActionDescription} placeholder="선택 입력" />
+                <button type="button" onClick={submitStockEvent} disabled={applyingAction} className="rounded-md bg-white px-3 py-3 text-sm font-black text-[#101418] disabled:opacity-50">
+                  {applyingAction ? "적용 중" : "이벤트 적용"}
+                </button>
+              </div>
+              <div className="mt-3 grid gap-3 md:grid-cols-3">
+                {actionType === "PAID_IN_CAPITAL_INCREASE" ? (
+                  <>
+                    <DarkInput label="권리락일" value={exRightsDate} onChange={setExRightsDate} placeholder="2026-06-22" type="date" />
+                    <DarkInput label="납입일" value={paymentDate} onChange={setPaymentDate} placeholder="2026-06-24" type="date" />
+                    <DarkInput label="신주상장일" value={listingDate} onChange={setListingDate} placeholder="2026-06-26" type="date" />
+                  </>
+                ) : null}
+                {actionType === "ADDITIONAL_ISSUE" ? (
+                  <DarkInput label="신주상장일" value={listingDate} onChange={setListingDate} placeholder="2026-06-26" type="date" />
+                ) : null}
+                {actionType === "STOCK_SPLIT" ? (
+                  <DarkInput label="효력일" value={listingDate} onChange={setListingDate} placeholder="2026-06-26" type="date" />
+                ) : null}
+                {actionType === "CASH_DIVIDEND" ? (
+                  <>
+                    <DarkInput label="배당락일" value={exRightsDate} onChange={setExRightsDate} placeholder="2026-06-22" type="date" />
+                    <DarkInput label="지급일" value={paymentDate} onChange={setPaymentDate} placeholder="2026-06-26" type="date" />
+                  </>
+                ) : null}
+                {actionType === "BONUS_ISSUE" || actionType === "STOCK_DIVIDEND" ? (
+                  <>
+                    <DarkInput label="권리락일" value={exRightsDate} onChange={setExRightsDate} placeholder="2026-06-22" type="date" />
+                    <DarkInput label="신주상장일" value={listingDate} onChange={setListingDate} placeholder="2026-06-26" type="date" />
+                  </>
+                ) : null}
+              </div>
+            </>
+          )}
         </section>
 
         <section className="mt-5 rounded-lg border border-white/10 bg-white/[0.06] p-4">
@@ -1235,8 +1531,8 @@ export default function SupplyDemandAdminPage() {
           </div>
           <div className="mt-3 grid gap-3 lg:grid-cols-3">
             <DarkInput label="요약" value={reportSummary} onChange={setReportSummary} placeholder="핵심 투자 판단을 입력" className="lg:col-span-3" />
-            <DarkInput label="상승 이유" value={reportRiseReason} onChange={setReportRiseReason} placeholder="가격이 오를 수 있는 이유" />
-            <DarkInput label="하락 이유" value={reportFallReason} onChange={setReportFallReason} placeholder="가격이 떨어질 수 있는 이유" />
+            <DarkInput label="상승 이유(선택)" value={reportRiseReason} onChange={setReportRiseReason} placeholder="가격이 오를 수 있는 이유" />
+            <DarkInput label="하락 이유(선택)" value={reportFallReason} onChange={setReportFallReason} placeholder="가격이 떨어질 수 있는 이유" />
             <div className="grid grid-cols-3 gap-2">
               <button type="button" onClick={() => void submitInstrumentReport("publish")} disabled={savingReport} className="min-h-11 rounded-md bg-white px-3 py-3 text-sm font-black text-[#101418] disabled:opacity-50">
                 {savingReport ? "저장 중" : "발행"}
@@ -1485,6 +1781,30 @@ function DarkFormInput({
   );
 }
 
+function DarkFormSelect({
+  label,
+  registration,
+  children,
+  className = "",
+}: {
+  label: string;
+  registration: UseFormRegisterReturn;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <label className={`block min-w-0 ${className}`}>
+      <span className="text-xs font-bold text-[#8b95a1]">{label}</span>
+      <select
+        {...registration}
+        className="mt-1 w-full min-w-0 rounded-md border border-[#2b333f] bg-[#101418] px-3 py-3 text-sm font-bold text-white outline-none focus:border-[#3182f6]"
+      >
+        {children}
+      </select>
+    </label>
+  );
+}
+
 function EnabledToggleButton({
   enabled,
   disabled = false,
@@ -1518,14 +1838,78 @@ function EnabledToggleButton({
   );
 }
 
-function formatWon(value: number) {
-  return `${Math.round(value).toLocaleString("ko-KR")}원`;
+function AutoSignalGuide() {
+  return (
+    <section className="mt-5 rounded-lg border border-[#3182f6]/20 bg-[#10233a] p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-black text-[#64a8ff]">AUTO SIGNAL FLOW</p>
+          <h2 className="mt-1 text-base font-black">자동장 강도 계산 기준</h2>
+          <p className="mt-1 max-w-3xl text-xs font-bold leading-5 text-[#b8c2cc]">
+            자동 주문은 종목 기본 강도, 참여자별 종목 전략, 최신 평가 보고서 점수를 순서대로 반영해 최종 매수/매도 압력과 호가 공격성을 정합니다.
+          </p>
+        </div>
+        <span className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-[#d8ecff]">1-10 척도</span>
+      </div>
+
+      <div className="mt-4 grid gap-3 lg:grid-cols-3">
+        <SignalGuideCard
+          label="종목별 자동 알고리즘 강도"
+          title="종목 기본 분위기"
+          body="참여자별 전략이 없을 때 쓰는 기본값입니다. 10에 가까우면 매수 우위, 1에 가까우면 매도 우위로 동작합니다."
+        />
+        <SignalGuideCard
+          label="참여자별 종목 전략 강도"
+          title="참여자 실제 성향"
+          body="같은 종목이라도 참여자마다 다르게 줄 수 있는 우선값입니다. 저장된 전략이 있으면 종목 기본 강도보다 먼저 적용됩니다."
+        />
+        <SignalGuideCard
+          label="종목 평가 보고서 점수"
+          title="최신 관리자 신호"
+          body="주문을 직접 만들지는 않고 참여자 전략을 보정합니다. 뉴스 민감형은 크게 반응하고 관망형은 작게 반응합니다."
+        />
+      </div>
+
+      <div className="mt-4 rounded-md bg-black/20 px-3 py-3 text-xs font-bold leading-5 text-[#b8c2cc]">
+        최종 강도는 참여자별 전략 강도를 기본으로 하되, 자동 참여자의 심리 프로필에 따라 최신 보고서 점수 반영 비율이 달라집니다. 참여자별 전략이 없으면 종목별 자동 알고리즘 강도가 참여자 전략의 기본값이 됩니다.
+      </div>
+    </section>
+  );
 }
 
-function formatNumber(value: number) {
-  return value.toLocaleString("ko-KR", {
+function SignalGuideCard({
+  label,
+  title,
+  body,
+}: {
+  label: string;
+  title: string;
+  body: string;
+}) {
+  return (
+    <div className="rounded-md border border-white/10 bg-white/[0.06] p-3">
+      <p className="text-[11px] font-black text-[#64a8ff]">{label}</p>
+      <h3 className="mt-1 text-sm font-black text-white">{title}</h3>
+      <p className="mt-2 text-xs font-bold leading-5 text-[#b8c2cc]">{body}</p>
+    </div>
+  );
+}
+
+function formatWon(value: number | null | undefined) {
+  const normalizedValue = Number.isFinite(value) ? Number(value) : 0;
+  return `${Math.round(normalizedValue).toLocaleString("ko-KR")}원`;
+}
+
+function formatNumber(value: number | null | undefined) {
+  const normalizedValue = Number.isFinite(value) ? Number(value) : 0;
+  return normalizedValue.toLocaleString("ko-KR", {
     maximumFractionDigits: 2,
   });
+}
+
+function optionalText(value: string) {
+  const normalized = value.trim();
+  return normalized ? normalized : null;
 }
 
 function formatAutoIntensityDirection(intensity: number): string {
@@ -1539,6 +1923,13 @@ function formatAutoIntensityDirection(intensity: number): string {
     return "하락";
   }
   return "중립";
+}
+
+function formatListingAutoPosition(positionSide: ListingAutoPosition): string {
+  if (positionSide === "BUY_ONLY") {
+    return "매수 전용";
+  }
+  return "매도 전용";
 }
 
 function formatDateTime(value: string) {
@@ -1569,6 +1960,8 @@ function formatCorporateActionType(actionType: CorporateActionType): string {
       return "무상증자";
     case "STOCK_DIVIDEND":
       return "주식배당";
+    case "DELISTING":
+      return "상장폐지";
   }
 }
 
@@ -1582,6 +1975,8 @@ function formatCorporateActionStatus(status: CorporateActionStatus): string {
       return "지급 완료";
     case "LISTED":
       return "상장 반영";
+    case "DELISTED":
+      return "상장폐지";
   }
 }
 
@@ -1591,6 +1986,9 @@ function formatCorporateActionValue(action: CorporateAction): string {
   }
   if (action.actionType === "CASH_DIVIDEND") {
     return formatWon(action.dividendAmount ?? 0);
+  }
+  if (action.actionType === "DELISTING") {
+    return action.delistingTreatment === "ZERO_VALUE" ? "가치 0원 처리" : "상장폐지";
   }
   if (action.shareQuantity) {
     const issuePrice = action.issuePrice ? ` · ${formatWon(action.issuePrice)}` : "";
@@ -1611,6 +2009,7 @@ function formatCorporateActionSchedule(action: CorporateAction): string {
     action.exRightsDate ? `권리락 ${action.exRightsDate}` : null,
     action.paymentDate ? `지급 ${action.paymentDate}` : null,
     action.listingDate ? `상장 ${action.listingDate}` : null,
+    action.delistingDate ? `폐지 ${action.delistingDate}` : null,
   ].filter(Boolean);
   return dates.length ? dates.join(" / ") : "-";
 }

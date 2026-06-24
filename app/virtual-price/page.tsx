@@ -133,6 +133,7 @@ export default function Home() {
     [orders],
   );
   const recentOrders = useMemo(() => orders.slice(0, 10), [orders]);
+  const orderActionClassName = side === "BUY" ? "bg-[#f04452]" : "bg-[#3182f6]";
 
   useEffect(() => {
     const nextSelectedSymbol = resolveSelectedSymbol(selectedSymbol, instruments, prices);
@@ -621,11 +622,11 @@ export default function Home() {
                 </select>
               </label>
               <div className="grid grid-cols-2 gap-2">
-                <Toggle active={side === "BUY"} onClick={() => {
+                <Toggle active={side === "BUY"} tone="buy" onClick={() => {
                   setVirtualOrderTicket({ side: "BUY" });
                   setMessage(null);
                 }} label="매수" />
-                <Toggle active={side === "SELL"} onClick={() => {
+                <Toggle active={side === "SELL"} tone="sell" onClick={() => {
                   setVirtualOrderTicket({ side: "SELL" });
                   setMessage(null);
                 }} label="매도" />
@@ -668,7 +669,7 @@ export default function Home() {
               type="button"
               onClick={() => void submitOrder()}
               disabled={Boolean(orderValidationMessage) || placingOrder}
-              className="mt-5 w-full rounded-md bg-[#3182f6] px-4 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:bg-[#4e5968] disabled:text-[#b0b8c1]"
+              className={`mt-5 w-full rounded-md px-4 py-3 text-sm font-black text-white ${orderActionClassName} disabled:cursor-not-allowed disabled:bg-[#4e5968] disabled:text-[#b0b8c1]`}
             >
               {placingOrder ? "접수 중" : "주문 접수"}
             </button>
@@ -812,9 +813,25 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
   );
 }
 
-function Toggle({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
+function Toggle({
+  active,
+  onClick,
+  label,
+  tone = "default",
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  tone?: "default" | "buy" | "sell";
+}) {
+  const activeClassName = tone === "buy"
+    ? "bg-[#f04452] text-white"
+    : tone === "sell"
+      ? "bg-[#3182f6] text-white"
+      : "bg-[#3182f6] text-white";
+
   return (
-    <button type="button" onClick={onClick} className={active ? "rounded-md bg-[#3182f6] px-3 py-2 text-sm font-black text-white" : "rounded-md bg-[#2b333f] px-3 py-2 text-sm font-bold text-[#b0b8c1]"}>
+    <button type="button" onClick={onClick} className={active ? `rounded-md px-3 py-2 text-sm font-black ${activeClassName}` : "rounded-md bg-[#2b333f] px-3 py-2 text-sm font-bold text-[#b0b8c1]"}>
       {label}
     </button>
   );

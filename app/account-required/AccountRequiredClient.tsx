@@ -4,9 +4,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
-import MarketModeTabs from "@/app/components/MarketModeTabs";
+import TradingTopBar from "@/app/components/TradingTopBar";
 import useAuthSession from "@/app/hooks/useAuthSession";
-import { clearAccessToken, getAccessToken, logout } from "@/app/lib/auth";
+import { getAccessToken } from "@/app/lib/auth";
 import { openAccountMutationOptions, reconnectAccountMutationOptions } from "@/app/lib/react-query/stockMutations";
 import { accountStatusQueryOptions } from "@/app/lib/react-query/stockQueries";
 import { stockKeys } from "@/app/lib/react-query/stockKeys";
@@ -32,10 +32,12 @@ export default function AccountRequiredClient() {
     ...openAccountMutationOptions(),
     onSuccess: async (account) => {
       setIssuedAccount(account);
+      setErrorMessage(null);
       setMessage(account.recoveryCode ? "모의투자 계좌가 준비되었습니다. 복구코드를 저장한 뒤 이동하세요." : "모의투자 계좌가 준비되었습니다.");
       await queryClient.invalidateQueries({ queryKey: stockKeys.account() });
     },
     onError: (error) => {
+      setMessage(null);
       setErrorMessage(error instanceof Error ? error.message : "계좌 개설에 실패했습니다.");
     },
   });
@@ -43,12 +45,14 @@ export default function AccountRequiredClient() {
     ...reconnectAccountMutationOptions(),
     onSuccess: async (account) => {
       setIssuedAccount(account);
+      setErrorMessage(null);
       setMessage("기존 모의투자 계좌가 현재 사용자에게 연결되었습니다. 새 복구코드를 저장하세요.");
       setReconnectAccountCode("");
       setReconnectRecoveryCode("");
       await queryClient.invalidateQueries({ queryKey: stockKeys.account() });
     },
     onError: (error) => {
+      setMessage(null);
       setErrorMessage(error instanceof Error ? error.message : "계좌 복구 연결에 실패했습니다.");
     },
   });
@@ -66,15 +70,6 @@ export default function AccountRequiredClient() {
     }
   }, [accountStatusQuery.data?.hasAccount, authStatus, isHydrated, issuedAccount, nextPath, router]);
 
-  const signOut = async () => {
-    try {
-      await logout();
-    } finally {
-      clearAccessToken();
-      router.replace("/login");
-    }
-  };
-
   if (!isHydrated || authStatus === "unknown" || accountStatusQuery.isPending) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#f6f7f9] px-5 text-[#191f28]">
@@ -87,14 +82,7 @@ export default function AccountRequiredClient() {
 
   return (
     <main className="min-h-screen bg-[#f6f7f9] text-[#191f28]">
-      <div className="sticky top-0 z-30 border-b border-[#e5e8eb] bg-white/95 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-5 lg:px-8">
-          <MarketModeTabs active={nextPath === "/supply-demand" ? "order-book" : "virtual-price"} />
-          <button type="button" onClick={signOut} className="shrink-0 rounded-md bg-[#191f28] px-3 py-2 text-sm font-bold text-white">
-            로그아웃
-          </button>
-        </div>
-      </div>
+      <TradingTopBar active={nextPath === "/supply-demand" ? "order-book" : "virtual-price"} />
 
       <section className="mx-auto grid min-h-[calc(100vh-65px)] w-full max-w-5xl content-center gap-5 px-4 py-8 sm:px-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:px-8">
         <div className="min-w-0 rounded-lg bg-white p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04)] ring-1 ring-[#eef0f2] sm:p-8">
@@ -173,9 +161,13 @@ export default function AccountRequiredClient() {
                 setMessage(null);
                 setErrorMessage(null);
                 setIssuedAccount(null);
+                if (!reconnectAccountCode.trim() || !reconnectRecoveryCode.trim()) {
+                  setErrorMessage("계좌코드와 복구코드를 모두 입력해 주세요.");
+                  return;
+                }
                 reconnectAccountMutation.mutate({
-                  accountCode: reconnectAccountCode,
-                  recoveryCode: reconnectRecoveryCode,
+                  accountCode: reconnectAccountCode.trim(),
+                  recoveryCode: reconnectRecoveryCode.trim(),
                 });
               }}
               disabled={openAccountMutation.isPending || reconnectAccountMutation.isPending}
