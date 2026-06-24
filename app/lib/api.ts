@@ -1,6 +1,24 @@
+import axios from "axios";
 import type { ResponseEnvelope } from "@/app/types/response";
 
-export const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+const API_MODE = process.env.NEXT_PUBLIC_API_MODE ?? "direct";
+const DEFAULT_GATEWAY_API_BASE = "http://localhost:8080";
+const DEFAULT_DIRECT_STOCK_API_BASE = "http://localhost:20480";
+const DEFAULT_DIRECT_AUTH_API_BASE = "http://localhost:9000";
+
+const isGatewayMode = API_MODE === "gateway";
+
+export const STOCK_API_BASE =
+  process.env.NEXT_PUBLIC_STOCK_API_URL ??
+  process.env.NEXT_PUBLIC_API_URL ??
+  (isGatewayMode ? DEFAULT_GATEWAY_API_BASE : DEFAULT_DIRECT_STOCK_API_BASE);
+
+export const AUTH_API_BASE =
+  process.env.NEXT_PUBLIC_AUTH_API_URL ??
+  process.env.NEXT_PUBLIC_API_URL ??
+  (isGatewayMode ? DEFAULT_GATEWAY_API_BASE : DEFAULT_DIRECT_AUTH_API_BASE);
+
+export const API_BASE = STOCK_API_BASE;
 export const STOCK_CLIENT_ID = "stock-front-service";
 
 export type ApiResult<T> = {
@@ -16,7 +34,26 @@ type RequestOptions = {
   body?: unknown;
   headers?: Record<string, string>;
   credentials?: RequestCredentials;
+  baseUrl?: string;
 };
+
+const stockApiClient = axios.create({
+  baseURL: STOCK_API_BASE,
+  withCredentials: true,
+  validateStatus: () => true,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+const authApiClient = axios.create({
+  baseURL: AUTH_API_BASE,
+  withCredentials: true,
+  validateStatus: () => true,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
 
 function isEnvelope<T>(value: unknown): value is ResponseEnvelope<T> {
   if (!value || typeof value !== "object") {
@@ -43,30 +80,34 @@ function parseResponseBody(text: string): unknown {
 
 async function requestJson<T>(path: string, options: RequestOptions = {}): Promise<ApiResult<T>> {
   const method = options.method ?? "GET";
+  const baseUrl = options.baseUrl ?? STOCK_API_BASE;
+  const client = baseUrl === AUTH_API_BASE ? authApiClient : stockApiClient;
 
   try {
-    const response = await fetch(`${API_BASE}${path}`, {
+    const response = await client.request({
+      url: path,
       method,
+      baseURL: baseUrl,
       headers: {
         "Content-Type": "application/json",
         ...(options.headers ?? {}),
       },
-      credentials: options.credentials ?? "include",
-      body: options.body === undefined ? undefined : JSON.stringify(options.body),
+      withCredentials: (options.credentials ?? "include") === "include",
+      data: options.body,
     });
 
-    const parsed = parseResponseBody(await response.text());
+    const parsed = typeof response.data === "string" ? parseResponseBody(response.data) : response.data ?? null;
     if (isEnvelope<T>(parsed)) {
       return {
-        ok: response.ok && parsed.success,
+        ok: response.status >= 200 && response.status < 300 && parsed.success,
         status: response.status,
-        data: response.ok && parsed.success ? parsed.data ?? null : null,
+        data: response.status >= 200 && response.status < 300 && parsed.success ? parsed.data ?? null : null,
         message: parsed.message,
         code: parsed.code,
       };
     }
 
-    if (response.ok) {
+    if (response.status >= 200 && response.status < 300) {
       return { ok: true, status: response.status, data: (parsed as T) ?? null };
     }
 
@@ -92,12 +133,28 @@ export function getJson<T>(path: string, headers?: Record<string, string>): Prom
   return requestJson<T>(path, { method: "GET", headers });
 }
 
+export function postAuthJson<T>(
+  path: string,
+  body: unknown,
+  headers?: Record<string, string>,
+): Promise<ApiResult<T>> {
+  return requestJson<T>(path, { method: "POST", body, headers, baseUrl: AUTH_API_BASE });
+}
+
 export function postJson<T>(
   path: string,
   body: unknown,
   headers?: Record<string, string>,
 ): Promise<ApiResult<T>> {
   return requestJson<T>(path, { method: "POST", body, headers });
+}
+
+export function patchJson<T>(
+  path: string,
+  body: unknown,
+  headers?: Record<string, string>,
+): Promise<ApiResult<T>> {
+  return requestJson<T>(path, { method: "PATCH", body, headers });
 }
 
 export function deleteJson<T>(path: string, headers?: Record<string, string>): Promise<ApiResult<T>> {

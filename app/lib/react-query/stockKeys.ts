@@ -1,0 +1,27 @@
+import type { Execution, MarketType } from "@/app/types/stock";
+
+export const stockKeys = {
+  all: ["stock"] as const,
+  market: () => [...stockKeys.all, "market"] as const,
+  instruments: () => [...stockKeys.market(), "instruments"] as const,
+  orderBookInstruments: () => [...stockKeys.market(), "order-book-instruments"] as const,
+  prices: () => [...stockKeys.market(), "prices"] as const,
+  priceTicks: (symbol: string) => [...stockKeys.prices(), "ticks", symbol] as const,
+  orderBook: (symbol: string) => [...stockKeys.market(), "order-book", symbol] as const,
+  rankings: () => [...stockKeys.market(), "rankings"] as const,
+  virtualMarketStatus: () => [...stockKeys.market(), "virtual-market"] as const,
+  orderBookMarketStatus: () => [...stockKeys.market(), "order-book-market"] as const,
+  autoMarketStatus: () => [...stockKeys.market(), "auto-market"] as const,
+  corporateActions: (symbol: string) => [...stockKeys.orderBookInstruments(), symbol, "corporate-actions"] as const,
+  instrumentReports: (symbol: string) => [...stockKeys.orderBookInstruments(), symbol, "reports"] as const,
+  account: () => [...stockKeys.all, "account"] as const,
+  accountStatus: () => [...stockKeys.account(), "status"] as const,
+  profile: () => [...stockKeys.account(), "profile"] as const,
+  portfolio: () => [...stockKeys.account(), "portfolio"] as const,
+  portfolioSnapshots: () => [...stockKeys.portfolio(), "snapshots"] as const,
+  profitSummary: () => [...stockKeys.portfolio(), "profit-summary"] as const,
+  holdings: () => [...stockKeys.account(), "holdings"] as const,
+  corporateActionEntitlements: () => [...stockKeys.account(), "corporate-action-entitlements"] as const,
+  orders: (options?: { marketType?: MarketType }) => [...stockKeys.account(), "orders", options?.marketType ?? "ALL"] as const,
+  executions: (options?: { source?: Execution["source"] }) => [...stockKeys.account(), "executions", options?.source ?? "ALL"] as const,
+};

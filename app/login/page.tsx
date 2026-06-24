@@ -2,11 +2,11 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { API_BASE } from "@/app/lib/api";
-import { clearAccessToken, getUserFromToken, isUserRole, login, setAccessToken, signup } from "@/app/lib/auth";
+import { AUTH_API_BASE } from "@/app/lib/api";
+import { clearAccessToken, getUserFromToken, isStockAccountRole, login, setAccessToken, signup } from "@/app/lib/auth";
 import { AUTH_EXPIRED_REDIRECT_KEY } from "@/app/lib/authEvents";
 
-const USER_ONLY_MESSAGE = "stock-front-service는 USER 계정만 사용할 수 있습니다.";
+const UNSUPPORTED_ROLE_MESSAGE = "stock-front-service에서 지원하지 않는 계정 권한입니다.";
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function resolveOAuthErrorMessage(error: string | null, errorCode: string | null, provider: string | null): string {
@@ -72,9 +72,9 @@ function LoginContent() {
     }
     setAccessToken(token);
     const user = getUserFromToken(token);
-    if (!isUserRole(user?.role)) {
+    if (!isStockAccountRole(user?.role)) {
       clearAccessToken();
-      window.setTimeout(() => setMessage(USER_ONLY_MESSAGE), 0);
+      window.setTimeout(() => setMessage(UNSUPPORTED_ROLE_MESSAGE), 0);
       return;
     }
     router.replace("/");
@@ -106,9 +106,9 @@ function LoginContent() {
       setSubmitting(false);
       return;
     }
-    if (!isUserRole(loginResult.user?.role)) {
+    if (!isStockAccountRole(loginResult.user?.role)) {
       clearAccessToken();
-      setMessage(USER_ONLY_MESSAGE);
+      setMessage(UNSUPPORTED_ROLE_MESSAGE);
       setSubmitting(false);
       return;
     }
@@ -206,7 +206,7 @@ function LoginContent() {
             <button
               type="button"
               onClick={() => {
-                window.location.href = `${API_BASE}/oauth2/authorize/naver-stock`;
+                window.location.href = `${AUTH_API_BASE}/oauth2/authorize/naver-stock`;
               }}
               className="rounded-md bg-[#03C75A] px-4 py-3 text-sm font-black text-white"
             >
@@ -215,7 +215,7 @@ function LoginContent() {
             <button
               type="button"
               onClick={() => {
-                window.location.href = `${API_BASE}/oauth2/authorize/kakao-stock`;
+                window.location.href = `${AUTH_API_BASE}/oauth2/authorize/kakao-stock`;
               }}
               className="rounded-md bg-[#FEE500] px-4 py-3 text-sm font-black text-[#191919]"
             >

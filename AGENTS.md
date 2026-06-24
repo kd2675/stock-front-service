@@ -11,11 +11,15 @@
 
 - `/`
 - `/login`
+- `/supply-demand`
+- `/supply-demand/admin`
 
 ## Key Files
 
 - `app/page.tsx`
 - `app/login/page.tsx`
+- `app/supply-demand/page.tsx`
+- `app/supply-demand/admin/page.tsx`
 - `app/globals.css`
 - `app/lib/api.ts`
 - `app/lib/auth.ts`
@@ -35,9 +39,13 @@ npm run lint
 ## Operational Notes
 
 - 포트: `3005`
-- `NEXT_PUBLIC_API_URL` 기본값은 `http://localhost:8080`입니다.
-- Gateway 경유 API는 `/api/stock/v1/**` 기준으로 붙입니다.
+- local direct 기본값은 stock API `http://localhost:20480`, auth/OAuth `http://localhost:9000`입니다.
+- Gateway/Eureka 경유가 필요하면 `NEXT_PUBLIC_API_MODE=gateway`, `NEXT_PUBLIC_API_URL=http://localhost:8080`으로 전환합니다.
+- Gateway 경유 stock API는 `/api/stock/v1/**` 기준으로 붙입니다.
 - 로그인은 `stock-front-service` client id와 기존 auth 서버를 사용합니다.
+- `local-direct` 보호 API 호출은 access token과 함께 `X-User-Key`, `X-User-Role` 헤더를 붙입니다.
+- 홈 화면 주문은 `VIRTUAL_PRICE`, 공급/수요 화면 주문은 `ORDER_BOOK`으로 접수합니다.
+- 공급/수요 화면은 stock-back API의 주문장, 가격, 자동장 상태를 읽고 프론트 localStorage 기반 가짜 체결 로직을 만들지 않습니다.
 
 ## For AI Agents
 
@@ -45,3 +53,4 @@ npm run lint
 - 시세 표시, 주문 입력, 미체결 주문, 보유 자산 화면을 분리 가능한 컴포넌트 경계로 유지합니다.
 - `any`를 쓰지 않고 `app/types`에 응답 타입을 둡니다.
 - 주문 체결이 즉시 된다고 가정하지 말고, batch 서버가 PENDING 주문을 체결한다는 UX를 유지합니다.
+- 자동 참여자 주문 생성, 체결, 현재가 갱신은 batch 서버 책임이며 프론트는 조회/표시만 담당합니다.

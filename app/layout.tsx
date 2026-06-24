@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import AuthWatcher from "@/app/components/AuthWatcher";
+import Providers from "@/app/providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -15,8 +15,7 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body>
-        <AuthWatcher />
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

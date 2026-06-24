@@ -6,7 +6,7 @@ import {
   clearAccessToken,
   getAccessToken,
   getUserFromToken,
-  isUserRole,
+  isStockAccountRole,
   isTokenExpired,
   notifyAuthExpired,
   refreshAccessToken,
@@ -29,7 +29,7 @@ export default function useAuthSession() {
     }
 
     const user = getUserFromToken(token);
-    if (!user || !isUserRole(user.role)) {
+    if (!user || !isStockAccountRole(user.role)) {
       return { status: "out", user: null };
     }
 

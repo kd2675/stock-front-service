@@ -1,4 +1,4 @@
-import { postJson, STOCK_CLIENT_ID } from "@/app/lib/api";
+import { postAuthJson, STOCK_CLIENT_ID } from "@/app/lib/api";
 import { emitAuthChanged, emitAuthExpired } from "@/app/lib/authEvents";
 import type { AuthUser, LoginResponse } from "@/app/types/auth";
 
@@ -39,7 +39,9 @@ function decodeBase64Url(value: string): string | null {
   try {
     const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
     const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
-    return atob(padded);
+    const binary = atob(padded);
+    const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
+    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
   } catch {
     return null;
   }
@@ -84,6 +86,15 @@ export function isUserRole(role?: string | null): boolean {
   return normalizeRole(role) === "USER";
 }
 
+export function isAdminRole(role?: string | null): boolean {
+  return normalizeRole(role) === "ADMIN";
+}
+
+export function isStockAccountRole(role?: string | null): boolean {
+  const normalizedRole = normalizeRole(role);
+  return normalizedRole === "USER" || normalizedRole === "ADMIN";
+}
+
 export function isTokenExpired(exp?: number, leewaySeconds = TOKEN_EXPIRY_LEEWAY_SECONDS): boolean {
   if (!exp) {
     return false;
@@ -110,7 +121,7 @@ export function notifyAuthExpired(reason: "expired" | "refresh_failed" = "expire
 }
 
 export async function login(username: string, password: string): Promise<AuthActionResult> {
-  const result = await postJson<LoginResponse>(
+  const result = await postAuthJson<LoginResponse>(
     "/auth/login",
     { username, password },
     { "X-Client-Id": STOCK_CLIENT_ID },
@@ -128,7 +139,7 @@ export async function login(username: string, password: string): Promise<AuthAct
 }
 
 export async function signup(username: string, password: string, email: string): Promise<AuthActionResult> {
-  const result = await postJson<unknown>(
+  const result = await postAuthJson<unknown>(
     "/api/users",
     {
       username,
@@ -147,12 +158,12 @@ export async function logout(): Promise<void> {
     "X-Client-Id": STOCK_CLIENT_ID,
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
-  await postJson<void>("/auth/logout", {}, headers);
+  await postAuthJson<void>("/auth/logout", {}, headers);
 }
 
 async function requestRefreshAccessToken(): Promise<string | null> {
   const requestGeneration = authGeneration;
-  const result = await postJson<LoginResponse>("/auth/refresh", {}, { "X-Client-Id": STOCK_CLIENT_ID });
+  const result = await postAuthJson<LoginResponse>("/auth/refresh", {}, { "X-Client-Id": STOCK_CLIENT_ID });
   if (!result.ok || !result.data?.accessToken) {
     return null;
   }
