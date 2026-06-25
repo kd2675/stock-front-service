@@ -7,23 +7,31 @@ import { type ReactNode, useEffect, useMemo, useState } from "react";
 import TradingTopBar from "@/app/components/TradingTopBar";
 import useAuthSession from "@/app/hooks/useAuthSession";
 import { getAccessToken, isAdminRole } from "@/app/lib/auth";
+import { ASSET_PERCENT_OPTIONS, calculateAssetPercentQuantity, resolveOrderSizingPrice } from "@/app/lib/orderSizing";
 import { cancelOrderMutationOptions, placeOrderMutationOptions } from "@/app/lib/react-query/stockMutations";
-import { accountStatusQueryOptions, autoMarketStatusQueryOptions, executionsQueryOptions, orderBookInstrumentsQueryOptions, orderBookMarketStatusQueryOptions, orderBookQueryOptions, ordersQueryOptions } from "@/app/lib/react-query/stockQueries";
+import { accountStatusQueryOptions, autoMarketStatusQueryOptions, executionsQueryOptions, holdingsQueryOptions, orderBookInstrumentsQueryOptions, orderBookMarketStatusQueryOptions, orderBookQueryOptions, ordersQueryOptions, portfolioQueryOptions } from "@/app/lib/react-query/stockQueries";
 import { stockKeys } from "@/app/lib/react-query/stockKeys";
 import { parseOrderTicket } from "@/app/lib/validation/orderSchemas";
 import { useStockUiStore } from "@/app/stores/stockUiStore";
-import type { Execution, MarketSessionStatus, Order, OrderBookInstrument, OrderSide, OrderType } from "@/app/types/stock";
+import type { AutoMarketConfig, Execution, MarketSessionStatus, Order, OrderBookInstrument, OrderSide, OrderType, SymbolMarketConfig } from "@/app/types/stock";
 
 const ORDER_BOOK_VISIBLE_LEVELS = 8;
 const EMPTY_ORDER_BOOK_INSTRUMENTS: OrderBookInstrument[] = [];
 const EMPTY_ORDERS: Order[] = [];
 const EMPTY_EXECUTIONS: Execution[] = [];
 
+type InstrumentSummary = {
+  instrument: OrderBookInstrument;
+  autoConfig?: AutoMarketConfig;
+  marketConfig?: SymbolMarketConfig;
+};
+
 export default function SupplyDemandPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { isHydrated, authStatus, user } = useAuthSession();
   const [message, setMessage] = useState<string | null>(null);
+  const [flashingOrderBookLevel, setFlashingOrderBookLevel] = useState<{ price: number; side: "bid" | "ask"; nonce: number } | null>(null);
   const orderBookTicket = useStockUiStore((state) => state.orderBookTicket);
   const setOrderBookTicket = useStockUiStore((state) => state.setOrderBookTicket);
   const { limitPrice, orderType, quantity, selectedSymbol, side } = orderBookTicket;
@@ -52,12 +60,19 @@ export default function SupplyDemandPage() {
   });
   const ordersQuery = useQuery(ordersQueryOptions(token, { marketType: "ORDER_BOOK", enabled: hasTradingAccount }));
   const executionsQuery = useQuery(executionsQueryOptions(token, { source: "INTERNAL_ORDER_BOOK", enabled: hasTradingAccount }));
+  const portfolioQuery = useQuery(portfolioQueryOptions(token, hasTradingAccount));
+  const holdingsQuery = useQuery(holdingsQueryOptions(token, hasTradingAccount));
   const instruments = instrumentsQuery.data ?? EMPTY_ORDER_BOOK_INSTRUMENTS;
   const autoMarket = autoMarketQuery.data ?? null;
   const orderBookMarket = orderBookMarketQuery.data ?? null;
   const orderBook = orderBookQuery.data ?? null;
   const orders = ordersQuery.data ?? EMPTY_ORDERS;
   const executions = executionsQuery.data ?? EMPTY_EXECUTIONS;
+  const portfolio = portfolioQuery.data ?? null;
+  const holdings = useMemo(
+    () => holdingsQuery.data ?? portfolio?.holdings ?? [],
+    [holdingsQuery.data, portfolio?.holdings],
+  );
   const updatedAtMs = Math.max(
     instrumentsQuery.dataUpdatedAt,
     autoMarketQuery.dataUpdatedAt,
@@ -65,6 +80,8 @@ export default function SupplyDemandPage() {
     orderBookQuery.dataUpdatedAt,
     ordersQuery.dataUpdatedAt,
     executionsQuery.dataUpdatedAt,
+    portfolioQuery.dataUpdatedAt,
+    holdingsQuery.dataUpdatedAt,
   );
   const updatedAt = updatedAtMs > 0 ? new Date(updatedAtMs) : null;
   const loading = instrumentsQuery.isLoading || autoMarketQuery.isLoading || orderBookMarketQuery.isLoading;
@@ -81,14 +98,26 @@ export default function SupplyDemandPage() {
     () => orderBookMarket?.configs.find((config) => config.symbol === selectedInstrument?.symbol),
     [orderBookMarket?.configs, selectedInstrument?.symbol],
   );
+  const selectedHolding = useMemo(
+    () => holdings.find((holding) => holding.symbol === selectedInstrument?.symbol),
+    [holdings, selectedInstrument?.symbol],
+  );
+  const instrumentSummaries = useMemo(
+    () => instruments.map((instrument) => ({
+      instrument,
+      autoConfig: autoMarket?.configs.find((config) => config.symbol === instrument.symbol),
+      marketConfig: orderBookMarket?.configs.find((config) => config.symbol === instrument.symbol),
+    })),
+    [autoMarket?.configs, instruments, orderBookMarket?.configs],
+  );
   const isSelectedMarketOpen = selectedOrderBookConfig?.enabled === true && selectedOrderBookConfig.marketStatus === "OPEN";
   const orderBookOrders = useMemo(
-    () => orders.slice(0, 8),
-    [orders],
+    () => orders.filter((order) => order.symbol === selectedSymbol).slice(0, 5),
+    [orders, selectedSymbol],
   );
   const orderBookExecutions = useMemo(
-    () => executions.slice(0, 6),
-    [executions],
+    () => executions.filter((execution) => execution.symbol === selectedSymbol).slice(0, 5),
+    [executions, selectedSymbol],
   );
   const estimatedOrderAmount = useMemo(() => {
     const parsedQuantity = Number.parseInt(quantity, 10);
@@ -98,6 +127,10 @@ export default function SupplyDemandPage() {
     }
     return parsedQuantity * parsedPrice;
   }, [limitPrice, orderType, quantity, selectedInstrument?.currentPrice]);
+
+  useEffect(() => {
+    setOrderBookTicket({ selectedSymbol: "" });
+  }, [setOrderBookTicket]);
 
   useEffect(() => {
     if (!isHydrated || authStatus === "unknown") {
@@ -116,23 +149,81 @@ export default function SupplyDemandPage() {
   }, [accountStatusQuery.isPending, authStatus, hasTradingAccount, isHydrated, router]);
 
   useEffect(() => {
-    if (!instruments.length) {
+    if (!selectedSymbol || !instruments.length) {
       return;
     }
-    const nextSymbol = resolveOrderBookSymbol(selectedSymbol, instruments);
-    if (nextSymbol !== selectedSymbol) {
-      setOrderBookTicket({ selectedSymbol: nextSymbol });
+    if (!instruments.some((instrument) => instrument.symbol === selectedSymbol)) {
+      setOrderBookTicket({ selectedSymbol: "" });
     }
   }, [instruments, selectedSymbol, setOrderBookTicket]);
+
+  const selectInstrument = (symbol: string) => {
+    const nextInstrument = instruments.find((instrument) => instrument.symbol === symbol);
+    setOrderBookTicket({
+      selectedSymbol: symbol,
+      limitPrice: nextInstrument ? String(Math.round(nextInstrument.currentPrice)) : limitPrice,
+    });
+    setMessage(null);
+  };
+
+  const selectOrderBookPrice = (price: number, clickedSide: "bid" | "ask") => {
+    if (!Number.isFinite(price) || price <= 0) {
+      return;
+    }
+    setFlashingOrderBookLevel(null);
+    window.setTimeout(() => {
+      setFlashingOrderBookLevel({ price, side: clickedSide, nonce: Date.now() });
+    }, 0);
+    setOrderBookTicket({
+      orderType: "LIMIT",
+      limitPrice: formatOrderInputPrice(price),
+    });
+    setMessage(null);
+  };
 
   const invalidateOrderBookTrading = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: stockKeys.autoMarketStatus() }),
       queryClient.invalidateQueries({ queryKey: stockKeys.orderBookMarketStatus() }),
+      queryClient.invalidateQueries({ queryKey: stockKeys.portfolio() }),
+      queryClient.invalidateQueries({ queryKey: stockKeys.holdings() }),
       queryClient.invalidateQueries({ queryKey: stockKeys.orders({ marketType: "ORDER_BOOK" }) }),
       queryClient.invalidateQueries({ queryKey: stockKeys.executions({ source: "INTERNAL_ORDER_BOOK" }) }),
       selectedInstrument?.symbol ? queryClient.invalidateQueries({ queryKey: stockKeys.orderBook(selectedInstrument.symbol) }) : Promise.resolve(),
     ]);
+  };
+
+  const applyAssetPercentQuantity = (percent: number) => {
+    if (!selectedInstrument) {
+      setMessage("종목을 선택해 주세요.");
+      return;
+    }
+    const resolvedPrice = resolveOrderSizingPrice({
+      currentPrice: selectedInstrument.currentPrice,
+      limitPrice,
+      orderType,
+    });
+    if (!resolvedPrice) {
+      setMessage("현재가 또는 주문가를 확인해 주세요.");
+      return;
+    }
+    const nextQuantity = calculateAssetPercentQuantity({
+      availableCash: portfolio?.account.cashBalance,
+      availableSellQuantity: selectedHolding?.availableQuantity,
+      percent,
+      price: resolvedPrice.price,
+      side,
+      totalAsset: portfolio?.totalAsset,
+    });
+    if (nextQuantity === null) {
+      setMessage("자산 정보를 불러온 뒤 다시 선택해 주세요.");
+      return;
+    }
+    setOrderBookTicket({
+      quantity: String(nextQuantity),
+      ...(resolvedPrice.normalizedLimitPrice ? { limitPrice: resolvedPrice.normalizedLimitPrice } : {}),
+    });
+    setMessage(null);
   };
 
   const placeOrderMutation = useMutation({
@@ -238,13 +329,32 @@ export default function SupplyDemandPage() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-xs font-bold text-[#3182f6]">LIVE ORDER BOOK</p>
-              <h1 className="mt-1 text-2xl font-black">자동장</h1>
+              <h1 className="mt-1 text-2xl font-black">{selectedInstrument ? "자동장 주문" : "자동장 종목 선택"}</h1>
             </div>
+            {selectedInstrument ? (
+              <button
+                type="button"
+                onClick={() => setOrderBookTicket({ selectedSymbol: "" })}
+                className="h-11 rounded-md bg-[#f2f4f6] px-3 text-sm font-bold text-[#333d4b]"
+              >
+                종목 목록
+              </button>
+            ) : null}
           </div>
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-7xl gap-5 px-4 py-5 sm:px-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:px-8">
+      {!selectedInstrument ? (
+        <InstrumentSelection
+          isLoading={loading}
+          isAdmin={isAdmin}
+          summaries={instrumentSummaries}
+          updatedAt={updatedAt}
+          onAdminClick={() => router.push("/supply-demand/admin")}
+          onSelect={selectInstrument}
+        />
+      ) : (
+        <section className="mx-auto grid max-w-7xl gap-5 px-4 py-5 sm:px-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:px-8">
         <div className="space-y-5">
           <div className="rounded-lg border border-[#e5e8eb] bg-white p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -254,7 +364,7 @@ export default function SupplyDemandPage() {
               </div>
               <select
                 value={selectedSymbol}
-                onChange={(event) => setOrderBookTicket({ selectedSymbol: event.target.value })}
+                onChange={(event) => selectInstrument(event.target.value)}
                 className="rounded-md border border-[#d1d6db] bg-white px-3 py-2 text-sm font-bold"
               >
                 <option value="" disabled>등록된 종목 없음</option>
@@ -277,8 +387,8 @@ export default function SupplyDemandPage() {
           </div>
 
           <div className="grid gap-5 md:grid-cols-2">
-            <OrderBookSide title="매도" levels={orderBook?.asks ?? []} side="ask" />
-            <OrderBookSide title="매수" levels={orderBook?.bids ?? []} side="bid" />
+            <OrderBookSide title="매도" flashingLevel={flashingOrderBookLevel} levels={orderBook?.asks ?? []} side="ask" onFlashEnd={() => setFlashingOrderBookLevel(null)} onPriceSelect={selectOrderBookPrice} />
+            <OrderBookSide title="매수" flashingLevel={flashingOrderBookLevel} levels={orderBook?.bids ?? []} side="bid" onFlashEnd={() => setFlashingOrderBookLevel(null)} onPriceSelect={selectOrderBookPrice} />
           </div>
         </div>
 
@@ -290,8 +400,12 @@ export default function SupplyDemandPage() {
             orderType={orderType}
             placingOrder={placeOrderMutation.isPending}
             quantity={quantity}
+            totalAsset={portfolio?.totalAsset}
+            availableCash={portfolio?.account.cashBalance}
+            availableSellQuantity={selectedHolding?.availableQuantity}
             selectedInstrument={selectedInstrument}
             side={side}
+            onAssetPercentSelect={applyAssetPercentQuantity}
             onLimitPriceChange={(value) => setOrderBookTicket({ limitPrice: value })}
             onOrderTypeChange={(value) => setOrderBookTicket({ orderType: value })}
             onQuantityChange={(value) => setOrderBookTicket({ quantity: value })}
@@ -319,7 +433,7 @@ export default function SupplyDemandPage() {
                 <button
                   key={config.symbol}
                   type="button"
-                  onClick={() => setOrderBookTicket({ selectedSymbol: config.symbol })}
+                  onClick={() => selectInstrument(config.symbol)}
                   className="grid w-full grid-cols-[minmax(0,1fr)_auto] gap-3 py-3 text-left"
                 >
                   <span className="font-bold">{config.symbol}</span>
@@ -386,12 +500,140 @@ export default function SupplyDemandPage() {
             </div>
           </div>
         </aside>
-      </section>
+        </section>
+      )}
     </main>
   );
 }
 
+function InstrumentSelection({
+  isLoading,
+  isAdmin,
+  summaries,
+  updatedAt,
+  onAdminClick,
+  onSelect,
+}: {
+  isLoading: boolean;
+  isAdmin: boolean;
+  summaries: InstrumentSummary[];
+  updatedAt: Date | null;
+  onAdminClick: () => void;
+  onSelect: (symbol: string) => void;
+}) {
+  const openCount = summaries.filter((summary) => summary.marketConfig?.enabled === true && summary.marketConfig.marketStatus === "OPEN").length;
+  const autoEnabledCount = summaries.filter((summary) => summary.autoConfig?.enabled === true).length;
+
+  return (
+    <section className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
+      <div className="rounded-lg border border-[#e5e8eb] bg-white p-4">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-[#6b7684]">주문할 종목을 먼저 선택하세요.</p>
+            <h2 className="mt-1 text-xl font-black">수요와 공급 주문 체결 종목</h2>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <SummaryPill label="등록" value={`${summaries.length}종목`} />
+            <SummaryPill label="정규장" value={`${openCount}종목`} tone="blue" />
+            <SummaryPill label="자동장" value={`${autoEnabledCount}종목`} />
+            {isAdmin ? (
+              <button type="button" onClick={onAdminClick} className="h-10 rounded-md bg-[#191f28] px-3 text-sm font-black text-white">
+                설정 현황
+              </button>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <Metric label="마지막 갱신" value={updatedAt ? updatedAt.toLocaleTimeString("ko-KR") : isLoading ? "조회 중" : "-"} />
+          <Metric label="전체 유통주식" value={`${formatNumber(summaries.reduce((total, summary) => total + summary.instrument.tradableShares, 0))}주`} />
+          <Metric label="자동장 대상" value={`${autoEnabledCount}/${summaries.length}`} />
+        </div>
+      </div>
+
+      {isLoading && !summaries.length ? (
+        <div className="mt-5 rounded-lg border border-[#e5e8eb] bg-white px-5 py-10 text-center">
+          <p className="text-base font-black text-[#191f28]">종목을 불러오는 중입니다.</p>
+          <p className="mt-2 text-sm font-bold text-[#8b95a1]">주문장 종목, 장 상태, 자동장 설정을 함께 확인하고 있습니다.</p>
+        </div>
+      ) : summaries.length ? (
+        <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {summaries.map(({ autoConfig, instrument, marketConfig }) => {
+            const isOpen = marketConfig?.enabled === true && marketConfig.marketStatus === "OPEN";
+            const changeRate = calculateChangeRate(instrument.currentPrice, instrument.priceLimitBase);
+            return (
+              <button
+                key={instrument.symbol}
+                type="button"
+                onClick={() => onSelect(instrument.symbol)}
+                className="rounded-lg border border-[#e5e8eb] bg-white p-4 text-left shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition hover:border-[#3182f6] hover:shadow-[0_8px_24px_rgba(49,130,246,0.10)] focus:outline-none focus:ring-2 focus:ring-[#3182f6]"
+              >
+                <div className="flex min-w-0 items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-lg font-black">{instrument.name}</p>
+                    <p className="mt-1 text-xs font-bold text-[#8b95a1]">{instrument.symbol} · {instrument.market}</p>
+                  </div>
+                  <span className={isOpen ? "shrink-0 rounded-sm bg-[#eff6ff] px-2 py-1 text-xs font-black text-[#3182f6]" : "shrink-0 rounded-sm bg-[#fff3f0] px-2 py-1 text-xs font-black text-[#d34b36]"}>
+                    {formatMarketSessionStatus(marketConfig?.marketStatus)}
+                  </span>
+                </div>
+
+                <div className="mt-4 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3">
+                  <div>
+                    <p className="text-xs font-bold text-[#8b95a1]">현재가</p>
+                    <p className="mt-1 text-2xl font-black tabular-nums">{formatWon(instrument.currentPrice)}</p>
+                  </div>
+                  <p className={changeRate >= 0 ? "text-right text-sm font-black tabular-nums text-[#f04452]" : "text-right text-sm font-black tabular-nums text-[#3182f6]"}>
+                    {formatSignedPercent(changeRate)}
+                  </p>
+                </div>
+
+                <div className="mt-4 grid gap-2 text-xs font-bold text-[#6b7684]">
+                  <SelectionInfoRow label="발행 / 유통" value={`${formatNumber(instrument.issuedShares)}주 / ${formatNumber(instrument.tradableShares)}주`} />
+                  <SelectionInfoRow label="호가 / 제한폭" value={`${formatNumber(instrument.tickSize)}원 / ${formatNumber(instrument.priceLimitRate)}%`} />
+                  <SelectionInfoRow label="자동장" value={autoConfig?.enabled ? `강도 ${autoConfig.intensity}, 최대 ${formatNumber(autoConfig.maxOrderQuantity)}주` : "정지"} />
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="mt-5 rounded-lg border border-[#e5e8eb] bg-white px-5 py-10 text-center">
+          <p className="text-base font-black text-[#191f28]">등록된 수요와 공급 종목이 없습니다.</p>
+          <p className="mt-2 text-sm font-bold text-[#8b95a1]">관리자 화면에서 주문장 종목을 만든 뒤 자동장과 거래를 시작할 수 있습니다.</p>
+          {isAdmin ? (
+            <button type="button" onClick={onAdminClick} className="mt-5 h-11 rounded-md bg-[#191f28] px-4 text-sm font-black text-white">
+              관리자 설정으로 이동
+            </button>
+          ) : null}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function SummaryPill({ label, value, tone = "default" }: { label: string; value: string; tone?: "default" | "blue" }) {
+  const valueClass = tone === "blue" ? "text-[#3182f6]" : "text-[#191f28]";
+  return (
+    <span className="grid h-10 grid-cols-[auto_auto] items-center gap-2 rounded-md bg-[#f2f4f6] px-3 text-xs font-bold text-[#6b7684]">
+      {label}
+      <strong className={`text-sm font-black ${valueClass}`}>{value}</strong>
+    </span>
+  );
+}
+
+function SelectionInfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="grid min-w-0 grid-cols-[76px_minmax(0,1fr)] items-center gap-2 rounded-md bg-[#f7f8fa] px-3 py-2">
+      <span className="text-[#8b95a1]">{label}</span>
+      <span className="min-w-0 truncate text-right text-[#333d4b]">{value}</span>
+    </div>
+  );
+}
+
 function OrderTicket({
+  availableCash,
+  availableSellQuantity,
   estimatedOrderAmount,
   isMarketOpen,
   limitPrice,
@@ -400,12 +642,16 @@ function OrderTicket({
   quantity,
   selectedInstrument,
   side,
+  totalAsset,
+  onAssetPercentSelect,
   onLimitPriceChange,
   onOrderTypeChange,
   onQuantityChange,
   onSideChange,
   onSubmit,
 }: {
+  availableCash?: number;
+  availableSellQuantity?: number;
   estimatedOrderAmount?: number;
   isMarketOpen: boolean;
   limitPrice: string;
@@ -414,6 +660,8 @@ function OrderTicket({
   quantity: string;
   selectedInstrument?: OrderBookInstrument;
   side: OrderSide;
+  totalAsset?: number;
+  onAssetPercentSelect: (percent: number) => void;
   onLimitPriceChange: (value: string) => void;
   onOrderTypeChange: (value: OrderType) => void;
   onQuantityChange: (value: string) => void;
@@ -470,6 +718,33 @@ function OrderTicket({
           value={quantity}
           onChange={onQuantityChange}
         />
+      </div>
+
+      <div className="mt-4 rounded-md border border-[#e5e8eb] p-3">
+        <div className="flex items-center justify-between gap-3 text-xs font-bold text-[#6b7684]">
+          <span>{side === "SELL" ? "보유 비중 주문" : "자산 비중 주문"}</span>
+          <span className="min-w-0 truncate text-right tabular-nums">
+            {side === "SELL" ? `매도가능 ${formatNumber(availableSellQuantity ?? 0)}주` : `총자산 ${formatWon(totalAsset)}`}
+          </span>
+        </div>
+        <div className="mt-3 grid grid-cols-4 gap-2">
+          {ASSET_PERCENT_OPTIONS.map((percent) => (
+            <button
+              key={percent}
+              type="button"
+              onClick={() => onAssetPercentSelect(percent)}
+              className="h-9 rounded-md bg-[#f2f4f6] text-xs font-black text-[#333d4b] hover:bg-[#e5e8eb]"
+            >
+              {percent}%
+            </button>
+          ))}
+        </div>
+        <div className="mt-3 flex items-center justify-between gap-3 text-xs font-bold text-[#8b95a1]">
+          <span>{side === "SELL" ? "매도 가능" : "현금 잔고"}</span>
+          <span className="min-w-0 truncate text-right tabular-nums">
+            {side === "SELL" ? `${formatNumber(availableSellQuantity ?? 0)}주` : formatWon(availableCash)}
+          </span>
+        </div>
       </div>
 
       <div className="mt-4 rounded-md bg-[#f7f8fa] p-3">
@@ -595,12 +870,18 @@ function Metric({ label, value, tone = "default" }: { label: string; value: stri
 }
 
 function OrderBookSide({
+  flashingLevel,
   title,
   levels,
+  onFlashEnd,
+  onPriceSelect,
   side,
 }: {
+  flashingLevel: { price: number; side: "bid" | "ask"; nonce: number } | null;
   title: string;
   levels: { price: number; quantity: number; orderCount: number }[];
+  onFlashEnd: () => void;
+  onPriceSelect: (price: number, side: "bid" | "ask") => void;
   side: "bid" | "ask";
 }) {
   const color = side === "bid" ? "text-[#f04452]" : "text-[#3182f6]";
@@ -621,8 +902,11 @@ function OrderBookSide({
         {depthLevels.map((level, index) => (
           <OrderBookRow
             key={`${side}-slot-${index}`}
+            flashNonce={level && flashingLevel?.side === side && flashingLevel.price === level.price ? flashingLevel.nonce : null}
             level={level}
             maxQuantity={maxQuantity}
+            onFlashEnd={onFlashEnd}
+            onPriceSelect={onPriceSelect}
             side={side}
           />
         ))}
@@ -632,12 +916,18 @@ function OrderBookSide({
 }
 
 function OrderBookRow({
+  flashNonce,
   level,
   maxQuantity,
+  onFlashEnd,
+  onPriceSelect,
   side,
 }: {
+  flashNonce: number | null;
   level: { price: number; quantity: number; orderCount: number } | null;
   maxQuantity: number;
+  onFlashEnd: () => void;
+  onPriceSelect: (price: number, side: "bid" | "ask") => void;
   side: "bid" | "ask";
 }) {
   const barColor = side === "bid" ? "bg-[#fff0f1]" : "bg-[#eff6ff]";
@@ -645,27 +935,42 @@ function OrderBookRow({
   const quantityRate = level ? Math.max(8, Math.min(100, Math.round(level.quantity / maxQuantity * 100))) : 0;
 
   return (
-    <div
+    <button
+      type="button"
       data-order-book-row={side}
-      className="relative grid h-10 min-w-0 grid-cols-[minmax(78px,1fr)_minmax(68px,1fr)_48px] items-center gap-2 overflow-hidden rounded-md bg-[#f7f8fa] px-3 text-xs sm:grid-cols-[108px_minmax(0,1fr)_64px] sm:text-sm"
+      disabled={!level}
+      aria-label={level ? `${side === "bid" ? "매수" : "매도"} 호가 ${formatWon(level.price)} 주문가로 선택` : undefined}
+      onClick={() => {
+        if (level) {
+          onPriceSelect(level.price, side);
+        }
+      }}
+      className="relative grid h-10 min-w-0 grid-cols-[minmax(78px,1fr)_minmax(68px,1fr)_48px] items-center gap-2 overflow-hidden rounded-md bg-[#f7f8fa] px-3 text-left text-xs transition enabled:cursor-pointer enabled:hover:bg-[#eef6ff] enabled:focus:outline-none enabled:focus-visible:bg-[#eef6ff] disabled:cursor-default sm:grid-cols-[108px_minmax(0,1fr)_64px] sm:text-sm"
     >
       {level ? (
         <span
           aria-hidden="true"
-          className={`absolute inset-y-0 right-0 ${barColor}`}
+          className={`absolute inset-y-0 right-0 z-0 ${barColor}`}
           style={{ width: `${quantityRate}%` }}
         />
       ) : null}
-      <span className={`relative min-w-0 truncate font-black tabular-nums ${level ? textColor : "text-[#b0b8c1]"}`} title={level ? formatWon(level.price) : undefined}>
+      {flashNonce !== null ? (
+        <span
+          aria-hidden="true"
+          className="order-book-flash-overlay absolute inset-0 z-10"
+          onAnimationEnd={onFlashEnd}
+        />
+      ) : null}
+      <span className={`relative z-20 min-w-0 truncate font-black tabular-nums ${level ? textColor : "text-[#b0b8c1]"}`} title={level ? formatWon(level.price) : undefined}>
         {level ? formatPrice(level.price) : "-"}
       </span>
-      <span className={`relative min-w-0 truncate text-right font-bold tabular-nums ${level ? "text-[#333d4b]" : "text-[#b0b8c1]"}`} title={level ? `${formatNumber(level.quantity)}주` : undefined}>
+      <span className={`relative z-20 min-w-0 truncate text-right font-bold tabular-nums ${level ? "text-[#333d4b]" : "text-[#b0b8c1]"}`} title={level ? `${formatNumber(level.quantity)}주` : undefined}>
         {level ? formatNumber(level.quantity) : "-"}
       </span>
-      <span className={`relative min-w-0 truncate text-right font-bold tabular-nums ${level ? "text-[#8b95a1]" : "text-[#b0b8c1]"}`} title={level ? `${formatNumber(level.orderCount)}건` : undefined}>
+      <span className={`relative z-20 min-w-0 truncate text-right font-bold tabular-nums ${level ? "text-[#8b95a1]" : "text-[#b0b8c1]"}`} title={level ? `${formatNumber(level.orderCount)}건` : undefined}>
         {level ? formatNumber(level.orderCount) : "-"}
       </span>
-    </div>
+    </button>
   );
 }
 
@@ -682,13 +987,6 @@ function StatusRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function resolveOrderBookSymbol(currentSymbol: string, instruments: OrderBookInstrument[]) {
-  if (currentSymbol && instruments.some((instrument) => instrument.symbol === currentSymbol)) {
-    return currentSymbol;
-  }
-  return instruments[0]?.symbol ?? "";
-}
-
 function formatWon(value?: number) {
   if (value === undefined || value === null) {
     return "-";
@@ -700,10 +998,29 @@ function formatPrice(value: number) {
   return Math.round(value).toLocaleString("ko-KR");
 }
 
+function formatOrderInputPrice(value: number) {
+  if (Number.isInteger(value)) {
+    return String(value);
+  }
+  return value.toFixed(6).replace(/0+$/, "").replace(/\.$/, "");
+}
+
 function formatNumber(value: number) {
   return value.toLocaleString("ko-KR", {
     maximumFractionDigits: 2,
   });
+}
+
+function calculateChangeRate(currentPrice: number, basePrice: number) {
+  if (!Number.isFinite(currentPrice) || !Number.isFinite(basePrice) || basePrice <= 0) {
+    return 0;
+  }
+  return (currentPrice - basePrice) / basePrice * 100;
+}
+
+function formatSignedPercent(value: number) {
+  const sign = value > 0 ? "+" : "";
+  return `${sign}${value.toLocaleString("ko-KR", { maximumFractionDigits: 2 })}%`;
 }
 
 function formatMarketSessionStatus(status?: MarketSessionStatus) {

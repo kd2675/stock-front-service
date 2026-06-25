@@ -9,6 +9,7 @@ import TradingTopBar from "@/app/components/TradingTopBar";
 import useAuthSession from "@/app/hooks/useAuthSession";
 import { getAccessToken } from "@/app/lib/auth";
 import { AUTH_EXPIRED_REDIRECT_KEY } from "@/app/lib/authEvents";
+import { ASSET_PERCENT_OPTIONS, calculateAssetPercentQuantity, resolveOrderSizingPrice } from "@/app/lib/orderSizing";
 import { amendOrderMutationOptions, cancelOrderMutationOptions, cancelOrderPartiallyMutationOptions, placeOrderMutationOptions } from "@/app/lib/react-query/stockMutations";
 import { accountStatusQueryOptions, corporateActionEntitlementsQueryOptions, executionsQueryOptions, holdingsQueryOptions, instrumentsQueryOptions, orderBookQueryOptions, ordersQueryOptions, portfolioQueryOptions, portfolioSnapshotsQueryOptions, priceTicksQueryOptions, pricesQueryOptions, profitSummaryQueryOptions, profileQueryOptions, rankingsQueryOptions } from "@/app/lib/react-query/stockQueries";
 import { stockKeys } from "@/app/lib/react-query/stockKeys";
@@ -132,7 +133,8 @@ export default function Home() {
     () => orders.filter((order) => order.status === "PENDING" || order.status === "PARTIALLY_FILLED"),
     [orders],
   );
-  const recentOrders = useMemo(() => orders.slice(0, 10), [orders]);
+  const recentOrders = useMemo(() => orders.slice(0, 5), [orders]);
+  const recentExecutions = useMemo(() => executions.slice(0, 5), [executions]);
   const orderActionClassName = side === "BUY" ? "bg-[#f04452]" : "bg-[#3182f6]";
 
   useEffect(() => {
@@ -177,11 +179,46 @@ export default function Home() {
   const invalidateTradingQueries = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: stockKeys.account() }),
+      queryClient.invalidateQueries({ queryKey: stockKeys.portfolio() }),
+      queryClient.invalidateQueries({ queryKey: stockKeys.holdings() }),
       queryClient.invalidateQueries({ queryKey: stockKeys.orders() }),
       queryClient.invalidateQueries({ queryKey: stockKeys.executions() }),
       queryClient.invalidateQueries({ queryKey: stockKeys.rankings() }),
       selectedSymbol ? queryClient.invalidateQueries({ queryKey: stockKeys.orderBook(selectedSymbol) }) : Promise.resolve(),
     ]);
+  };
+
+  const applyAssetPercentQuantity = (percent: number) => {
+    if (!selectedSymbol) {
+      setMessage("종목을 선택해 주세요.");
+      return;
+    }
+    const resolvedPrice = resolveOrderSizingPrice({
+      currentPrice: selectedPrice?.currentPrice,
+      limitPrice,
+      orderType,
+    });
+    if (!resolvedPrice) {
+      setMessage("현재가 또는 주문가를 확인해 주세요.");
+      return;
+    }
+    const nextQuantity = calculateAssetPercentQuantity({
+      availableCash: portfolio?.account.cashBalance,
+      availableSellQuantity: selectedHolding?.availableQuantity,
+      percent,
+      price: resolvedPrice.price,
+      side,
+      totalAsset: portfolio?.totalAsset,
+    });
+    if (nextQuantity === null) {
+      setMessage("자산 정보를 불러온 뒤 다시 선택해 주세요.");
+      return;
+    }
+    setVirtualOrderTicket({
+      quantity: String(nextQuantity),
+      ...(resolvedPrice.normalizedLimitPrice ? { limitPrice: resolvedPrice.normalizedLimitPrice } : {}),
+    });
+    setMessage(null);
   };
 
   const placeOrderMutation = useMutation({
@@ -651,6 +688,32 @@ export default function Home() {
                 setMessage(null);
               }} inputMode="numeric" />
             </div>
+            <div className="mt-4 rounded-md border border-[#3a4553] p-3">
+              <div className="flex items-center justify-between gap-3 text-xs font-semibold text-[#b0b8c1]">
+                <span>{side === "SELL" ? "보유 비중 주문" : "자산 비중 주문"}</span>
+                <span className="min-w-0 break-words text-right tabular-nums">
+                  {side === "SELL" ? `매도가능 ${formatNumber(selectedHolding?.availableQuantity ?? 0)}주` : `총자산 ${formatWon(portfolio?.totalAsset)}`}
+                </span>
+              </div>
+              <div className="mt-3 grid grid-cols-4 gap-2">
+                {ASSET_PERCENT_OPTIONS.map((percent) => (
+                  <button
+                    key={percent}
+                    type="button"
+                    onClick={() => applyAssetPercentQuantity(percent)}
+                    className="h-9 rounded-md bg-[#2b333f] text-xs font-black text-white hover:bg-[#3a4553]"
+                  >
+                    {percent}%
+                  </button>
+                ))}
+              </div>
+              <div className="mt-3 flex items-center justify-between gap-3 text-xs font-semibold text-[#8b95a1]">
+                <span>{side === "SELL" ? "매도 가능" : "현금 잔고"}</span>
+                <span className="min-w-0 break-words text-right tabular-nums">
+                  {side === "SELL" ? `${formatNumber(selectedHolding?.availableQuantity ?? 0)}주` : formatWon(portfolio?.account.cashBalance)}
+                </span>
+              </div>
+            </div>
             <div className="mt-4 grid gap-3 rounded-md bg-[#2b333f] p-3 text-xs sm:grid-cols-2">
               <div className="min-w-0">
                 <p className="text-[#b0b8c1]">예상 금액</p>
@@ -755,7 +818,7 @@ export default function Home() {
 
           <Panel title="최근 체결">
             <div className="space-y-3">
-              {executions.map((execution) => (
+              {recentExecutions.map((execution) => (
                 <article key={execution.id} className="rounded-md bg-[#f9fafb] p-4">
                   <div className="flex min-w-0 items-center justify-between gap-2">
                     <p className="min-w-0 truncate text-sm font-bold">{execution.side === "BUY" ? "매수" : "매도"} {execution.symbol}</p>
@@ -779,7 +842,7 @@ export default function Home() {
                   </div>
                 </article>
               ))}
-              {!executions.length ? <p className="text-sm text-[#6b7684]">체결 내역이 없습니다.</p> : null}
+              {!recentExecutions.length ? <p className="text-sm text-[#6b7684]">체결 내역이 없습니다.</p> : null}
             </div>
           </Panel>
         </aside>

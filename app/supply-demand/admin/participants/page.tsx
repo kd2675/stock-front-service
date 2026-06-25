@@ -6,10 +6,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import TradingTopBar from "@/app/components/TradingTopBar";
-import { formatAutoParticipantProfile, formatAutoParticipantProfileDescription } from "@/app/lib/autoParticipantProfiles";
+import { formatAutoParticipantProfile, formatAutoParticipantProfileBehavior, formatAutoParticipantProfileDescription } from "@/app/lib/autoParticipantProfiles";
 import { bootstrapAccessToken, getUserFromToken, isAdminRole } from "@/app/lib/auth";
 import { autoParticipantOverviewsQueryOptions } from "@/app/lib/react-query/stockQueries";
-import type { AutoParticipantOverview } from "@/app/types/stock";
+import type { AutoParticipantOverview, AutoParticipantProfileType } from "@/app/types/stock";
 
 type AdminStatus = "checking" | "allowed" | "denied";
 
@@ -47,6 +47,7 @@ export default function AutoParticipantOverviewPage() {
   const overviewQuery = useQuery(autoParticipantOverviewsQueryOptions(accessToken));
   const participants = overviewQuery.data ?? EMPTY_PARTICIPANTS;
   const summary = useMemo(() => summarizeParticipants(participants), [participants]);
+  const profileSummaries = useMemo(() => summarizeParticipantsByProfile(participants), [participants]);
 
   if (adminStatus === "checking") {
     return (
@@ -113,6 +114,75 @@ export default function AutoParticipantOverviewPage() {
           <SummaryTile label="미체결 주문" value={`${formatNumber(summary.openOrderCount)}건`} subValue={`매수 ${formatNumber(summary.openBuyQuantity)}주 / 매도 ${formatNumber(summary.openSellQuantity)}주`} />
           <SummaryTile label="당일 체결" value={`${formatNumber(summary.todayExecutionCount)}건`} subValue={formatWon(summary.todayGrossAmount)} />
         </div>
+
+        <section className="mt-5 rounded-md border border-white/10 bg-white/[0.06]">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
+            <div>
+              <h2 className="text-base font-black">프로필별 행동/활동 요약</h2>
+              <p className="mt-1 text-xs font-bold text-[#8b95a1]">심리 프로필 설명과 실제 계좌, 주문, 체결 흐름을 같은 기준으로 확인합니다.</p>
+            </div>
+            <span className="text-xs font-bold text-[#64a8ff]">{profileSummaries.length.toLocaleString("ko-KR")}개 프로필 활동 중</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-[1320px] w-full table-fixed text-left text-sm">
+              <thead className="border-b border-white/10 bg-white/[0.04] text-xs font-black text-[#8b95a1]">
+                <tr>
+                  <th className="w-[300px] px-4 py-3">프로필</th>
+                  <th className="w-[120px] px-3 py-3 text-right">참여자</th>
+                  <th className="w-[180px] px-3 py-3 text-right">자산/손익</th>
+                  <th className="w-[180px] px-3 py-3 text-right">현금/예약</th>
+                  <th className="w-[180px] px-3 py-3 text-right">보유</th>
+                  <th className="w-[170px] px-3 py-3 text-right">미체결 방향</th>
+                  <th className="w-[170px] px-3 py-3 text-right">당일 체결 방향</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/10">
+                {profileSummaries.map((profileSummary) => (
+                  <tr key={profileSummary.profileType} className="align-top hover:bg-white/[0.04]">
+                    <td className="px-4 py-3">
+                      <p className="font-black text-white">{formatAutoParticipantProfile(profileSummary.profileType)}</p>
+                      <p className="mt-1 line-clamp-2 text-xs font-bold leading-5 text-[#8b95a1]">{formatAutoParticipantProfileDescription(profileSummary.profileType)}</p>
+                      <p className="mt-1 line-clamp-2 text-xs font-bold leading-5 text-[#b8c2cc]">{formatAutoParticipantProfileBehavior(profileSummary.profileType)}</p>
+                    </td>
+                    <td className="px-3 py-3 text-right">
+                      <MetricStack primary={`${formatNumber(profileSummary.totalParticipants)}명`} secondary={`가동 ${formatNumber(profileSummary.enabledParticipants)}명`} />
+                    </td>
+                    <td className="px-3 py-3 text-right">
+                      <MetricStack
+                        primary={formatWon(profileSummary.estimatedTotalAsset)}
+                        secondary={`${formatRate(profileSummary.returnRate)} · ${formatSignedWon(profileSummary.totalProfit)}`}
+                        tone={profileSummary.returnRate < 0 ? "blue" : "red"}
+                      />
+                    </td>
+                    <td className="px-3 py-3 text-right">
+                      <MetricStack primary={formatWon(profileSummary.availableCash)} secondary={`매수 예약 ${formatWon(profileSummary.reservedBuyCash)}`} />
+                    </td>
+                    <td className="px-3 py-3 text-right">
+                      <MetricStack primary={`${formatNumber(profileSummary.totalHoldingQuantity)}주`} secondary={`${formatNumber(profileSummary.holdingCount)}종목 · 매도 예약 ${formatNumber(profileSummary.reservedSellQuantity)}주`} />
+                    </td>
+                    <td className="px-3 py-3 text-right">
+                      <MetricStack
+                        primary={formatActivityBias(profileSummary.openBuyQuantity, profileSummary.openSellQuantity)}
+                        secondary={`${formatNumber(profileSummary.openOrderCount)}건 · 매수 ${formatNumber(profileSummary.openBuyQuantity)}주 / 매도 ${formatNumber(profileSummary.openSellQuantity)}주`}
+                      />
+                    </td>
+                    <td className="px-3 py-3 text-right">
+                      <MetricStack
+                        primary={formatActivityBias(profileSummary.todayBuyQuantity, profileSummary.todaySellQuantity)}
+                        secondary={`${formatNumber(profileSummary.todayExecutionCount)}건 · ${formatWon(profileSummary.todayGrossAmount)}`}
+                      />
+                    </td>
+                  </tr>
+                ))}
+                {!overviewQuery.isLoading && profileSummaries.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-4 py-8 text-center text-sm font-bold text-[#8b95a1]">프로필별 활동을 집계할 자동 참여자가 없습니다.</td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+        </section>
 
         <section className="mt-5 rounded-md border border-white/10 bg-white/[0.06]">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
@@ -186,6 +256,7 @@ function ParticipantRow({ participant }: { participant: AutoParticipantOverview 
       </td>
       <td className="px-3 py-3">
         <StatusBadge participant={participant} />
+        <ActivityBadge participant={participant} />
         <p className="mt-2 text-xs font-bold text-[#8b95a1]">{accountLabel}</p>
         <p className="mt-1 text-xs font-bold text-[#8b95a1]">{participant.accountStatus ?? "-"}</p>
       </td>
@@ -284,6 +355,17 @@ function StatusBadge({ participant }: { participant: AutoParticipantOverview }) 
   return <span className="inline-flex rounded-md bg-[#112f55] px-2 py-1 text-xs font-black text-[#64a8ff]">가동</span>;
 }
 
+function ActivityBadge({ participant }: { participant: AutoParticipantOverview }) {
+  const buyQuantity = safeNumber(participant.todayBuyQuantity) || safeNumber(participant.openBuyQuantity);
+  const sellQuantity = safeNumber(participant.todaySellQuantity) || safeNumber(participant.openSellQuantity);
+  const tone = buyQuantity > sellQuantity ? "red" : sellQuantity > buyQuantity ? "blue" : "neutral";
+  return (
+    <span className={`mt-2 inline-flex rounded-md px-2 py-1 text-xs font-black ${activityToneClass(tone)}`}>
+      {formatActivityBias(buyQuantity, sellQuantity)}
+    </span>
+  );
+}
+
 function MetricStack({
   primary,
   secondary,
@@ -341,6 +423,74 @@ function summarizeParticipants(participants: AutoParticipantOverview[]) {
   };
 }
 
+function summarizeParticipantsByProfile(participants: AutoParticipantOverview[]) {
+  const summaries = new Map<AutoParticipantProfileType, ReturnType<typeof createEmptyProfileSummary>>();
+  participants.forEach((participant) => {
+    const current = summaries.get(participant.profileType) ?? createEmptyProfileSummary(participant.profileType);
+    current.totalParticipants += 1;
+    current.enabledParticipants += participant.enabled ? 1 : 0;
+    current.estimatedTotalAsset += safeNumber(participant.estimatedTotalAsset);
+    current.netCashFlow += safeNumber(participant.netCashFlow);
+    current.totalProfit += safeNumber(participant.totalProfit);
+    current.availableCash += safeNumber(participant.availableCash);
+    current.reservedBuyCash += safeNumber(participant.reservedBuyCash);
+    current.holdingCount += safeNumber(participant.holdingCount);
+    current.totalHoldingQuantity += safeNumber(participant.totalHoldingQuantity);
+    current.reservedSellQuantity += safeNumber(participant.reservedSellQuantity);
+    current.openOrderCount += safeNumber(participant.openOrderCount);
+    current.openBuyQuantity += safeNumber(participant.openBuyQuantity);
+    current.openSellQuantity += safeNumber(participant.openSellQuantity);
+    current.todayExecutionCount += safeNumber(participant.todayExecutionCount);
+    current.todayBuyQuantity += safeNumber(participant.todayBuyQuantity);
+    current.todaySellQuantity += safeNumber(participant.todaySellQuantity);
+    current.todayGrossAmount += safeNumber(participant.todayGrossAmount);
+    summaries.set(participant.profileType, current);
+  });
+
+  return Array.from(summaries.values())
+    .map((summary) => ({
+      ...summary,
+      returnRate: summary.netCashFlow > 0 ? (summary.totalProfit * 100) / summary.netCashFlow : 0,
+    }))
+    .sort((left, right) => right.totalParticipants - left.totalParticipants || left.profileType.localeCompare(right.profileType));
+}
+
+function createEmptyProfileSummary(profileType: AutoParticipantProfileType) {
+  return {
+    profileType,
+    totalParticipants: 0,
+    enabledParticipants: 0,
+    estimatedTotalAsset: 0,
+    netCashFlow: 0,
+    totalProfit: 0,
+    availableCash: 0,
+    reservedBuyCash: 0,
+    holdingCount: 0,
+    totalHoldingQuantity: 0,
+    reservedSellQuantity: 0,
+    openOrderCount: 0,
+    openBuyQuantity: 0,
+    openSellQuantity: 0,
+    todayExecutionCount: 0,
+    todayBuyQuantity: 0,
+    todaySellQuantity: 0,
+    todayGrossAmount: 0,
+  };
+}
+
+function formatActivityBias(buyQuantity: number, sellQuantity: number) {
+  if (buyQuantity > sellQuantity) {
+    return "매수 우위";
+  }
+  if (sellQuantity > buyQuantity) {
+    return "매도 우위";
+  }
+  if (buyQuantity > 0 || sellQuantity > 0) {
+    return "균형";
+  }
+  return "활동 없음";
+}
+
 function safeNumber(value: number | null | undefined) {
   return Number.isFinite(value) ? Number(value) : 0;
 }
@@ -376,6 +526,16 @@ function metricToneClass(tone: "red" | "blue" | "neutral" = "neutral") {
     return "text-[#3182f6]";
   }
   return "text-white";
+}
+
+function activityToneClass(tone: "red" | "blue" | "neutral") {
+  if (tone === "red") {
+    return "bg-[#3a1f1b] text-[#ffb4a8]";
+  }
+  if (tone === "blue") {
+    return "bg-[#112f55] text-[#64a8ff]";
+  }
+  return "bg-white/10 text-[#b8c2cc]";
 }
 
 function formatNumber(value?: number | null) {

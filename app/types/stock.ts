@@ -75,6 +75,15 @@ export type AccountStatus = {
   account?: Account | null;
 };
 
+export type AccountCashAdjustment = {
+  accountId: number;
+  userKey: string;
+  adjustmentType: "DEPOSIT" | "WITHDRAW";
+  amount: number;
+  cashBalance: number;
+  updatedAt: string;
+};
+
 export type Holding = {
   symbol: string;
   quantity: number;
@@ -253,18 +262,34 @@ export type AutoParticipantProfileType =
   | "NOISE_TRADER"
   | "VALUE_ANCHOR"
   | "SCALPER"
+  | "DAY_TRADER"
+  | "SWING_TRADER"
+  | "LONG_TERM_HOLDER"
+  | "PAYDAY_ACCUMULATOR"
+  | "DIVIDEND_REINVESTOR"
+  | "LIMIT_DOWN_TRAPPED"
+  | "AVERAGE_DOWN_BUYER"
+  | "STOP_LOSS_TRADER"
+  | "FOMO_BUYER"
   | "PANIC_SELLER"
   | "DIP_BUYER"
+  | "PROFIT_LOCKER"
   | "LIQUIDITY_AVOIDANT"
+  | "CASH_DEFENSIVE"
   | "WHALE"
   | "SMALL_DIVERSIFIER"
   | "OBSERVER";
+
+export type RecurringCashIntervalUnit = "SECOND" | "MINUTE" | "HOUR" | "DAY" | "MONTH" | "YEAR";
 
 export type AutoParticipant = {
   userKey: string;
   displayName: string;
   enabled: boolean;
   profileType: AutoParticipantProfileType;
+  recurringCashAmount?: number | null;
+  recurringCashIntervalValue?: number | null;
+  recurringCashIntervalUnit?: RecurringCashIntervalUnit | null;
   cashBalance?: number | null;
   createdAt: string;
   updatedAt: string;
@@ -326,12 +351,66 @@ export type AutoParticipantCashAdjustment = {
   updatedAt: string;
 };
 
+export type AutoParticipantCashFlowStatus = {
+  schedulerConfigured: boolean;
+  runtimeEnabled: boolean;
+  effectiveEnabled: boolean;
+  updatedBy?: string | null;
+  updatedAt?: string | null;
+};
+
+export type BatchJobRuntimeStatus = {
+  jobName: string;
+  schedulerConfigured: boolean;
+  runtimeEnabled: boolean;
+  effectiveEnabled: boolean;
+  updatedBy?: string | null;
+  updatedAt?: string | null;
+};
+
+export type StockBatchJobRun = {
+  job: string;
+  status: string;
+  executionMode: string;
+  processedCount: number;
+  message: string;
+  startedAt: string;
+  completedAt: string;
+};
+
 export type AutoParticipantSymbolConfig = {
   userKey: string;
   symbol: string;
   enabled: boolean;
   intensity: number;
   updatedAt: string;
+};
+
+export type AutoParticipantProfileConfig = {
+  profileType: AutoParticipantProfileType;
+  newsWeight: number;
+  momentumWeight: number;
+  contrarianWeight: number;
+  lossAversionWeight: number;
+  herdingWeight: number;
+  marketMakingWeight: number;
+  overconfidenceWeight: number;
+  noiseWeight: number;
+  panicSellWeight: number;
+  dipBuyWeight: number;
+  orderMultiplier: number;
+  aggressionMultiplier: number;
+  orderTtlMultiplier: number;
+  quantityMultiplier: number;
+  holdingPatienceWeight: number;
+  deepLossHoldWeight: number;
+  profitTakingWeight: number;
+  recurringDepositAmount: number;
+  recurringDepositIntervalValue: number;
+  recurringDepositIntervalUnit: RecurringCashIntervalUnit;
+  recurringDepositIntervalDays: number;
+  customized: boolean;
+  updatedAt?: string | null;
 };
 
 export type ListingAutoAccount = {
@@ -383,5 +462,6 @@ export type AutoMarketStatus = {
   configs: AutoMarketConfig[];
   participants: AutoParticipant[];
   participantSymbolConfigs: AutoParticipantSymbolConfig[];
+  participantProfileConfigs: AutoParticipantProfileConfig[];
   listingAutoAccounts: ListingAutoAccount[];
 };

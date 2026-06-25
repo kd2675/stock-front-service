@@ -36,3 +36,27 @@ button {
     color 160ms ease,
     border-color 160ms ease;
 }
+
+@keyframes order-book-flash-overlay {
+  0% {
+    opacity: 0;
+  }
+
+  18% {
+    opacity: 0.72;
+  }
+
+  48% {
+    opacity: 0.34;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+.order-book-flash-overlay {
+  background: rgba(255, 244, 178, 0.78);
+  opacity: 0;
+  animation: order-book-flash-overlay 360ms ease-out;
+}

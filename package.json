@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start -p 3005",
     "lint": "eslint",
-    "verify:contract": "node ../scripts/verify-stock-front-contract.mjs"
+    "verify:contract": "node ../scripts/verify-stock-auto-profiles.mjs && node ../scripts/verify-stock-front-contract.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

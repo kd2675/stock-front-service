@@ -1,6 +1,6 @@
 import { STOCK_API_BASE, deleteJson, getJson, patchJson, postJson, type ApiResult } from "@/app/lib/api";
 import { clearAccessToken, getUserFromToken, notifyAuthExpired, refreshAccessToken } from "@/app/lib/auth";
-import type { Account, AccountStatus, AutoMarketStatus, AutoParticipantCashAdjustment, AutoParticipantOverview, AutoParticipantProfileType, CorporateAction, CorporateActionEntitlement, CorporateActionType, Execution, Holding, Instrument, InstrumentReport, ListingAutoPosition, MarketSessionStatus, MarketType, Order, OrderBook, OrderBookInstrument, OrderBookMarketStatus, OrderSide, OrderType, Portfolio, PortfolioSnapshot, Price, PriceTick, ProfitSummary, Ranking, StockUserProfile, SymbolMarketConfig, VirtualMarketStatus } from "@/app/types/stock";
+import type { Account, AccountCashAdjustment, AccountStatus, AutoMarketStatus, AutoParticipantCashAdjustment, AutoParticipantCashFlowStatus, AutoParticipantOverview, AutoParticipantProfileType, BatchJobRuntimeStatus, CorporateAction, CorporateActionEntitlement, CorporateActionType, Execution, Holding, Instrument, InstrumentReport, ListingAutoPosition, MarketSessionStatus, MarketType, Order, OrderBook, OrderBookInstrument, OrderBookMarketStatus, OrderSide, OrderType, Portfolio, PortfolioSnapshot, Price, PriceTick, ProfitSummary, Ranking, RecurringCashIntervalUnit, StockBatchJobRun, StockUserProfile, SymbolMarketConfig, VirtualMarketStatus } from "@/app/types/stock";
 
 function authHeaders(token: string): Record<string, string> {
   const user = getUserFromToken(token);
@@ -198,6 +198,40 @@ export function getAutoParticipantOverviews(token: string) {
   );
 }
 
+export function getAutoParticipantCashFlowStatus(token: string) {
+  return withAuthRefresh(token, (nextToken) =>
+    getJson<AutoParticipantCashFlowStatus>("/api/stock/v1/markets/auto-market/cash-flow", authHeaders(nextToken)),
+  );
+}
+
+export function updateAutoParticipantCashFlowStatus(token: string, payload: { runtimeEnabled: boolean }) {
+  return withAuthRefresh(token, (nextToken) =>
+    patchJson<AutoParticipantCashFlowStatus>("/api/stock/v1/markets/auto-market/cash-flow", payload, authHeaders(nextToken)),
+  );
+}
+
+export function runAutoParticipantCashFlow(token: string) {
+  return withAuthRefresh(token, (nextToken) =>
+    postJson<StockBatchJobRun>("/api/stock/v1/markets/auto-market/cash-flow/run", {}, authHeaders(nextToken)),
+  );
+}
+
+export function getBatchJobRuntimeControls(token: string) {
+  return withAuthRefresh(token, (nextToken) =>
+    getJson<BatchJobRuntimeStatus[]>("/api/stock/v1/markets/batch-jobs/runtime-controls", authHeaders(nextToken)),
+  );
+}
+
+export function updateBatchJobRuntimeControl(token: string, jobName: string, payload: { runtimeEnabled: boolean }) {
+  return withAuthRefresh(token, (nextToken) =>
+    patchJson<BatchJobRuntimeStatus>(
+      `/api/stock/v1/markets/batch-jobs/runtime-controls/${encodeURIComponent(jobName)}`,
+      payload,
+      authHeaders(nextToken),
+    ),
+  );
+}
+
 export function updateListingAutoAccountConfig(
   token: string,
   symbol: string,
@@ -230,6 +264,41 @@ export function updateAutoMarketConfig(
   );
 }
 
+export function updateAutoParticipantProfileConfig(
+  token: string,
+  profileType: AutoParticipantProfileType,
+  payload: {
+    newsWeight: number;
+    momentumWeight: number;
+    contrarianWeight: number;
+    lossAversionWeight: number;
+    herdingWeight: number;
+    marketMakingWeight: number;
+    overconfidenceWeight: number;
+    noiseWeight: number;
+    panicSellWeight: number;
+    dipBuyWeight: number;
+    orderMultiplier: number;
+    aggressionMultiplier: number;
+    orderTtlMultiplier: number;
+    quantityMultiplier: number;
+    holdingPatienceWeight: number;
+    deepLossHoldWeight: number;
+    profitTakingWeight: number;
+    recurringDepositAmount: number;
+    recurringDepositIntervalValue: number;
+    recurringDepositIntervalUnit: RecurringCashIntervalUnit;
+  },
+) {
+  return withAuthRefresh(token, (nextToken) =>
+    patchJson<AutoMarketStatus["participantProfileConfigs"][number]>(
+      `/api/stock/v1/markets/auto-market/profile-configs/${encodeURIComponent(profileType)}`,
+      payload,
+      authHeaders(nextToken),
+    ),
+  );
+}
+
 export function upsertAutoParticipant(
   token: string,
   userKey: string,
@@ -237,6 +306,9 @@ export function upsertAutoParticipant(
     displayName: string;
     enabled?: boolean;
     profileType?: AutoParticipantProfileType;
+    recurringCashAmount?: number | null;
+    recurringCashIntervalValue?: number | null;
+    recurringCashIntervalUnit?: string | null;
   },
 ) {
   return withAuthRefresh(token, (nextToken) =>
@@ -307,6 +379,19 @@ export function detachStockAccount(token: string) {
 
 export function reconnectStockAccount(token: string, payload: { accountCode: string; recoveryCode: string }) {
   return withAuthRefresh(token, (nextToken) => postJson<Account>("/api/stock/v1/accounts/reconnect", payload, authHeaders(nextToken)));
+}
+
+export function adjustUserAccountCash(
+  token: string,
+  userKey: string,
+  payload: {
+    adjustmentType: "DEPOSIT" | "WITHDRAW";
+    amount: number;
+  },
+) {
+  return withAuthRefresh(token, (nextToken) =>
+    postJson<AccountCashAdjustment>(`/api/stock/v1/accounts/admin/users/${encodeURIComponent(userKey)}/cash-adjustments`, payload, authHeaders(nextToken)),
+  );
 }
 
 export function getStockUserProfile(token: string) {

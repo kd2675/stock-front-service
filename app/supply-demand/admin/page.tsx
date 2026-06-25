@@ -5,17 +5,61 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
-import { useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 import { useForm, type UseFormRegisterReturn } from "react-hook-form";
 
 import TradingTopBar from "@/app/components/TradingTopBar";
-import { AUTO_PARTICIPANT_PROFILE_OPTIONS, formatAutoParticipantProfile, formatAutoParticipantProfileDescription } from "@/app/lib/autoParticipantProfiles";
+import { AUTO_PARTICIPANT_PROFILE_OPTIONS, formatAutoParticipantProfile, formatAutoParticipantProfileBehavior, formatAutoParticipantProfileDescription } from "@/app/lib/autoParticipantProfiles";
 import { bootstrapAccessToken, ensureAccessToken, getUserFromToken, isAdminRole } from "@/app/lib/auth";
 import { createOrderBookInstrumentMutationOptions } from "@/app/lib/react-query/stockMutations";
 import { stockKeys } from "@/app/lib/react-query/stockKeys";
-import { adjustAutoParticipantCash, applyCorporateAction, deleteInstrumentReport, getAutoMarketStatus, getCorporateActions, getInstrumentReports, getOrderBookInstruments, getOrderBookMarketStatus, getVirtualMarketStatus, publishInstrumentReport, updateAutoMarketConfig, updateAutoParticipantSymbolConfig, updateInstrumentReport, updateListingAutoAccountConfig, updateMarketStatus, upsertAutoParticipant, withdrawAutoParticipant } from "@/app/lib/stock";
+import { adjustAutoParticipantCash, adjustUserAccountCash, applyCorporateAction, deleteInstrumentReport, getAutoMarketStatus, getBatchJobRuntimeControls, getCorporateActions, getInstrumentReports, getOrderBookInstruments, getOrderBookMarketStatus, getVirtualMarketStatus, publishInstrumentReport, runAutoParticipantCashFlow, updateAutoMarketConfig, updateAutoParticipantProfileConfig, updateAutoParticipantSymbolConfig, updateBatchJobRuntimeControl, updateInstrumentReport, updateListingAutoAccountConfig, updateMarketStatus, upsertAutoParticipant, withdrawAutoParticipant } from "@/app/lib/stock";
 import { createInstrumentSchema, type CreateInstrumentFormValues } from "@/app/lib/validation/adminSchemas";
-import type { AutoMarketConfig, AutoMarketStatus, AutoParticipant, AutoParticipantProfileType, AutoParticipantSymbolConfig, CorporateAction, CorporateActionStatus, CorporateActionType, InstrumentReport, ListingAutoAccount, ListingAutoPosition, MarketSessionStatus, OrderBookInstrument, OrderBookMarketStatus, VirtualMarketStatus } from "@/app/types/stock";
+import type { AutoMarketConfig, AutoMarketStatus, AutoParticipant, AutoParticipantProfileConfig, AutoParticipantProfileType, AutoParticipantSymbolConfig, BatchJobRuntimeStatus, CorporateAction, CorporateActionStatus, CorporateActionType, InstrumentReport, ListingAutoAccount, ListingAutoPosition, MarketSessionStatus, OrderBookInstrument, OrderBookMarketStatus, RecurringCashIntervalUnit, StockBatchJobRun, VirtualMarketStatus } from "@/app/types/stock";
+
+const RECURRING_CASH_INTERVAL_UNIT_OPTIONS: { value: RecurringCashIntervalUnit; label: string }[] = [
+  { value: "SECOND", label: "초" },
+  { value: "MINUTE", label: "분" },
+  { value: "HOUR", label: "시간" },
+  { value: "DAY", label: "일" },
+  { value: "MONTH", label: "월" },
+  { value: "YEAR", label: "년" },
+];
+
+const BATCH_JOB_RUNTIME_LABELS: Record<string, { label: string; description: string }> = {
+  "market-data-refresh": {
+    label: "시세 갱신",
+    description: "외부/내부 가격 데이터를 주기적으로 갱신합니다.",
+  },
+  "virtual-price-execution": {
+    label: "특정가격 자동주문체결",
+    description: "가상 가격 시장 주문 체결 배치를 실행합니다.",
+  },
+  "order-book-execution": {
+    label: "수요와 공급 주문 체결",
+    description: "호가장 미체결 주문을 가격/시간 우선으로 체결합니다.",
+  },
+  "corporate-actions": {
+    label: "주식 이벤트 처리",
+    description: "배당, 증자, 분할, 상장폐지 같은 이벤트를 반영합니다.",
+  },
+  "auto-market": {
+    label: "자동장 주문 생성",
+    description: "자동참여자와 종목 알고리즘 기준으로 호가를 냅니다.",
+  },
+  "auto-participant-cash-flow": {
+    label: "월급 지급",
+    description: "가동 자동참여자와 ACTIVE 계좌에 반복 현금을 지급합니다.",
+  },
+  "market-close-rollover": {
+    label: "장마감 롤오버",
+    description: "장마감 기준 가격/일중 지표를 다음 기준으로 넘깁니다.",
+  },
+  "portfolio-settlement": {
+    label: "포트폴리오 정산",
+    description: "계좌 보유/손익 스냅샷을 정산합니다.",
+  },
+};
 
 export default function SupplyDemandAdminPage() {
   const router = useRouter();
@@ -24,6 +68,7 @@ export default function SupplyDemandAdminPage() {
   const [status, setStatus] = useState<AutoMarketStatus | null>(null);
   const [virtualMarket, setVirtualMarket] = useState<VirtualMarketStatus | null>(null);
   const [orderBookMarket, setOrderBookMarket] = useState<OrderBookMarketStatus | null>(null);
+  const [lastCashFlowRun, setLastCashFlowRun] = useState<StockBatchJobRun | null>(null);
   const [instruments, setInstruments] = useState<OrderBookInstrument[]>([]);
   const [corporateActions, setCorporateActions] = useState<CorporateAction[]>([]);
   const [instrumentReports, setInstrumentReports] = useState<InstrumentReport[]>([]);
@@ -69,6 +114,7 @@ export default function SupplyDemandAdminPage() {
   const [deletingReport, setDeletingReport] = useState(false);
   const [updatingStatusSymbol, setUpdatingStatusSymbol] = useState<string | null>(null);
   const [autoConfigSymbol, setAutoConfigSymbol] = useState("");
+  const [editingAutoConfigSymbol, setEditingAutoConfigSymbol] = useState<string | null>(null);
   const [autoConfigEnabled, setAutoConfigEnabled] = useState(true);
   const [autoIntensity, setAutoIntensity] = useState("5");
   const [autoMaxOrderQuantity, setAutoMaxOrderQuantity] = useState("4");
@@ -76,6 +122,7 @@ export default function SupplyDemandAdminPage() {
   const [updatingAutoConfig, setUpdatingAutoConfig] = useState(false);
   const [togglingAutoConfigSymbol, setTogglingAutoConfigSymbol] = useState<string | null>(null);
   const [listingAutoSymbol, setListingAutoSymbol] = useState("");
+  const [editingListingAutoSymbol, setEditingListingAutoSymbol] = useState<string | null>(null);
   const [listingAutoDisplayName, setListingAutoDisplayName] = useState("");
   const [listingAutoEnabled, setListingAutoEnabled] = useState(true);
   const [listingAutoPositionSide, setListingAutoPositionSide] = useState<ListingAutoPosition>("SELL_ONLY");
@@ -88,17 +135,56 @@ export default function SupplyDemandAdminPage() {
   const [autoParticipantDisplayName, setAutoParticipantDisplayName] = useState("");
   const [autoParticipantEnabled, setAutoParticipantEnabled] = useState(true);
   const [autoParticipantProfileType, setAutoParticipantProfileType] = useState<AutoParticipantProfileType>("NOISE_TRADER");
+  const [autoParticipantRecurringCashAmount, setAutoParticipantRecurringCashAmount] = useState("");
+  const [autoParticipantRecurringCashIntervalValue, setAutoParticipantRecurringCashIntervalValue] = useState("");
+  const [autoParticipantRecurringCashIntervalUnit, setAutoParticipantRecurringCashIntervalUnit] = useState<RecurringCashIntervalUnit>("DAY");
   const [savingAutoParticipant, setSavingAutoParticipant] = useState(false);
+  const [autoGenerateCount, setAutoGenerateCount] = useState("5");
+  const [autoGenerateKeyPrefix, setAutoGenerateKeyPrefix] = useState("stock-auto-");
+  const [autoGenerateDisplayPrefix, setAutoGenerateDisplayPrefix] = useState("자동 참여자");
+  const [autoGenerateProfileMode, setAutoGenerateProfileMode] = useState<"ROTATE" | "SINGLE">("ROTATE");
+  const [autoGenerateProfileType, setAutoGenerateProfileType] = useState<AutoParticipantProfileType>("NOISE_TRADER");
+  const [generatingAutoParticipants, setGeneratingAutoParticipants] = useState(false);
   const [togglingAutoParticipantUserKey, setTogglingAutoParticipantUserKey] = useState<string | null>(null);
   const [withdrawingAutoParticipantUserKey, setWithdrawingAutoParticipantUserKey] = useState<string | null>(null);
   const [cashAdjustmentAmount, setCashAdjustmentAmount] = useState("");
   const [adjustingCashType, setAdjustingCashType] = useState<"DEPOSIT" | "WITHDRAW" | null>(null);
+  const [userCashAdjustmentUserKey, setUserCashAdjustmentUserKey] = useState("");
+  const [userCashAdjustmentAmount, setUserCashAdjustmentAmount] = useState("");
+  const [adjustingUserCashType, setAdjustingUserCashType] = useState<"DEPOSIT" | "WITHDRAW" | null>(null);
+  const [runningCashFlow, setRunningCashFlow] = useState(false);
+  const [batchJobRuntimeControls, setBatchJobRuntimeControls] = useState<BatchJobRuntimeStatus[]>([]);
+  const [loadingBatchJobRuntimeControls, setLoadingBatchJobRuntimeControls] = useState(false);
+  const [updatingBatchJobName, setUpdatingBatchJobName] = useState<string | null>(null);
   const [strategyUserKey, setStrategyUserKey] = useState("");
   const [strategySymbol, setStrategySymbol] = useState("");
+  const [editingStrategyKey, setEditingStrategyKey] = useState<string | null>(null);
   const [strategyEnabled, setStrategyEnabled] = useState(true);
   const [strategyIntensity, setStrategyIntensity] = useState("5");
   const [savingStrategy, setSavingStrategy] = useState(false);
   const [togglingStrategyKey, setTogglingStrategyKey] = useState<string | null>(null);
+  const [editingProfileType, setEditingProfileType] = useState<AutoParticipantProfileType | null>(null);
+  const [profileNewsWeight, setProfileNewsWeight] = useState("0");
+  const [profileMomentumWeight, setProfileMomentumWeight] = useState("0");
+  const [profileContrarianWeight, setProfileContrarianWeight] = useState("0");
+  const [profileLossAversionWeight, setProfileLossAversionWeight] = useState("0");
+  const [profileHerdingWeight, setProfileHerdingWeight] = useState("0");
+  const [profileMarketMakingWeight, setProfileMarketMakingWeight] = useState("0");
+  const [profileOverconfidenceWeight, setProfileOverconfidenceWeight] = useState("0");
+  const [profileNoiseWeight, setProfileNoiseWeight] = useState("0");
+  const [profilePanicSellWeight, setProfilePanicSellWeight] = useState("0");
+  const [profileDipBuyWeight, setProfileDipBuyWeight] = useState("0");
+  const [profileOrderMultiplier, setProfileOrderMultiplier] = useState("1");
+  const [profileAggressionMultiplier, setProfileAggressionMultiplier] = useState("1");
+  const [profileOrderTtlMultiplier, setProfileOrderTtlMultiplier] = useState("1");
+  const [profileQuantityMultiplier, setProfileQuantityMultiplier] = useState("1");
+  const [profileHoldingPatienceWeight, setProfileHoldingPatienceWeight] = useState("0");
+  const [profileDeepLossHoldWeight, setProfileDeepLossHoldWeight] = useState("0");
+  const [profileProfitTakingWeight, setProfileProfitTakingWeight] = useState("0");
+  const [profileRecurringDepositAmount, setProfileRecurringDepositAmount] = useState("0");
+  const [profileRecurringDepositIntervalValue, setProfileRecurringDepositIntervalValue] = useState("30");
+  const [profileRecurringDepositIntervalUnit, setProfileRecurringDepositIntervalUnit] = useState<RecurringCashIntervalUnit>("DAY");
+  const [savingProfileConfig, setSavingProfileConfig] = useState(false);
 
   const loadCorporateActions = useCallback((targetSymbol: string) => {
     const normalizedSymbol = targetSymbol.trim().toUpperCase();
@@ -187,6 +273,29 @@ export default function SupplyDemandAdminPage() {
     };
   }, [autoConfigSymbol, listingAutoSymbol, reportSymbol, strategySymbol, strategyUserKey]);
 
+  const loadBatchJobRuntimeControls = useCallback(async (showError = false) => {
+    setLoadingBatchJobRuntimeControls(true);
+    try {
+      const token = await ensureAccessToken();
+      if (!token) {
+        if (showError) {
+          setMessage("관리자 로그인 후 배치 자동 실행 상태를 조회할 수 있습니다.");
+        }
+        return;
+      }
+      const result = await getBatchJobRuntimeControls(token);
+      if (!result.ok || !result.data) {
+        if (showError) {
+          setMessage(result.message ?? "배치 자동 실행 상태를 조회하지 못했습니다.");
+        }
+        return;
+      }
+      setBatchJobRuntimeControls(result.data);
+    } finally {
+      setLoadingBatchJobRuntimeControls(false);
+    }
+  }, []);
+
   const createInstrumentMutation = useMutation({
     ...createOrderBookInstrumentMutationOptions(),
     onSuccess: async (instrument) => {
@@ -251,21 +360,31 @@ export default function SupplyDemandAdminPage() {
 
   useEffect(() => {
     if (adminStatus !== "allowed") {
-      return;
+      return undefined;
     }
-    if (actionSymbol.trim()) {
-      loadCorporateActions(actionSymbol);
-    }
-  }, [actionSymbol, adminStatus, loadCorporateActions]);
+    const timer = window.setTimeout(() => {
+      void loadBatchJobRuntimeControls(false);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [adminStatus, loadBatchJobRuntimeControls]);
 
   useEffect(() => {
     if (adminStatus !== "allowed") {
       return;
     }
-    if (reportSymbol.trim()) {
+    if (isKnownOrderBookSymbol(instruments, actionSymbol)) {
+      loadCorporateActions(actionSymbol);
+    }
+  }, [actionSymbol, adminStatus, instruments, loadCorporateActions]);
+
+  useEffect(() => {
+    if (adminStatus !== "allowed") {
+      return;
+    }
+    if (isKnownOrderBookSymbol(instruments, reportSymbol)) {
       loadInstrumentReports(reportSymbol);
     }
-  }, [adminStatus, loadInstrumentReports, reportSymbol]);
+  }, [adminStatus, instruments, loadInstrumentReports, reportSymbol]);
 
   const submitInstrument = createInstrumentForm.handleSubmit((values) => {
     const parsed = createInstrumentSchema.safeParse(values);
@@ -322,6 +441,10 @@ export default function SupplyDemandAdminPage() {
       setMessage("보고서 종목, 제목, 요약, 점수 1-10을 입력해 주세요.");
       return;
     }
+    if (!isKnownOrderBookSymbol(instruments, normalizedSymbol)) {
+      setMessage("현재 주문장 종목 목록에 없는 종목입니다. 종목을 다시 선택해 주세요.");
+      return;
+    }
     setSavingReport(true);
     try {
       const token = await ensureAccessToken();
@@ -359,6 +482,10 @@ export default function SupplyDemandAdminPage() {
       setMessage("삭제할 보고서 종목을 선택해 주세요.");
       return;
     }
+    if (!isKnownOrderBookSymbol(instruments, normalizedSymbol)) {
+      setMessage("현재 주문장 종목 목록에 없는 종목입니다. 종목을 다시 선택해 주세요.");
+      return;
+    }
     const confirmed = window.confirm(`${normalizedSymbol} 최신 평가 보고서를 삭제 이벤트로 처리할까요?`);
     if (!confirmed) {
       return;
@@ -389,6 +516,10 @@ export default function SupplyDemandAdminPage() {
     const normalizedSymbol = actionSymbol.trim().toUpperCase();
     if (!normalizedSymbol) {
       setMessage("액션을 적용할 종목을 선택해 주세요.");
+      return;
+    }
+    if (!isKnownOrderBookSymbol(instruments, normalizedSymbol)) {
+      setMessage("현재 주문장 종목 목록에 없는 종목입니다. 종목을 다시 선택해 주세요.");
       return;
     }
     const payload: {
@@ -553,6 +684,7 @@ export default function SupplyDemandAdminPage() {
   };
 
   const selectAutoConfigDraft = (config: AutoMarketConfig) => {
+    setEditingAutoConfigSymbol(config.symbol);
     setAutoConfigSymbol(config.symbol);
     setAutoConfigEnabled(config.enabled);
     setAutoIntensity(String(config.intensity));
@@ -590,6 +722,7 @@ export default function SupplyDemandAdminPage() {
         return;
       }
       setMessage("자동장 알고리즘 설정을 변경했습니다.");
+      setEditingAutoConfigSymbol(null);
       loadStatus();
     } finally {
       setUpdatingAutoConfig(false);
@@ -629,6 +762,7 @@ export default function SupplyDemandAdminPage() {
   };
 
   const selectListingAutoAccountDraft = (config: ListingAutoAccount) => {
+    setEditingListingAutoSymbol(config.symbol);
     setListingAutoSymbol(config.symbol);
     setListingAutoDisplayName(config.displayName);
     setListingAutoEnabled(config.enabled);
@@ -670,9 +804,59 @@ export default function SupplyDemandAdminPage() {
         return;
       }
       setMessage("상장주관사 자동계정 설정을 변경했습니다.");
+      setEditingListingAutoSymbol(null);
       loadStatus();
     } finally {
       setUpdatingListingAutoAccount(false);
+    }
+  };
+
+  const setBatchJobRuntime = async (jobName: string, runtimeEnabled: boolean) => {
+    if (updatingBatchJobName) {
+      return;
+    }
+    setUpdatingBatchJobName(jobName);
+    try {
+      const token = await ensureAccessToken();
+      if (!token) {
+        setMessage("관리자 로그인 후 배치 자동 실행 상태를 변경할 수 있습니다.");
+        return;
+      }
+      const result = await updateBatchJobRuntimeControl(token, jobName, { runtimeEnabled });
+      if (!result.ok || !result.data) {
+        setMessage(result.message ?? "배치 자동 실행 상태 변경에 실패했습니다.");
+        return;
+      }
+      const nextControl = result.data;
+      setBatchJobRuntimeControls((controls) => controls.map((control) => (control.jobName === jobName ? nextControl : control)));
+      setMessage(formatRuntimeUpdateMessage(BATCH_JOB_RUNTIME_LABELS[jobName]?.label ?? "배치 자동 실행", runtimeEnabled, nextControl.effectiveEnabled));
+    } finally {
+      setUpdatingBatchJobName(null);
+    }
+  };
+
+  const runAutoParticipantCashFlowNow = async () => {
+    if (runningCashFlow) {
+      return;
+    }
+    setRunningCashFlow(true);
+    try {
+      const token = await ensureAccessToken();
+      if (!token) {
+        setMessage("관리자 로그인 후 월급 지급 배치를 실행할 수 있습니다.");
+        return;
+      }
+      const result = await runAutoParticipantCashFlow(token);
+      if (!result.ok || !result.data) {
+        setMessage(result.message ?? "월급 지급 배치 실행에 실패했습니다.");
+        return;
+      }
+      setLastCashFlowRun(result.data);
+      setMessage(`월급 지급 배치를 실행했습니다. 처리 ${result.data.processedCount.toLocaleString("ko-KR")}건`);
+      void loadBatchJobRuntimeControls(false);
+      loadStatus();
+    } finally {
+      setRunningCashFlow(false);
     }
   };
 
@@ -682,6 +866,9 @@ export default function SupplyDemandAdminPage() {
     setAutoParticipantDisplayName(participant.displayName);
     setAutoParticipantEnabled(participant.enabled);
     setAutoParticipantProfileType(participant.profileType);
+    setAutoParticipantRecurringCashAmount(participant.recurringCashAmount == null ? "" : String(participant.recurringCashAmount));
+    setAutoParticipantRecurringCashIntervalValue(participant.recurringCashIntervalValue == null ? "" : String(participant.recurringCashIntervalValue));
+    setAutoParticipantRecurringCashIntervalUnit(participant.recurringCashIntervalUnit ?? "DAY");
     setCashAdjustmentAmount("");
   };
 
@@ -691,10 +878,14 @@ export default function SupplyDemandAdminPage() {
     setAutoParticipantDisplayName("");
     setAutoParticipantEnabled(true);
     setAutoParticipantProfileType("NOISE_TRADER");
+    setAutoParticipantRecurringCashAmount("");
+    setAutoParticipantRecurringCashIntervalValue("");
+    setAutoParticipantRecurringCashIntervalUnit("DAY");
     setCashAdjustmentAmount("");
   };
 
   const selectAutoStrategyDraft = (config: AutoParticipantSymbolConfig) => {
+    setEditingStrategyKey(`${config.userKey}:${config.symbol}`);
     setStrategyUserKey(config.userKey);
     setStrategySymbol(config.symbol);
     setStrategyEnabled(config.enabled);
@@ -711,6 +902,15 @@ export default function SupplyDemandAdminPage() {
       setMessage("자동 참여자 키와 표시명을 입력해 주세요.");
       return;
     }
+    const recurringCashPayload = parseAutoParticipantRecurringCashDraft(
+      autoParticipantRecurringCashAmount,
+      autoParticipantRecurringCashIntervalValue,
+      autoParticipantRecurringCashIntervalUnit,
+    );
+    if (recurringCashPayload === null) {
+      setMessage("참여자별 월급/정기 현금은 금액 0 이상, 주기 0 초과 1000 이하로 입력해 주세요. 비워두면 프로필 기본값을 사용합니다.");
+      return;
+    }
     setSavingAutoParticipant(true);
     try {
       const token = await ensureAccessToken();
@@ -722,15 +922,86 @@ export default function SupplyDemandAdminPage() {
         displayName,
         enabled: autoParticipantEnabled,
         profileType: autoParticipantProfileType,
+        ...recurringCashPayload,
       });
       if (!result.ok) {
         setMessage(result.message ?? "자동 참여자 저장에 실패했습니다.");
         return;
       }
       setMessage("자동 참여자를 저장했습니다.");
+      if (editingAutoParticipantUserKey) {
+        resetAutoParticipantDraft();
+      }
       loadStatus();
     } finally {
       setSavingAutoParticipant(false);
+    }
+  };
+
+  const generateAutoParticipants = async () => {
+    if (generatingAutoParticipants || savingAutoParticipant) {
+      return;
+    }
+    const count = Number.parseInt(autoGenerateCount, 10);
+    const keyPrefix = autoGenerateKeyPrefix.trim() || "stock-auto-";
+    const displayPrefix = autoGenerateDisplayPrefix.trim() || "자동 참여자";
+    if (!Number.isSafeInteger(count) || count <= 0 || count > 100) {
+      setMessage("자동 생성 인원은 1명 이상 100명 이하로 입력해 주세요.");
+      return;
+    }
+    if (keyPrefix.length > 40) {
+      setMessage("참여자 키 접두어는 40자 이하로 입력해 주세요.");
+      return;
+    }
+    if (displayPrefix.length > 60) {
+      setMessage("표시명 접두어는 60자 이하로 입력해 주세요.");
+      return;
+    }
+
+    setGeneratingAutoParticipants(true);
+    try {
+      const token = await ensureAccessToken();
+      if (!token) {
+        setMessage("관리자 로그인 후 자동 참여자를 생성할 수 있습니다.");
+        return;
+      }
+
+      const existingKeys = new Set((status?.participants ?? []).map((participant) => participant.userKey));
+      const profileTypes = AUTO_PARTICIPANT_PROFILE_OPTIONS.map((profile) => profile.value);
+      let nextSerial = nextAutoParticipantSerial(existingKeys, keyPrefix);
+      let created = 0;
+      while (created < count) {
+        const userKey = `${keyPrefix}${formatAutoParticipantSerial(nextSerial)}`;
+        nextSerial += 1;
+        if (existingKeys.has(userKey)) {
+          continue;
+        }
+        const profileType = autoGenerateProfileMode === "SINGLE"
+          ? autoGenerateProfileType
+          : profileTypes[created % profileTypes.length] ?? "NOISE_TRADER";
+        const displayName = `${displayPrefix} ${formatAutoParticipantSerial(nextSerial - 1)}`;
+        const result = await upsertAutoParticipant(token, userKey, {
+          displayName,
+          enabled: true,
+          profileType,
+          recurringCashAmount: null,
+          recurringCashIntervalValue: null,
+          recurringCashIntervalUnit: null,
+        });
+        if (!result.ok) {
+          setMessage(result.message ?? `${userKey} 자동 참여자 생성에 실패했습니다.`);
+          return;
+        }
+        existingKeys.add(userKey);
+        created += 1;
+      }
+      resetAutoParticipantDraft();
+      setMessage(autoGenerateProfileMode === "SINGLE"
+        ? `자동 참여자 ${created.toLocaleString("ko-KR")}명을 ${formatAutoParticipantProfile(autoGenerateProfileType)} 프로필로 생성했습니다.`
+        : `자동 참여자 ${created.toLocaleString("ko-KR")}명을 생성했습니다. 프로필은 순서대로 분산 적용했습니다.`);
+      loadStatus();
+    } finally {
+      setGeneratingAutoParticipants(false);
     }
   };
 
@@ -768,6 +1039,42 @@ export default function SupplyDemandAdminPage() {
     }
   };
 
+  const adjustUserCashBalance = async (adjustmentType: "DEPOSIT" | "WITHDRAW") => {
+    if (adjustingUserCashType) {
+      return;
+    }
+    const normalizedUserKey = userCashAdjustmentUserKey.trim();
+    const amount = Number.parseFloat(userCashAdjustmentAmount);
+    if (!normalizedUserKey || !Number.isFinite(amount) || amount <= 0) {
+      setMessage("입금/회수할 실제 유저 식별키와 금액을 확인해 주세요.");
+      return;
+    }
+    setAdjustingUserCashType(adjustmentType);
+    try {
+      const token = await ensureAccessToken();
+      if (!token) {
+        setMessage("관리자 로그인 후 실제 유저 계좌 현금을 조정할 수 있습니다.");
+        return;
+      }
+      const result = await adjustUserAccountCash(token, normalizedUserKey, {
+        adjustmentType,
+        amount,
+      });
+      if (!result.ok) {
+        setMessage(result.message ?? "실제 유저 계좌 현금 조정에 실패했습니다.");
+        return;
+      }
+      setUserCashAdjustmentAmount("");
+      setMessage(adjustmentType === "DEPOSIT" ? "실제 유저 계좌에 입금했습니다." : "실제 유저 계좌에서 회수했습니다.");
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: stockKeys.account() }),
+        queryClient.invalidateQueries({ queryKey: stockKeys.portfolio() }),
+      ]);
+    } finally {
+      setAdjustingUserCashType(null);
+    }
+  };
+
   const toggleAutoParticipantEnabled = async (participant: AutoParticipant) => {
     if (togglingAutoParticipantUserKey) {
       return;
@@ -784,6 +1091,9 @@ export default function SupplyDemandAdminPage() {
         displayName: participant.displayName,
         enabled: nextEnabled,
         profileType: participant.profileType,
+        recurringCashAmount: participant.recurringCashAmount ?? null,
+        recurringCashIntervalValue: participant.recurringCashIntervalValue ?? null,
+        recurringCashIntervalUnit: participant.recurringCashIntervalUnit ?? null,
       });
       if (!result.ok) {
         setMessage(result.message ?? "자동 참여자 상태 변경에 실패했습니다.");
@@ -856,9 +1166,101 @@ export default function SupplyDemandAdminPage() {
         return;
       }
       setMessage("참여자별 종목 전략을 저장했습니다.");
+      setEditingStrategyKey(null);
       loadStatus();
     } finally {
       setSavingStrategy(false);
+    }
+  };
+
+  const selectProfileConfigDraft = (config: AutoParticipantProfileConfig) => {
+    setEditingProfileType(config.profileType);
+    setProfileNewsWeight(String(config.newsWeight));
+    setProfileMomentumWeight(String(config.momentumWeight));
+    setProfileContrarianWeight(String(config.contrarianWeight));
+    setProfileLossAversionWeight(String(config.lossAversionWeight));
+    setProfileHerdingWeight(String(config.herdingWeight));
+    setProfileMarketMakingWeight(String(config.marketMakingWeight));
+    setProfileOverconfidenceWeight(String(config.overconfidenceWeight));
+    setProfileNoiseWeight(String(config.noiseWeight));
+    setProfilePanicSellWeight(String(config.panicSellWeight));
+    setProfileDipBuyWeight(String(config.dipBuyWeight));
+    setProfileOrderMultiplier(String(config.orderMultiplier));
+    setProfileAggressionMultiplier(String(config.aggressionMultiplier));
+    setProfileOrderTtlMultiplier(String(config.orderTtlMultiplier));
+    setProfileQuantityMultiplier(String(config.quantityMultiplier));
+    setProfileHoldingPatienceWeight(String(config.holdingPatienceWeight));
+    setProfileDeepLossHoldWeight(String(config.deepLossHoldWeight));
+    setProfileProfitTakingWeight(String(config.profitTakingWeight));
+    setProfileRecurringDepositAmount(String(config.recurringDepositAmount));
+    setProfileRecurringDepositIntervalValue(String(config.recurringDepositIntervalValue ?? config.recurringDepositIntervalDays));
+    setProfileRecurringDepositIntervalUnit(config.recurringDepositIntervalUnit ?? "DAY");
+  };
+
+  const submitProfileConfig = async () => {
+    if (savingProfileConfig || editingProfileType === null) {
+      return;
+    }
+    const orderMultiplier = Number(profileOrderMultiplier);
+    const newsWeight = Number(profileNewsWeight);
+    const momentumWeight = Number(profileMomentumWeight);
+    const contrarianWeight = Number(profileContrarianWeight);
+    const lossAversionWeight = Number(profileLossAversionWeight);
+    const herdingWeight = Number(profileHerdingWeight);
+    const marketMakingWeight = Number(profileMarketMakingWeight);
+    const overconfidenceWeight = Number(profileOverconfidenceWeight);
+    const noiseWeight = Number(profileNoiseWeight);
+    const panicSellWeight = Number(profilePanicSellWeight);
+    const dipBuyWeight = Number(profileDipBuyWeight);
+    const aggressionMultiplier = Number(profileAggressionMultiplier);
+    const orderTtlMultiplier = Number(profileOrderTtlMultiplier);
+    const quantityMultiplier = Number(profileQuantityMultiplier);
+    const holdingPatienceWeight = Number(profileHoldingPatienceWeight);
+    const deepLossHoldWeight = Number(profileDeepLossHoldWeight);
+    const profitTakingWeight = Number(profileProfitTakingWeight);
+    const recurringDepositAmount = Number(profileRecurringDepositAmount);
+    const recurringDepositIntervalValue = Number(profileRecurringDepositIntervalValue);
+    if (!isRangeNumber(newsWeight, 0, 1) || !isRangeNumber(momentumWeight, 0, 1) || !isRangeNumber(contrarianWeight, 0, 1) || !isRangeNumber(lossAversionWeight, 0, 1) || !isRangeNumber(herdingWeight, 0, 1) || !isRangeNumber(marketMakingWeight, 0, 1) || !isRangeNumber(overconfidenceWeight, 0, 1) || !isRangeNumber(noiseWeight, 0, 1) || !isRangeNumber(panicSellWeight, 0, 1) || !isRangeNumber(dipBuyWeight, 0, 1) || !isRangeNumber(orderMultiplier, 0, 5) || !isRangeNumber(aggressionMultiplier, 0, 5) || !isRangeNumber(orderTtlMultiplier, 0.1, 10) || !isRangeNumber(quantityMultiplier, 0, 5) || !isRangeNumber(holdingPatienceWeight, 0, 1) || !isRangeNumber(deepLossHoldWeight, 0, 1) || !isRangeNumber(profitTakingWeight, 0, 1) || !isRangeNumber(recurringDepositAmount, 0, 1000000000000) || !isRangeNumber(recurringDepositIntervalValue, 0, 1000) || (recurringDepositAmount > 0 && recurringDepositIntervalValue <= 0)) {
+      setMessage("프로필 행동 설정 숫자 범위를 확인해 주세요.");
+      return;
+    }
+    setSavingProfileConfig(true);
+    try {
+      const token = await ensureAccessToken();
+      if (!token) {
+        setMessage("관리자 로그인 후 프로필 행동 설정을 저장할 수 있습니다.");
+        return;
+      }
+      const result = await updateAutoParticipantProfileConfig(token, editingProfileType, {
+        newsWeight,
+        momentumWeight,
+        contrarianWeight,
+        lossAversionWeight,
+        herdingWeight,
+        marketMakingWeight,
+        overconfidenceWeight,
+        noiseWeight,
+        panicSellWeight,
+        dipBuyWeight,
+        orderMultiplier,
+        aggressionMultiplier,
+        orderTtlMultiplier,
+        quantityMultiplier,
+        holdingPatienceWeight,
+        deepLossHoldWeight,
+        profitTakingWeight,
+        recurringDepositAmount,
+        recurringDepositIntervalValue,
+        recurringDepositIntervalUnit: profileRecurringDepositIntervalUnit,
+      });
+      if (!result.ok) {
+        setMessage(result.message ?? "프로필 행동 설정 저장에 실패했습니다.");
+        return;
+      }
+      setMessage("프로필 행동 설정을 저장했습니다.");
+      loadStatus();
+    } finally {
+      setSavingProfileConfig(false);
     }
   };
 
@@ -896,9 +1298,21 @@ export default function SupplyDemandAdminPage() {
   const orderBookConfigBySymbol = new Map((orderBookMarket?.configs ?? []).map((config) => [config.symbol, config]));
   const autoParticipantByUserKey = new Map((status?.participants ?? []).map((participant) => [participant.userKey, participant]));
   const autoConfigBySymbol = new Map((status?.configs ?? []).map((config) => [config.symbol, config]));
-  const selectedAutoParticipant = editingAutoParticipantUserKey ? autoParticipantByUserKey.get(editingAutoParticipantUserKey) : undefined;
   const isEditingAutoParticipant = editingAutoParticipantUserKey !== null;
   const selectedListingAutoAccount = status?.listingAutoAccounts.find((item) => item.symbol === listingAutoSymbol) ?? null;
+  const profileConfigs = status?.participantProfileConfigs ?? [];
+  const selectedProfileConfig = editingProfileType === null ? null : profileConfigs.find((config) => config.profileType === editingProfileType) ?? null;
+  const selectedProfileOption = selectedProfileConfig === null ? null : AUTO_PARTICIPANT_PROFILE_OPTIONS.find((profile) => profile.value === selectedProfileConfig.profileType) ?? null;
+  const batchRuntimeSummary = summarizeBatchRuntimeControls(batchJobRuntimeControls);
+
+  const selectProfileConfigByType = (profileType: string) => {
+    const config = profileConfigs.find((item) => item.profileType === profileType);
+    if (config) {
+      selectProfileConfigDraft(config);
+      return;
+    }
+    setEditingProfileType(null);
+  };
 
   if (adminStatus === "checking") {
     return (
@@ -957,7 +1371,144 @@ export default function SupplyDemandAdminPage() {
           <DarkMetric label="자동 참여자" value={status ? `${status.enabledParticipantCount}명` : "-"} />
         </div>
 
+        <section className="mt-5 rounded-lg border border-white/10 bg-white/[0.06] p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-base font-black">실제 유저 계좌 현금</h2>
+              <p className="mt-1 text-xs font-bold text-[#8b95a1]">자동참여자가 아닌 로그인 유저의 모의투자 계좌에 입금하거나 회수합니다.</p>
+            </div>
+            <span className="text-xs font-bold text-[#64a8ff]">stock_account_cash_flow 원장 기록</span>
+          </div>
+          <div className="mt-4 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_auto_auto]">
+            <DarkInput label="유저 식별키" value={userCashAdjustmentUserKey} onChange={setUserCashAdjustmentUserKey} placeholder="userKey" />
+            <DarkInput label="입금/회수 금액" value={userCashAdjustmentAmount} onChange={setUserCashAdjustmentAmount} placeholder="1000000" />
+            <button
+              type="button"
+              onClick={() => void adjustUserCashBalance("DEPOSIT")}
+              disabled={adjustingUserCashType !== null}
+              className="min-h-11 rounded-md bg-[#f04452] px-4 py-3 text-sm font-black text-white disabled:opacity-50"
+            >
+              {adjustingUserCashType === "DEPOSIT" ? "입금 중" : "입금"}
+            </button>
+            <button
+              type="button"
+              onClick={() => void adjustUserCashBalance("WITHDRAW")}
+              disabled={adjustingUserCashType !== null}
+              className="min-h-11 rounded-md bg-[#3182f6] px-4 py-3 text-sm font-black text-white disabled:opacity-50"
+            >
+              {adjustingUserCashType === "WITHDRAW" ? "회수 중" : "회수"}
+            </button>
+          </div>
+        </section>
+
         <AutoSignalGuide />
+
+        <section className="mt-5 rounded-lg border border-white/10 bg-white/[0.06] p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-base font-black">프로필 행동 설정</h2>
+              <p className="mt-1 text-xs font-bold text-[#8b95a1]">자동 참여자 심리 프로필별 주문 빈도, 호가 공격성, 주문 유지 시간, 수량, 보유 성향, 주기적 현금 유입을 조정합니다.</p>
+            </div>
+            <span className="text-xs font-bold text-[#64a8ff]">{status?.participantProfileConfigs.length ?? 0}개 프로필</span>
+          </div>
+          <div className="mt-4 grid min-w-0 gap-4 lg:grid-cols-[minmax(240px,320px)_minmax(0,1fr)]">
+            <div className="rounded-md border border-white/10 bg-black/15 p-3">
+              <DarkSelect label="프로필 선택" value={editingProfileType ?? ""} onChange={selectProfileConfigByType}>
+                <option value="">프로필을 선택하세요</option>
+                {profileConfigs.map((config) => (
+                  <option key={config.profileType} value={config.profileType}>
+                    {formatAutoParticipantProfile(config.profileType)}
+                  </option>
+                ))}
+              </DarkSelect>
+              <div className="mt-3 grid gap-2 text-xs font-bold text-[#8b95a1]">
+                <div className="flex items-center justify-between gap-3 rounded-md bg-white/[0.04] px-3 py-2">
+                  <span>전체 프로필</span>
+                  <span className="font-black text-white">{profileConfigs.length}개</span>
+                </div>
+                <div className="flex items-center justify-between gap-3 rounded-md bg-white/[0.04] px-3 py-2">
+                  <span>선택 상태</span>
+                  <span className="font-black text-[#64a8ff]">{selectedProfileConfig ? (selectedProfileConfig.customized ? "커스텀" : "기본값") : "미선택"}</span>
+                </div>
+	              </div>
+            </div>
+            {selectedProfileConfig ? (
+              <div className="min-w-0 rounded-md border border-white/10 bg-black/20 p-3">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-base font-black">{selectedProfileOption?.label ?? formatAutoParticipantProfile(selectedProfileConfig.profileType)}</p>
+                    <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">{selectedProfileOption?.description ?? formatAutoParticipantProfileDescription(selectedProfileConfig.profileType)}</p>
+                    <p className="mt-1 max-w-3xl text-xs font-bold leading-5 text-[#b8c2cc]">{selectedProfileOption?.behavior ?? formatAutoParticipantProfileBehavior(selectedProfileConfig.profileType)}</p>
+                  </div>
+                  <span className={["rounded-md px-2 py-1 text-xs font-black", selectedProfileConfig.customized ? "bg-[#19324a] text-[#64a8ff]" : "bg-white/10 text-[#b8c2cc]"].join(" ")}>
+                    {selectedProfileConfig.customized ? "커스텀" : "기본값"}
+                  </span>
+                </div>
+                <div className="mt-4 grid gap-2 text-xs font-bold text-[#b8c2cc] sm:grid-cols-2 lg:grid-cols-5">
+                  <ProfileMetric label="뉴스" value={formatNumber(selectedProfileConfig.newsWeight)} />
+                  <ProfileMetric label="추세" value={formatNumber(selectedProfileConfig.momentumWeight)} />
+                  <ProfileMetric label="역추세" value={formatNumber(selectedProfileConfig.contrarianWeight)} />
+                  <ProfileMetric label="손실" value={formatNumber(selectedProfileConfig.lossAversionWeight)} />
+                  <ProfileMetric label="군중" value={formatNumber(selectedProfileConfig.herdingWeight)} />
+                  <ProfileMetric label="조성" value={formatNumber(selectedProfileConfig.marketMakingWeight)} />
+                  <ProfileMetric label="과신" value={formatNumber(selectedProfileConfig.overconfidenceWeight)} />
+                  <ProfileMetric label="노이즈" value={formatNumber(selectedProfileConfig.noiseWeight)} />
+                  <ProfileMetric label="패닉" value={formatNumber(selectedProfileConfig.panicSellWeight)} />
+                  <ProfileMetric label="저가매수" value={formatNumber(selectedProfileConfig.dipBuyWeight)} />
+                  <ProfileMetric label="주문 빈도" value={`${formatNumber(selectedProfileConfig.orderMultiplier)}배`} />
+                  <ProfileMetric label="호가 공격성" value={`${formatNumber(selectedProfileConfig.aggressionMultiplier)}배`} />
+                  <ProfileMetric label="TTL" value={`${formatNumber(selectedProfileConfig.orderTtlMultiplier)}배`} />
+                  <ProfileMetric label="수량" value={`${formatNumber(selectedProfileConfig.quantityMultiplier)}배`} />
+                  <ProfileMetric label="익절" value={formatNumber(selectedProfileConfig.profitTakingWeight)} />
+                  <ProfileMetric label="보유 인내" value={formatNumber(selectedProfileConfig.holdingPatienceWeight)} />
+	                  <ProfileMetric label="손실 보유" value={formatNumber(selectedProfileConfig.deepLossHoldWeight)} />
+	                  <ProfileMetric label="주기 입금" value={formatWon(selectedProfileConfig.recurringDepositAmount)} />
+	                  <ProfileMetric label="입금 주기" value={`${formatNumber(selectedProfileConfig.recurringDepositIntervalValue)}${formatRecurringCashIntervalUnit(selectedProfileConfig.recurringDepositIntervalUnit)}`} />
+	                  <ProfileMetric label="수정일" value={selectedProfileConfig.updatedAt ? selectedProfileConfig.updatedAt.slice(0, 10) : "-"} />
+                </div>
+                <div className="mt-4 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                  <DarkInput label="뉴스 민감(0-1)" value={profileNewsWeight} onChange={setProfileNewsWeight} placeholder="0.6" />
+                  <DarkInput label="추세 추종(0-1)" value={profileMomentumWeight} onChange={setProfileMomentumWeight} placeholder="0.6" />
+                  <DarkInput label="역추세(0-1)" value={profileContrarianWeight} onChange={setProfileContrarianWeight} placeholder="0.6" />
+                  <DarkInput label="손실 회피(0-1)" value={profileLossAversionWeight} onChange={setProfileLossAversionWeight} placeholder="0.7" />
+                  <DarkInput label="군중 추종(0-1)" value={profileHerdingWeight} onChange={setProfileHerdingWeight} placeholder="0.6" />
+                  <DarkInput label="시장 조성(0-1)" value={profileMarketMakingWeight} onChange={setProfileMarketMakingWeight} placeholder="0.9" />
+                  <DarkInput label="과신(0-1)" value={profileOverconfidenceWeight} onChange={setProfileOverconfidenceWeight} placeholder="0.6" />
+                  <DarkInput label="노이즈(0-1)" value={profileNoiseWeight} onChange={setProfileNoiseWeight} placeholder="0.8" />
+                  <DarkInput label="패닉 매도(0-1)" value={profilePanicSellWeight} onChange={setProfilePanicSellWeight} placeholder="0.5" />
+                  <DarkInput label="저가 매수(0-1)" value={profileDipBuyWeight} onChange={setProfileDipBuyWeight} placeholder="0.5" />
+                  <DarkInput label="주문 빈도(0-5)" value={profileOrderMultiplier} onChange={setProfileOrderMultiplier} placeholder="1" />
+                  <DarkInput label="호가 공격성(0-5)" value={profileAggressionMultiplier} onChange={setProfileAggressionMultiplier} placeholder="1" />
+                  <DarkInput label="TTL 배율(0.1-10)" value={profileOrderTtlMultiplier} onChange={setProfileOrderTtlMultiplier} placeholder="1" />
+                  <DarkInput label="수량 배율(0-5)" value={profileQuantityMultiplier} onChange={setProfileQuantityMultiplier} placeholder="1" />
+                  <DarkInput label="보유 인내(0-1)" value={profileHoldingPatienceWeight} onChange={setProfileHoldingPatienceWeight} placeholder="0.5" />
+	                  <DarkInput label="손실 보유(0-1)" value={profileDeepLossHoldWeight} onChange={setProfileDeepLossHoldWeight} placeholder="0.5" />
+	                  <DarkInput label="익절 성향(0-1)" value={profileProfitTakingWeight} onChange={setProfileProfitTakingWeight} placeholder="0.8" />
+	                  <DarkInput label="주기 입금" value={profileRecurringDepositAmount} onChange={setProfileRecurringDepositAmount} placeholder="300000" />
+	                  <DarkInput label="입금 주기 값" value={profileRecurringDepositIntervalValue} onChange={setProfileRecurringDepositIntervalValue} placeholder="30" />
+	                  <DarkSelect label="입금 주기 단위" value={profileRecurringDepositIntervalUnit} onChange={(value) => setProfileRecurringDepositIntervalUnit(value as RecurringCashIntervalUnit)}>
+	                    {RECURRING_CASH_INTERVAL_UNIT_OPTIONS.map((option) => (
+	                      <option key={option.value} value={option.value}>{option.label}</option>
+	                    ))}
+	                  </DarkSelect>
+	                  <div className="grid grid-cols-2 gap-2 self-end lg:col-span-2">
+                    <button type="button" onClick={submitProfileConfig} disabled={savingProfileConfig} className="min-h-11 rounded-md bg-white px-3 py-3 text-sm font-black text-[#101418] disabled:opacity-50">
+                      {savingProfileConfig ? "저장 중" : "저장"}
+                    </button>
+                    <button type="button" onClick={() => setEditingProfileType(null)} className="min-h-11 rounded-md bg-white/10 px-3 py-3 text-sm font-black text-white">
+                      선택 해제
+                    </button>
+                  </div>
+                </div>
+                <p className="mt-2 text-xs font-bold text-[#8b95a1]">심리 행동 가중치는 0-1 사이이며 실제 매수/매도 판단 방향에 직접 들어갑니다. 주문 빈도, 호가 공격성, TTL, 수량은 행동 결과의 빈도와 크기를 조정하고, 주기 입금은 외부 현금 유입을 시뮬레이션합니다.</p>
+              </div>
+            ) : (
+              <div className="grid min-h-[220px] place-items-center rounded-md border border-dashed border-white/15 bg-black/15 px-4 py-8 text-center">
+                <p className="text-sm font-bold text-[#8b95a1]">수정할 프로필을 하나 선택하세요.</p>
+              </div>
+            )}
+          </div>
+        </section>
 
         <section className="mt-5 rounded-lg border border-white/10 bg-white/[0.06] p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -1007,25 +1558,50 @@ export default function SupplyDemandAdminPage() {
               </thead>
               <tbody className="divide-y divide-white/10">
                 {(status?.configs ?? []).map((config) => (
-                  <tr key={config.symbol}>
-                    <td className="px-3 py-2 font-black">{config.symbol}</td>
-                    <td className="px-3 py-2">
-                      <EnabledToggleButton
-                        enabled={config.enabled}
-                        disabled={togglingAutoConfigSymbol === config.symbol}
-                        onToggle={() => void toggleAutoConfigEnabled(config)}
-                      />
-                    </td>
-                    <td className="px-3 py-2">{formatAutoIntensityDirection(config.intensity)}</td>
-                    <td className="px-3 py-2 tabular-nums">{config.intensity}/10</td>
-                    <td className="px-3 py-2 tabular-nums">{config.maxOrderQuantity}주</td>
-                    <td className="px-3 py-2 tabular-nums">{config.orderTtlSeconds}초</td>
-                    <td className="px-3 py-2">
-                      <button type="button" onClick={() => selectAutoConfigDraft(config)} className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-white">
-                        선택
-                      </button>
-                    </td>
-                  </tr>
+                  <Fragment key={config.symbol}>
+                    <tr>
+                      <td className="px-3 py-2 font-black">{config.symbol}</td>
+                      <td className="px-3 py-2">
+                        <EnabledToggleButton
+                          enabled={config.enabled}
+                          disabled={togglingAutoConfigSymbol === config.symbol}
+                          onToggle={() => void toggleAutoConfigEnabled(config)}
+                        />
+                      </td>
+                      <td className="px-3 py-2">{formatAutoIntensityDirection(config.intensity)}</td>
+                      <td className="px-3 py-2 tabular-nums">{config.intensity}/10</td>
+                      <td className="px-3 py-2 tabular-nums">{config.maxOrderQuantity}주</td>
+                      <td className="px-3 py-2 tabular-nums">{config.orderTtlSeconds}초</td>
+                      <td className="px-3 py-2">
+                        <button type="button" onClick={() => selectAutoConfigDraft(config)} className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-white">
+                          수정
+                        </button>
+                      </td>
+                    </tr>
+                    {editingAutoConfigSymbol === config.symbol ? (
+                      <tr>
+                        <td colSpan={7} className="bg-black/20 px-3 py-3">
+                          <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[0.9fr_0.9fr_0.9fr_auto_auto]">
+                            <DarkSelect label="자동장" value={autoConfigEnabled ? "true" : "false"} onChange={(value) => setAutoConfigEnabled(value === "true")}>
+                              <option value="true">가동</option>
+                              <option value="false">정지</option>
+                            </DarkSelect>
+                            <DarkInput label="강도(1-10)" value={autoIntensity} onChange={setAutoIntensity} placeholder="10" />
+                            <DarkInput label="최대 수량" value={autoMaxOrderQuantity} onChange={setAutoMaxOrderQuantity} placeholder="4" />
+                            <DarkInput label="호가 TTL(초)" value={autoOrderTtlSeconds} onChange={setAutoOrderTtlSeconds} placeholder="15" />
+                            <div className="grid grid-cols-2 gap-2 self-end">
+                              <button type="button" onClick={submitAutoConfig} disabled={updatingAutoConfig} className="min-h-11 rounded-md bg-white px-3 py-3 text-sm font-black text-[#101418] disabled:opacity-50">
+                                {updatingAutoConfig ? "저장 중" : "저장"}
+                              </button>
+                              <button type="button" onClick={() => setEditingAutoConfigSymbol(null)} className="min-h-11 rounded-md bg-white/10 px-3 py-3 text-sm font-black text-white">
+                                닫기
+                              </button>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : null}
+                  </Fragment>
                 ))}
                 {(status?.configs ?? []).length === 0 ? (
                   <tr>
@@ -1107,36 +1683,66 @@ export default function SupplyDemandAdminPage() {
               </thead>
               <tbody className="divide-y divide-white/10">
                 {(status?.listingAutoAccounts ?? []).map((config) => (
-                  <tr key={config.symbol}>
-                    <td className="px-3 py-2 font-black">{config.symbol}</td>
-                    <td className="px-3 py-2">
-                      <p className="font-black">{config.displayName}</p>
-                      <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">{config.userKey}</p>
-                      <p className="mt-0.5 text-xs font-bold text-[#5f6b76]">계좌 ID {config.accountId ?? "-"}</p>
-                    </td>
-                    <td className="px-3 py-2">{config.enabled ? "가동" : "정지"}</td>
-                    <td className="px-3 py-2 tabular-nums">
-                      <p className="font-black">{formatNumber(config.holdingQuantity)}주</p>
-                      <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">예약 {formatNumber(config.reservedQuantity)}주</p>
-                    </td>
-                    <td className="px-3 py-2 tabular-nums">{formatNumber(config.availableQuantity)}주</td>
-                    <td className="px-3 py-2 tabular-nums">{formatWon(config.cashBalance)}</td>
-                    <td className="px-3 py-2 tabular-nums">
-                      <p className="font-black">{formatWon(config.marketValue)}</p>
-                      <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">현재가 {formatWon(config.currentPrice)}</p>
-                    </td>
-                    <td className="px-3 py-2">
-                      <p className="font-black">{formatListingAutoPosition(config.positionSide)}</p>
-                      <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">
-                        최대 {formatNumber(config.maxOrderQuantity)}주 · {config.orderTtlSeconds}초 · {config.priceOffsetTicks}틱
-                      </p>
-                    </td>
-                    <td className="px-3 py-2">
-                      <button type="button" onClick={() => selectListingAutoAccountDraft(config)} className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-white">
-                        선택
-                      </button>
-                    </td>
-                  </tr>
+                  <Fragment key={config.symbol}>
+                    <tr>
+                      <td className="px-3 py-2 font-black">{config.symbol}</td>
+                      <td className="px-3 py-2">
+                        <p className="font-black">{config.displayName}</p>
+                        <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">{config.userKey}</p>
+                        <p className="mt-0.5 text-xs font-bold text-[#5f6b76]">계좌 ID {config.accountId ?? "-"}</p>
+                      </td>
+                      <td className="px-3 py-2">{config.enabled ? "가동" : "정지"}</td>
+                      <td className="px-3 py-2 tabular-nums">
+                        <p className="font-black">{formatNumber(config.holdingQuantity)}주</p>
+                        <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">예약 {formatNumber(config.reservedQuantity)}주</p>
+                      </td>
+                      <td className="px-3 py-2 tabular-nums">{formatNumber(config.availableQuantity)}주</td>
+                      <td className="px-3 py-2 tabular-nums">{formatWon(config.cashBalance)}</td>
+                      <td className="px-3 py-2 tabular-nums">
+                        <p className="font-black">{formatWon(config.marketValue)}</p>
+                        <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">현재가 {formatWon(config.currentPrice)}</p>
+                      </td>
+                      <td className="px-3 py-2">
+                        <p className="font-black">{formatListingAutoPosition(config.positionSide)}</p>
+                        <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">
+                          최대 {formatNumber(config.maxOrderQuantity)}주 · {config.orderTtlSeconds}초 · {config.priceOffsetTicks}틱
+                        </p>
+                      </td>
+                      <td className="px-3 py-2">
+                        <button type="button" onClick={() => selectListingAutoAccountDraft(config)} className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-white">
+                          수정
+                        </button>
+                      </td>
+                    </tr>
+                    {editingListingAutoSymbol === config.symbol ? (
+                      <tr>
+                        <td colSpan={9} className="bg-black/20 px-3 py-3">
+                          <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[1.4fr_0.8fr_0.9fr_0.8fr_0.8fr_0.8fr_auto]">
+                            <DarkInput label="표시명" value={listingAutoDisplayName} onChange={setListingAutoDisplayName} placeholder="상장주관사" />
+                            <DarkSelect label="상태" value={listingAutoEnabled ? "true" : "false"} onChange={(value) => setListingAutoEnabled(value === "true")}>
+                              <option value="true">가동</option>
+                              <option value="false">정지</option>
+                            </DarkSelect>
+                            <DarkSelect label="포지션" value={listingAutoPositionSide} onChange={(value) => setListingAutoPositionSide(value as ListingAutoPosition)}>
+                              <option value="SELL_ONLY">매도 전용</option>
+                              <option value="BUY_ONLY">매수 전용</option>
+                            </DarkSelect>
+                            <DarkInput label="최대 수량" value={listingAutoMaxOrderQuantity} onChange={setListingAutoMaxOrderQuantity} placeholder="100" />
+                            <DarkInput label="TTL(초)" value={listingAutoOrderTtlSeconds} onChange={setListingAutoOrderTtlSeconds} placeholder="30" />
+                            <DarkInput label="분산 틱" value={listingAutoPriceOffsetTicks} onChange={setListingAutoPriceOffsetTicks} placeholder="3" />
+                            <div className="grid grid-cols-2 gap-2 self-end">
+                              <button type="button" onClick={submitListingAutoAccountConfig} disabled={updatingListingAutoAccount} className="min-h-11 rounded-md bg-white px-3 py-3 text-sm font-black text-[#101418] disabled:opacity-50">
+                                {updatingListingAutoAccount ? "저장 중" : "저장"}
+                              </button>
+                              <button type="button" onClick={() => setEditingListingAutoSymbol(null)} className="min-h-11 rounded-md bg-white/10 px-3 py-3 text-sm font-black text-white">
+                                닫기
+                              </button>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : null}
+                  </Fragment>
                 ))}
                 {(status?.listingAutoAccounts ?? []).length === 0 ? (
                   <tr>
@@ -1201,28 +1807,58 @@ export default function SupplyDemandAdminPage() {
               <tbody className="divide-y divide-white/10">
                 {(status?.participantSymbolConfigs ?? []).map((config) => {
                   const participant = autoParticipantByUserKey.get(config.userKey);
+                  const rowKey = `${config.userKey}:${config.symbol}`;
                   return (
-                    <tr key={`${config.userKey}:${config.symbol}`}>
-                      <td className="px-3 py-2">
-                        <p className="font-black">{participant?.displayName ?? config.userKey}</p>
-                        <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">{config.userKey}</p>
-                      </td>
-                      <td className="px-3 py-2 font-black">{config.symbol}</td>
-                      <td className="px-3 py-2">
-                        <EnabledToggleButton
-                          enabled={config.enabled}
-                          disabled={togglingStrategyKey === `${config.userKey}:${config.symbol}`}
-                          onToggle={() => void toggleAutoStrategyEnabled(config)}
-                      />
-                      </td>
-                      <td className="px-3 py-2">{formatAutoIntensityDirection(config.intensity)}</td>
-                      <td className="px-3 py-2 tabular-nums">{config.intensity}/10</td>
-                      <td className="px-3 py-2">
-                        <button type="button" onClick={() => selectAutoStrategyDraft(config)} className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-white">
-                          선택
-                        </button>
-                      </td>
-                    </tr>
+                    <Fragment key={rowKey}>
+                      <tr>
+                        <td className="px-3 py-2">
+                          <p className="font-black">{participant?.displayName ?? config.userKey}</p>
+                          <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">{config.userKey}</p>
+                        </td>
+                        <td className="px-3 py-2 font-black">{config.symbol}</td>
+                        <td className="px-3 py-2">
+                          <EnabledToggleButton
+                            enabled={config.enabled}
+                            disabled={togglingStrategyKey === rowKey}
+                            onToggle={() => void toggleAutoStrategyEnabled(config)}
+                          />
+                        </td>
+                        <td className="px-3 py-2">{formatAutoIntensityDirection(config.intensity)}</td>
+                        <td className="px-3 py-2 tabular-nums">{config.intensity}/10</td>
+                        <td className="px-3 py-2">
+                          <button type="button" onClick={() => selectAutoStrategyDraft(config)} className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-white">
+                            수정
+                          </button>
+                        </td>
+                      </tr>
+                      {editingStrategyKey === rowKey ? (
+                        <tr>
+                          <td colSpan={6} className="bg-black/20 px-3 py-3">
+                            <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_0.8fr_0.8fr_auto]">
+                              <DarkSelect label="전략" value={strategyEnabled ? "true" : "false"} onChange={(value) => setStrategyEnabled(value === "true")}>
+                                <option value="true">가동</option>
+                                <option value="false">정지</option>
+                              </DarkSelect>
+                              <DarkInput label="강도(1-10)" value={strategyIntensity} onChange={setStrategyIntensity} placeholder="10" />
+                              <div className="grid gap-1 text-xs font-bold text-[#b8c2cc]">
+                                대상
+                                <div className="rounded-md border border-white/10 bg-[#161b21] px-3 py-3 text-sm font-black text-white">
+                                  {participant?.displayName ?? config.userKey} · {config.symbol}
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2 self-end">
+                                <button type="button" onClick={submitAutoStrategy} disabled={savingStrategy} className="min-h-11 rounded-md bg-white px-3 py-3 text-sm font-black text-[#101418] disabled:opacity-50">
+                                  {savingStrategy ? "저장 중" : "저장"}
+                                </button>
+                                <button type="button" onClick={() => setEditingStrategyKey(null)} className="min-h-11 rounded-md bg-white/10 px-3 py-3 text-sm font-black text-white">
+                                  닫기
+                                </button>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      ) : null}
+                    </Fragment>
                   );
                 })}
                 {(status?.participantSymbolConfigs ?? []).length === 0 ? (
@@ -1233,6 +1869,64 @@ export default function SupplyDemandAdminPage() {
               </tbody>
             </table>
           </div>
+        </section>
+
+        <section className="mt-5 rounded-lg border border-white/10 bg-white/[0.06] p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-base font-black">배치 자동 실행 제어</h2>
+              <p className="mt-1 text-xs font-bold leading-5 text-[#8b95a1]">
+                배치 서버는 실행 직전에 DB 런타임 값을 읽습니다. 스케줄러 설정은 서버 설정값이고, DB 런타임은 운영 중 중지/재개 값입니다.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void loadBatchJobRuntimeControls(true)}
+              disabled={loadingBatchJobRuntimeControls}
+              className="inline-flex min-h-10 items-center justify-center rounded-md border border-white/10 bg-white/10 px-3 py-2 text-xs font-black text-white disabled:cursor-wait disabled:opacity-55"
+            >
+              {loadingBatchJobRuntimeControls ? "조회 중" : "전체 상태 새로고침"}
+            </button>
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <BatchRuntimeMetric label="전체 배치" value={`${batchRuntimeSummary.total.toLocaleString("ko-KR")}개`} tone="neutral" />
+            <BatchRuntimeMetric label="자동 실행" value={`${batchRuntimeSummary.effective.toLocaleString("ko-KR")}개`} tone="good" />
+            <BatchRuntimeMetric label="DB 중지" value={`${batchRuntimeSummary.runtimeOff.toLocaleString("ko-KR")}개`} tone="danger" />
+            <BatchRuntimeMetric label="설정 OFF" value={`${batchRuntimeSummary.schedulerOff.toLocaleString("ko-KR")}개`} tone="muted" />
+          </div>
+
+          {batchJobRuntimeControls.length > 0 ? (
+            <div className="mt-4 grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-2">
+              {batchJobRuntimeControls.map((control) => {
+                const label = BATCH_JOB_RUNTIME_LABELS[control.jobName] ?? { label: control.jobName, description: "등록된 배치 자동 실행 제어입니다." };
+                const updating = updatingBatchJobName === control.jobName;
+                return (
+                  <BatchRuntimeControlCard
+                    key={control.jobName}
+                    control={control}
+                    label={label.label}
+                    description={label.description}
+                    updating={updating}
+                    onStart={() => void setBatchJobRuntime(control.jobName, true)}
+                    onStop={() => void setBatchJobRuntime(control.jobName, false)}
+                    manualAction={control.jobName === "auto-participant-cash-flow" ? {
+                      label: "수동 월급 지급",
+                      busyLabel: "지급 실행 중",
+                      description: "자동 실행이 중지되어 있어도 관리자가 명시적으로 한 번 지급할 때 사용합니다. 대상은 가동 자동참여자와 ACTIVE 계좌입니다.",
+                      running: runningCashFlow,
+                      resultText: lastCashFlowRun ? `${lastCashFlowRun.status} · ${lastCashFlowRun.processedCount.toLocaleString("ko-KR")}건` : "-",
+                      onRun: () => void runAutoParticipantCashFlowNow(),
+                    } : undefined}
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            <div className="mt-4 rounded-md border border-white/10 bg-black/20 p-4 text-sm font-bold leading-6 text-[#8b95a1]">
+              배치 자동 실행 상태를 아직 조회하지 않았습니다. 배치 서버가 켜져 있으면 전체 상태 새로고침으로 현재 스케줄러 설정과 DB 런타임 값을 확인할 수 있습니다.
+            </div>
+          )}
         </section>
 
         <section className="mt-5 rounded-lg border border-white/10 bg-white/[0.06] p-4">
@@ -1254,7 +1948,7 @@ export default function SupplyDemandAdminPage() {
               <span className="text-xs font-bold text-[#64a8ff]">{status?.participants.length ?? 0}명 등록</span>
             </div>
           </div>
-          <div className="mt-4 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[1.1fr_1.2fr_1.1fr_0.8fr_auto]">
+          <div className="mt-4 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[1.1fr_1.2fr_1.1fr_0.8fr_0.9fr_0.75fr_0.75fr_auto]">
             <DarkInput label="참여자 키" value={autoParticipantUserKey} onChange={setAutoParticipantUserKey} placeholder="stock-auto-001" disabled={isEditingAutoParticipant} />
             <DarkInput label="표시명" value={autoParticipantDisplayName} onChange={setAutoParticipantDisplayName} placeholder="자동 참여자 1" />
             <DarkSelect label="심리 프로필" value={autoParticipantProfileType} onChange={(value) => setAutoParticipantProfileType(value as AutoParticipantProfileType)}>
@@ -1266,51 +1960,71 @@ export default function SupplyDemandAdminPage() {
               <option value="true">가동</option>
               <option value="false">정지</option>
             </DarkSelect>
+            <DarkInput label="개별 월급/현금" value={autoParticipantRecurringCashAmount} onChange={setAutoParticipantRecurringCashAmount} placeholder="비우면 프로필" />
+            <DarkInput label="주기 값" value={autoParticipantRecurringCashIntervalValue} onChange={setAutoParticipantRecurringCashIntervalValue} placeholder="0.5" />
+            <DarkSelect label="주기 단위" value={autoParticipantRecurringCashIntervalUnit} onChange={(value) => setAutoParticipantRecurringCashIntervalUnit(value as RecurringCashIntervalUnit)}>
+              {RECURRING_CASH_INTERVAL_UNIT_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </DarkSelect>
             <button type="button" onClick={submitAutoParticipant} disabled={savingAutoParticipant} className="min-h-11 min-w-0 self-end rounded-md bg-white px-3 py-3 text-sm font-black text-[#101418] disabled:opacity-50 sm:col-span-2 lg:col-span-1">
               {savingAutoParticipant ? "저장 중" : isEditingAutoParticipant ? "상태 저장" : "등록"}
             </button>
           </div>
-          {selectedAutoParticipant ? (
-            <div className="mt-4 grid min-w-0 grid-cols-1 gap-3 rounded-lg border border-[#3182f6]/20 bg-[#10233a] p-3 sm:grid-cols-[1.2fr_1fr_auto_auto]">
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-xs font-bold text-[#8b95a1]">선택 참여자 실제 계좌</p>
-                  <button type="button" onClick={resetAutoParticipantDraft} className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-white">
-                    신규 등록으로 전환
-                  </button>
-                </div>
-                <p className="mt-1 break-all text-sm font-black text-white">{selectedAutoParticipant.displayName} · {selectedAutoParticipant.userKey}</p>
-                <p className="mt-1 text-xs font-bold text-[#b8c2cc]">
-                  {formatAutoParticipantProfile(selectedAutoParticipant.profileType)} · 현재 현금 {selectedAutoParticipant.cashBalance == null ? "계좌 미개설" : formatWon(selectedAutoParticipant.cashBalance)}
-                </p>
+          <div className="mt-3 rounded-md bg-black/20 px-3 py-3 text-xs font-bold leading-5 text-[#b8c2cc]">
+            <span className="text-white">{formatAutoParticipantProfile(autoParticipantProfileType)}</span>
+            <span className="mx-2 text-[#5a6572]">/</span>
+            <span>{formatAutoParticipantProfileDescription(autoParticipantProfileType)}</span>
+            <span className="mx-2 text-[#5a6572]">/</span>
+            <span>{formatAutoParticipantProfileBehavior(autoParticipantProfileType)}</span>
+          </div>
+	          {!isEditingAutoParticipant ? (
+	            <div className="mt-4 rounded-lg border border-white/10 bg-black/20 p-3">
+	              <div className="flex flex-wrap items-start justify-between gap-3">
+	                <div>
+	                  <p className="text-sm font-black text-white">자동 생성</p>
+	                  <p className="mt-1 text-xs font-bold text-[#8b95a1]">다음 번호부터 참여자를 여러 명 만들고, 심리 프로필을 순서대로 분산하거나 하나의 프로필로 고정합니다.</p>
+	                </div>
+	                <span className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-[#64a8ff]">계좌/현금은 기존 흐름 유지</span>
+	              </div>
+	              <div className="mt-3 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[0.7fr_1fr_1fr_0.9fr_1.2fr_auto]">
+	                <DarkInput label="생성 인원" value={autoGenerateCount} onChange={setAutoGenerateCount} placeholder="5" />
+	                <DarkInput label="키 접두어" value={autoGenerateKeyPrefix} onChange={setAutoGenerateKeyPrefix} placeholder="stock-auto-" />
+	                <DarkInput label="표시명 접두어" value={autoGenerateDisplayPrefix} onChange={setAutoGenerateDisplayPrefix} placeholder="자동 참여자" />
+	                <DarkSelect label="프로필 적용" value={autoGenerateProfileMode} onChange={(value) => setAutoGenerateProfileMode(value as "ROTATE" | "SINGLE")}>
+	                  <option value="ROTATE">순서 분산</option>
+	                  <option value="SINGLE">단일 프로필</option>
+	                </DarkSelect>
+	                <DarkSelect
+	                  label="단일 프로필"
+	                  value={autoGenerateProfileType}
+	                  onChange={(value) => setAutoGenerateProfileType(value as AutoParticipantProfileType)}
+	                  disabled={autoGenerateProfileMode !== "SINGLE"}
+	                >
+	                  {AUTO_PARTICIPANT_PROFILE_OPTIONS.map((profile) => (
+	                    <option key={profile.value} value={profile.value}>{profile.label}</option>
+	                  ))}
+	                </DarkSelect>
+	                <button
+	                  type="button"
+	                  onClick={() => void generateAutoParticipants()}
+	                  disabled={generatingAutoParticipants || savingAutoParticipant}
+	                  className="min-h-11 self-end rounded-md bg-[#3182f6] px-3 py-3 text-sm font-black text-white disabled:cursor-wait disabled:opacity-55 sm:col-span-2 lg:col-span-1"
+	                >
+	                  {generatingAutoParticipants ? "생성 중" : "자동 등록"}
+	                </button>
               </div>
-              <DarkInput label="입금/회수 금액" value={cashAdjustmentAmount} onChange={setCashAdjustmentAmount} placeholder="1000000" />
-              <button
-                type="button"
-                onClick={() => void adjustAutoParticipantCashBalance("DEPOSIT")}
-                disabled={Boolean(adjustingCashType)}
-                className="min-h-11 self-end rounded-md bg-[#3182f6] px-3 py-3 text-sm font-black text-white disabled:cursor-wait disabled:opacity-55"
-              >
-                {adjustingCashType === "DEPOSIT" ? "입금 중" : "입금"}
-              </button>
-              <button
-                type="button"
-                onClick={() => void adjustAutoParticipantCashBalance("WITHDRAW")}
-                disabled={Boolean(adjustingCashType)}
-                className="min-h-11 self-end rounded-md bg-[#3a1f1b] px-3 py-3 text-sm font-black text-[#ffb4a8] disabled:cursor-wait disabled:opacity-55"
-              >
-                {adjustingCashType === "WITHDRAW" ? "회수 중" : "회수"}
-              </button>
             </div>
           ) : null}
           <div className="mt-4 overflow-x-auto rounded-md border border-white/10">
-            <table className="min-w-[980px] w-full border-collapse text-sm">
+            <table className="min-w-[1120px] w-full border-collapse text-sm">
               <thead className="bg-white/10 text-left text-[#b8c2cc]">
                 <tr>
                   <th className="px-3 py-2">참여자</th>
-                  <th className="px-3 py-2">프로필</th>
-                  <th className="px-3 py-2">상태</th>
-                  <th className="px-3 py-2">현재 현금</th>
+	                  <th className="px-3 py-2">프로필</th>
+	                  <th className="px-3 py-2">상태</th>
+	                  <th className="px-3 py-2">개별 월급/현금</th>
+	                  <th className="px-3 py-2">현재 현금</th>
                   <th className="px-3 py-2">수정일</th>
                   <th className="px-3 py-2">수정</th>
                   <th className="px-3 py-2">탈퇴</th>
@@ -1318,40 +2032,103 @@ export default function SupplyDemandAdminPage() {
               </thead>
               <tbody className="divide-y divide-white/10">
                 {(status?.participants ?? []).map((participant) => (
-                  <tr key={participant.userKey}>
-                    <td className="px-3 py-2">
-                      <p className="font-black">{participant.displayName}</p>
-                      <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">{participant.userKey}</p>
-                    </td>
-                    <td className="px-3 py-2">
-                      <p className="font-black">{formatAutoParticipantProfile(participant.profileType)}</p>
-                      <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">{formatAutoParticipantProfileDescription(participant.profileType)}</p>
-                    </td>
-                    <td className="px-3 py-2">
-                      <EnabledToggleButton
-                        enabled={participant.enabled}
-                        disabled={togglingAutoParticipantUserKey === participant.userKey}
-                        onToggle={() => void toggleAutoParticipantEnabled(participant)}
-                      />
-                    </td>
-                    <td className="px-3 py-2 tabular-nums">{participant.cashBalance == null ? "계좌 미개설" : formatWon(participant.cashBalance)}</td>
-                    <td className="px-3 py-2 text-[#b8c2cc]">{formatDateTime(participant.updatedAt)}</td>
-                    <td className="px-3 py-2">
-                      <button type="button" onClick={() => selectAutoParticipantDraft(participant)} className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-white">
-                        선택
-                      </button>
-                    </td>
-                    <td className="px-3 py-2">
-                      <button
-                        type="button"
-                        onClick={() => void withdrawAutoParticipantRow(participant)}
-                        disabled={withdrawingAutoParticipantUserKey === participant.userKey}
-                        className="rounded-md bg-[#3a1f1b] px-2 py-1 text-xs font-black text-[#ffb4a8] disabled:cursor-wait disabled:opacity-55"
-                      >
-                        {withdrawingAutoParticipantUserKey === participant.userKey ? "처리 중" : "탈퇴"}
-                      </button>
-                    </td>
-                  </tr>
+                  <Fragment key={participant.userKey}>
+                    <tr>
+                      <td className="px-3 py-2">
+                        <p className="font-black">{participant.displayName}</p>
+                        <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">{participant.userKey}</p>
+                      </td>
+                      <td className="px-3 py-2">
+                        <p className="font-black">{formatAutoParticipantProfile(participant.profileType)}</p>
+                        <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">{formatAutoParticipantProfileDescription(participant.profileType)}</p>
+                        <p className="mt-1 max-w-[340px] text-xs font-bold leading-5 text-[#b8c2cc]">{formatAutoParticipantProfileBehavior(participant.profileType)}</p>
+                      </td>
+                      <td className="px-3 py-2">
+                        <EnabledToggleButton
+                          enabled={participant.enabled}
+                          disabled={togglingAutoParticipantUserKey === participant.userKey}
+                          onToggle={() => void toggleAutoParticipantEnabled(participant)}
+	                        />
+	                      </td>
+	                      <td className="px-3 py-2 text-[#b8c2cc]">{formatParticipantRecurringCash(participant)}</td>
+	                      <td className="px-3 py-2 tabular-nums">{participant.cashBalance == null ? "계좌 미개설" : formatWon(participant.cashBalance)}</td>
+                      <td className="px-3 py-2 text-[#b8c2cc]">{formatDateTime(participant.updatedAt)}</td>
+                      <td className="px-3 py-2">
+                        <button type="button" onClick={() => selectAutoParticipantDraft(participant)} className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-white">
+                          수정
+                        </button>
+                      </td>
+                      <td className="px-3 py-2">
+                        <button
+                          type="button"
+                          onClick={() => void withdrawAutoParticipantRow(participant)}
+                          disabled={withdrawingAutoParticipantUserKey === participant.userKey}
+                          className="rounded-md bg-[#3a1f1b] px-2 py-1 text-xs font-black text-[#ffb4a8] disabled:cursor-wait disabled:opacity-55"
+                        >
+                          {withdrawingAutoParticipantUserKey === participant.userKey ? "처리 중" : "탈퇴"}
+                        </button>
+                      </td>
+                    </tr>
+                    {editingAutoParticipantUserKey === participant.userKey ? (
+                      <tr>
+	                        <td colSpan={8} className="bg-black/20 px-3 py-3">
+	                          <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[1.2fr_1.1fr_0.8fr_0.9fr_0.75fr_0.75fr_auto]">
+	                            <DarkInput label="표시명" value={autoParticipantDisplayName} onChange={setAutoParticipantDisplayName} placeholder="자동 참여자 1" />
+	                            <DarkSelect label="심리 프로필" value={autoParticipantProfileType} onChange={(value) => setAutoParticipantProfileType(value as AutoParticipantProfileType)}>
+                              {AUTO_PARTICIPANT_PROFILE_OPTIONS.map((profile) => (
+                                <option key={profile.value} value={profile.value}>{profile.label}</option>
+                              ))}
+                            </DarkSelect>
+                            <DarkSelect label="상태" value={autoParticipantEnabled ? "true" : "false"} onChange={(value) => setAutoParticipantEnabled(value === "true")}>
+	                              <option value="true">가동</option>
+	                              <option value="false">정지</option>
+	                            </DarkSelect>
+	                            <DarkInput label="개별 월급/현금" value={autoParticipantRecurringCashAmount} onChange={setAutoParticipantRecurringCashAmount} placeholder="비우면 프로필" />
+	                            <DarkInput label="주기 값" value={autoParticipantRecurringCashIntervalValue} onChange={setAutoParticipantRecurringCashIntervalValue} placeholder="0.5" />
+	                            <DarkSelect label="주기 단위" value={autoParticipantRecurringCashIntervalUnit} onChange={(value) => setAutoParticipantRecurringCashIntervalUnit(value as RecurringCashIntervalUnit)}>
+	                              {RECURRING_CASH_INTERVAL_UNIT_OPTIONS.map((option) => (
+	                                <option key={option.value} value={option.value}>{option.label}</option>
+	                              ))}
+	                            </DarkSelect>
+	                            <div className="grid grid-cols-2 gap-2 self-end">
+                              <button type="button" onClick={submitAutoParticipant} disabled={savingAutoParticipant} className="min-h-11 rounded-md bg-white px-3 py-3 text-sm font-black text-[#101418] disabled:opacity-50">
+                                {savingAutoParticipant ? "저장 중" : "저장"}
+                              </button>
+                              <button type="button" onClick={resetAutoParticipantDraft} className="min-h-11 rounded-md bg-white/10 px-3 py-3 text-sm font-black text-white">
+                                닫기
+                              </button>
+                            </div>
+                          </div>
+                          <div className="mt-3 grid min-w-0 grid-cols-1 gap-3 border-t border-white/10 pt-3 sm:grid-cols-[1.2fr_1fr_auto_auto]">
+                            <div className="min-w-0 self-center">
+                              <p className="text-xs font-bold text-[#8b95a1]">선택 참여자 실제 계좌</p>
+                              <p className="mt-1 break-all text-sm font-black text-white">{participant.displayName} · {participant.userKey}</p>
+                              <p className="mt-1 text-xs font-bold text-[#b8c2cc]">
+                                {formatAutoParticipantProfile(participant.profileType)} · 현재 현금 {participant.cashBalance == null ? "계좌 미개설" : formatWon(participant.cashBalance)}
+                              </p>
+                            </div>
+                            <DarkInput label="입금/회수 금액" value={cashAdjustmentAmount} onChange={setCashAdjustmentAmount} placeholder="1000000" />
+                            <button
+                              type="button"
+                              onClick={() => void adjustAutoParticipantCashBalance("DEPOSIT")}
+                              disabled={Boolean(adjustingCashType)}
+                              className="min-h-11 self-end rounded-md bg-[#3182f6] px-3 py-3 text-sm font-black text-white disabled:cursor-wait disabled:opacity-55"
+                            >
+                              {adjustingCashType === "DEPOSIT" ? "입금 중" : "입금"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => void adjustAutoParticipantCashBalance("WITHDRAW")}
+                              disabled={Boolean(adjustingCashType)}
+                              className="min-h-11 self-end rounded-md bg-[#3a1f1b] px-3 py-3 text-sm font-black text-[#ffb4a8] disabled:cursor-wait disabled:opacity-55"
+                            >
+                              {adjustingCashType === "WITHDRAW" ? "회수 중" : "회수"}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : null}
+                  </Fragment>
                 ))}
                 {(status?.participants ?? []).length === 0 ? (
                   <tr>
@@ -1413,7 +2190,7 @@ export default function SupplyDemandAdminPage() {
 
           {actionType === "INITIAL_ISSUE" ? (
             <div className="mt-4 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <DarkFormInput label="종목 코드" registration={createInstrumentForm.register("symbol")} placeholder="예: ZQ001" error={createInstrumentForm.formState.errors.symbol?.message} />
+              <DarkFormInput label="종목 코드" registration={createInstrumentForm.register("symbol")} placeholder="예: DEMO001" error={createInstrumentForm.formState.errors.symbol?.message} />
               <DarkFormInput label="종목명" registration={createInstrumentForm.register("name")} placeholder="예: 제로큐 주문장" error={createInstrumentForm.formState.errors.name?.message} className="sm:col-span-2 lg:col-span-2" />
               <DarkFormInput label="시장" registration={createInstrumentForm.register("market")} placeholder="ORDERBOOK" error={createInstrumentForm.formState.errors.market?.message} />
               <DarkFormInput label="초기 가격" registration={createInstrumentForm.register("initialPrice")} placeholder="70000" error={createInstrumentForm.formState.errors.initialPrice?.message} />
@@ -1694,23 +2471,177 @@ function DarkSelect({
   value,
   onChange,
   children,
+  disabled = false,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   children: ReactNode;
+  disabled?: boolean;
 }) {
   return (
-    <label className="grid min-w-0 gap-1 text-xs font-bold text-[#b8c2cc]">
+    <label className={`grid min-w-0 gap-1 text-xs font-bold ${disabled ? "text-[#66717d]" : "text-[#b8c2cc]"}`}>
       {label}
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="w-full min-w-0 rounded-md border border-white/10 bg-[#161b21] px-3 py-3 text-sm font-bold text-white outline-none focus:border-[#64a8ff]"
+        disabled={disabled}
+        className="w-full min-w-0 rounded-md border border-white/10 bg-[#161b21] px-3 py-3 text-sm font-bold text-white outline-none focus:border-[#64a8ff] disabled:cursor-not-allowed disabled:border-white/5 disabled:bg-[#101418] disabled:text-[#66717d]"
       >
         {children}
       </select>
     </label>
+  );
+}
+
+function RuntimeBadge({
+  active,
+  activeText,
+  inactiveText,
+}: {
+  active: boolean;
+  activeText: string;
+  inactiveText: string;
+}) {
+  return (
+    <span className={active ? "inline-flex rounded-md bg-[#123820] px-2 py-1 text-xs font-black text-[#6ee7a8]" : "inline-flex rounded-md bg-[#3a1f1b] px-2 py-1 text-xs font-black text-[#ffb4a8]"}>
+      {active ? activeText : inactiveText}
+    </span>
+  );
+}
+
+function BatchRuntimeMetric({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: "neutral" | "good" | "danger" | "muted";
+}) {
+  const toneClassName = {
+    neutral: "border-white/10 bg-black/20 text-white",
+    good: "border-[#1f6f45]/40 bg-[#123820]/60 text-[#6ee7a8]",
+    danger: "border-[#7c2c22]/50 bg-[#3a1f1b]/80 text-[#ffb4a8]",
+    muted: "border-white/10 bg-white/[0.04] text-[#b8c2cc]",
+  }[tone];
+
+  return (
+    <div className={`min-w-0 rounded-md border p-3 ${toneClassName}`}>
+      <p className="text-[11px] font-bold text-[#8b95a1]">{label}</p>
+      <p className="mt-1 text-2xl font-black tabular-nums">{value}</p>
+    </div>
+  );
+}
+
+function BatchRuntimeControlCard({
+  control,
+  label,
+  description,
+  updating,
+  onStart,
+  onStop,
+  manualAction,
+}: {
+  control: BatchJobRuntimeStatus;
+  label: string;
+  description: string;
+  updating: boolean;
+  onStart: () => void;
+  onStop: () => void;
+  manualAction?: {
+    label: string;
+    busyLabel: string;
+    description: string;
+    running: boolean;
+    resultText: string;
+    onRun: () => void;
+  };
+}) {
+  return (
+    <article className="grid min-w-0 gap-4 rounded-md border border-white/10 bg-black/20 p-4">
+      <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <h3 className="text-sm font-black text-white">{label}</h3>
+            <RuntimeBadge active={control.effectiveEnabled} activeText="자동실행" inactiveText="스킵" />
+          </div>
+          <p className="mt-1 break-all font-mono text-[11px] font-bold text-[#6f7a86]">{control.jobName}</p>
+          <p className="mt-2 text-xs font-bold leading-5 text-[#b8c2cc]">{description}</p>
+        </div>
+      </div>
+
+      <div className="grid gap-2 sm:grid-cols-3">
+        <BatchRuntimeState label="스케줄러 설정" active={control.schedulerConfigured} activeText="ON" inactiveText="OFF" />
+        <BatchRuntimeState label="DB 런타임" active={control.runtimeEnabled} activeText="ON" inactiveText="OFF" />
+        <BatchRuntimeState label="실제 자동실행" active={control.effectiveEnabled} activeText="실행" inactiveText="스킵" />
+      </div>
+
+      <div className="rounded-md bg-white/[0.04] px-3 py-2">
+        <p className="text-xs font-bold leading-5 text-[#b8c2cc]">{formatRuntimeReason(control)}</p>
+        <p className="mt-1 text-[11px] font-bold text-[#6f7a86]">
+          수정 {formatDateTime(control.updatedAt)} · {control.updatedBy ?? "-"}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          onClick={onStart}
+          disabled={updating || control.runtimeEnabled}
+          className="min-h-11 rounded-md bg-[#123820] px-3 py-3 text-sm font-black text-[#6ee7a8] disabled:cursor-not-allowed disabled:opacity-45"
+        >
+          {updating && !control.runtimeEnabled ? "재개 중" : "재개"}
+        </button>
+        <button
+          type="button"
+          onClick={onStop}
+          disabled={updating || !control.runtimeEnabled}
+          className="min-h-11 rounded-md bg-[#3a1f1b] px-3 py-3 text-sm font-black text-[#ffb4a8] disabled:cursor-not-allowed disabled:opacity-45"
+        >
+          {updating && control.runtimeEnabled ? "중지 중" : "중지"}
+        </button>
+      </div>
+
+      {manualAction ? (
+        <div className="rounded-md border border-white/10 bg-white/[0.04] p-3">
+          <p className="text-xs font-bold leading-5 text-[#b8c2cc]">{manualAction.description}</p>
+          <button
+            type="button"
+            onClick={manualAction.onRun}
+            disabled={manualAction.running}
+            className="mt-3 min-h-11 w-full rounded-md bg-white px-3 py-3 text-sm font-black text-[#101418] disabled:cursor-wait disabled:opacity-55"
+          >
+            {manualAction.running ? manualAction.busyLabel : manualAction.label}
+          </button>
+          <p className="mt-2 text-xs font-bold text-[#8b95a1]">
+            마지막 수동 실행 {manualAction.resultText}
+          </p>
+        </div>
+      ) : null}
+    </article>
+  );
+}
+
+function BatchRuntimeState({
+  label,
+  active,
+  activeText,
+  inactiveText,
+}: {
+  label: string;
+  active: boolean;
+  activeText: string;
+  inactiveText: string;
+}) {
+  return (
+    <div className="min-w-0 rounded-md border border-white/10 bg-[#161b21] px-3 py-3">
+      <p className="text-[11px] font-bold text-[#8b95a1]">{label}</p>
+      <p className={active ? "mt-1 text-sm font-black text-[#6ee7a8]" : "mt-1 text-sm font-black text-[#ffb4a8]"}>
+        {activeText}
+      </p>
+      {!active ? <p className="mt-0.5 text-[11px] font-bold text-[#6f7a86]">{inactiveText}</p> : null}
+    </div>
   );
 }
 
@@ -1719,6 +2650,15 @@ function DarkMetric({ label, value }: { label: string; value: string }) {
     <div className="rounded-lg border border-white/10 bg-white/[0.06] p-4">
       <p className="text-xs font-bold text-[#8b95a1]">{label}</p>
       <p className="mt-2 text-xl font-black">{value}</p>
+    </div>
+  );
+}
+
+function ProfileMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0 rounded-md bg-white/[0.04] px-3 py-2">
+      <p className="text-[11px] font-bold text-[#8b95a1]">{label}</p>
+      <p className="mt-1 truncate text-xs font-black text-white">{value}</p>
     </div>
   );
 }
@@ -1912,6 +2852,117 @@ function optionalText(value: string) {
   return normalized ? normalized : null;
 }
 
+function parseAutoParticipantRecurringCashDraft(
+  amountValue: string,
+  intervalValue: string,
+  intervalUnit: RecurringCashIntervalUnit,
+) {
+  const normalizedAmount = amountValue.trim();
+  const normalizedInterval = intervalValue.trim();
+  if (!normalizedAmount && !normalizedInterval) {
+    return {
+      recurringCashAmount: null,
+      recurringCashIntervalValue: null,
+      recurringCashIntervalUnit: null,
+    };
+  }
+  const recurringCashAmount = normalizedAmount ? Number(normalizedAmount) : 0;
+  const recurringCashIntervalValue = normalizedInterval ? Number(normalizedInterval) : 0;
+  if (!isRangeNumber(recurringCashAmount, 0, 1000000000000) || !isRangeNumber(recurringCashIntervalValue, 0, 1000)) {
+    return null;
+  }
+  if (recurringCashAmount > 0 && recurringCashIntervalValue <= 0) {
+    return null;
+  }
+  return {
+    recurringCashAmount,
+    recurringCashIntervalValue,
+    recurringCashIntervalUnit: recurringCashAmount > 0 ? intervalUnit : null,
+  };
+}
+
+function formatRecurringCashIntervalUnit(value: RecurringCashIntervalUnit | null | undefined) {
+  return RECURRING_CASH_INTERVAL_UNIT_OPTIONS.find((option) => option.value === value)?.label ?? "-";
+}
+
+function formatParticipantRecurringCash(participant: AutoParticipant) {
+  if (participant.recurringCashAmount == null) {
+    return "프로필 기본값";
+  }
+  if (participant.recurringCashAmount <= 0) {
+    return "개별 지급 없음";
+  }
+  return `${formatWon(participant.recurringCashAmount)} / ${formatNumber(participant.recurringCashIntervalValue)}${formatRecurringCashIntervalUnit(participant.recurringCashIntervalUnit)}`;
+}
+
+function isKnownOrderBookSymbol(instruments: OrderBookInstrument[], symbol: string) {
+  const normalizedSymbol = symbol.trim().toUpperCase();
+  return Boolean(normalizedSymbol) && instruments.some((instrument) => instrument.symbol === normalizedSymbol);
+}
+
+function summarizeBatchRuntimeControls(controls: BatchJobRuntimeStatus[]) {
+  return controls.reduce(
+    (summary, control) => ({
+      total: summary.total + 1,
+      effective: summary.effective + (control.effectiveEnabled ? 1 : 0),
+      runtimeOff: summary.runtimeOff + (!control.runtimeEnabled ? 1 : 0),
+      schedulerOff: summary.schedulerOff + (!control.schedulerConfigured ? 1 : 0),
+    }),
+    {
+      total: 0,
+      effective: 0,
+      runtimeOff: 0,
+      schedulerOff: 0,
+    },
+  );
+}
+
+function formatRuntimeUpdateMessage(label: string, requestedRuntimeEnabled: boolean, effectiveEnabled: boolean) {
+  if (!requestedRuntimeEnabled) {
+    return `${label}을 중지했습니다.`;
+  }
+  if (!effectiveEnabled) {
+    return `${label} DB 런타임은 ON이지만 배치 서버 설정이 OFF라 자동 실행은 아직 스킵됩니다.`;
+  }
+  return `${label}을 재개했습니다.`;
+}
+
+function formatRuntimeReason(control: Pick<BatchJobRuntimeStatus, "schedulerConfigured" | "runtimeEnabled" | "effectiveEnabled">) {
+  if (control.effectiveEnabled) {
+    return "스케줄러 설정과 DB 런타임이 모두 ON입니다.";
+  }
+  if (!control.schedulerConfigured && control.runtimeEnabled) {
+    return "배치 서버 설정이 OFF라 DB ON이어도 자동 실행하지 않습니다.";
+  }
+  if (control.schedulerConfigured && !control.runtimeEnabled) {
+    return "DB 런타임이 OFF라 스케줄러가 실행을 건너뜁니다.";
+  }
+  return "배치 서버 설정과 DB 런타임이 모두 OFF입니다.";
+}
+
+function isRangeNumber(value: number, min: number, max: number) {
+  return Number.isFinite(value) && value >= min && value <= max;
+}
+
+function nextAutoParticipantSerial(existingKeys: Set<string>, keyPrefix: string) {
+  let maxSerial = 0;
+  existingKeys.forEach((key) => {
+    if (!key.startsWith(keyPrefix)) {
+      return;
+    }
+    const suffix = key.slice(keyPrefix.length);
+    if (!/^\d+$/.test(suffix)) {
+      return;
+    }
+    maxSerial = Math.max(maxSerial, Number.parseInt(suffix, 10));
+  });
+  return maxSerial + 1;
+}
+
+function formatAutoParticipantSerial(value: number) {
+  return String(value).padStart(3, "0");
+}
+
 function formatAutoIntensityDirection(intensity: number): string {
   if (intensity >= 8) {
     return "강한 상승";
@@ -1932,7 +2983,7 @@ function formatListingAutoPosition(positionSide: ListingAutoPosition): string {
   return "매도 전용";
 }
 
-function formatDateTime(value: string) {
+function formatDateTime(value: string | null | undefined) {
   if (!value) {
     return "-";
   }
