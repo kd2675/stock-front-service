@@ -1,3 +1,5 @@
-import SupplyDemandAdminPage from "../../page";
+import { redirect } from "next/navigation";
 
-export default SupplyDemandAdminPage;
+export default function LegacyAutomationStrategiesPage() {
+  redirect("/supply-demand/admin/accounts/participants");
+}

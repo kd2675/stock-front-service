@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
-import { Fragment, useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { useForm, type UseFormRegisterReturn } from "react-hook-form";
 
 import TradingTopBar from "@/app/components/TradingTopBar";
@@ -59,7 +59,6 @@ const SUPPLY_DEMAND_BATCH_JOB_NAMES = new Set([
 ]);
 
 const ADMIN_CASH_FLOW_PAGE_SIZE = 20;
-const TABLE_HEADER_CELL_CLASS = "border-b border-white/10 bg-[#161b21] px-3 py-2";
 
 type AdminTab = "market" | "accounts" | "automation" | "events";
 
@@ -74,13 +73,13 @@ type AdminTabItem = {
 type AdminSection =
   | "market"
   | "account-cash"
+  | "cash-flow-ledger"
   | "salary"
   | "profile-overview"
   | "participants"
   | "profiles"
   | "auto-symbols"
   | "listing-auto"
-  | "participant-strategies"
   | "batch"
   | "events";
 
@@ -173,6 +172,7 @@ export default function SupplyDemandAdminPage() {
   const router = useRouter();
   const pathname = usePathname();
   const queryClient = useQueryClient();
+  const cashFlowLedgerAutoLoadRef = useRef(false);
   const activeAdminTab = resolveAdminTabFromPath(pathname);
   const activeAdminSection = resolveAdminSectionFromPath(pathname);
   const [adminStatus, setAdminStatus] = useState<"checking" | "allowed" | "denied">("checking");
@@ -278,7 +278,6 @@ export default function SupplyDemandAdminPage() {
   const [updatingBatchJobName, setUpdatingBatchJobName] = useState<string | null>(null);
   const [strategyUserKey, setStrategyUserKey] = useState("");
   const [strategySymbol, setStrategySymbol] = useState("");
-  const [strategySearch, setStrategySearch] = useState("");
   const [editingStrategyKey, setEditingStrategyKey] = useState<string | null>(null);
   const [strategyEnabled, setStrategyEnabled] = useState(true);
   const [strategyIntensity, setStrategyIntensity] = useState("5");
@@ -362,19 +361,6 @@ export default function SupplyDemandAdminPage() {
           setListingAutoOrderTtlSeconds(String(firstListingAutoAccount.orderTtlSeconds));
           setListingAutoPriceOffsetTicks(String(firstListingAutoAccount.priceOffsetTicks));
         }
-        const firstStrategy = autoResult.data.participantSymbolConfigs[0];
-        if (!strategyUserKey && firstStrategy) {
-          setStrategyUserKey(firstStrategy.userKey);
-          setStrategySymbol(firstStrategy.symbol);
-          setStrategyEnabled(firstStrategy.enabled);
-          setStrategyIntensity(String(firstStrategy.intensity));
-        } else if (!strategyUserKey && autoResult.data.participants.length > 0) {
-          setStrategyUserKey(autoResult.data.participants[0].userKey);
-        }
-        if (!firstStrategy && !strategySymbol && autoResult.data.configs.length > 0) {
-          setStrategySymbol(autoResult.data.configs[0].symbol);
-          setStrategyIntensity(String(autoResult.data.configs[0].intensity));
-        }
       }
       if (orderBookResult.ok && orderBookResult.data) {
         setOrderBookMarket(orderBookResult.data);
@@ -399,7 +385,7 @@ export default function SupplyDemandAdminPage() {
     return () => {
       cancelled = true;
     };
-  }, [accessToken, autoConfigSymbol, listingAutoSymbol, reportSymbol, strategySymbol, strategyUserKey]);
+  }, [accessToken, autoConfigSymbol, listingAutoSymbol, reportSymbol]);
 
   const reloadAutoParticipantState = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: stockKeys.autoParticipantOverviews() });
@@ -520,6 +506,24 @@ export default function SupplyDemandAdminPage() {
     }, 0);
     return () => window.clearTimeout(timer);
   }, [adminStatus, loadBatchJobRuntimeControls]);
+
+  useEffect(() => {
+    if (adminStatus !== "allowed") {
+      return undefined;
+    }
+    if (activeAdminSection !== "cash-flow-ledger") {
+      cashFlowLedgerAutoLoadRef.current = false;
+      return undefined;
+    }
+    if (adminCashFlowPage || loadingAdminCashFlowPage || cashFlowLedgerAutoLoadRef.current) {
+      return undefined;
+    }
+    cashFlowLedgerAutoLoadRef.current = true;
+    const timer = window.setTimeout(() => {
+      void loadAdminCashFlowPage(0);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [activeAdminSection, adminCashFlowPage, adminStatus, loadAdminCashFlowPage, loadingAdminCashFlowPage]);
 
   useEffect(() => {
     if (adminStatus !== "allowed") {
@@ -1028,6 +1032,21 @@ export default function SupplyDemandAdminPage() {
     setAutoParticipantRecurringCashIntervalValue(participant.recurringCashIntervalValue == null ? "" : String(participant.recurringCashIntervalValue));
     setAutoParticipantRecurringCashIntervalUnit(participant.recurringCashIntervalUnit ?? "DAY");
     setCashAdjustmentAmount("");
+    const firstParticipantStrategy = (status?.participantSymbolConfigs ?? []).find((config) => config.userKey === participant.userKey) ?? null;
+    if (firstParticipantStrategy) {
+      setEditingStrategyKey(`${firstParticipantStrategy.userKey}:${firstParticipantStrategy.symbol}`);
+      setStrategyUserKey(firstParticipantStrategy.userKey);
+      setStrategySymbol(firstParticipantStrategy.symbol);
+      setStrategyEnabled(firstParticipantStrategy.enabled);
+      setStrategyIntensity(String(firstParticipantStrategy.intensity));
+      return;
+    }
+    const firstAutoConfig = status?.configs[0] ?? null;
+    setEditingStrategyKey(null);
+    setStrategyUserKey(participant.userKey);
+    setStrategySymbol(firstAutoConfig?.symbol ?? "");
+    setStrategyEnabled(true);
+    setStrategyIntensity(String(firstAutoConfig?.intensity ?? 5));
   };
 
   const resetAutoParticipantDraft = () => {
@@ -1040,6 +1059,11 @@ export default function SupplyDemandAdminPage() {
     setAutoParticipantRecurringCashIntervalValue("");
     setAutoParticipantRecurringCashIntervalUnit("DAY");
     setCashAdjustmentAmount("");
+    setEditingStrategyKey(null);
+    setStrategyUserKey("");
+    setStrategySymbol("");
+    setStrategyEnabled(true);
+    setStrategyIntensity("5");
   };
 
   const selectAutoStrategyDraft = (config: AutoParticipantSymbolConfig) => {
@@ -1048,6 +1072,19 @@ export default function SupplyDemandAdminPage() {
     setStrategySymbol(config.symbol);
     setStrategyEnabled(config.enabled);
     setStrategyIntensity(String(config.intensity));
+  };
+
+  const selectParticipantStrategySymbolDraft = (participantUserKey: string, symbol: string) => {
+    const existingConfig = (status?.participantSymbolConfigs ?? []).find((config) => config.userKey === participantUserKey && config.symbol === symbol) ?? null;
+    if (existingConfig) {
+      selectAutoStrategyDraft(existingConfig);
+      return;
+    }
+    setEditingStrategyKey(null);
+    setStrategyUserKey(participantUserKey);
+    setStrategySymbol(symbol);
+    setStrategyEnabled(true);
+    setStrategyIntensity(String(autoConfigBySymbol.get(symbol)?.intensity ?? 5));
   };
 
   const submitAutoParticipant = async () => {
@@ -1358,7 +1395,7 @@ export default function SupplyDemandAdminPage() {
     try {
       const token = await ensureAccessToken();
       if (!token) {
-        setMessage("관리자 로그인 후 참여자별 종목 전략을 저장할 수 있습니다.");
+        setMessage("관리자 로그인 후 참여자 종목별 가격 방향/강도를 저장할 수 있습니다.");
         return;
       }
       const result = await updateAutoParticipantSymbolConfig(token, normalizedUserKey, normalizedSymbol, {
@@ -1366,10 +1403,10 @@ export default function SupplyDemandAdminPage() {
         intensity: parsedIntensity,
       });
       if (!result.ok) {
-        setMessage(result.message ?? "참여자별 종목 전략 저장에 실패했습니다.");
+        setMessage(result.message ?? "참여자 종목별 가격 방향/강도 저장에 실패했습니다.");
         return;
       }
-      setMessage("참여자별 종목 전략을 저장했습니다.");
+      setMessage("참여자 종목별 가격 방향/강도를 저장했습니다.");
       setEditingStrategyKey(null);
       loadStatus();
     } finally {
@@ -1479,7 +1516,7 @@ export default function SupplyDemandAdminPage() {
     try {
       const token = await ensureAccessToken();
       if (!token) {
-        setMessage("관리자 로그인 후 참여자별 종목 전략 상태를 변경할 수 있습니다.");
+        setMessage("관리자 로그인 후 참여자 종목별 가격 방향/강도 상태를 변경할 수 있습니다.");
         return;
       }
       const result = await updateAutoParticipantSymbolConfig(token, config.userKey, config.symbol, {
@@ -1487,13 +1524,13 @@ export default function SupplyDemandAdminPage() {
         intensity: config.intensity,
       });
       if (!result.ok) {
-        setMessage(result.message ?? "참여자별 종목 전략 상태 변경에 실패했습니다.");
+        setMessage(result.message ?? "참여자 종목별 가격 방향/강도 상태 변경에 실패했습니다.");
         return;
       }
       if (strategyUserKey === config.userKey && strategySymbol === config.symbol) {
         setStrategyEnabled(nextEnabled);
       }
-      setMessage(nextEnabled ? "참여자별 종목 전략을 가동했습니다." : "참여자별 종목 전략을 정지했습니다.");
+      setMessage(nextEnabled ? "참여자 종목별 가격 방향/강도를 가동했습니다." : "참여자 종목별 가격 방향/강도를 정지했습니다.");
       loadStatus();
     } finally {
       setTogglingStrategyKey(null);
@@ -1501,13 +1538,19 @@ export default function SupplyDemandAdminPage() {
   };
 
   const orderBookConfigBySymbol = new Map((orderBookMarket?.configs ?? []).map((config) => [config.symbol, config]));
-  const autoParticipantByUserKey = new Map((status?.participants ?? []).map((participant) => [participant.userKey, participant]));
   const autoConfigBySymbol = new Map((status?.configs ?? []).map((config) => [config.symbol, config]));
   const isEditingAutoParticipant = editingAutoParticipantUserKey !== null;
-  const selectedListingAutoAccount = status?.listingAutoAccounts.find((item) => item.symbol === listingAutoSymbol) ?? null;
+  const selectedListingAutoAccount = (status?.listingAutoAccounts ?? []).find((item) => item.symbol === listingAutoSymbol) ?? null;
   const profileConfigs = status?.participantProfileConfigs ?? [];
   const profileConfigByType = new Map<AutoParticipantProfileType, AutoParticipantProfileConfig>(profileConfigs.map((config) => [config.profileType, config]));
   const autoParticipantOverviewByUserKey = new Map(autoParticipantOverviews.map((overview) => [overview.userKey, overview]));
+  const selectedAutoParticipant = editingAutoParticipantUserKey === null
+    ? null
+    : (status?.participants ?? []).find((participant) => participant.userKey === editingAutoParticipantUserKey) ?? null;
+  const selectedAutoParticipantSymbolConfigs = selectedAutoParticipant === null
+    ? []
+    : (status?.participantSymbolConfigs ?? []).filter((config) => config.userKey === selectedAutoParticipant.userKey);
+  const selectedParticipantStrategyKey = selectedAutoParticipant === null ? "" : `${selectedAutoParticipant.userKey}:${strategySymbol}`;
   const salaryEligibilityRows = resolveSalaryEligibilityRows(status?.participants ?? [], profileConfigByType, autoParticipantOverviewByUserKey);
   const salaryReceivableRows = salaryEligibilityRows.filter((row) => row.canReceive);
   const salaryPolicyRows = salaryEligibilityRows.filter((row) => row.recurringPolicy.payable);
@@ -1527,7 +1570,6 @@ export default function SupplyDemandAdminPage() {
     search: participantSearch,
     status: participantStatusFilter,
   });
-  const filteredParticipantSymbolConfigs = filterParticipantSymbolConfigs(status?.participantSymbolConfigs ?? [], autoParticipantByUserKey, strategySearch);
   const adminTabs: AdminTabItem[] = [
     {
       value: "market",
@@ -1541,13 +1583,13 @@ export default function SupplyDemandAdminPage() {
       href: "/supply-demand/admin/accounts",
       label: "계좌/참여자",
       description: "유저 현금과 자동참여자",
-      metric: `${status?.participants.length ?? 0}명`,
+      metric: `${(status?.participants ?? []).length}명`,
     },
     {
       value: "automation",
       href: "/supply-demand/admin/automation",
       label: "자동장/배치",
-      description: "알고리즘, 전략, 배치 제어",
+      description: "알고리즘과 배치 제어",
       metric: `${batchRuntimeSummary.effective.toLocaleString("ko-KR")}/${batchRuntimeSummary.total.toLocaleString("ko-KR")}`,
     },
     {
@@ -1566,6 +1608,12 @@ export default function SupplyDemandAdminPage() {
       metric: "입금/회수",
     },
     {
+      value: "cash-flow-ledger",
+      href: "/supply-demand/admin/accounts/cash-flows",
+      label: "현금 원장",
+      metric: adminCashFlowPage ? `${adminCashFlowPage.totalElements.toLocaleString("ko-KR")}건` : "전체",
+    },
+    {
       value: "salary",
       href: "/supply-demand/admin/accounts/salary",
       label: "월급 대상",
@@ -1581,7 +1629,7 @@ export default function SupplyDemandAdminPage() {
       value: "participants",
       href: "/supply-demand/admin/accounts/participants",
       label: "자동참여자",
-      metric: `${(status?.participants.length ?? 0).toLocaleString("ko-KR")}명`,
+      metric: `${(status?.participants ?? []).length.toLocaleString("ko-KR")}명`,
     },
   ];
   const automationSubTabs: AdminSubTabItem[] = [
@@ -1595,19 +1643,13 @@ export default function SupplyDemandAdminPage() {
       value: "auto-symbols",
       href: "/supply-demand/admin/automation/symbols",
       label: "종목 기본값",
-      metric: `${(status?.configs.length ?? 0).toLocaleString("ko-KR")}개`,
+      metric: `${(status?.configs ?? []).length.toLocaleString("ko-KR")}개`,
     },
     {
       value: "listing-auto",
       href: "/supply-demand/admin/automation/listing-auto",
       label: "상장주관사",
-      metric: `${(status?.listingAutoAccounts.length ?? 0).toLocaleString("ko-KR")}개`,
-    },
-    {
-      value: "participant-strategies",
-      href: "/supply-demand/admin/automation/strategies",
-      label: "참여자 전략",
-      metric: `${(status?.participantSymbolConfigs.length ?? 0).toLocaleString("ko-KR")}개`,
+      metric: `${(status?.listingAutoAccounts ?? []).length.toLocaleString("ko-KR")}개`,
     },
     {
       value: "batch",
@@ -1682,20 +1724,24 @@ export default function SupplyDemandAdminPage() {
           <DarkMetric label="주문장 시장" value={formatMarketEnabledStatus(orderBookMarket)} />
           <DarkMetric label="주문장 종목" value={`${instruments.length.toLocaleString("ko-KR")}종목`} />
           <DarkMetric label="정규장 종목" value={`${openOrderBookConfigCount.toLocaleString("ko-KR")}종목`} />
-          <DarkMetric label="주문장 대기 주문" value={orderBookMarket ? `${orderBookMarket.openOrderCount}건` : "-"} />
-          <DarkMetric label="오늘 주문장 체결" value={orderBookMarket ? `${orderBookMarket.todayExecutionCount.toLocaleString("ko-KR")}건` : "-"} />
-          <DarkMetric label="자동 참여자" value={status ? `${status.enabledParticipantCount.toLocaleString("ko-KR")}명` : "-"} />
+          <DarkMetric label="주문장 대기 주문" value={orderBookMarket ? `${orderBookMarket.openOrderCount ?? 0}건` : "-"} />
+          <DarkMetric label="오늘 주문장 체결" value={orderBookMarket ? `${(orderBookMarket.todayExecutionCount ?? 0).toLocaleString("ko-KR")}건` : "-"} />
+          <DarkMetric label="자동 참여자" value={status ? `${(status.enabledParticipantCount ?? 0).toLocaleString("ko-KR")}명` : "-"} />
         </div>
 
         {activeAdminSection === "market" ? (
           <AdminFlowOverviewPanel
             overview={adminFlowOverview}
-            cashFlowPage={adminCashFlowPage}
-            loadingCashFlowPage={loadingAdminCashFlowPage}
             onRefresh={loadStatus}
-            onOpenCashFlowPage={() => void loadAdminCashFlowPage(0)}
-            onCloseCashFlowPage={() => setAdminCashFlowPage(null)}
-            onCashFlowPageChange={(page) => void loadAdminCashFlowPage(page)}
+          />
+        ) : null}
+
+        {activeAdminSection === "cash-flow-ledger" ? (
+          <AdminCashFlowLedgerPanel
+            cashFlowPage={adminCashFlowPage}
+            loading={loadingAdminCashFlowPage}
+            onRefresh={() => void loadAdminCashFlowPage(adminCashFlowPage?.page ?? 0)}
+            onPageChange={(page) => void loadAdminCashFlowPage(page)}
           />
         ) : null}
 
@@ -1779,7 +1825,7 @@ export default function SupplyDemandAdminPage() {
               <h2 className="text-base font-black">프로필 행동 설정</h2>
               <p className="mt-1 text-xs font-bold text-[#8b95a1]">자동 참여자 심리 프로필별 주문 빈도, 호가 공격성, 주문 유지 시간, 수량, 보유 성향, 주기적 현금 유입을 조정합니다.</p>
             </div>
-            <span className="text-xs font-bold text-[#64a8ff]">{status?.participantProfileConfigs.length ?? 0}개 프로필</span>
+            <span className="text-xs font-bold text-[#64a8ff]">{(status?.participantProfileConfigs ?? []).length}개 프로필</span>
           </div>
           <div className="mt-4 grid min-w-0 gap-4 lg:grid-cols-[minmax(240px,320px)_minmax(0,1fr)]">
             <div className="rounded-md border border-white/10 bg-black/15 p-3">
@@ -1898,7 +1944,7 @@ export default function SupplyDemandAdminPage() {
           </div>
           <div className="mt-4 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_0.8fr_0.8fr_0.8fr_0.8fr_auto]">
             <DarkSelect label="자동장 대상 종목" value={autoConfigSymbol} onChange={(value) => {
-              const config = status?.configs.find((item) => item.symbol === value);
+              const config = (status?.configs ?? []).find((item) => item.symbol === value);
               if (config) {
                 selectAutoConfigDraft(config);
                 return;
@@ -2001,11 +2047,11 @@ export default function SupplyDemandAdminPage() {
               <h2 className="text-base font-black">상장주관사 자동계정</h2>
               <p className="mt-1 text-xs font-bold text-[#8b95a1]">상장 때 받은 물량을 소량 매도하거나, 매수 전용으로 바꿔 자사주 매입 흐름처럼 운용합니다.</p>
             </div>
-            <span className="text-xs font-bold text-[#64a8ff]">{status?.listingAutoAccounts.length ?? 0}개 계정</span>
+            <span className="text-xs font-bold text-[#64a8ff]">{(status?.listingAutoAccounts ?? []).length}개 계정</span>
           </div>
           <div className="mt-4 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1.4fr_0.8fr_0.9fr_0.8fr_0.8fr_0.8fr_auto]">
             <DarkSelect label="종목" value={listingAutoSymbol} onChange={(value) => {
-              const config = status?.listingAutoAccounts.find((item) => item.symbol === value);
+              const config = (status?.listingAutoAccounts ?? []).find((item) => item.symbol === value);
               if (config) {
                 selectListingAutoAccountDraft(config);
                 return;
@@ -2138,133 +2184,6 @@ export default function SupplyDemandAdminPage() {
 
         ) : null}
 
-        {activeAdminSection === "participant-strategies" ? (
-        <section className="mt-5 rounded-lg border border-white/10 bg-white/[0.06] p-4">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h2 className="text-base font-black">참여자별 종목 전략</h2>
-              <p className="mt-1 text-xs font-bold text-[#8b95a1]">같은 종목이라도 참여자마다 강도 1-10을 다르게 설정합니다.</p>
-            </div>
-            <span className="text-xs font-bold text-[#64a8ff]">{status?.participantSymbolConfigs.length ?? 0}개 전략</span>
-          </div>
-          <div className="mt-4 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[1.2fr_1fr_0.8fr_0.8fr_auto]">
-            <DarkSelect label="참여자" value={strategyUserKey} onChange={(value) => {
-              setStrategyUserKey(value);
-            }}>
-              <option value="">선택</option>
-              {(status?.participants ?? []).map((participant) => (
-                <option key={participant.userKey} value={participant.userKey}>{participant.displayName}</option>
-              ))}
-            </DarkSelect>
-            <DarkSelect label="종목" value={strategySymbol} onChange={(value) => {
-              setStrategySymbol(value);
-              const config = autoConfigBySymbol.get(value);
-              if (config) {
-                setStrategyIntensity(String(config.intensity));
-              }
-            }}>
-              <option value="">선택</option>
-              {(status?.configs ?? []).map((config) => (
-                <option key={config.symbol} value={config.symbol}>{config.symbol}</option>
-              ))}
-            </DarkSelect>
-            <DarkSelect label="전략" value={strategyEnabled ? "true" : "false"} onChange={(value) => setStrategyEnabled(value === "true")}>
-              <option value="true">가동</option>
-              <option value="false">정지</option>
-            </DarkSelect>
-            <DarkInput label="강도(1-10)" value={strategyIntensity} onChange={setStrategyIntensity} placeholder="10" />
-            <button type="button" onClick={submitAutoStrategy} disabled={savingStrategy} className="min-h-11 min-w-0 self-end rounded-md bg-white px-3 py-3 text-sm font-black text-[#101418] disabled:opacity-50 sm:col-span-2 lg:col-span-1">
-              {savingStrategy ? "저장 중" : "저장"}
-            </button>
-          </div>
-          <div className="mt-4 rounded-md border border-white/10 bg-black/20 p-3">
-            <div className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
-              <DarkInput label="전략 검색" value={strategySearch} onChange={setStrategySearch} placeholder="참여자, userKey, 종목" />
-              <div className="self-end rounded-md bg-white/[0.04] px-3 py-3 text-xs font-bold text-[#8b95a1]">
-                표시 <span className="font-black text-white">{filteredParticipantSymbolConfigs.length.toLocaleString("ko-KR")}</span>개 / 전체 {(status?.participantSymbolConfigs.length ?? 0).toLocaleString("ko-KR")}개
-              </div>
-            </div>
-          </div>
-          <div className="mt-4 overflow-x-auto rounded-md border border-white/10">
-            <table className="min-w-[760px] w-full border-collapse text-sm">
-              <thead className="bg-white/10 text-left text-[#b8c2cc]">
-                <tr>
-                  <th className="px-3 py-2">참여자</th>
-                  <th className="px-3 py-2">종목</th>
-                  <th className="px-3 py-2">상태</th>
-                  <th className="px-3 py-2">가격 방향</th>
-                  <th className="px-3 py-2">강도</th>
-                  <th className="px-3 py-2">수정</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/10">
-                {filteredParticipantSymbolConfigs.map((config) => {
-                  const participant = autoParticipantByUserKey.get(config.userKey);
-                  const rowKey = `${config.userKey}:${config.symbol}`;
-                  return (
-                    <Fragment key={rowKey}>
-                      <tr>
-                        <td className="px-3 py-2">
-                          <p className="font-black">{participant?.displayName ?? config.userKey}</p>
-                          <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">{config.userKey}</p>
-                        </td>
-                        <td className="px-3 py-2 font-black">{config.symbol}</td>
-                        <td className="px-3 py-2">
-                          <EnabledToggleButton
-                            enabled={config.enabled}
-                            disabled={togglingStrategyKey === rowKey}
-                            onToggle={() => void toggleAutoStrategyEnabled(config)}
-                          />
-                        </td>
-                        <td className="px-3 py-2">{formatAutoIntensityDirection(config.intensity)}</td>
-                        <td className="px-3 py-2 tabular-nums">{config.intensity}/10</td>
-                        <td className="px-3 py-2">
-                          <button type="button" onClick={() => selectAutoStrategyDraft(config)} className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-white">
-                            수정
-                          </button>
-                        </td>
-                      </tr>
-                      {editingStrategyKey === rowKey ? (
-                        <tr>
-                          <td colSpan={6} className="bg-black/20 px-3 py-3">
-                            <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_0.8fr_0.8fr_auto]">
-                              <DarkSelect label="전략" value={strategyEnabled ? "true" : "false"} onChange={(value) => setStrategyEnabled(value === "true")}>
-                                <option value="true">가동</option>
-                                <option value="false">정지</option>
-                              </DarkSelect>
-                              <DarkInput label="강도(1-10)" value={strategyIntensity} onChange={setStrategyIntensity} placeholder="10" />
-                              <div className="grid gap-1 text-xs font-bold text-[#b8c2cc]">
-                                대상
-                                <div className="rounded-md border border-white/10 bg-[#161b21] px-3 py-3 text-sm font-black text-white">
-                                  {participant?.displayName ?? config.userKey} · {config.symbol}
-                                </div>
-                              </div>
-                              <div className="grid grid-cols-2 gap-2 self-end">
-                                <button type="button" onClick={submitAutoStrategy} disabled={savingStrategy} className="min-h-11 rounded-md bg-white px-3 py-3 text-sm font-black text-[#101418] disabled:opacity-50">
-                                  {savingStrategy ? "저장 중" : "저장"}
-                                </button>
-                                <button type="button" onClick={() => setEditingStrategyKey(null)} className="min-h-11 rounded-md bg-white/10 px-3 py-3 text-sm font-black text-white">
-                                  닫기
-                                </button>
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      ) : null}
-                    </Fragment>
-                  );
-                })}
-                {filteredParticipantSymbolConfigs.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-3 py-4 text-[#8b95a1]">조건에 맞는 참여자별 종목 전략이 없습니다.</td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
-          </div>
-        </section>
-        ) : null}
-
         {activeAdminSection === "batch" ? (
         <section className="mt-5 rounded-lg border border-white/10 bg-white/[0.06] p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -2340,7 +2259,7 @@ export default function SupplyDemandAdminPage() {
                   신규 등록
                 </button>
               ) : null}
-              <span className="text-xs font-bold text-[#64a8ff]">{status?.participants.length ?? 0}명 등록</span>
+              <span className="text-xs font-bold text-[#64a8ff]">{(status?.participants ?? []).length}명 등록</span>
             </div>
           </div>
           <div className="mt-4 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[1.1fr_1.2fr_1.1fr_0.8fr_0.9fr_0.75fr_0.75fr_auto]">
@@ -2373,6 +2292,99 @@ export default function SupplyDemandAdminPage() {
             <span className="mx-2 text-[#5a6572]">/</span>
             <span>{formatAutoParticipantProfileBehavior(autoParticipantProfileType)}</span>
           </div>
+          {selectedAutoParticipant ? (
+            <div className="mt-4 rounded-lg border border-white/10 bg-black/20 p-3">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-black text-white">종목별 가격 방향/강도</p>
+                  <p className="mt-1 text-xs font-bold text-[#8b95a1]">
+                    {selectedAutoParticipant.displayName}에게만 적용되는 종목 강도입니다. 강도 10은 매수 우위, 1은 매도 우위로 계산됩니다.
+                  </p>
+                </div>
+                <span className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-[#64a8ff]">
+                  {selectedAutoParticipantSymbolConfigs.length.toLocaleString("ko-KR")}개 설정
+                </span>
+              </div>
+              <div className="mt-3 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_0.8fr_0.8fr_0.9fr_auto]">
+                <DarkSelect
+                  label="종목"
+                  value={strategyUserKey === selectedAutoParticipant.userKey ? strategySymbol : ""}
+                  onChange={(value) => {
+                    if (!value) {
+                      setEditingStrategyKey(null);
+                      setStrategyUserKey(selectedAutoParticipant.userKey);
+                      setStrategySymbol("");
+                      setStrategyEnabled(true);
+                      setStrategyIntensity("5");
+                      return;
+                    }
+                    selectParticipantStrategySymbolDraft(selectedAutoParticipant.userKey, value);
+                  }}
+                >
+                  <option value="">선택</option>
+                  {(status?.configs ?? []).map((config) => (
+                    <option key={config.symbol} value={config.symbol}>{config.symbol}</option>
+                  ))}
+                </DarkSelect>
+                <DarkSelect label="가동 상태" value={strategyEnabled ? "true" : "false"} onChange={(value) => setStrategyEnabled(value === "true")}>
+                  <option value="true">가동</option>
+                  <option value="false">정지</option>
+                </DarkSelect>
+                <DarkInput label="강도(1-10)" value={strategyIntensity} onChange={setStrategyIntensity} placeholder="10" />
+                <div className="grid gap-1 text-xs font-bold text-[#b8c2cc]">
+                  가격 방향
+                  <div className="rounded-md border border-white/10 bg-[#161b21] px-3 py-3 text-sm font-black text-white">
+                    {formatAutoIntensityDirection(Number.parseInt(strategyIntensity, 10))}
+                  </div>
+                </div>
+                <button type="button" onClick={submitAutoStrategy} disabled={savingStrategy} className="min-h-11 self-end rounded-md bg-white px-3 py-3 text-sm font-black text-[#101418] disabled:opacity-50 sm:col-span-2 lg:col-span-1">
+                  {savingStrategy ? "저장 중" : editingStrategyKey === selectedParticipantStrategyKey ? "강도 저장" : "강도 추가"}
+                </button>
+              </div>
+              <div className="mt-3 overflow-x-auto rounded-md border border-white/10">
+                <table className="min-w-[640px] w-full border-collapse text-sm">
+                  <thead className="bg-white/10 text-left text-[#b8c2cc]">
+                    <tr>
+                      <th className="px-3 py-2">종목</th>
+                      <th className="px-3 py-2">상태</th>
+                      <th className="px-3 py-2">가격 방향</th>
+                      <th className="px-3 py-2">강도</th>
+                      <th className="px-3 py-2">수정</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/10">
+                    {selectedAutoParticipantSymbolConfigs.map((config) => {
+                      const rowKey = `${config.userKey}:${config.symbol}`;
+                      return (
+                        <tr key={rowKey} className={editingStrategyKey === rowKey ? "bg-[#10233a]/50" : undefined}>
+                          <td className="px-3 py-2 font-black">{config.symbol}</td>
+                          <td className="px-3 py-2">
+                            <EnabledToggleButton
+                              enabled={config.enabled}
+                              disabled={togglingStrategyKey === rowKey}
+                              onToggle={() => void toggleAutoStrategyEnabled(config)}
+                            />
+                          </td>
+                          <td className="px-3 py-2">{formatAutoIntensityDirection(config.intensity)}</td>
+                          <td className="px-3 py-2 tabular-nums">{config.intensity}/10</td>
+                          <td className="px-3 py-2">
+                            <button type="button" onClick={() => selectAutoStrategyDraft(config)} className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-white">
+                              값 불러오기
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {selectedAutoParticipantSymbolConfigs.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-3 py-4 text-[#8b95a1]">이 참여자에게 지정된 종목별 강도가 없습니다. 종목을 선택해 추가하세요.</td>
+                      </tr>
+                    ) : null}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : null}
 	          {!isEditingAutoParticipant ? (
 	            <div className="mt-4 rounded-lg border border-white/10 bg-black/20 p-3">
 	              <div className="flex flex-wrap items-start justify-between gap-3">
@@ -2425,184 +2437,171 @@ export default function SupplyDemandAdminPage() {
               ))}
             </DarkSelect>
             <p className="text-xs font-bold text-[#8b95a1] sm:col-span-3">
-              표시 {filteredParticipants.length.toLocaleString("ko-KR")}명 / 전체 {(status?.participants.length ?? 0).toLocaleString("ko-KR")}명
+              표시 {filteredParticipants.length.toLocaleString("ko-KR")}명 / 전체 {(status?.participants ?? []).length.toLocaleString("ko-KR")}명
             </p>
           </div>
-          <div className="mt-4 overflow-x-auto rounded-md border border-white/10">
-            <table className="min-w-[1480px] w-full border-separate border-spacing-0 text-sm">
-              <thead className="text-left text-[#b8c2cc]">
-                <tr>
-                  <th className={TABLE_HEADER_CELL_CLASS}>참여자</th>
-	                  <th className={TABLE_HEADER_CELL_CLASS}>프로필</th>
-	                  <th className={TABLE_HEADER_CELL_CLASS}>상태</th>
-	                  <th className={TABLE_HEADER_CELL_CLASS}>현금/총자산</th>
-	                  <th className={TABLE_HEADER_CELL_CLASS}>보유/평가</th>
-	                  <th className={TABLE_HEADER_CELL_CLASS}>손익률</th>
-	                  <th className={TABLE_HEADER_CELL_CLASS}>당일 거래</th>
-	                  <th className={TABLE_HEADER_CELL_CLASS}>최근 활동</th>
-	                  <th className={TABLE_HEADER_CELL_CLASS}>개별 월급/현금</th>
-                  <th className={TABLE_HEADER_CELL_CLASS}>수정일</th>
-                  <th className={TABLE_HEADER_CELL_CLASS}>수정</th>
-                  <th className={TABLE_HEADER_CELL_CLASS}>탈퇴</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/10">
-                {filteredParticipants.map((participant) => {
-                  const overview = autoParticipantOverviewByUserKey.get(participant.userKey) ?? null;
-                  const holdingPreview = overview ? resolveAutoParticipantHoldingPreview(overview.holdings) : [];
-                  return (
-                  <Fragment key={participant.userKey}>
-                    <tr>
-                      <td className="px-3 py-2">
-                        <p className="font-black">{participant.displayName}</p>
-                        <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">{participant.userKey}</p>
-                      </td>
-                      <td className="px-3 py-2">
-                        <p className="font-black">{formatAutoParticipantProfile(participant.profileType)}</p>
-                        <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">{formatAutoParticipantProfileDescription(participant.profileType)}</p>
-                        <p className="mt-1 max-w-[340px] text-xs font-bold leading-5 text-[#b8c2cc]">{formatAutoParticipantProfileBehavior(participant.profileType)}</p>
-                      </td>
-                      <td className="px-3 py-2">
-                        <EnabledToggleButton
-                          enabled={participant.enabled}
-                          disabled={togglingAutoParticipantUserKey === participant.userKey}
-                          onToggle={() => void toggleAutoParticipantEnabled(participant)}
-	                        />
-	                      </td>
-	                      <td className="px-3 py-2 tabular-nums">
-	                        <p className="font-black">{overview ? formatWon(overview.availableCash) : participant.cashBalance == null ? "계좌 미개설" : formatWon(participant.cashBalance)}</p>
-	                        <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">총 {overview ? formatWon(overview.estimatedTotalAsset) : "-"}</p>
-	                      </td>
-	                      <td className="px-3 py-2 tabular-nums">
-	                        <p className="font-black">{overview ? `${formatNumber(overview.totalHoldingQuantity)}주` : "-"}</p>
-	                        <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">{overview ? `${overview.holdingCount.toLocaleString("ko-KR")}종목 · ${formatWon(overview.holdingMarketValue)}` : "현황 없음"}</p>
-	                        {holdingPreview.length ? (
-	                          <div className="mt-1 grid gap-0.5 text-xs font-bold leading-5 text-[#b8c2cc]">
-	                            {holdingPreview.map((line) => (
-	                              <p key={line} className="max-w-[220px] truncate" title={line}>{line}</p>
-	                            ))}
-	                          </div>
-	                        ) : overview ? (
-	                          <p className="mt-1 text-xs font-bold text-[#6f7a86]">보유 종목 없음</p>
-	                        ) : null}
-	                      </td>
-	                      <td className="px-3 py-2 tabular-nums">
-	                        <p className={["font-black", overview && overview.returnRate > 0 ? "text-[#6ee7a8]" : overview && overview.returnRate < 0 ? "text-[#ffb4a8]" : "text-white"].join(" ")}>
-	                          {overview ? formatSignedPercent(overview.returnRate) : "-"}
-	                        </p>
-	                        <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">{overview ? formatWon(overview.totalProfit) : "-"}</p>
-	                      </td>
-	                      <td className="px-3 py-2 text-xs font-bold leading-5 text-[#b8c2cc]">
-	                        {overview ? (
-	                          <>
-	                            <p>매수 {formatNumber(overview.todayBuyQuantity)}주 / 매도 {formatNumber(overview.todaySellQuantity)}주</p>
-	                            <p>체결 {overview.todayExecutionCount.toLocaleString("ko-KR")}건 · 대기 {overview.openOrderCount.toLocaleString("ko-KR")}건</p>
-	                            <p>거래대금 {formatWon(overview.todayGrossAmount)}</p>
-	                          </>
-	                        ) : "현황 없음"}
-	                      </td>
-	                      <td className="px-3 py-2 text-xs font-bold leading-5 text-[#b8c2cc]">
-	                        {overview ? (
-	                          <>
-	                            <p>최근 주문 {formatDateTime(overview.lastOrderAt)}</p>
-	                            <p>최근 체결 {formatDateTime(overview.lastExecutionAt)}</p>
-	                          </>
-	                        ) : "현황 없음"}
-	                      </td>
-	                      <td className="px-3 py-2 text-[#b8c2cc]">{formatParticipantRecurringCash(participant)}</td>
-                      <td className="px-3 py-2 text-[#b8c2cc]">{formatDateTime(participant.updatedAt)}</td>
-                      <td className="px-3 py-2">
-                        <button type="button" onClick={() => selectAutoParticipantDraft(participant)} className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-white">
-                          수정
-                        </button>
-                      </td>
-                      <td className="px-3 py-2">
+          <div className="mt-4 grid gap-3">
+            {filteredParticipants.map((participant) => {
+              const overview = autoParticipantOverviewByUserKey.get(participant.userKey) ?? null;
+              const holdingPreview = overview ? resolveAutoParticipantHoldingPreview(overview.holdings) : [];
+              const editingThisParticipant = editingAutoParticipantUserKey === participant.userKey;
+              return (
+                <article key={participant.userKey} className={["min-w-0 overflow-hidden rounded-lg border p-3", editingThisParticipant ? "border-[#3182f6]/60 bg-[#10233a]/35" : "border-white/10 bg-black/20"].join(" ")}>
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-black text-white">{participant.displayName}</p>
+                      <p className="mt-1 break-all text-xs font-bold text-[#8b95a1]">{participant.userKey}</p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <EnabledToggleButton
+                        enabled={participant.enabled}
+                        disabled={togglingAutoParticipantUserKey === participant.userKey}
+                        onToggle={() => void toggleAutoParticipantEnabled(participant)}
+                      />
+                      <button type="button" onClick={() => selectAutoParticipantDraft(participant)} className="min-h-8 rounded-md bg-white/10 px-3 py-1.5 text-xs font-black text-white">
+                        수정
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void withdrawAutoParticipantRow(participant)}
+                        disabled={withdrawingAutoParticipantUserKey === participant.userKey}
+                        className="min-h-8 rounded-md bg-[#3a1f1b] px-3 py-1.5 text-xs font-black text-[#ffb4a8] disabled:cursor-wait disabled:opacity-55"
+                      >
+                        {withdrawingAutoParticipantUserKey === participant.userKey ? "처리 중" : "탈퇴"}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                    <ParticipantInfoItem label="프로필" className="lg:col-span-2">
+                      <p className="font-black text-white">{formatAutoParticipantProfile(participant.profileType)}</p>
+                      <p className="mt-1 text-xs font-bold leading-5 text-[#8b95a1]">{formatAutoParticipantProfileDescription(participant.profileType)}</p>
+                      <p className="mt-1 text-xs font-bold leading-5 text-[#b8c2cc]">{formatAutoParticipantProfileBehavior(participant.profileType)}</p>
+                    </ParticipantInfoItem>
+                    <ParticipantInfoItem label="현금 / 총자산">
+                      <p className="font-black text-white tabular-nums">{overview ? formatWon(overview.availableCash) : participant.cashBalance == null ? "계좌 미개설" : formatWon(participant.cashBalance)}</p>
+                      <p className="mt-1 text-xs font-bold text-[#8b95a1]">총 {overview ? formatWon(overview.estimatedTotalAsset) : "-"}</p>
+                    </ParticipantInfoItem>
+                    <ParticipantInfoItem label="보유 / 평가">
+                      <p className="font-black text-white tabular-nums">{overview ? `${formatNumber(overview.totalHoldingQuantity)}주` : "-"}</p>
+                      <p className="mt-1 text-xs font-bold text-[#8b95a1]">{overview ? `${overview.holdingCount.toLocaleString("ko-KR")}종목 · ${formatWon(overview.holdingMarketValue)}` : "현황 없음"}</p>
+                      {holdingPreview.length ? (
+                        <div className="mt-1 grid gap-0.5 text-xs font-bold leading-5 text-[#b8c2cc]">
+                          {holdingPreview.map((line) => (
+                            <p key={line} className="truncate" title={line}>{line}</p>
+                          ))}
+                        </div>
+                      ) : overview ? (
+                        <p className="mt-1 text-xs font-bold text-[#6f7a86]">보유 종목 없음</p>
+                      ) : null}
+                    </ParticipantInfoItem>
+                    <ParticipantInfoItem label="손익 / 수익률">
+                      <p className={["font-black tabular-nums", overview && overview.returnRate > 0 ? "text-[#6ee7a8]" : overview && overview.returnRate < 0 ? "text-[#ffb4a8]" : "text-white"].join(" ")}>
+                        {overview ? formatSignedPercent(overview.returnRate) : "-"}
+                      </p>
+                      <p className="mt-1 text-xs font-bold text-[#8b95a1]">{overview ? formatWon(overview.totalProfit) : "-"}</p>
+                    </ParticipantInfoItem>
+                    <ParticipantInfoItem label="당일 거래" className="lg:col-span-2">
+                      {overview ? (
+                        <div className="grid gap-0.5 text-xs font-bold leading-5 text-[#b8c2cc]">
+                          <p>매수 {formatNumber(overview.todayBuyQuantity)}주 / 매도 {formatNumber(overview.todaySellQuantity)}주</p>
+                          <p>체결 {overview.todayExecutionCount.toLocaleString("ko-KR")}건 · 대기 {overview.openOrderCount.toLocaleString("ko-KR")}건</p>
+                          <p>거래대금 {formatWon(overview.todayGrossAmount)}</p>
+                        </div>
+                      ) : (
+                        <p className="font-bold text-[#8b95a1]">현황 없음</p>
+                      )}
+                    </ParticipantInfoItem>
+                    <ParticipantInfoItem label="최근 활동" className="lg:col-span-2">
+                      {overview ? (
+                        <div className="grid gap-0.5 text-xs font-bold leading-5 text-[#b8c2cc]">
+                          <p>최근 주문 {formatDateTime(overview.lastOrderAt)}</p>
+                          <p>최근 체결 {formatDateTime(overview.lastExecutionAt)}</p>
+                        </div>
+                      ) : (
+                        <p className="font-bold text-[#8b95a1]">현황 없음</p>
+                      )}
+                    </ParticipantInfoItem>
+                    <ParticipantInfoItem label="개별 월급 / 현금">
+                      <p className="font-bold text-[#b8c2cc]">{formatParticipantRecurringCash(participant)}</p>
+                    </ParticipantInfoItem>
+                    <ParticipantInfoItem label="수정일">
+                      <p className="font-bold text-[#b8c2cc]">{formatDateTime(participant.updatedAt)}</p>
+                    </ParticipantInfoItem>
+                  </div>
+
+                  {editingThisParticipant ? (
+                    <div className="mt-3 border-t border-white/10 pt-3">
+                      <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[1.2fr_1.1fr_0.8fr_0.9fr_0.75fr_0.75fr_auto]">
+                        <DarkInput label="표시명" value={autoParticipantDisplayName} onChange={setAutoParticipantDisplayName} placeholder="자동 참여자 1" />
+                        <DarkSelect label="심리 프로필" value={autoParticipantProfileType} onChange={(value) => setAutoParticipantProfileType(value as AutoParticipantProfileType)}>
+                          {AUTO_PARTICIPANT_PROFILE_OPTIONS.map((profile) => (
+                            <option key={profile.value} value={profile.value}>{profile.label}</option>
+                          ))}
+                        </DarkSelect>
+                        <DarkSelect label="상태" value={autoParticipantEnabled ? "true" : "false"} onChange={(value) => setAutoParticipantEnabled(value === "true")}>
+                          <option value="true">가동</option>
+                          <option value="false">정지</option>
+                        </DarkSelect>
+                        <DarkInput label="개별 월급/현금" value={isAutoParticipantRecurringCashDisabled ? "" : autoParticipantRecurringCashAmount} onChange={setAutoParticipantRecurringCashAmount} placeholder={isAutoParticipantRecurringCashDisabled ? "배당 이벤트만 사용" : "비우면 프로필"} disabled={isAutoParticipantRecurringCashDisabled} />
+                        <DarkInput label="주기 값" value={isAutoParticipantRecurringCashDisabled ? "" : autoParticipantRecurringCashIntervalValue} onChange={setAutoParticipantRecurringCashIntervalValue} placeholder={isAutoParticipantRecurringCashDisabled ? "-" : "0.5"} disabled={isAutoParticipantRecurringCashDisabled} />
+                        <DarkSelect label="주기 단위" value={isAutoParticipantRecurringCashDisabled ? "DAY" : autoParticipantRecurringCashIntervalUnit} onChange={(value) => setAutoParticipantRecurringCashIntervalUnit(value as RecurringCashIntervalUnit)} disabled={isAutoParticipantRecurringCashDisabled}>
+                          {RECURRING_CASH_INTERVAL_UNIT_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                          ))}
+                        </DarkSelect>
+                        <div className="grid grid-cols-2 gap-2 self-end">
+                          <button type="button" onClick={submitAutoParticipant} disabled={savingAutoParticipant} className="min-h-11 rounded-md bg-white px-3 py-3 text-sm font-black text-[#101418] disabled:opacity-50">
+                            {savingAutoParticipant ? "저장 중" : "저장"}
+                          </button>
+                          <button type="button" onClick={resetAutoParticipantDraft} className="min-h-11 rounded-md bg-white/10 px-3 py-3 text-sm font-black text-white">
+                            닫기
+                          </button>
+                        </div>
+                      </div>
+                      <div className="mt-3 grid min-w-0 grid-cols-1 gap-3 border-t border-white/10 pt-3 sm:grid-cols-[1.2fr_1fr_auto_auto]">
+                        <div className="min-w-0 self-center">
+                          <p className="text-xs font-bold text-[#8b95a1]">선택 참여자 실제 계좌</p>
+                          <p className="mt-1 break-all text-sm font-black text-white">{participant.displayName} · {participant.userKey}</p>
+                          <p className="mt-1 text-xs font-bold text-[#b8c2cc]">
+                            {formatAutoParticipantProfile(participant.profileType)} · 현재 현금 {participant.cashBalance == null ? "계좌 미개설" : formatWon(participant.cashBalance)}
+                          </p>
+                        </div>
+                        <DarkInput label="입금/회수 금액" value={cashAdjustmentAmount} onChange={setCashAdjustmentAmount} placeholder="1000000" />
                         <button
                           type="button"
-                          onClick={() => void withdrawAutoParticipantRow(participant)}
-                          disabled={withdrawingAutoParticipantUserKey === participant.userKey}
-                          className="rounded-md bg-[#3a1f1b] px-2 py-1 text-xs font-black text-[#ffb4a8] disabled:cursor-wait disabled:opacity-55"
+                          onClick={() => void adjustAutoParticipantCashBalance("DEPOSIT")}
+                          disabled={Boolean(adjustingCashType)}
+                          className="min-h-11 self-end rounded-md bg-[#3182f6] px-3 py-3 text-sm font-black text-white disabled:cursor-wait disabled:opacity-55"
                         >
-                          {withdrawingAutoParticipantUserKey === participant.userKey ? "처리 중" : "탈퇴"}
+                          {adjustingCashType === "DEPOSIT" ? "입금 중" : "입금"}
                         </button>
-                      </td>
-                    </tr>
-                    {editingAutoParticipantUserKey === participant.userKey ? (
-                      <tr>
-	                        <td colSpan={12} className="bg-black/20 px-3 py-3">
-	                          <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[1.2fr_1.1fr_0.8fr_0.9fr_0.75fr_0.75fr_auto]">
-	                            <DarkInput label="표시명" value={autoParticipantDisplayName} onChange={setAutoParticipantDisplayName} placeholder="자동 참여자 1" />
-	                            <DarkSelect label="심리 프로필" value={autoParticipantProfileType} onChange={(value) => setAutoParticipantProfileType(value as AutoParticipantProfileType)}>
-                              {AUTO_PARTICIPANT_PROFILE_OPTIONS.map((profile) => (
-                                <option key={profile.value} value={profile.value}>{profile.label}</option>
-                              ))}
-                            </DarkSelect>
-                            <DarkSelect label="상태" value={autoParticipantEnabled ? "true" : "false"} onChange={(value) => setAutoParticipantEnabled(value === "true")}>
-	                              <option value="true">가동</option>
-	                              <option value="false">정지</option>
-	                            </DarkSelect>
-	                            <DarkInput label="개별 월급/현금" value={isAutoParticipantRecurringCashDisabled ? "" : autoParticipantRecurringCashAmount} onChange={setAutoParticipantRecurringCashAmount} placeholder={isAutoParticipantRecurringCashDisabled ? "배당 이벤트만 사용" : "비우면 프로필"} disabled={isAutoParticipantRecurringCashDisabled} />
-	                            <DarkInput label="주기 값" value={isAutoParticipantRecurringCashDisabled ? "" : autoParticipantRecurringCashIntervalValue} onChange={setAutoParticipantRecurringCashIntervalValue} placeholder={isAutoParticipantRecurringCashDisabled ? "-" : "0.5"} disabled={isAutoParticipantRecurringCashDisabled} />
-	                            <DarkSelect label="주기 단위" value={isAutoParticipantRecurringCashDisabled ? "DAY" : autoParticipantRecurringCashIntervalUnit} onChange={(value) => setAutoParticipantRecurringCashIntervalUnit(value as RecurringCashIntervalUnit)} disabled={isAutoParticipantRecurringCashDisabled}>
-	                              {RECURRING_CASH_INTERVAL_UNIT_OPTIONS.map((option) => (
-	                                <option key={option.value} value={option.value}>{option.label}</option>
-	                              ))}
-	                            </DarkSelect>
-	                            <div className="grid grid-cols-2 gap-2 self-end">
-                              <button type="button" onClick={submitAutoParticipant} disabled={savingAutoParticipant} className="min-h-11 rounded-md bg-white px-3 py-3 text-sm font-black text-[#101418] disabled:opacity-50">
-                                {savingAutoParticipant ? "저장 중" : "저장"}
-                              </button>
-                              <button type="button" onClick={resetAutoParticipantDraft} className="min-h-11 rounded-md bg-white/10 px-3 py-3 text-sm font-black text-white">
-                                닫기
-                              </button>
-                            </div>
-                          </div>
-                          <div className="mt-3 grid min-w-0 grid-cols-1 gap-3 border-t border-white/10 pt-3 sm:grid-cols-[1.2fr_1fr_auto_auto]">
-                            <div className="min-w-0 self-center">
-                              <p className="text-xs font-bold text-[#8b95a1]">선택 참여자 실제 계좌</p>
-                              <p className="mt-1 break-all text-sm font-black text-white">{participant.displayName} · {participant.userKey}</p>
-                              <p className="mt-1 text-xs font-bold text-[#b8c2cc]">
-                                {formatAutoParticipantProfile(participant.profileType)} · 현재 현금 {participant.cashBalance == null ? "계좌 미개설" : formatWon(participant.cashBalance)}
-                              </p>
-                            </div>
-                            <DarkInput label="입금/회수 금액" value={cashAdjustmentAmount} onChange={setCashAdjustmentAmount} placeholder="1000000" />
-                            <button
-                              type="button"
-                              onClick={() => void adjustAutoParticipantCashBalance("DEPOSIT")}
-                              disabled={Boolean(adjustingCashType)}
-                              className="min-h-11 self-end rounded-md bg-[#3182f6] px-3 py-3 text-sm font-black text-white disabled:cursor-wait disabled:opacity-55"
-                            >
-                              {adjustingCashType === "DEPOSIT" ? "입금 중" : "입금"}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => void adjustAutoParticipantCashBalance("WITHDRAW")}
-                              disabled={Boolean(adjustingCashType)}
-                              className="min-h-11 self-end rounded-md bg-[#3a1f1b] px-3 py-3 text-sm font-black text-[#ffb4a8] disabled:cursor-wait disabled:opacity-55"
-                            >
-                              {adjustingCashType === "WITHDRAW" ? "회수 중" : "회수"}
-                            </button>
-                          </div>
-                          {overview ? (
-                            <AutoParticipantOverviewDetail overview={overview} />
-                          ) : (
-                            <div className="mt-3 rounded-md border border-white/10 bg-black/20 px-3 py-3 text-xs font-bold text-[#8b95a1]">
-                              이 참여자의 계좌/보유 현황을 아직 조회하지 못했습니다.
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    ) : null}
-                  </Fragment>
-                  );
-                })}
-                {filteredParticipants.length === 0 ? (
-                  <tr>
-                    <td colSpan={12} className="px-3 py-4 text-[#8b95a1]">조건에 맞는 자동 참여자가 없습니다.</td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
+                        <button
+                          type="button"
+                          onClick={() => void adjustAutoParticipantCashBalance("WITHDRAW")}
+                          disabled={Boolean(adjustingCashType)}
+                          className="min-h-11 self-end rounded-md bg-[#3a1f1b] px-3 py-3 text-sm font-black text-[#ffb4a8] disabled:cursor-wait disabled:opacity-55"
+                        >
+                          {adjustingCashType === "WITHDRAW" ? "회수 중" : "회수"}
+                        </button>
+                      </div>
+                      {overview ? (
+                        <AutoParticipantOverviewDetail overview={overview} />
+                      ) : (
+                        <div className="mt-3 rounded-md border border-white/10 bg-black/20 px-3 py-3 text-xs font-bold text-[#8b95a1]">
+                          이 참여자의 계좌/보유 현황을 아직 조회하지 못했습니다.
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
+                </article>
+              );
+            })}
+            {filteredParticipants.length === 0 ? (
+              <div className="rounded-md border border-white/10 bg-black/20 px-3 py-4 text-sm font-bold text-[#8b95a1]">
+                조건에 맞는 자동 참여자가 없습니다.
+              </div>
+            ) : null}
           </div>
         </section>
         ) : null}
@@ -3012,6 +3011,23 @@ function AutoParticipantOverviewDetail({ overview }: { overview: AutoParticipant
   );
 }
 
+function ParticipantInfoItem({
+  label,
+  children,
+  className = "",
+}: {
+  label: string;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={["min-w-0 overflow-hidden rounded-md border border-white/10 bg-white/[0.04] px-3 py-2", className].join(" ")}>
+      <p className="text-[11px] font-black text-[#8b95a1]">{label}</p>
+      <div className="mt-1 min-w-0 break-words text-sm leading-5">{children}</div>
+    </div>
+  );
+}
+
 function ParticipantProfileOverviewPanel({
   summaries,
   loading,
@@ -3089,83 +3105,95 @@ function ParticipantProfileOverviewPanel({
         <ProfileMiniMetric label="전략" value={`${total.enabledStrategyCount.toLocaleString("ko-KR")} / ${total.strategyCount.toLocaleString("ko-KR")}`} tone="blue" />
       </div>
 
-      <div className="mt-4 overflow-x-auto rounded-md border border-white/10">
-        <table className="min-w-[1840px] w-full border-separate border-spacing-0 text-sm">
-          <thead className="text-left text-[#b8c2cc]">
-            <tr>
-              <th className={TABLE_HEADER_CELL_CLASS}>프로필</th>
-              <th className={`${TABLE_HEADER_CELL_CLASS} text-right`}>참여자</th>
-              <th className={`${TABLE_HEADER_CELL_CLASS} text-right`}>현금</th>
-              <th className={`${TABLE_HEADER_CELL_CLASS} text-right`}>예약 매수금</th>
-              <th className={`${TABLE_HEADER_CELL_CLASS} text-right`}>보유 평가액</th>
-              <th className={`${TABLE_HEADER_CELL_CLASS} text-right`}>총자산</th>
-              <th className={`${TABLE_HEADER_CELL_CLASS} text-right`}>순입금</th>
-              <th className={`${TABLE_HEADER_CELL_CLASS} text-right`}>손익/수익률</th>
-              <th className={`${TABLE_HEADER_CELL_CLASS} text-right`}>보유</th>
-              <th className={`${TABLE_HEADER_CELL_CLASS} text-right`}>주문/체결</th>
-              <th className={`${TABLE_HEADER_CELL_CLASS} text-right`}>전략</th>
-              <th className={TABLE_HEADER_CELL_CLASS}>주요 보유종목</th>
-              <th className={TABLE_HEADER_CELL_CLASS}>최근 활동</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-white/10">
-            {summaries.map((summary) => (
-              <tr key={summary.profileType}>
-                <td className="px-3 py-2">
-                  <p className="font-black text-white">{summary.label}</p>
-                  <p className="mt-0.5 max-w-[280px] text-xs font-bold leading-5 text-[#8b95a1]">{summary.description}</p>
-                </td>
-                <td className="px-3 py-2 text-right tabular-nums">
-                  <p className="font-black">{summary.totalCount.toLocaleString("ko-KR")}명</p>
-                  <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">가동 {summary.enabledCount.toLocaleString("ko-KR")} / 정지 {summary.disabledCount.toLocaleString("ko-KR")}</p>
-                </td>
-                <td className="px-3 py-2 text-right tabular-nums">{formatWon(summary.availableCash)}</td>
-                <td className="px-3 py-2 text-right text-[#b8c2cc] tabular-nums">{formatWon(summary.reservedBuyCash)}</td>
-                <td className="px-3 py-2 text-right tabular-nums">{formatWon(summary.holdingMarketValue)}</td>
-                <td className="px-3 py-2 text-right font-black tabular-nums">{formatWon(summary.estimatedTotalAsset)}</td>
-                <td className="px-3 py-2 text-right text-[#b8c2cc] tabular-nums">{formatWon(summary.netCashFlow)}</td>
-                <td className="px-3 py-2 text-right tabular-nums">
-                  <p className={["font-black", summary.totalProfit > 0 ? "text-[#6ee7a8]" : summary.totalProfit < 0 ? "text-[#ffb4a8]" : "text-white"].join(" ")}>{formatWon(summary.totalProfit)}</p>
-                  <p className={["mt-0.5 text-xs font-black", summary.returnRate > 0 ? "text-[#6ee7a8]" : summary.returnRate < 0 ? "text-[#ffb4a8]" : "text-[#8b95a1]"].join(" ")}>{formatSignedPercent(summary.returnRate)}</p>
-                </td>
-                <td className="px-3 py-2 text-right text-[#b8c2cc] tabular-nums">
-                  <p>{summary.holdingCount.toLocaleString("ko-KR")}종목</p>
-                  <p className="mt-0.5 text-xs">{formatNumber(summary.totalHoldingQuantity)}주</p>
-                  <p className="mt-0.5 text-xs">예약 {formatNumber(summary.reservedSellQuantity)}주</p>
-                </td>
-                <td className="px-3 py-2 text-right text-[#b8c2cc] tabular-nums">
-                  <p>대기 {summary.openOrderCount.toLocaleString("ko-KR")}건</p>
-                  <p className="mt-0.5 text-xs">매수/매도 {summary.openBuyOrderCount.toLocaleString("ko-KR")} / {summary.openSellOrderCount.toLocaleString("ko-KR")}건</p>
-                  <p className="mt-0.5 text-xs">대기 수량 {formatNumber(summary.openBuyQuantity)} / {formatNumber(summary.openSellQuantity)}주</p>
-                  <p className="mt-0.5 text-xs">오늘 {summary.todayExecutionCount.toLocaleString("ko-KR")}체결</p>
-                  <p className="mt-0.5 text-xs">매수/매도 {formatNumber(summary.todayBuyQuantity)} / {formatNumber(summary.todaySellQuantity)}주</p>
-                  <p className="mt-0.5 text-xs">거래대금 {formatWon(summary.todayGrossAmount)}</p>
-                </td>
-                <td className="px-3 py-2 text-right text-[#b8c2cc] tabular-nums">
-                  <p className="font-black text-white">{summary.enabledStrategyCount.toLocaleString("ko-KR")} / {summary.strategyCount.toLocaleString("ko-KR")}</p>
-                  <p className="mt-0.5 text-xs">가동 / 전체</p>
-                </td>
-                <td className="px-3 py-2">
-                  <div className="grid gap-1 text-xs font-bold text-[#b8c2cc]">
-                    {summary.symbolHoldings.slice(0, 3).map((holding) => (
-                      <p key={holding.symbol}>
-                        <span className="font-black text-white">{holding.symbol}</span>
-                        <span className="text-[#8b95a1]"> · {formatNumber(holding.quantity)}주 · {formatWon(holding.marketValue)}</span>
-                      </p>
-                    ))}
-                    {summary.symbolHoldings.length === 0 ? <p className="text-[#8b95a1]">보유 없음</p> : null}
+      <div className="mt-4 grid min-w-0 gap-3">
+        {summaries.map((summary) => (
+          <article key={summary.profileType} className="min-w-0 rounded-md border border-white/10 bg-black/20 p-3">
+            <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="break-words text-sm font-black text-white">{summary.label}</p>
+                <p className="mt-1 max-w-3xl break-words text-xs font-bold leading-5 text-[#8b95a1]">{summary.description}</p>
+              </div>
+              <div className="flex flex-wrap gap-2 text-xs font-black">
+                <span className="rounded-md bg-white/10 px-2 py-1 text-[#64a8ff]">{summary.totalCount.toLocaleString("ko-KR")}명</span>
+                <span className="rounded-md bg-white/10 px-2 py-1 text-[#6ee7a8]">가동 {summary.enabledCount.toLocaleString("ko-KR")}</span>
+                <span className="rounded-md bg-white/10 px-2 py-1 text-[#8b95a1]">정지 {summary.disabledCount.toLocaleString("ko-KR")}</span>
+              </div>
+            </div>
+
+            <div className="mt-3 grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
+              <ProfileOverviewInfoItem label="현금">
+                <p className="font-black tabular-nums text-white">{formatWon(summary.availableCash)}</p>
+                <p className="mt-1 text-xs font-bold tabular-nums text-[#8b95a1]">예약 매수금 {formatWon(summary.reservedBuyCash)}</p>
+              </ProfileOverviewInfoItem>
+              <ProfileOverviewInfoItem label="자산">
+                <p className="font-black tabular-nums text-white">{formatWon(summary.estimatedTotalAsset)}</p>
+                <p className="mt-1 text-xs font-bold tabular-nums text-[#8b95a1]">보유 평가액 {formatWon(summary.holdingMarketValue)}</p>
+              </ProfileOverviewInfoItem>
+              <ProfileOverviewInfoItem label="순입금">
+                <p className="font-black tabular-nums text-white">{formatWon(summary.netCashFlow)}</p>
+                <p className="mt-1 text-xs font-bold text-[#8b95a1]">외부 현금 흐름 기준</p>
+              </ProfileOverviewInfoItem>
+              <ProfileOverviewInfoItem label="손익/수익률">
+                <p className={["font-black tabular-nums", summary.totalProfit > 0 ? "text-[#6ee7a8]" : summary.totalProfit < 0 ? "text-[#ffb4a8]" : "text-white"].join(" ")}>{formatWon(summary.totalProfit)}</p>
+                <p className={["mt-1 text-xs font-black tabular-nums", summary.returnRate > 0 ? "text-[#6ee7a8]" : summary.returnRate < 0 ? "text-[#ffb4a8]" : "text-[#8b95a1]"].join(" ")}>{formatSignedPercent(summary.returnRate)}</p>
+              </ProfileOverviewInfoItem>
+              <ProfileOverviewInfoItem label="보유">
+                <p className="font-black tabular-nums text-white">{summary.holdingCount.toLocaleString("ko-KR")}종목</p>
+                <p className="mt-1 text-xs font-bold tabular-nums text-[#8b95a1]">{formatNumber(summary.totalHoldingQuantity)}주</p>
+                <p className="mt-1 text-xs font-bold tabular-nums text-[#8b95a1]">예약 {formatNumber(summary.reservedSellQuantity)}주</p>
+              </ProfileOverviewInfoItem>
+              <ProfileOverviewInfoItem label="주문/체결">
+                <p className="font-black tabular-nums text-white">대기 {summary.openOrderCount.toLocaleString("ko-KR")}건</p>
+                <p className="mt-1 text-xs font-bold tabular-nums text-[#8b95a1]">매수/매도 {summary.openBuyOrderCount.toLocaleString("ko-KR")} / {summary.openSellOrderCount.toLocaleString("ko-KR")}건</p>
+                <p className="mt-1 text-xs font-bold tabular-nums text-[#8b95a1]">대기 수량 {formatNumber(summary.openBuyQuantity)} / {formatNumber(summary.openSellQuantity)}주</p>
+                <p className="mt-1 text-xs font-bold tabular-nums text-[#8b95a1]">오늘 {summary.todayExecutionCount.toLocaleString("ko-KR")}체결</p>
+                <p className="mt-1 text-xs font-bold tabular-nums text-[#8b95a1]">매수/매도 {formatNumber(summary.todayBuyQuantity)} / {formatNumber(summary.todaySellQuantity)}주</p>
+                <p className="mt-1 text-xs font-bold tabular-nums text-[#8b95a1]">거래대금 {formatWon(summary.todayGrossAmount)}</p>
+              </ProfileOverviewInfoItem>
+              <ProfileOverviewInfoItem label="전략">
+                <p className="font-black tabular-nums text-white">{summary.enabledStrategyCount.toLocaleString("ko-KR")} / {summary.strategyCount.toLocaleString("ko-KR")}</p>
+                <p className="mt-1 text-xs font-bold text-[#8b95a1]">가동 / 전체</p>
+              </ProfileOverviewInfoItem>
+              <ProfileOverviewInfoItem label="최근 활동">
+                <p className="text-xs font-bold leading-5 text-[#8b95a1]">주문 {formatDateTime(summary.lastOrderAt)}</p>
+                <p className="text-xs font-bold leading-5 text-[#8b95a1]">체결 {formatDateTime(summary.lastExecutionAt)}</p>
+              </ProfileOverviewInfoItem>
+            </div>
+
+            <div className="mt-2 rounded-md border border-white/10 bg-white/[0.04] px-3 py-3">
+              <p className="text-[11px] font-black text-[#8b95a1]">주요 보유종목</p>
+              <div className="mt-2 grid min-w-0 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                {summary.symbolHoldings.slice(0, 3).map((holding) => (
+                  <div key={holding.symbol} className="min-w-0 rounded-md bg-black/20 px-3 py-2">
+                    <p className="break-all text-xs font-black text-white">{holding.symbol}</p>
+                    <p className="mt-1 text-xs font-bold tabular-nums text-[#8b95a1]">{formatNumber(holding.quantity)}주</p>
+                    <p className="mt-1 text-xs font-bold tabular-nums text-[#b8c2cc]">{formatWon(holding.marketValue)}</p>
                   </div>
-                </td>
-                <td className="px-3 py-2 text-xs font-bold leading-5 text-[#8b95a1]">
-                  <p>주문 {formatDateTime(summary.lastOrderAt)}</p>
-                  <p>체결 {formatDateTime(summary.lastExecutionAt)}</p>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                ))}
+                {summary.symbolHoldings.length === 0 ? (
+                  <p className="text-xs font-bold text-[#8b95a1]">보유 없음</p>
+                ) : null}
+              </div>
+            </div>
+          </article>
+        ))}
       </div>
     </section>
+  );
+}
+
+function ProfileOverviewInfoItem({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="min-w-0 overflow-hidden rounded-md border border-white/10 bg-white/[0.04] px-3 py-2">
+      <p className="text-[11px] font-black text-[#8b95a1]">{label}</p>
+      <div className="mt-1 min-w-0 break-words text-sm leading-5">{children}</div>
+    </div>
   );
 }
 
@@ -3361,27 +3389,16 @@ function SalaryEligibilityPanel({
 
 function AdminFlowOverviewPanel({
   overview,
-  cashFlowPage,
-  loadingCashFlowPage,
   onRefresh,
-  onOpenCashFlowPage,
-  onCloseCashFlowPage,
-  onCashFlowPageChange,
 }: {
   overview: AdminFlowOverview | null;
-  cashFlowPage: AdminCashFlowPage | null;
-  loadingCashFlowPage: boolean;
   onRefresh: () => void;
-  onOpenCashFlowPage: () => void;
-  onCloseCashFlowPage: () => void;
-  onCashFlowPageChange: (page: number) => void;
 }) {
   const fundFlow = overview?.fundFlow;
   const orderFlow = overview?.orderFlow;
   const corporateActionFlow = overview?.corporateActionFlow;
   const topSymbolFlows = overview?.symbolFlows.slice(0, 8) ?? [];
   const recentCashFlows = overview?.recentCashFlows.slice(0, 8) ?? [];
-  const cashFlowPageTotalPages = Math.max(1, cashFlowPage?.totalPages ?? 0);
 
   return (
     <section className="mt-5 rounded-lg border border-white/10 bg-white/[0.06] p-4">
@@ -3523,106 +3540,139 @@ function AdminFlowOverviewPanel({
         <div className="min-w-0 rounded-md border border-white/10 bg-black/20 p-4">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
-              <h3 className="text-sm font-black text-white">{cashFlowPage ? "전체 현금 원장" : "최근 현금 원장"}</h3>
+              <h3 className="text-sm font-black text-white">최근 현금 원장</h3>
               <p className="mt-1 text-xs font-bold text-[#8b95a1]">
-                {cashFlowPage
-                  ? `총 ${cashFlowPage.totalElements.toLocaleString("ko-KR")}건 · ${cashFlowPage.page + 1}/${cashFlowPageTotalPages}페이지`
-                  : `최근 ${recentCashFlows.length.toLocaleString("ko-KR")}건 미리보기`}
+                최근 {recentCashFlows.length.toLocaleString("ko-KR")}건 미리보기
               </p>
             </div>
-            <button
-              type="button"
-              onClick={cashFlowPage ? onCloseCashFlowPage : onOpenCashFlowPage}
-              disabled={loadingCashFlowPage}
-              className="min-h-9 rounded-md bg-white px-3 py-2 text-xs font-black text-[#101418] disabled:cursor-wait disabled:opacity-55"
+            <Link
+              href="/supply-demand/admin/accounts/cash-flows"
+              className="inline-flex min-h-9 items-center rounded-md bg-white px-3 py-2 text-xs font-black text-[#101418]"
             >
-              {loadingCashFlowPage ? "조회 중" : cashFlowPage ? "접기" : "전체 보기"}
-            </button>
+              전체 보기
+            </Link>
           </div>
 
-          {cashFlowPage ? (
-            <>
-              <div className="mt-3 overflow-x-auto rounded-md border border-white/10">
-                <table className="min-w-[840px] w-full border-collapse text-sm">
-                  <thead className="bg-white/10 text-left text-[#b8c2cc]">
-                    <tr>
-                      <th className="px-3 py-2">일시</th>
-                      <th className="px-3 py-2">사용자/계좌</th>
-                      <th className="px-3 py-2">구분</th>
-                      <th className="px-3 py-2">사유</th>
-                      <th className="px-3 py-2 text-right">금액</th>
-                      <th className="px-3 py-2">처리자</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/10">
-                    {cashFlowPage.content.map((cashFlow) => (
-                      <tr key={cashFlow.id}>
-                        <td className="px-3 py-2 text-xs font-bold text-[#8b95a1]">{formatDateTime(cashFlow.createdAt)}</td>
-                        <td className="px-3 py-2">
-                          <p className="max-w-[220px] break-all text-xs font-black text-white">{cashFlow.userKey ?? `계좌 ${cashFlow.accountId}`}</p>
-                          <p className="mt-0.5 text-[11px] font-bold text-[#8b95a1]">계좌 ID {cashFlow.accountId}</p>
-                        </td>
-                        <td className="px-3 py-2 font-black text-white">{cashFlow.flowType === "WITHDRAW" ? "회수" : "입금"}</td>
-                        <td className="px-3 py-2 text-[#b8c2cc]">{formatCashFlowReason(cashFlow.reason)}</td>
-                        <td className={cashFlow.flowType === "WITHDRAW" ? "px-3 py-2 text-right font-black tabular-nums text-[#ffb4a8]" : "px-3 py-2 text-right font-black tabular-nums text-[#6ee7a8]"}>
-                          {cashFlow.flowType === "WITHDRAW" ? "-" : "+"}{formatWon(cashFlow.amount)}
-                        </td>
-                        <td className="px-3 py-2 text-xs font-bold text-[#8b95a1]">{cashFlow.createdBy ?? "-"}</td>
-                      </tr>
-                    ))}
-                    {cashFlowPage.content.length === 0 ? (
-                      <tr>
-                        <td colSpan={6} className="px-3 py-6 text-center text-sm font-bold text-[#8b95a1]">현금 원장 내역이 없습니다.</td>
-                      </tr>
-                    ) : null}
-                  </tbody>
-                </table>
-              </div>
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                <span className="text-xs font-bold text-[#8b95a1]">
-                  페이지당 {cashFlowPage.size.toLocaleString("ko-KR")}건
-                </span>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => onCashFlowPageChange(cashFlowPage.page - 1)}
-                    disabled={loadingCashFlowPage || !cashFlowPage.hasPrevious}
-                    className="min-h-9 rounded-md border border-white/10 bg-white/[0.05] px-3 py-2 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-45"
-                  >
-                    이전
-                  </button>
-                  <span className="min-w-20 text-center text-xs font-black text-white tabular-nums">
-                    {cashFlowPage.page + 1} / {cashFlowPageTotalPages}
+          <div className="mt-3 space-y-2">
+            {recentCashFlows.map((cashFlow) => (
+              <div key={cashFlow.id} className="rounded-md border border-white/10 bg-white/[0.04] px-3 py-2">
+                <div className="flex min-w-0 items-center justify-between gap-3">
+                  <p className="min-w-0 truncate text-xs font-black text-white">{cashFlow.userKey ?? `계좌 ${cashFlow.accountId}`}</p>
+                  <span className={cashFlow.flowType === "WITHDRAW" ? "shrink-0 text-sm font-black tabular-nums text-[#ffb4a8]" : "shrink-0 text-sm font-black tabular-nums text-[#6ee7a8]"}>
+                    {cashFlow.flowType === "WITHDRAW" ? "-" : "+"}{formatWon(cashFlow.amount)}
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => onCashFlowPageChange(cashFlowPage.page + 1)}
-                    disabled={loadingCashFlowPage || !cashFlowPage.hasNext}
-                    className="min-h-9 rounded-md border border-white/10 bg-white/[0.05] px-3 py-2 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-45"
-                  >
-                    다음
-                  </button>
                 </div>
+                <p className="mt-1 text-xs font-bold text-[#8b95a1]">{formatCashFlowReason(cashFlow.reason)} · {formatDateTime(cashFlow.createdAt)}</p>
               </div>
-            </>
-          ) : (
-            <div className="mt-3 space-y-2">
-              {recentCashFlows.map((cashFlow) => (
-                <div key={cashFlow.id} className="rounded-md border border-white/10 bg-white/[0.04] px-3 py-2">
-                  <div className="flex min-w-0 items-center justify-between gap-3">
-                    <p className="min-w-0 truncate text-xs font-black text-white">{cashFlow.userKey ?? `계좌 ${cashFlow.accountId}`}</p>
-                    <span className={cashFlow.flowType === "WITHDRAW" ? "shrink-0 text-sm font-black tabular-nums text-[#ffb4a8]" : "shrink-0 text-sm font-black tabular-nums text-[#6ee7a8]"}>
-                      {cashFlow.flowType === "WITHDRAW" ? "-" : "+"}{formatWon(cashFlow.amount)}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs font-bold text-[#8b95a1]">{formatCashFlowReason(cashFlow.reason)} · {formatDateTime(cashFlow.createdAt)}</p>
-                </div>
-              ))}
-              {recentCashFlows.length === 0 ? (
-                <p className="rounded-md bg-white/[0.04] px-3 py-4 text-sm font-bold text-[#8b95a1]">최근 현금 원장이 없습니다.</p>
-              ) : null}
-            </div>
-          )}
+            ))}
+            {recentCashFlows.length === 0 ? (
+              <p className="rounded-md bg-white/[0.04] px-3 py-4 text-sm font-bold text-[#8b95a1]">최근 현금 원장이 없습니다.</p>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function AdminCashFlowLedgerPanel({
+  cashFlowPage,
+  loading,
+  onRefresh,
+  onPageChange,
+}: {
+  cashFlowPage: AdminCashFlowPage | null;
+  loading: boolean;
+  onRefresh: () => void;
+  onPageChange: (page: number) => void;
+}) {
+  const totalPages = Math.max(1, cashFlowPage?.totalPages ?? 0);
+
+  return (
+    <section className="mt-5 rounded-lg border border-white/10 bg-white/[0.06] p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-base font-black">전체 현금 원장</h2>
+          <p className="mt-1 text-xs font-bold text-[#8b95a1]">유저와 자동참여자 계좌의 입금, 회수, 월급, 배당 현금 흐름을 페이지 단위로 조회합니다.</p>
+        </div>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <span className="rounded-md bg-[#19324a] px-2 py-1 text-xs font-black text-[#64a8ff]">
+            {cashFlowPage ? `총 ${cashFlowPage.totalElements.toLocaleString("ko-KR")}건` : "조회 필요"}
+          </span>
+          <button
+            type="button"
+            onClick={onRefresh}
+            disabled={loading}
+            className="min-h-10 rounded-md bg-white px-3 py-2 text-xs font-black text-[#101418] disabled:cursor-wait disabled:opacity-55"
+          >
+            {loading ? "조회 중" : "새로고침"}
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-4 overflow-x-auto rounded-md border border-white/10">
+        <table className="min-w-[920px] w-full border-collapse text-sm">
+          <thead className="bg-white/10 text-left text-[#b8c2cc]">
+            <tr>
+              <th className="px-3 py-2">일시</th>
+              <th className="px-3 py-2">사용자/계좌</th>
+              <th className="px-3 py-2">구분</th>
+              <th className="px-3 py-2">사유</th>
+              <th className="px-3 py-2 text-right">금액</th>
+              <th className="px-3 py-2">처리자</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/10">
+            {cashFlowPage?.content.map((cashFlow) => (
+              <tr key={cashFlow.id}>
+                <td className="px-3 py-2 text-xs font-bold text-[#8b95a1]">{formatDateTime(cashFlow.createdAt)}</td>
+                <td className="px-3 py-2">
+                  <p className="max-w-[280px] break-all text-xs font-black text-white">{cashFlow.userKey ?? `계좌 ${cashFlow.accountId}`}</p>
+                  <p className="mt-0.5 text-[11px] font-bold text-[#8b95a1]">계좌 ID {cashFlow.accountId}</p>
+                </td>
+                <td className="px-3 py-2 font-black text-white">{cashFlow.flowType === "WITHDRAW" ? "회수" : "입금"}</td>
+                <td className="px-3 py-2 text-[#b8c2cc]">{formatCashFlowReason(cashFlow.reason)}</td>
+                <td className={cashFlow.flowType === "WITHDRAW" ? "px-3 py-2 text-right font-black tabular-nums text-[#ffb4a8]" : "px-3 py-2 text-right font-black tabular-nums text-[#6ee7a8]"}>
+                  {cashFlow.flowType === "WITHDRAW" ? "-" : "+"}{formatWon(cashFlow.amount)}
+                </td>
+                <td className="px-3 py-2 text-xs font-bold text-[#8b95a1]">{cashFlow.createdBy ?? "-"}</td>
+              </tr>
+            ))}
+            {(!cashFlowPage || cashFlowPage.content.length === 0) ? (
+              <tr>
+                <td colSpan={6} className="px-3 py-8 text-center text-sm font-bold text-[#8b95a1]">
+                  {loading ? "현금 원장을 조회하고 있습니다." : "현금 원장 내역이 없습니다."}
+                </td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+        <span className="text-xs font-bold text-[#8b95a1]">
+          {cashFlowPage ? `페이지당 ${cashFlowPage.size.toLocaleString("ko-KR")}건` : `페이지당 ${ADMIN_CASH_FLOW_PAGE_SIZE.toLocaleString("ko-KR")}건`}
+        </span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => cashFlowPage ? onPageChange(cashFlowPage.page - 1) : undefined}
+            disabled={loading || !cashFlowPage?.hasPrevious}
+            className="min-h-9 rounded-md border border-white/10 bg-white/[0.05] px-3 py-2 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-45"
+          >
+            이전
+          </button>
+          <span className="min-w-20 text-center text-xs font-black text-white tabular-nums">
+            {cashFlowPage ? cashFlowPage.page + 1 : 1} / {totalPages}
+          </span>
+          <button
+            type="button"
+            onClick={() => cashFlowPage ? onPageChange(cashFlowPage.page + 1) : undefined}
+            disabled={loading || !cashFlowPage?.hasNext}
+            className="min-h-9 rounded-md border border-white/10 bg-white/[0.05] px-3 py-2 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-45"
+          >
+            다음
+          </button>
         </div>
       </div>
     </section>
@@ -3733,6 +3783,9 @@ function resolveAdminTabFromPath(pathname: string | null): AdminTab {
 }
 
 function resolveAdminSectionFromPath(pathname: string | null): AdminSection {
+  if (pathname?.startsWith("/supply-demand/admin/accounts/cash-flows")) {
+    return "cash-flow-ledger";
+  }
   if (pathname?.startsWith("/supply-demand/admin/accounts/participants")) {
     return "participants";
   }
@@ -3750,9 +3803,6 @@ function resolveAdminSectionFromPath(pathname: string | null): AdminSection {
   }
   if (pathname?.startsWith("/supply-demand/admin/automation/listing-auto")) {
     return "listing-auto";
-  }
-  if (pathname?.startsWith("/supply-demand/admin/automation/strategies")) {
-    return "participant-strategies";
   }
   if (pathname?.startsWith("/supply-demand/admin/automation/batch")) {
     return "batch";
@@ -4465,26 +4515,6 @@ function filterAutoParticipants(
       participant.userKey,
       participant.displayName,
       formatAutoParticipantProfile(participant.profileType),
-    ].some((value) => value.toLowerCase().includes(search));
-  });
-}
-
-function filterParticipantSymbolConfigs(
-  configs: AutoParticipantSymbolConfig[],
-  participantByUserKey: Map<string, AutoParticipant>,
-  searchValue: string,
-) {
-  const search = searchValue.trim().toLowerCase();
-  if (!search) {
-    return configs;
-  }
-  return configs.filter((config) => {
-    const participant = participantByUserKey.get(config.userKey);
-    return [
-      config.userKey,
-      config.symbol,
-      participant?.displayName ?? "",
-      participant ? formatAutoParticipantProfile(participant.profileType) : "",
     ].some((value) => value.toLowerCase().includes(search));
   });
 }
