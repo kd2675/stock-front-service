@@ -1,9 +1,10 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { CandlestickSeries, createChart, HistogramSeries, type CandlestickData, type HistogramData, type IChartApi, type ISeriesApi, type Time } from "lightweight-charts";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
 import TradingTopBar from "@/app/components/TradingTopBar";
 import useAuthSession from "@/app/hooks/useAuthSession";
@@ -44,6 +45,7 @@ export default function SupplyDemandPage() {
   const [flashingOrderBookLevel, setFlashingOrderBookLevel] = useState<{ price: number; side: "bid" | "ask"; nonce: number } | null>(null);
   const [orderBookLayout, setOrderBookLayout] = useState<"split" | "stacked">("split");
   const [candleInterval, setCandleInterval] = useState<OrderBookCandleInterval>("1M");
+  const [chartExpanded, setChartExpanded] = useState(false);
   const orderBookTicket = useStockUiStore((state) => state.orderBookTicket);
   const setOrderBookTicket = useStockUiStore((state) => state.setOrderBookTicket);
   const { limitPrice, orderType, quantity, selectedSymbol, side } = orderBookTicket;
@@ -443,14 +445,6 @@ export default function SupplyDemandPage() {
             {message ? <p className="mt-4 rounded-md bg-[#fff3f0] px-3 py-2 text-sm font-bold text-[#d34b36]">{message}</p> : null}
           </div>
 
-          <MarketChartPanel
-            candles={orderBookCandles}
-            interval={candleInterval}
-            isLoading={orderBookCandlesQuery.isLoading}
-            summary={orderBookTradeSummary}
-            onIntervalChange={setCandleInterval}
-          />
-
           <OrderBookPanel
             currentPrice={selectedInstrument.currentPrice}
             flashingLevel={flashingOrderBookLevel}
@@ -459,6 +453,16 @@ export default function SupplyDemandPage() {
             onFlashEnd={() => setFlashingOrderBookLevel(null)}
             onLayoutChange={setOrderBookLayout}
             onPriceSelect={selectOrderBookPrice}
+          />
+
+          <MarketChartPanel
+            candles={orderBookCandles}
+            expanded={chartExpanded}
+            interval={candleInterval}
+            isLoading={orderBookCandlesQuery.isLoading}
+            summary={orderBookTradeSummary}
+            onExpandedChange={setChartExpanded}
+            onIntervalChange={setCandleInterval}
           />
         </div>
 
@@ -715,26 +719,43 @@ function SelectionInfoRow({ label, value }: { label: string; value: string }) {
 
 function MarketChartPanel({
   candles,
+  expanded,
   interval,
   isLoading,
   summary,
+  onExpandedChange,
   onIntervalChange,
 }: {
   candles: OrderBookCandle[];
+  expanded: boolean;
   interval: OrderBookCandleInterval;
   isLoading: boolean;
   summary: OrderBookTradeSummary | null;
+  onExpandedChange: (expanded: boolean) => void;
   onIntervalChange: (interval: OrderBookCandleInterval) => void;
 }) {
   return (
-    <section className="rounded-lg border border-[#e5e8eb] bg-white p-4">
+    <>
+      {expanded ? (
+        <button
+          type="button"
+          aria-label="차트 확대 닫기"
+          onClick={() => onExpandedChange(false)}
+          className="fixed inset-0 z-40 cursor-default bg-black/30"
+        />
+      ) : null}
+      <section className={expanded
+        ? "fixed inset-3 z-50 overflow-auto rounded-lg border border-[#d1d6db] bg-white p-4 shadow-[0_18px_80px_rgba(25,31,40,0.26)] sm:inset-6"
+        : "rounded-lg border border-[#e5e8eb] bg-white p-4"}
+      >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs font-bold text-[#8b95a1]">PRICE / VOLUME</p>
           <h3 className="mt-1 text-base font-black">가격 흐름</h3>
         </div>
-        <div className="grid grid-cols-5 rounded-md bg-[#f2f4f6] p-1">
-          {CANDLE_INTERVAL_OPTIONS.map((option) => (
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="grid grid-cols-5 rounded-md bg-[#f2f4f6] p-1">
+            {CANDLE_INTERVAL_OPTIONS.map((option) => (
             <button
               key={option.value}
               type="button"
@@ -745,13 +766,21 @@ function MarketChartPanel({
             >
               {option.label}
             </button>
-          ))}
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => onExpandedChange(!expanded)}
+            className="h-11 rounded-md bg-[#191f28] px-3 text-xs font-black text-white"
+          >
+            {expanded ? "축소" : "확대"}
+          </button>
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_180px]">
-        <MarketCandleChart candles={candles} isLoading={isLoading} />
-        <div className="grid gap-2 rounded-md bg-[#f7f8fa] p-3 text-sm">
+      <div className={expanded ? "mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_220px]" : "mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_180px]"}>
+        <MarketCandleChart candles={candles} expanded={expanded} interval={interval} isLoading={isLoading} />
+        <div className="grid content-start gap-2 rounded-md bg-[#f7f8fa] p-3 text-sm">
           <StatusRow label="체결" value={summary ? `${formatNumber(summary.todayExecutionCount)}건` : "-"} />
           <StatusRow label="거래량" value={`${formatNumber(summary?.todayVolume ?? 0)}주`} />
           <StatusRow label="거래대금" value={formatWon(summary?.todayTurnover)} />
@@ -760,38 +789,161 @@ function MarketChartPanel({
         </div>
       </div>
     </section>
+    </>
   );
 }
 
-function MarketCandleChart({ candles, isLoading }: { candles: OrderBookCandle[]; isLoading: boolean }) {
+function MarketCandleChart({ candles, expanded, interval, isLoading }: { candles: OrderBookCandle[]; expanded: boolean; interval: OrderBookCandleInterval; isLoading: boolean }) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const chartRef = useRef<IChartApi | null>(null);
+  const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+  const volumeSeriesRef = useRef<ISeriesApi<"Histogram"> | null>(null);
+  const chartHeight = expanded ? 560 : 300;
+  const chartData = useMemo(() => {
+    const uniqueTimes = new Set<number>();
+    const candleData: CandlestickData<Time>[] = [];
+    const volumeData: HistogramData<Time>[] = [];
+    for (const candle of candles) {
+      const time = Math.floor(new Date(candle.bucketStart).getTime() / 1000);
+      if (!Number.isFinite(time) || uniqueTimes.has(time)) {
+        continue;
+      }
+      uniqueTimes.add(time);
+      const up = candle.closePrice >= candle.openPrice;
+      candleData.push({
+        time: time as Time,
+        open: candle.openPrice,
+        high: candle.highPrice,
+        low: candle.lowPrice,
+        close: candle.closePrice,
+      });
+      volumeData.push({
+        time: time as Time,
+        value: candle.volume,
+        color: up ? "rgba(240, 68, 82, 0.28)" : "rgba(49, 130, 246, 0.28)",
+      });
+    }
+    return { candleData, volumeData };
+  }, [candles]);
+  const emptyHeightClass = expanded ? "h-[560px]" : "h-[300px]";
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || chartData.candleData.length < 2) {
+      return;
+    }
+
+    const chart = createChart(container, {
+      autoSize: true,
+      height: chartHeight,
+      layout: {
+        background: { color: "#fbfcfd" },
+        textColor: "#4e5968",
+      },
+      grid: {
+        vertLines: { color: "#eef0f2" },
+        horzLines: { color: "#eef0f2" },
+      },
+      rightPriceScale: {
+        borderVisible: false,
+        scaleMargins: {
+          top: 0.05,
+          bottom: 0.26,
+        },
+      },
+      timeScale: {
+        borderVisible: false,
+        rightOffset: 6,
+        barSpacing: expanded ? 12 : 8,
+        minBarSpacing: 4,
+        tickMarkFormatter: (time: Time) => formatChartTickTime(time, interval),
+      },
+      localization: {
+        locale: "ko-KR",
+        timeFormatter: (time: Time) => formatChartCrosshairTime(time, interval),
+      },
+      crosshair: {
+        vertLine: { color: "#8b95a1", labelBackgroundColor: "#333d4b" },
+        horzLine: { color: "#8b95a1", labelBackgroundColor: "#333d4b" },
+      },
+      handleScroll: {
+        mouseWheel: true,
+        pressedMouseMove: true,
+        horzTouchDrag: true,
+        vertTouchDrag: false,
+      },
+      handleScale: {
+        axisPressedMouseMove: true,
+        mouseWheel: true,
+        pinch: true,
+      },
+    });
+    const candleSeries = chart.addSeries(CandlestickSeries, {
+      upColor: "#f04452",
+      downColor: "#3182f6",
+      borderUpColor: "#f04452",
+      borderDownColor: "#3182f6",
+      wickUpColor: "#f04452",
+      wickDownColor: "#3182f6",
+      priceLineVisible: true,
+      lastValueVisible: true,
+    });
+    const volumeSeries = chart.addSeries(HistogramSeries, {
+      priceFormat: {
+        type: "volume",
+      },
+      priceLineVisible: false,
+      priceScaleId: "volume",
+    });
+    chart.priceScale("volume").applyOptions({
+      scaleMargins: {
+        top: 0.78,
+        bottom: 0,
+      },
+    });
+
+    chartRef.current = chart;
+    candleSeriesRef.current = candleSeries;
+    volumeSeriesRef.current = volumeSeries;
+
+    return () => {
+      chart.remove();
+      chartRef.current = null;
+      candleSeriesRef.current = null;
+      volumeSeriesRef.current = null;
+    };
+  }, [chartData.candleData.length, chartHeight, expanded, interval]);
+
+  useEffect(() => {
+    candleSeriesRef.current?.setData(chartData.candleData);
+    volumeSeriesRef.current?.setData(chartData.volumeData);
+    chartRef.current?.applyOptions({
+      height: chartHeight,
+      timeScale: {
+        barSpacing: expanded ? 12 : 8,
+      },
+    });
+    chartRef.current?.timeScale().fitContent();
+  }, [chartData, chartHeight, expanded]);
+
   if (isLoading && candles.length === 0) {
     return (
-      <div className="grid h-[300px] place-items-center rounded-md bg-[#f7f8fa] text-sm font-bold text-[#8b95a1]">
+      <div className={`grid ${emptyHeightClass} place-items-center rounded-md bg-[#f7f8fa] text-sm font-bold text-[#8b95a1]`}>
         차트 데이터를 불러오는 중입니다.
       </div>
     );
   }
-  if (candles.length < 2) {
+  if (chartData.candleData.length < 2) {
     return (
-      <div className="grid h-[300px] place-items-center rounded-md bg-[#f7f8fa] px-4 text-center text-sm font-bold leading-6 text-[#8b95a1]">
+      <div className={`grid ${emptyHeightClass} place-items-center rounded-md bg-[#f7f8fa] px-4 text-center text-sm font-bold leading-6 text-[#8b95a1]`}>
         가격 이력과 체결이 더 쌓이면 일봉/주봉 차트와 거래량이 표시됩니다.
       </div>
     );
   }
 
-  const width = 720;
-  const priceHeight = 200;
-  const volumeHeight = 68;
-  const gap = 18;
-  const height = priceHeight + gap + volumeHeight;
   const prices = candles.flatMap((candle) => [candle.highPrice, candle.lowPrice]);
   const minPrice = Math.min(...prices);
   const maxPrice = Math.max(...prices);
-  const priceRange = maxPrice - minPrice || 1;
-  const maxVolume = Math.max(1, ...candles.map((candle) => candle.volume));
-  const slotWidth = width / candles.length;
-  const candleWidth = Math.max(3, Math.min(12, slotWidth * 0.56));
-  const yPrice = (price: number) => priceHeight - ((price - minPrice) / priceRange) * priceHeight;
   const last = candles[candles.length - 1];
   const first = candles[0];
   const changeRate = calculateChangeRate(last.closePrice, first.openPrice);
@@ -809,31 +961,13 @@ function MarketCandleChart({ candles, isLoading }: { candles: OrderBookCandle[];
           {formatSignedPercent(changeRate)}
         </span>
       </div>
-      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="가격 캔들 및 거래량 차트" className="h-[260px] w-full">
-        <line x1="0" x2={width} y1="0" y2="0" stroke="#eef0f2" strokeWidth="1" />
-        <line x1="0" x2={width} y1={priceHeight} y2={priceHeight} stroke="#e5e8eb" strokeWidth="1" />
-        <line x1="0" x2={width} y1={priceHeight + gap + volumeHeight} y2={priceHeight + gap + volumeHeight} stroke="#eef0f2" strokeWidth="1" />
-        {candles.map((candle, index) => {
-          const x = index * slotWidth + slotWidth / 2;
-          const openY = yPrice(candle.openPrice);
-          const closeY = yPrice(candle.closePrice);
-          const highY = yPrice(candle.highPrice);
-          const lowY = yPrice(candle.lowPrice);
-          const up = candle.closePrice >= candle.openPrice;
-          const color = up ? "#f04452" : "#3182f6";
-          const bodyTop = Math.min(openY, closeY);
-          const bodyHeight = Math.max(2, Math.abs(closeY - openY));
-          const volumeBarHeight = Math.max(1, candle.volume / maxVolume * volumeHeight);
-          return (
-            <g key={`${candle.bucketStart}-${index}`}>
-              <line x1={x} x2={x} y1={highY} y2={lowY} stroke={color} strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
-              <rect x={x - candleWidth / 2} y={bodyTop} width={candleWidth} height={bodyHeight} rx="1" fill={up ? color : "white"} stroke={color} strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
-              <rect x={x - candleWidth / 2} y={priceHeight + gap + volumeHeight - volumeBarHeight} width={candleWidth} height={volumeBarHeight} rx="1" fill={up ? "#ffd6d9" : "#dcecff"} />
-            </g>
-          );
-        })}
-      </svg>
-      <div className="mt-2 flex items-center justify-between gap-3 text-[11px] font-bold text-[#8b95a1]">
+      <div
+        ref={containerRef}
+        aria-label="확대와 이동이 가능한 가격 캔들 및 거래량 차트"
+        className="w-full min-w-0 overflow-hidden rounded-md bg-[#fbfcfd]"
+        style={{ height: chartHeight }}
+      />
+      <div className="mt-2 flex items-center justify-between gap-3 text-xs font-bold text-[#8b95a1]">
         <span>{formatShortDateTime(candles[0].bucketStart)}</span>
         <span>고가 {formatWon(maxPrice)} · 저가 {formatWon(minPrice)}</span>
         <span>{formatShortDateTime(last.bucketStart)}</span>
@@ -1172,14 +1306,14 @@ function OrderBookPanel({
   onLayoutChange: (layout: "split" | "stacked") => void;
   onPriceSelect: (price: number, side: "bid" | "ask") => void;
 }) {
-  const bids = orderBook?.bids ?? [];
-  const asks = orderBook?.asks ?? [];
+  const bids = sortBidLevels(orderBook?.bids ?? []);
+  const asks = sortAskLevels(orderBook?.asks ?? []);
   const totalBidQuantity = bids.reduce((total, level) => total + level.quantity, 0);
   const totalAskQuantity = asks.reduce((total, level) => total + level.quantity, 0);
   const imbalance = totalAskQuantity <= 0 ? 0 : totalBidQuantity / totalAskQuantity;
 
   return (
-    <section className="rounded-lg border border-[#e5e8eb] bg-white p-4">
+    <section className="rounded-lg border border-[#d1d6db] bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs font-bold text-[#8b95a1]">ORDER BOOK DEPTH</p>
@@ -1251,7 +1385,7 @@ function OrderBookSide({
         <span className="shrink-0 text-xs font-bold text-[#8b95a1]">고정 {ORDER_BOOK_VISIBLE_LEVELS}호가</span>
       </div>
       <div className="mt-3 grid h-[376px] grid-rows-[24px_repeat(8,40px)] gap-1 overflow-hidden">
-        <div className="grid grid-cols-[minmax(78px,1fr)_minmax(58px,0.9fr)_minmax(58px,0.9fr)_42px] items-center gap-2 px-3 text-[11px] font-bold text-[#8b95a1] sm:grid-cols-[100px_minmax(0,1fr)_minmax(0,1fr)_52px]">
+        <div className="grid grid-cols-[minmax(78px,1fr)_minmax(58px,0.9fr)_minmax(58px,0.9fr)_42px] items-center gap-2 px-3 text-xs font-bold text-[#8b95a1] sm:grid-cols-[100px_minmax(0,1fr)_minmax(0,1fr)_52px]">
           <span>가격</span>
           <span className="text-right">잔량</span>
           <span className="text-right">누적</span>
@@ -1350,20 +1484,20 @@ function StackedOrderBook({
   onFlashEnd: () => void;
   onPriceSelect: (price: number, side: "bid" | "ask") => void;
 }) {
-  const askLevels = addCumulativeQuantity(toFixedOrderBookLevels([...asks].reverse()));
-  const bidLevels = addCumulativeQuantity(toFixedOrderBookLevels(bids));
+  const askLevels = [...addCumulativeQuantity(toFixedOrderBookLevels(sortAskLevels(asks)))].reverse();
+  const bidLevels = addCumulativeQuantity(toFixedOrderBookLevels(sortBidLevels(bids)));
   const maxQuantity = Math.max(1, ...asks.map((level) => level.quantity), ...bids.map((level) => level.quantity));
   return (
     <div className="mt-4 rounded-md border border-[#eef0f2] bg-[#fbfcfd] p-3">
-      <div className="grid grid-cols-[minmax(82px,1fr)_minmax(64px,0.8fr)_minmax(64px,0.8fr)_44px] items-center gap-2 px-3 text-[11px] font-bold text-[#8b95a1] sm:grid-cols-[112px_minmax(0,1fr)_minmax(0,1fr)_58px]">
-        <span>가격</span>
-        <span className="text-right">잔량</span>
-        <span className="text-right">누적</span>
-        <span className="text-right">주문</span>
+      <div className="grid grid-cols-[minmax(76px,1fr)_minmax(90px,0.85fr)_minmax(76px,1fr)_44px] items-center gap-2 px-3 text-xs font-bold text-[#8b95a1] sm:grid-cols-[minmax(120px,1fr)_116px_minmax(120px,1fr)_58px]">
+        <span className="text-left">매도 잔량</span>
+        <span className="text-center">가격</span>
+        <span className="text-right">매수 잔량</span>
+        <span className="text-right">건수</span>
       </div>
       <div className="mt-2 grid gap-1">
         {askLevels.map((level, index) => (
-          <OrderBookRow
+          <StackedOrderBookRow
             key={`stacked-ask-${index}`}
             flashNonce={level && flashingLevel?.side === "ask" && flashingLevel.price === level.price ? flashingLevel.nonce : null}
             level={level}
@@ -1375,13 +1509,13 @@ function StackedOrderBook({
         ))}
         <div className="my-1 grid min-h-12 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-md border border-[#d1d6db] bg-white px-3">
           <div>
-            <p className="text-[11px] font-bold text-[#8b95a1]">중앙 현재가</p>
+            <p className="text-xs font-bold text-[#8b95a1]">중앙 현재가</p>
             <p className="mt-0.5 text-lg font-black tabular-nums text-[#191f28]">{formatWon(currentPrice)}</p>
           </div>
           <span className="rounded-sm bg-[#f2f4f6] px-2 py-1 text-xs font-black text-[#333d4b]">매도 위 / 매수 아래</span>
         </div>
         {bidLevels.map((level, index) => (
-          <OrderBookRow
+          <StackedOrderBookRow
             key={`stacked-bid-${index}`}
             flashNonce={level && flashingLevel?.side === "bid" && flashingLevel.price === level.price ? flashingLevel.nonce : null}
             level={level}
@@ -1394,6 +1528,77 @@ function StackedOrderBook({
       </div>
     </div>
   );
+}
+
+function StackedOrderBookRow({
+  flashNonce,
+  level,
+  maxQuantity,
+  onFlashEnd,
+  onPriceSelect,
+  side,
+}: {
+  flashNonce: number | null;
+  level: (OrderBookLevel & { cumulativeQuantity: number }) | null;
+  maxQuantity: number;
+  onFlashEnd: () => void;
+  onPriceSelect: (price: number, side: "bid" | "ask") => void;
+  side: "bid" | "ask";
+}) {
+  const quantityRate = level ? Math.max(8, Math.min(100, Math.round(level.quantity / maxQuantity * 100))) : 0;
+  const priceColor = side === "ask" ? "text-[#3182f6]" : "text-[#f04452]";
+  const barClass = side === "ask" ? "left-0 bg-[#eff6ff]" : "right-0 bg-[#fff0f1]";
+  const rowHover = side === "ask" ? "enabled:hover:bg-[#f5f9ff] enabled:focus-visible:bg-[#f5f9ff]" : "enabled:hover:bg-[#fff7f7] enabled:focus-visible:bg-[#fff7f7]";
+
+  return (
+    <button
+      type="button"
+      data-order-book-row={side}
+      disabled={!level}
+      aria-label={level ? `${side === "bid" ? "매수" : "매도"} 호가 ${formatWon(level.price)} 주문가로 선택` : undefined}
+      onClick={() => {
+        if (level) {
+          onPriceSelect(level.price, side);
+        }
+      }}
+      className={`relative grid h-10 min-w-0 grid-cols-[minmax(76px,1fr)_minmax(90px,0.85fr)_minmax(76px,1fr)_44px] items-center gap-2 overflow-hidden rounded-md bg-[#f7f8fa] px-3 text-xs transition enabled:cursor-pointer enabled:focus:outline-none disabled:cursor-default sm:grid-cols-[minmax(120px,1fr)_116px_minmax(120px,1fr)_58px] sm:text-sm ${rowHover}`}
+    >
+      {level ? (
+        <span
+          aria-hidden="true"
+          className={`absolute inset-y-0 z-0 ${barClass}`}
+          style={{ width: `${quantityRate}%` }}
+        />
+      ) : null}
+      {flashNonce !== null ? (
+        <span
+          aria-hidden="true"
+          className="order-book-flash-overlay absolute inset-0 z-10"
+          onAnimationEnd={onFlashEnd}
+        />
+      ) : null}
+      <span className={`relative z-20 min-w-0 truncate text-left font-bold tabular-nums ${level && side === "ask" ? "text-[#333d4b]" : "text-[#b0b8c1]"}`} title={level && side === "ask" ? `${formatNumber(level.quantity)}주, 누적 ${formatNumber(level.cumulativeQuantity)}주` : undefined}>
+        {level && side === "ask" ? `${formatNumber(level.quantity)}주` : "-"}
+      </span>
+      <span className={`relative z-20 min-w-0 truncate text-center font-black tabular-nums ${level ? priceColor : "text-[#b0b8c1]"}`} title={level ? formatWon(level.price) : undefined}>
+        {level ? formatPrice(level.price) : "-"}
+      </span>
+      <span className={`relative z-20 min-w-0 truncate text-right font-bold tabular-nums ${level && side === "bid" ? "text-[#333d4b]" : "text-[#b0b8c1]"}`} title={level && side === "bid" ? `${formatNumber(level.quantity)}주, 누적 ${formatNumber(level.cumulativeQuantity)}주` : undefined}>
+        {level && side === "bid" ? `${formatNumber(level.quantity)}주` : "-"}
+      </span>
+      <span className={`relative z-20 min-w-0 truncate text-right font-bold tabular-nums ${level ? "text-[#8b95a1]" : "text-[#b0b8c1]"}`} title={level ? `누적 ${formatNumber(level.cumulativeQuantity)}주, ${formatNumber(level.orderCount)}건` : undefined}>
+        {level ? formatNumber(level.orderCount) : "-"}
+      </span>
+    </button>
+  );
+}
+
+function sortAskLevels(levels: OrderBookLevel[]) {
+  return [...levels].sort((a, b) => a.price - b.price);
+}
+
+function sortBidLevels(levels: OrderBookLevel[]) {
+  return [...levels].sort((a, b) => b.price - a.price);
 }
 
 function toFixedOrderBookLevels(levels: OrderBookLevel[]) {
@@ -1442,13 +1647,13 @@ function MarketTapePanel({ executions, isLoading }: { executions: OrderBookRecen
                   <p className={up ? "text-sm font-black tabular-nums text-[#f04452]" : "text-sm font-black tabular-nums text-[#3182f6]"}>
                     {formatWon(execution.price)}
                   </p>
-                  <p className="mt-0.5 text-[11px] font-bold text-[#8b95a1]">
+                  <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">
                     {up ? "+" : ""}{formatNumber(execution.priceChange)}원
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-black tabular-nums text-[#191f28]">{formatNumber(execution.quantity)}주</p>
-                  <p className="mt-0.5 text-[11px] font-bold text-[#8b95a1]">{formatWon(execution.grossAmount)}</p>
+                  <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">{formatWon(execution.grossAmount)}</p>
                 </div>
               </div>
             </article>
@@ -1506,6 +1711,46 @@ function formatShortDateTime(value: string) {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function formatChartCrosshairTime(time: Time, interval: OrderBookCandleInterval) {
+  return formatChartTime(time, interval, "crosshair");
+}
+
+function formatChartTickTime(time: Time, interval: OrderBookCandleInterval) {
+  return formatChartTime(time, interval, "tick");
+}
+
+function formatChartTime(time: Time, interval: OrderBookCandleInterval, mode: "crosshair" | "tick") {
+  const date = resolveChartDate(time);
+  if (!date) {
+    return "";
+  }
+  if (interval === "1D" || interval === "1W") {
+    return date.toLocaleDateString("ko-KR", {
+      year: mode === "crosshair" ? "numeric" : undefined,
+      month: "2-digit",
+      day: "2-digit",
+    });
+  }
+  return date.toLocaleString("ko-KR", {
+    month: mode === "crosshair" ? "2-digit" : undefined,
+    day: mode === "crosshair" ? "2-digit" : undefined,
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function resolveChartDate(time: Time) {
+  if (typeof time === "number") {
+    return new Date(time * 1000);
+  }
+  if (typeof time === "string") {
+    const date = new Date(time);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+  const date = new Date(time.year, time.month - 1, time.day);
+  return Number.isNaN(date.getTime()) ? null : date;
 }
 
 function formatExecutionStrength(summary: OrderBookTradeSummary | null) {

@@ -280,6 +280,16 @@ export type AdminRecentCashFlow = AccountCashFlow & {
   userKey?: string | null;
 };
 
+export type AdminCashFlowPage = {
+  content: AdminRecentCashFlow[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  hasPrevious: boolean;
+  hasNext: boolean;
+};
+
 export type AdminFlowOverview = {
   fundFlow: AdminFundFlowSummary;
   orderFlow: AdminOrderFlowSummary;
