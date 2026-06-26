@@ -127,6 +127,125 @@ export type ProfitSummary = {
   executionCount: number;
 };
 
+export type AccountCashFlow = {
+  id: number;
+  flowType: "DEPOSIT" | "WITHDRAW";
+  amount: number;
+  reason:
+    | "OPENING_GRANT"
+    | "ADMIN_DEPOSIT"
+    | "ADMIN_WITHDRAW"
+    | "DIVIDEND_PAYMENT"
+    | "AUTO_PROFILE_RECURRING_DEPOSIT"
+    | "AUTO_PARTICIPANT_RECURRING_DEPOSIT";
+  createdBy?: string | null;
+  createdAt: string;
+};
+
+export type FundFlow = {
+  cashBalance: number;
+  reservedBuyCash: number;
+  marketValue: number;
+  totalAsset: number;
+  externalDepositAmount: number;
+  externalWithdrawAmount: number;
+  netExternalCashFlow: number;
+  dividendIncomeAmount: number;
+  buyNetAmount: number;
+  sellNetAmount: number;
+  tradeNetCashFlow: number;
+  totalFeeAmount: number;
+  totalTaxAmount: number;
+  realizedProfit: number;
+  unrealizedProfit: number;
+  totalProfit: number;
+  executionCount: number;
+  recentCashFlows: AccountCashFlow[];
+};
+
+export type AdminFundFlowSummary = {
+  activeAccountCount: number;
+  totalCashBalance: number;
+  totalReservedBuyCash: number;
+  totalHoldingMarketValue: number;
+  totalAsset: number;
+  externalDepositAmount: number;
+  externalWithdrawAmount: number;
+  netExternalCashFlow: number;
+  dividendIncomeAmount: number;
+  buyNetAmount: number;
+  sellNetAmount: number;
+  tradeNetCashFlow: number;
+  totalFeeAmount: number;
+  totalTaxAmount: number;
+  realizedProfit: number;
+  executionCount: number;
+};
+
+export type AdminOrderFlowSummary = {
+  openOrderCount: number;
+  openBuyOrderCount: number;
+  openSellOrderCount: number;
+  partiallyFilledOrderCount: number;
+  reservedBuyCash: number;
+  reservedSellQuantity: number;
+  todayOrderCount: number;
+  todayFilledOrderCount: number;
+  todayCancelledOrderCount: number;
+  todayRejectedOrderCount: number;
+};
+
+export type AdminCorporateActionFlowSummary = {
+  announcedCount: number;
+  exRightsAppliedCount: number;
+  paidCount: number;
+  listedCount: number;
+  delistedCount: number;
+  pendingCount: number;
+  todayCreatedCount: number;
+};
+
+export type AdminSymbolFlow = {
+  symbol: string;
+  name: string;
+  enabled: boolean;
+  marketStatus: MarketSessionStatus | string;
+  issuedShares: number;
+  tradableShares: number;
+  currentPrice: number;
+  previousClose: number;
+  changeRate: number;
+  executionCount: number;
+  executionQuantity: number;
+  turnoverAmount: number;
+  buyQuantity: number;
+  sellQuantity: number;
+  buyNetAmount: number;
+  sellNetAmount: number;
+  openOrderCount: number;
+  openBuyOrderCount: number;
+  openSellOrderCount: number;
+  reservedBuyCash: number;
+  holderCount: number;
+  holdingQuantity: number;
+  pendingCorporateActionCount: number;
+  lastExecutedAt?: string | null;
+};
+
+export type AdminRecentCashFlow = AccountCashFlow & {
+  accountId: number;
+  userKey?: string | null;
+};
+
+export type AdminFlowOverview = {
+  fundFlow: AdminFundFlowSummary;
+  orderFlow: AdminOrderFlowSummary;
+  corporateActionFlow: AdminCorporateActionFlowSummary;
+  symbolFlows: AdminSymbolFlow[];
+  recentCashFlows: AdminRecentCashFlow[];
+  generatedAt: string;
+};
+
 export type StockUserProfile = {
   userKey: string;
   username?: string | null;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 
@@ -161,7 +162,7 @@ export default function SupplyDemandPage() {
     const nextInstrument = instruments.find((instrument) => instrument.symbol === symbol);
     setOrderBookTicket({
       selectedSymbol: symbol,
-      limitPrice: nextInstrument ? String(Math.round(nextInstrument.currentPrice)) : limitPrice,
+      limitPrice: nextInstrument ? formatOrderInputPrice(resolveDefaultLimitPrice(nextInstrument)) : limitPrice,
     });
     setMessage(null);
   };
@@ -176,7 +177,7 @@ export default function SupplyDemandPage() {
     }, 0);
     setOrderBookTicket({
       orderType: "LIMIT",
-      limitPrice: formatOrderInputPrice(price),
+      limitPrice: formatOrderInputPrice(selectedInstrument ? resolveLimitPriceForInstrument(price, selectedInstrument) : price),
     });
     setMessage(null);
   };
@@ -221,8 +222,21 @@ export default function SupplyDemandPage() {
     }
     setOrderBookTicket({
       quantity: String(nextQuantity),
-      ...(resolvedPrice.normalizedLimitPrice ? { limitPrice: resolvedPrice.normalizedLimitPrice } : {}),
+      ...(resolvedPrice.normalizedLimitPrice && selectedInstrument ? { limitPrice: formatOrderInputPrice(resolveDefaultLimitPrice(selectedInstrument)) } : {}),
     });
+    setMessage(null);
+  };
+
+  const stepLimitPrice = (direction: -1 | 1) => {
+    if (!selectedInstrument || orderType === "MARKET") {
+      return;
+    }
+    const nextLimitPrice = resolveSteppedLimitPrice({
+      currentValue: limitPrice,
+      direction,
+      instrument: selectedInstrument,
+    });
+    setOrderBookTicket({ limitPrice: formatOrderInputPrice(nextLimitPrice) });
     setMessage(null);
   };
 
@@ -317,11 +331,18 @@ export default function SupplyDemandPage() {
     <main className="min-h-screen bg-[#f7f8fa] text-[#191f28]">
       <TradingTopBar
         active="order-book"
-        actions={isAdmin ? (
-          <button type="button" onClick={() => router.push("/supply-demand/admin")} className="h-11 rounded-md bg-[#f2f4f6] px-3 text-sm font-bold text-[#333d4b]">
-            설정 현황
-          </button>
-        ) : null}
+        actions={(
+          <div className="flex flex-wrap items-center gap-2">
+            <Link href="/supply-demand/orders" className="inline-flex h-11 items-center rounded-md bg-[#191f28] px-3 text-sm font-bold text-white">
+              내 주문
+            </Link>
+            {isAdmin ? (
+              <button type="button" onClick={() => router.push("/supply-demand/admin")} className="h-11 rounded-md bg-[#f2f4f6] px-3 text-sm font-bold text-[#333d4b]">
+                설정 현황
+              </button>
+            ) : null}
+          </div>
+        )}
       />
 
       <section className="border-b border-[#e5e8eb] bg-white">
@@ -407,6 +428,7 @@ export default function SupplyDemandPage() {
             side={side}
             onAssetPercentSelect={applyAssetPercentQuantity}
             onLimitPriceChange={(value) => setOrderBookTicket({ limitPrice: value })}
+            onLimitPriceStep={stepLimitPrice}
             onOrderTypeChange={(value) => setOrderBookTicket({ orderType: value })}
             onQuantityChange={(value) => setOrderBookTicket({ quantity: value })}
             onSideChange={(value) => setOrderBookTicket({ side: value })}
@@ -448,7 +470,15 @@ export default function SupplyDemandPage() {
           </div>
 
           <div className="rounded-lg border border-[#e5e8eb] bg-white p-4">
-            <h3 className="text-base font-black">내 주문</h3>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h3 className="text-base font-black">내 주문</h3>
+                <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">선택 종목 최근 5건</p>
+              </div>
+              <Link href="/supply-demand/orders" className="rounded-md bg-[#f2f4f6] px-2.5 py-1.5 text-xs font-black text-[#333d4b]">
+                전체 보기
+              </Link>
+            </div>
             <div className="mt-3 space-y-3">
               {orderBookOrders.length ? orderBookOrders.map((order) => {
                 const isOpenOrder = order.status === "PENDING" || order.status === "PARTIALLY_FILLED";
@@ -645,6 +675,7 @@ function OrderTicket({
   totalAsset,
   onAssetPercentSelect,
   onLimitPriceChange,
+  onLimitPriceStep,
   onOrderTypeChange,
   onQuantityChange,
   onSideChange,
@@ -663,6 +694,7 @@ function OrderTicket({
   totalAsset?: number;
   onAssetPercentSelect: (percent: number) => void;
   onLimitPriceChange: (value: string) => void;
+  onLimitPriceStep: (direction: -1 | 1) => void;
   onOrderTypeChange: (value: OrderType) => void;
   onQuantityChange: (value: string) => void;
   onSideChange: (value: OrderSide) => void;
@@ -703,13 +735,13 @@ function OrderTicket({
         <OrderTicketField label="현재가">
           <span className="min-w-0 truncate text-right text-sm font-black tabular-nums">{formatWon(selectedInstrument?.currentPrice)}</span>
         </OrderTicketField>
-        <OrderTicketInput
+        <OrderPriceInput
           disabled={orderType === "MARKET"}
-          label="주문가"
           placeholder={orderType === "MARKET" ? "시장가" : "가격"}
-          suffix="원"
+          tickSize={selectedInstrument?.tickSize}
           value={limitPrice}
           onChange={onLimitPriceChange}
+          onStep={onLimitPriceStep}
         />
         <OrderTicketInput
           label="수량"
@@ -859,6 +891,79 @@ function OrderTicketInput({
   );
 }
 
+function OrderPriceInput({
+  disabled,
+  placeholder,
+  tickSize,
+  value,
+  onChange,
+  onStep,
+}: {
+  disabled: boolean;
+  placeholder: string;
+  tickSize?: number;
+  value: string;
+  onChange: (value: string) => void;
+  onStep: (direction: -1 | 1) => void;
+}) {
+  const stepLabel = tickSize && Number.isFinite(tickSize) && tickSize > 0 ? `${formatNumber(tickSize)}원` : "호가";
+  return (
+    <OrderTicketField label="주문가">
+      <div className="grid min-w-0 grid-cols-[36px_minmax(0,1fr)_24px_36px] items-center rounded-md border border-[#d1d6db] bg-white px-1 focus-within:border-[#3182f6]">
+        <PriceStepButton
+          disabled={disabled}
+          label={`${stepLabel} 낮추기`}
+          onClick={() => onStep(-1)}
+        >
+          -
+        </PriceStepButton>
+        <input
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          disabled={disabled}
+          placeholder={placeholder}
+          inputMode="decimal"
+          aria-label="주문가"
+          className="h-11 min-w-0 bg-transparent px-2 text-right text-sm font-black tabular-nums outline-none placeholder:text-[#b0b8c1] disabled:text-[#8b95a1]"
+        />
+        <span className="text-right text-xs font-bold text-[#8b95a1]">원</span>
+        <PriceStepButton
+          disabled={disabled}
+          label={`${stepLabel} 높이기`}
+          onClick={() => onStep(1)}
+        >
+          +
+        </PriceStepButton>
+      </div>
+    </OrderTicketField>
+  );
+}
+
+function PriceStepButton({
+  children,
+  disabled,
+  label,
+  onClick,
+}: {
+  children: ReactNode;
+  disabled: boolean;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      disabled={disabled}
+      onClick={onClick}
+      className="grid h-8 w-8 place-items-center rounded-sm text-base font-black text-[#333d4b] transition hover:bg-[#f2f4f6] disabled:cursor-not-allowed disabled:text-[#b0b8c1] disabled:hover:bg-transparent"
+    >
+      {children}
+    </button>
+  );
+}
+
 function Metric({ label, value, tone = "default" }: { label: string; value: string; tone?: "default" | "red" | "blue" }) {
   const toneClass = tone === "red" ? "text-[#f04452]" : tone === "blue" ? "text-[#3182f6]" : "text-[#191f28]";
   return (
@@ -1003,6 +1108,86 @@ function formatOrderInputPrice(value: number) {
     return String(value);
   }
   return value.toFixed(6).replace(/0+$/, "").replace(/\.$/, "");
+}
+
+function resolveDefaultLimitPrice(instrument: Pick<OrderBookInstrument, "currentPrice" | "priceLimitBase" | "priceLimitRate" | "tickSize">) {
+  const fallbackPrice = resolvePositivePrice(instrument.currentPrice) ?? resolvePositivePrice(instrument.priceLimitBase) ?? resolvePositivePriceUnit(instrument.tickSize);
+  return resolveLimitPriceForInstrument(fallbackPrice, instrument);
+}
+
+function resolveLimitPriceForInstrument(
+  price: number,
+  instrument: Pick<OrderBookInstrument, "priceLimitBase" | "priceLimitRate" | "tickSize">,
+) {
+  const tickSize = resolvePositivePriceUnit(instrument.tickSize);
+  return clampLimitPriceToInstrument(alignPriceToNearestTick(price, tickSize), instrument, tickSize);
+}
+
+function resolveSteppedLimitPrice({
+  currentValue,
+  direction,
+  instrument,
+}: {
+  currentValue: string;
+  direction: -1 | 1;
+  instrument: Pick<OrderBookInstrument, "currentPrice" | "priceLimitBase" | "priceLimitRate" | "tickSize">;
+}) {
+  const tickSize = resolvePositivePriceUnit(instrument.tickSize);
+  const parsedCurrent = parseOrderPriceInput(currentValue);
+  const fallbackPrice = resolvePositivePrice(instrument.currentPrice) ?? resolvePositivePrice(instrument.priceLimitBase) ?? tickSize;
+  const basePrice = parsedCurrent ?? fallbackPrice;
+  const nextRawPrice = parsedCurrent === null
+    ? alignPriceToTick(basePrice, tickSize, direction)
+    : isAlignedToTick(basePrice, tickSize)
+      ? basePrice + direction * tickSize
+      : alignPriceToTick(basePrice, tickSize, direction);
+  return clampLimitPriceToInstrument(nextRawPrice, instrument, tickSize);
+}
+
+function parseOrderPriceInput(value: string) {
+  const trimmed = value.trim();
+  if (!/^\d+(\.\d+)?$/.test(trimmed)) {
+    return null;
+  }
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+function resolvePositivePrice(value: number) {
+  return Number.isFinite(value) && value > 0 ? value : null;
+}
+
+function resolvePositivePriceUnit(value: number) {
+  return Number.isFinite(value) && value > 0 ? value : 1;
+}
+
+function isAlignedToTick(price: number, tickSize: number) {
+  return Math.abs(price / tickSize - Math.round(price / tickSize)) < 0.000001;
+}
+
+function alignPriceToTick(price: number, tickSize: number, direction: -1 | 1) {
+  const quotient = price / tickSize;
+  const tickCount = direction > 0 ? Math.ceil(quotient - 0.000001) : Math.floor(quotient + 0.000001);
+  return Math.max(tickSize, tickCount * tickSize);
+}
+
+function alignPriceToNearestTick(price: number, tickSize: number) {
+  return Math.max(tickSize, Math.round(price / tickSize) * tickSize);
+}
+
+function clampLimitPriceToInstrument(
+  price: number,
+  instrument: Pick<OrderBookInstrument, "priceLimitBase" | "priceLimitRate">,
+  tickSize: number,
+) {
+  const lowerRaw = instrument.priceLimitBase * (100 - instrument.priceLimitRate) / 100;
+  const upperRaw = instrument.priceLimitBase * (100 + instrument.priceLimitRate) / 100;
+  const lowerLimit = resolvePositivePrice(lowerRaw) ? alignPriceToTick(lowerRaw, tickSize, 1) : tickSize;
+  const upperLimit = resolvePositivePrice(upperRaw) ? alignPriceToTick(upperRaw, tickSize, -1) : Number.POSITIVE_INFINITY;
+  if (lowerLimit > upperLimit) {
+    return Math.max(tickSize, price);
+  }
+  return Math.min(Math.max(price, lowerLimit), upperLimit);
 }
 
 function formatNumber(value: number) {

@@ -1,6 +1,6 @@
 import { STOCK_API_BASE, deleteJson, getJson, patchJson, postJson, type ApiResult } from "@/app/lib/api";
 import { clearAccessToken, getUserFromToken, notifyAuthExpired, refreshAccessToken } from "@/app/lib/auth";
-import type { Account, AccountCashAdjustment, AccountStatus, AutoMarketStatus, AutoParticipantCashAdjustment, AutoParticipantCashFlowStatus, AutoParticipantOverview, AutoParticipantProfileType, BatchJobRuntimeStatus, CorporateAction, CorporateActionEntitlement, CorporateActionType, Execution, Holding, Instrument, InstrumentReport, ListingAutoPosition, MarketSessionStatus, MarketType, Order, OrderBook, OrderBookInstrument, OrderBookMarketStatus, OrderSide, OrderType, Portfolio, PortfolioSnapshot, Price, PriceTick, ProfitSummary, Ranking, RecurringCashIntervalUnit, StockBatchJobRun, StockUserProfile, SymbolMarketConfig, VirtualMarketStatus } from "@/app/types/stock";
+import type { Account, AccountCashAdjustment, AccountStatus, AdminFlowOverview, AutoMarketStatus, AutoParticipantCashAdjustment, AutoParticipantCashFlowStatus, AutoParticipantOverview, AutoParticipantProfileType, BatchJobRuntimeStatus, CorporateAction, CorporateActionEntitlement, CorporateActionType, Execution, FundFlow, Holding, Instrument, InstrumentReport, ListingAutoPosition, MarketSessionStatus, MarketType, Order, OrderBook, OrderBookInstrument, OrderBookMarketStatus, OrderSide, OrderType, Portfolio, PortfolioSnapshot, Price, PriceTick, ProfitSummary, Ranking, RecurringCashIntervalUnit, StockBatchJobRun, StockUserProfile, SymbolMarketConfig, VirtualMarketStatus } from "@/app/types/stock";
 
 function authHeaders(token: string): Record<string, string> {
   const user = getUserFromToken(token);
@@ -192,6 +192,12 @@ export function getAutoMarketStatus() {
   return getJson<AutoMarketStatus>("/api/stock/v1/markets/auto-market");
 }
 
+export function getAdminFlowOverview(token: string) {
+  return withAuthRefresh(token, (nextToken) =>
+    getJson<AdminFlowOverview>("/api/stock/v1/markets/admin/flow-overview", authHeaders(nextToken)),
+  );
+}
+
 export function getAutoParticipantOverviews(token: string) {
   return withAuthRefresh(token, (nextToken) =>
     getJson<AutoParticipantOverview[]>("/api/stock/v1/markets/auto-market/participants/overviews", authHeaders(nextToken)),
@@ -363,6 +369,12 @@ export function getPortfolioSnapshots(token: string) {
 
 export function getProfitSummary(token: string) {
   return withAuthRefresh(token, (nextToken) => getJson<ProfitSummary>("/api/stock/v1/portfolio/me/profit-summary", authHeaders(nextToken)));
+}
+
+export function getAdminUserFundFlow(token: string, userKey: string) {
+  return withAuthRefresh(token, (nextToken) =>
+    getJson<FundFlow>(`/api/stock/v1/accounts/admin/users/${encodeURIComponent(userKey)}/fund-flow`, authHeaders(nextToken)),
+  );
 }
 
 export function getAccountStatus(token: string) {

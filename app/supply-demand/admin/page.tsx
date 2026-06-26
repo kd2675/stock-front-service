@@ -1,9 +1,9 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { Fragment, useCallback, useEffect, useState } from "react";
 import { useForm, type UseFormRegisterReturn } from "react-hook-form";
@@ -13,9 +13,10 @@ import { AUTO_PARTICIPANT_PROFILE_OPTIONS, formatAutoParticipantProfile, formatA
 import { bootstrapAccessToken, ensureAccessToken, getUserFromToken, isAdminRole } from "@/app/lib/auth";
 import { createOrderBookInstrumentMutationOptions } from "@/app/lib/react-query/stockMutations";
 import { stockKeys } from "@/app/lib/react-query/stockKeys";
-import { adjustAutoParticipantCash, adjustUserAccountCash, applyCorporateAction, deleteInstrumentReport, getAutoMarketStatus, getBatchJobRuntimeControls, getCorporateActions, getInstrumentReports, getOrderBookInstruments, getOrderBookMarketStatus, getVirtualMarketStatus, publishInstrumentReport, runAutoParticipantCashFlow, updateAutoMarketConfig, updateAutoParticipantProfileConfig, updateAutoParticipantSymbolConfig, updateBatchJobRuntimeControl, updateInstrumentReport, updateListingAutoAccountConfig, updateMarketStatus, upsertAutoParticipant, withdrawAutoParticipant } from "@/app/lib/stock";
+import { autoParticipantOverviewsQueryOptions } from "@/app/lib/react-query/stockQueries";
+import { adjustAutoParticipantCash, adjustUserAccountCash, applyCorporateAction, deleteInstrumentReport, getAdminFlowOverview, getAdminUserFundFlow, getAutoMarketStatus, getBatchJobRuntimeControls, getCorporateActions, getInstrumentReports, getOrderBookInstruments, getOrderBookMarketStatus, publishInstrumentReport, runAutoParticipantCashFlow, updateAutoMarketConfig, updateAutoParticipantProfileConfig, updateAutoParticipantSymbolConfig, updateBatchJobRuntimeControl, updateInstrumentReport, updateListingAutoAccountConfig, updateMarketStatus, upsertAutoParticipant, withdrawAutoParticipant } from "@/app/lib/stock";
 import { createInstrumentSchema, type CreateInstrumentFormValues } from "@/app/lib/validation/adminSchemas";
-import type { AutoMarketConfig, AutoMarketStatus, AutoParticipant, AutoParticipantProfileConfig, AutoParticipantProfileType, AutoParticipantSymbolConfig, BatchJobRuntimeStatus, CorporateAction, CorporateActionStatus, CorporateActionType, InstrumentReport, ListingAutoAccount, ListingAutoPosition, MarketSessionStatus, OrderBookInstrument, OrderBookMarketStatus, RecurringCashIntervalUnit, StockBatchJobRun, VirtualMarketStatus } from "@/app/types/stock";
+import type { AdminFlowOverview, AutoMarketConfig, AutoMarketStatus, AutoParticipant, AutoParticipantOverview, AutoParticipantProfileConfig, AutoParticipantProfileType, AutoParticipantSymbolConfig, BatchJobRuntimeStatus, CorporateAction, CorporateActionStatus, CorporateActionType, FundFlow, InstrumentReport, ListingAutoAccount, ListingAutoPosition, MarketSessionStatus, OrderBookInstrument, OrderBookMarketStatus, RecurringCashIntervalUnit, StockBatchJobRun } from "@/app/types/stock";
 
 const RECURRING_CASH_INTERVAL_UNIT_OPTIONS: { value: RecurringCashIntervalUnit; label: string }[] = [
   { value: "SECOND", label: "초" },
@@ -27,14 +28,6 @@ const RECURRING_CASH_INTERVAL_UNIT_OPTIONS: { value: RecurringCashIntervalUnit; 
 ];
 
 const BATCH_JOB_RUNTIME_LABELS: Record<string, { label: string; description: string }> = {
-  "market-data-refresh": {
-    label: "시세 갱신",
-    description: "외부/내부 가격 데이터를 주기적으로 갱신합니다.",
-  },
-  "virtual-price-execution": {
-    label: "특정가격 자동주문체결",
-    description: "가상 가격 시장 주문 체결 배치를 실행합니다.",
-  },
   "order-book-execution": {
     label: "수요와 공급 주문 체결",
     description: "호가장 미체결 주문을 가격/시간 우선으로 체결합니다.",
@@ -51,23 +44,79 @@ const BATCH_JOB_RUNTIME_LABELS: Record<string, { label: string; description: str
     label: "월급 지급",
     description: "가동 자동참여자와 ACTIVE 계좌에 반복 현금을 지급합니다.",
   },
-  "market-close-rollover": {
-    label: "장마감 롤오버",
-    description: "장마감 기준 가격/일중 지표를 다음 기준으로 넘깁니다.",
-  },
   "portfolio-settlement": {
     label: "포트폴리오 정산",
     description: "계좌 보유/손익 스냅샷을 정산합니다.",
   },
 };
 
+const SUPPLY_DEMAND_BATCH_JOB_NAMES = new Set([
+  "order-book-execution",
+  "auto-market",
+  "auto-participant-cash-flow",
+  "corporate-actions",
+  "portfolio-settlement",
+]);
+
+type AdminTab = "market" | "accounts" | "automation" | "events";
+
+type AdminTabItem = {
+  value: AdminTab;
+  href: string;
+  label: string;
+  description: string;
+  metric: string;
+};
+
+type AdminSection =
+  | "market"
+  | "account-cash"
+  | "salary"
+  | "participants"
+  | "profiles"
+  | "auto-symbols"
+  | "listing-auto"
+  | "participant-strategies"
+  | "batch"
+  | "events";
+
+type AdminSubTabItem = {
+  value: AdminSection;
+  href: string;
+  label: string;
+  metric: string;
+};
+
+type RecurringCashPolicyResolution = {
+  payable: boolean;
+  source: "PARTICIPANT" | "PROFILE";
+  sourceLabel: string;
+  amount: number;
+  intervalValue: number | null;
+  intervalUnit: RecurringCashIntervalUnit | null;
+  reason: string;
+};
+
+type SalaryEligibilityRow = {
+  participant: AutoParticipant;
+  overview: AutoParticipantOverview | null;
+  recurringPolicy: RecurringCashPolicyResolution;
+  accountStatus: string | null;
+  canReceive: boolean;
+  blockers: string[];
+};
+
 export default function SupplyDemandAdminPage() {
   const router = useRouter();
+  const pathname = usePathname();
   const queryClient = useQueryClient();
+  const activeAdminTab = resolveAdminTabFromPath(pathname);
+  const activeAdminSection = resolveAdminSectionFromPath(pathname);
   const [adminStatus, setAdminStatus] = useState<"checking" | "allowed" | "denied">("checking");
+  const [accessToken, setAccessToken] = useState<string | null>(null);
   const [status, setStatus] = useState<AutoMarketStatus | null>(null);
-  const [virtualMarket, setVirtualMarket] = useState<VirtualMarketStatus | null>(null);
   const [orderBookMarket, setOrderBookMarket] = useState<OrderBookMarketStatus | null>(null);
+  const [adminFlowOverview, setAdminFlowOverview] = useState<AdminFlowOverview | null>(null);
   const [lastCashFlowRun, setLastCashFlowRun] = useState<StockBatchJobRun | null>(null);
   const [instruments, setInstruments] = useState<OrderBookInstrument[]>([]);
   const [corporateActions, setCorporateActions] = useState<CorporateAction[]>([]);
@@ -138,6 +187,9 @@ export default function SupplyDemandAdminPage() {
   const [autoParticipantRecurringCashAmount, setAutoParticipantRecurringCashAmount] = useState("");
   const [autoParticipantRecurringCashIntervalValue, setAutoParticipantRecurringCashIntervalValue] = useState("");
   const [autoParticipantRecurringCashIntervalUnit, setAutoParticipantRecurringCashIntervalUnit] = useState<RecurringCashIntervalUnit>("DAY");
+  const [participantSearch, setParticipantSearch] = useState("");
+  const [participantStatusFilter, setParticipantStatusFilter] = useState<"ALL" | "ENABLED" | "DISABLED">("ALL");
+  const [participantProfileFilter, setParticipantProfileFilter] = useState<"ALL" | AutoParticipantProfileType>("ALL");
   const [savingAutoParticipant, setSavingAutoParticipant] = useState(false);
   const [autoGenerateCount, setAutoGenerateCount] = useState("5");
   const [autoGenerateKeyPrefix, setAutoGenerateKeyPrefix] = useState("stock-auto-");
@@ -152,12 +204,16 @@ export default function SupplyDemandAdminPage() {
   const [userCashAdjustmentUserKey, setUserCashAdjustmentUserKey] = useState("");
   const [userCashAdjustmentAmount, setUserCashAdjustmentAmount] = useState("");
   const [adjustingUserCashType, setAdjustingUserCashType] = useState<"DEPOSIT" | "WITHDRAW" | null>(null);
+  const [userFundFlow, setUserFundFlow] = useState<FundFlow | null>(null);
+  const [userFundFlowUserKey, setUserFundFlowUserKey] = useState<string | null>(null);
+  const [loadingUserFundFlow, setLoadingUserFundFlow] = useState(false);
   const [runningCashFlow, setRunningCashFlow] = useState(false);
   const [batchJobRuntimeControls, setBatchJobRuntimeControls] = useState<BatchJobRuntimeStatus[]>([]);
   const [loadingBatchJobRuntimeControls, setLoadingBatchJobRuntimeControls] = useState(false);
   const [updatingBatchJobName, setUpdatingBatchJobName] = useState<string | null>(null);
   const [strategyUserKey, setStrategyUserKey] = useState("");
   const [strategySymbol, setStrategySymbol] = useState("");
+  const [strategySearch, setStrategySearch] = useState("");
   const [editingStrategyKey, setEditingStrategyKey] = useState<string | null>(null);
   const [strategyEnabled, setStrategyEnabled] = useState(true);
   const [strategyIntensity, setStrategyIntensity] = useState("5");
@@ -185,6 +241,8 @@ export default function SupplyDemandAdminPage() {
   const [profileRecurringDepositIntervalValue, setProfileRecurringDepositIntervalValue] = useState("30");
   const [profileRecurringDepositIntervalUnit, setProfileRecurringDepositIntervalUnit] = useState<RecurringCashIntervalUnit>("DAY");
   const [savingProfileConfig, setSavingProfileConfig] = useState(false);
+  const autoParticipantOverviewsQuery = useQuery(autoParticipantOverviewsQueryOptions(accessToken));
+  const autoParticipantOverviews = autoParticipantOverviewsQuery.data ?? [];
 
   const loadCorporateActions = useCallback((targetSymbol: string) => {
     const normalizedSymbol = targetSymbol.trim().toUpperCase();
@@ -212,7 +270,10 @@ export default function SupplyDemandAdminPage() {
 
   const loadStatus = useCallback(() => {
     let cancelled = false;
-    Promise.all([getAutoMarketStatus(), getVirtualMarketStatus(), getOrderBookMarketStatus(), getOrderBookInstruments()]).then(([autoResult, virtualResult, orderBookResult, instrumentResult]) => {
+    const flowPromise = accessToken
+      ? getAdminFlowOverview(accessToken)
+      : Promise.resolve(null);
+    Promise.all([getAutoMarketStatus(), getOrderBookMarketStatus(), getOrderBookInstruments(), flowPromise]).then(([autoResult, orderBookResult, instrumentResult, flowResult]) => {
       if (cancelled) {
         return;
       }
@@ -250,9 +311,6 @@ export default function SupplyDemandAdminPage() {
           setStrategyIntensity(String(autoResult.data.configs[0].intensity));
         }
       }
-      if (virtualResult.ok && virtualResult.data) {
-        setVirtualMarket(virtualResult.data);
-      }
       if (orderBookResult.ok && orderBookResult.data) {
         setOrderBookMarket(orderBookResult.data);
       }
@@ -262,16 +320,26 @@ export default function SupplyDemandAdminPage() {
           setReportSymbol(instrumentResult.data[0].symbol);
         }
       }
-      if (autoResult.ok && virtualResult.ok && orderBookResult.ok && instrumentResult.ok) {
+      if (flowResult && flowResult.ok && flowResult.data) {
+        setAdminFlowOverview(flowResult.data);
+      } else if (flowResult && !flowResult.ok) {
+        setAdminFlowOverview(null);
+      }
+      if (autoResult.ok && orderBookResult.ok && instrumentResult.ok) {
         setMessage(null);
         return;
       }
-      setMessage(autoResult.message ?? virtualResult.message ?? orderBookResult.message ?? instrumentResult.message ?? "시장 설정을 조회하지 못했습니다.");
+      setMessage(autoResult.message ?? orderBookResult.message ?? instrumentResult.message ?? "시장 설정을 조회하지 못했습니다.");
     });
     return () => {
       cancelled = true;
     };
-  }, [autoConfigSymbol, listingAutoSymbol, reportSymbol, strategySymbol, strategyUserKey]);
+  }, [accessToken, autoConfigSymbol, listingAutoSymbol, reportSymbol, strategySymbol, strategyUserKey]);
+
+  const reloadAutoParticipantState = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: stockKeys.autoParticipantOverviews() });
+    loadStatus();
+  }, [loadStatus, queryClient]);
 
   const loadBatchJobRuntimeControls = useCallback(async (showError = false) => {
     setLoadingBatchJobRuntimeControls(true);
@@ -344,6 +412,7 @@ export default function SupplyDemandAdminPage() {
         return;
       }
       const user = getUserFromToken(token);
+      setAccessToken(token);
       setAdminStatus(isAdminRole(user?.role) ? "allowed" : "denied");
     })();
     return () => {
@@ -676,7 +745,9 @@ export default function SupplyDemandAdminPage() {
         setMessage(result.message ?? "장 상태 변경에 실패했습니다.");
         return;
       }
-      setMessage("장 상태를 변경했습니다.");
+      setMessage(marketStatus === "CLOSED"
+        ? "장마감을 실행했습니다. 해당 종목의 미체결 주문 정리, 예약 해제, 보유 스냅샷, 기준가 롤오버가 처리되었습니다."
+        : "장 상태를 변경했습니다.");
       loadStatus();
     } finally {
       setUpdatingStatusSymbol(null);
@@ -854,7 +925,7 @@ export default function SupplyDemandAdminPage() {
       setLastCashFlowRun(result.data);
       setMessage(`월급 지급 배치를 실행했습니다. 처리 ${result.data.processedCount.toLocaleString("ko-KR")}건`);
       void loadBatchJobRuntimeControls(false);
-      loadStatus();
+      reloadAutoParticipantState();
     } finally {
       setRunningCashFlow(false);
     }
@@ -902,11 +973,13 @@ export default function SupplyDemandAdminPage() {
       setMessage("자동 참여자 키와 표시명을 입력해 주세요.");
       return;
     }
-    const recurringCashPayload = parseAutoParticipantRecurringCashDraft(
-      autoParticipantRecurringCashAmount,
-      autoParticipantRecurringCashIntervalValue,
-      autoParticipantRecurringCashIntervalUnit,
-    );
+    const recurringCashPayload = autoParticipantProfileType === "DIVIDEND_REINVESTOR"
+      ? emptyAutoParticipantRecurringCashPayload()
+      : parseAutoParticipantRecurringCashDraft(
+          autoParticipantRecurringCashAmount,
+          autoParticipantRecurringCashIntervalValue,
+          autoParticipantRecurringCashIntervalUnit,
+        );
     if (recurringCashPayload === null) {
       setMessage("참여자별 월급/정기 현금은 금액 0 이상, 주기 0 초과 1000 이하로 입력해 주세요. 비워두면 프로필 기본값을 사용합니다.");
       return;
@@ -932,7 +1005,7 @@ export default function SupplyDemandAdminPage() {
       if (editingAutoParticipantUserKey) {
         resetAutoParticipantDraft();
       }
-      loadStatus();
+      reloadAutoParticipantState();
     } finally {
       setSavingAutoParticipant(false);
     }
@@ -999,7 +1072,7 @@ export default function SupplyDemandAdminPage() {
       setMessage(autoGenerateProfileMode === "SINGLE"
         ? `자동 참여자 ${created.toLocaleString("ko-KR")}명을 ${formatAutoParticipantProfile(autoGenerateProfileType)} 프로필로 생성했습니다.`
         : `자동 참여자 ${created.toLocaleString("ko-KR")}명을 생성했습니다. 프로필은 순서대로 분산 적용했습니다.`);
-      loadStatus();
+      reloadAutoParticipantState();
     } finally {
       setGeneratingAutoParticipants(false);
     }
@@ -1033,7 +1106,7 @@ export default function SupplyDemandAdminPage() {
       setCashAdjustmentAmount("");
       setMessage(adjustmentType === "DEPOSIT" ? "자동 참여자 계좌에 입금했습니다." : "자동 참여자 계좌에서 회수했습니다.");
       await queryClient.invalidateQueries({ queryKey: stockKeys.autoParticipantOverviews() });
-      loadStatus();
+      reloadAutoParticipantState();
     } finally {
       setAdjustingCashType(null);
     }
@@ -1070,8 +1143,46 @@ export default function SupplyDemandAdminPage() {
         queryClient.invalidateQueries({ queryKey: stockKeys.account() }),
         queryClient.invalidateQueries({ queryKey: stockKeys.portfolio() }),
       ]);
+      if (userFundFlowUserKey === normalizedUserKey) {
+        await loadUserFundFlow(false);
+      }
     } finally {
       setAdjustingUserCashType(null);
+    }
+  };
+
+  const loadUserFundFlow = async (showSuccessMessage = true) => {
+    if (loadingUserFundFlow) {
+      return;
+    }
+    const normalizedUserKey = userCashAdjustmentUserKey.trim();
+    if (!normalizedUserKey) {
+      if (showSuccessMessage) {
+        setMessage("자금 흐름을 조회할 유저 식별키를 입력해 주세요.");
+      }
+      return;
+    }
+    setLoadingUserFundFlow(true);
+    try {
+      const token = await ensureAccessToken();
+      if (!token) {
+        setMessage("관리자 로그인 후 자금 흐름을 조회할 수 있습니다.");
+        return;
+      }
+      const result = await getAdminUserFundFlow(token, normalizedUserKey);
+      if (!result.ok || !result.data) {
+        setUserFundFlow(null);
+        setUserFundFlowUserKey(null);
+        setMessage(result.message ?? "자금 흐름 조회에 실패했습니다.");
+        return;
+      }
+      setUserFundFlow(result.data);
+      setUserFundFlowUserKey(normalizedUserKey);
+      if (showSuccessMessage) {
+        setMessage(`${normalizedUserKey} 자금 흐름을 조회했습니다.`);
+      }
+    } finally {
+      setLoadingUserFundFlow(false);
     }
   };
 
@@ -1103,7 +1214,7 @@ export default function SupplyDemandAdminPage() {
         setAutoParticipantEnabled(nextEnabled);
       }
       setMessage(nextEnabled ? "자동 참여자를 가동했습니다." : "자동 참여자를 정지했습니다.");
-      loadStatus();
+      reloadAutoParticipantState();
     } finally {
       setTogglingAutoParticipantUserKey(null);
     }
@@ -1133,7 +1244,7 @@ export default function SupplyDemandAdminPage() {
         resetAutoParticipantDraft();
       }
       setMessage("자동 참여자를 탈퇴 처리했습니다.");
-      loadStatus();
+      reloadAutoParticipantState();
     } finally {
       setWithdrawingAutoParticipantUserKey(null);
     }
@@ -1218,8 +1329,9 @@ export default function SupplyDemandAdminPage() {
     const holdingPatienceWeight = Number(profileHoldingPatienceWeight);
     const deepLossHoldWeight = Number(profileDeepLossHoldWeight);
     const profitTakingWeight = Number(profileProfitTakingWeight);
-    const recurringDepositAmount = Number(profileRecurringDepositAmount);
-    const recurringDepositIntervalValue = Number(profileRecurringDepositIntervalValue);
+    const isDividendReinvestorProfile = editingProfileType === "DIVIDEND_REINVESTOR";
+    const recurringDepositAmount = isDividendReinvestorProfile ? 0 : Number(profileRecurringDepositAmount);
+    const recurringDepositIntervalValue = isDividendReinvestorProfile ? 0 : Number(profileRecurringDepositIntervalValue);
     if (!isRangeNumber(newsWeight, 0, 1) || !isRangeNumber(momentumWeight, 0, 1) || !isRangeNumber(contrarianWeight, 0, 1) || !isRangeNumber(lossAversionWeight, 0, 1) || !isRangeNumber(herdingWeight, 0, 1) || !isRangeNumber(marketMakingWeight, 0, 1) || !isRangeNumber(overconfidenceWeight, 0, 1) || !isRangeNumber(noiseWeight, 0, 1) || !isRangeNumber(panicSellWeight, 0, 1) || !isRangeNumber(dipBuyWeight, 0, 1) || !isRangeNumber(orderMultiplier, 0, 5) || !isRangeNumber(aggressionMultiplier, 0, 5) || !isRangeNumber(orderTtlMultiplier, 0.1, 10) || !isRangeNumber(quantityMultiplier, 0, 5) || !isRangeNumber(holdingPatienceWeight, 0, 1) || !isRangeNumber(deepLossHoldWeight, 0, 1) || !isRangeNumber(profitTakingWeight, 0, 1) || !isRangeNumber(recurringDepositAmount, 0, 1000000000000) || !isRangeNumber(recurringDepositIntervalValue, 0, 1000) || (recurringDepositAmount > 0 && recurringDepositIntervalValue <= 0)) {
       setMessage("프로필 행동 설정 숫자 범위를 확인해 주세요.");
       return;
@@ -1251,7 +1363,7 @@ export default function SupplyDemandAdminPage() {
         profitTakingWeight,
         recurringDepositAmount,
         recurringDepositIntervalValue,
-        recurringDepositIntervalUnit: profileRecurringDepositIntervalUnit,
+        recurringDepositIntervalUnit: isDividendReinvestorProfile ? "DAY" : profileRecurringDepositIntervalUnit,
       });
       if (!result.ok) {
         setMessage(result.message ?? "프로필 행동 설정 저장에 실패했습니다.");
@@ -1301,9 +1413,108 @@ export default function SupplyDemandAdminPage() {
   const isEditingAutoParticipant = editingAutoParticipantUserKey !== null;
   const selectedListingAutoAccount = status?.listingAutoAccounts.find((item) => item.symbol === listingAutoSymbol) ?? null;
   const profileConfigs = status?.participantProfileConfigs ?? [];
+  const profileConfigByType = new Map<AutoParticipantProfileType, AutoParticipantProfileConfig>(profileConfigs.map((config) => [config.profileType, config]));
+  const autoParticipantOverviewByUserKey = new Map(autoParticipantOverviews.map((overview) => [overview.userKey, overview]));
+  const salaryEligibilityRows = resolveSalaryEligibilityRows(status?.participants ?? [], profileConfigByType, autoParticipantOverviewByUserKey);
+  const salaryReceivableRows = salaryEligibilityRows.filter((row) => row.canReceive);
+  const salaryPolicyRows = salaryEligibilityRows.filter((row) => row.recurringPolicy.payable);
+  const salaryAccountCheckRows = salaryEligibilityRows.filter((row) => row.recurringPolicy.payable && row.participant.enabled && !row.participant.withdrawnAt && row.accountStatus === null);
+  const salaryExcludedRows = salaryEligibilityRows.filter((row) => !row.canReceive);
   const selectedProfileConfig = editingProfileType === null ? null : profileConfigs.find((config) => config.profileType === editingProfileType) ?? null;
   const selectedProfileOption = selectedProfileConfig === null ? null : AUTO_PARTICIPANT_PROFILE_OPTIONS.find((profile) => profile.value === selectedProfileConfig.profileType) ?? null;
-  const batchRuntimeSummary = summarizeBatchRuntimeControls(batchJobRuntimeControls);
+  const isDividendReinvestorProfileSelected = selectedProfileConfig?.profileType === "DIVIDEND_REINVESTOR";
+  const isAutoParticipantRecurringCashDisabled = autoParticipantProfileType === "DIVIDEND_REINVESTOR";
+  const supplyDemandBatchJobRuntimeControls = batchJobRuntimeControls.filter((control) => SUPPLY_DEMAND_BATCH_JOB_NAMES.has(control.jobName));
+  const batchRuntimeSummary = summarizeBatchRuntimeControls(supplyDemandBatchJobRuntimeControls);
+  const openOrderBookConfigCount = (orderBookMarket?.configs ?? []).filter((config) => config.enabled && config.marketStatus === "OPEN").length;
+  const filteredParticipants = filterAutoParticipants(status?.participants ?? [], {
+    profileType: participantProfileFilter,
+    search: participantSearch,
+    status: participantStatusFilter,
+  });
+  const filteredParticipantSymbolConfigs = filterParticipantSymbolConfigs(status?.participantSymbolConfigs ?? [], autoParticipantByUserKey, strategySearch);
+  const adminTabs: AdminTabItem[] = [
+    {
+      value: "market",
+      href: "/supply-demand/admin/market",
+      label: "시장/종목",
+      description: "장 상태와 주문장 종목",
+      metric: `${instruments.length.toLocaleString("ko-KR")}종목`,
+    },
+    {
+      value: "accounts",
+      href: "/supply-demand/admin/accounts",
+      label: "계좌/참여자",
+      description: "유저 현금과 자동참여자",
+      metric: `${status?.participants.length ?? 0}명`,
+    },
+    {
+      value: "automation",
+      href: "/supply-demand/admin/automation",
+      label: "자동장/배치",
+      description: "알고리즘, 전략, 배치 제어",
+      metric: `${batchRuntimeSummary.effective.toLocaleString("ko-KR")}/${batchRuntimeSummary.total.toLocaleString("ko-KR")}`,
+    },
+    {
+      value: "events",
+      href: "/supply-demand/admin/events",
+      label: "이벤트/보고서",
+      description: "주식 이벤트와 평가 보고서",
+      metric: `${corporateActions.length + instrumentReports.length}건`,
+    },
+  ];
+  const accountSubTabs: AdminSubTabItem[] = [
+    {
+      value: "account-cash",
+      href: "/supply-demand/admin/accounts",
+      label: "유저 현금",
+      metric: "입금/회수",
+    },
+    {
+      value: "salary",
+      href: "/supply-demand/admin/accounts/salary",
+      label: "월급 대상",
+      metric: `${salaryReceivableRows.length.toLocaleString("ko-KR")}명`,
+    },
+    {
+      value: "participants",
+      href: "/supply-demand/admin/accounts/participants",
+      label: "자동참여자",
+      metric: `${(status?.participants.length ?? 0).toLocaleString("ko-KR")}명`,
+    },
+  ];
+  const automationSubTabs: AdminSubTabItem[] = [
+    {
+      value: "profiles",
+      href: "/supply-demand/admin/automation",
+      label: "프로필",
+      metric: `${profileConfigs.length.toLocaleString("ko-KR")}개`,
+    },
+    {
+      value: "auto-symbols",
+      href: "/supply-demand/admin/automation/symbols",
+      label: "종목 알고리즘",
+      metric: `${(status?.configs.length ?? 0).toLocaleString("ko-KR")}개`,
+    },
+    {
+      value: "listing-auto",
+      href: "/supply-demand/admin/automation/listing-auto",
+      label: "상장주관사",
+      metric: `${(status?.listingAutoAccounts.length ?? 0).toLocaleString("ko-KR")}개`,
+    },
+    {
+      value: "participant-strategies",
+      href: "/supply-demand/admin/automation/strategies",
+      label: "참여자 전략",
+      metric: `${(status?.participantSymbolConfigs.length ?? 0).toLocaleString("ko-KR")}개`,
+    },
+    {
+      value: "batch",
+      href: "/supply-demand/admin/automation/batch",
+      label: "배치 제어",
+      metric: `${batchRuntimeSummary.effective.toLocaleString("ko-KR")}/${batchRuntimeSummary.total.toLocaleString("ko-KR")}`,
+    },
+  ];
 
   const selectProfileConfigByType = (profileType: string) => {
     const config = profileConfigs.find((item) => item.profileType === profileType);
@@ -1341,7 +1552,7 @@ export default function SupplyDemandAdminPage() {
         active="order-book"
         actions={(
           <div className="flex flex-wrap items-center gap-2">
-            <Link href="/supply-demand/admin/participants" className="inline-flex h-11 items-center rounded-md bg-[#f2f4f6] px-3 text-sm font-bold text-[#333d4b]">
+            <Link href="/supply-demand/admin/accounts/participants" className="inline-flex h-11 items-center rounded-md bg-[#f2f4f6] px-3 text-sm font-bold text-[#333d4b]">
               참여자 현황
             </Link>
             <Link href="/supply-demand" className="inline-flex h-11 items-center rounded-md bg-[#f2f4f6] px-3 text-sm font-bold text-[#333d4b]">
@@ -1362,15 +1573,24 @@ export default function SupplyDemandAdminPage() {
       <section className="mx-auto max-w-6xl px-4 py-5 sm:px-6 lg:px-8">
         {message ? <p className="rounded-md bg-[#3a1f1b] px-3 py-2 text-sm font-bold text-[#ffb4a8]">{message}</p> : null}
 
+        <AdminTabNav tabs={adminTabs} activeTab={activeAdminTab} />
+        {activeAdminTab === "accounts" ? <AdminSubTabNav tabs={accountSubTabs} activeSection={activeAdminSection} /> : null}
+        {activeAdminTab === "automation" ? <AdminSubTabNav tabs={automationSubTabs} activeSection={activeAdminSection} /> : null}
+
         <div className="grid gap-4 sm:grid-cols-3">
-          <DarkMetric label="현재가 시장" value={virtualMarket?.enabled ? "가동" : "정지"} />
-          <DarkMetric label="주문장 시장" value={orderBookMarket?.enabled ? "가동" : "정지"} />
-          <DarkMetric label="자동 유동성" value={status?.enabled ? "가동" : "정지"} />
-          <DarkMetric label="현재가 대기 주문" value={virtualMarket ? `${virtualMarket.openOrderCount}건` : "-"} />
+          <DarkMetric label="주문장 시장" value={formatMarketEnabledStatus(orderBookMarket)} />
+          <DarkMetric label="주문장 종목" value={`${instruments.length.toLocaleString("ko-KR")}종목`} />
+          <DarkMetric label="정규장 종목" value={`${openOrderBookConfigCount.toLocaleString("ko-KR")}종목`} />
           <DarkMetric label="주문장 대기 주문" value={orderBookMarket ? `${orderBookMarket.openOrderCount}건` : "-"} />
-          <DarkMetric label="자동 참여자" value={status ? `${status.enabledParticipantCount}명` : "-"} />
+          <DarkMetric label="오늘 주문장 체결" value={orderBookMarket ? `${orderBookMarket.todayExecutionCount.toLocaleString("ko-KR")}건` : "-"} />
+          <DarkMetric label="자동 참여자" value={status ? `${status.enabledParticipantCount.toLocaleString("ko-KR")}명` : "-"} />
         </div>
 
+        {activeAdminSection === "market" ? (
+          <AdminFlowOverviewPanel overview={adminFlowOverview} onRefresh={loadStatus} />
+        ) : null}
+
+        {activeAdminSection === "account-cash" ? (
         <section className="mt-5 rounded-lg border border-white/10 bg-white/[0.06] p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -1379,9 +1599,17 @@ export default function SupplyDemandAdminPage() {
             </div>
             <span className="text-xs font-bold text-[#64a8ff]">stock_account_cash_flow 원장 기록</span>
           </div>
-          <div className="mt-4 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_auto_auto]">
+          <div className="mt-4 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_auto_auto_auto]">
             <DarkInput label="유저 식별키" value={userCashAdjustmentUserKey} onChange={setUserCashAdjustmentUserKey} placeholder="userKey" />
             <DarkInput label="입금/회수 금액" value={userCashAdjustmentAmount} onChange={setUserCashAdjustmentAmount} placeholder="1000000" />
+            <button
+              type="button"
+              onClick={() => void loadUserFundFlow()}
+              disabled={loadingUserFundFlow}
+              className="min-h-11 rounded-md bg-white px-4 py-3 text-sm font-black text-[#101418] disabled:cursor-wait disabled:opacity-55"
+            >
+              {loadingUserFundFlow ? "조회 중" : "흐름 조회"}
+            </button>
             <button
               type="button"
               onClick={() => void adjustUserCashBalance("DEPOSIT")}
@@ -1399,11 +1627,36 @@ export default function SupplyDemandAdminPage() {
               {adjustingUserCashType === "WITHDRAW" ? "회수 중" : "회수"}
             </button>
           </div>
+          {userFundFlow ? (
+            <AdminFundFlowPanel userKey={userFundFlowUserKey ?? userCashAdjustmentUserKey.trim()} fundFlow={userFundFlow} />
+          ) : (
+            <div className="mt-4 rounded-md border border-white/10 bg-black/20 p-4 text-sm font-bold leading-6 text-[#8b95a1]">
+              유저 식별키를 입력하고 흐름 조회를 누르면 입출금, 예약 현금, 거래 순현금, 배당 수입, 최근 현금 원장을 확인할 수 있습니다.
+            </div>
+          )}
         </section>
+        ) : null}
 
-        <AutoSignalGuide />
+        {activeAdminSection === "salary" ? (
+          <SalaryEligibilityPanel
+            rows={salaryEligibilityRows}
+            receivableCount={salaryReceivableRows.length}
+            policyCount={salaryPolicyRows.length}
+            accountCheckCount={salaryAccountCheckRows.length}
+            excludedCount={salaryExcludedRows.length}
+            loading={autoParticipantOverviewsQuery.isFetching}
+            error={autoParticipantOverviewsQuery.isError}
+            running={runningCashFlow}
+            lastRun={lastCashFlowRun}
+            onRun={() => void runAutoParticipantCashFlowNow()}
+          />
+        ) : null}
 
-        <section className="mt-5 rounded-lg border border-white/10 bg-white/[0.06] p-4">
+        {activeAdminSection === "profiles" ? (
+        <>
+          <AutoSignalGuide />
+
+          <section className="mt-5 rounded-lg border border-white/10 bg-white/[0.06] p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="text-base font-black">프로필 행동 설정</h2>
@@ -1462,8 +1715,8 @@ export default function SupplyDemandAdminPage() {
                   <ProfileMetric label="익절" value={formatNumber(selectedProfileConfig.profitTakingWeight)} />
                   <ProfileMetric label="보유 인내" value={formatNumber(selectedProfileConfig.holdingPatienceWeight)} />
 	                  <ProfileMetric label="손실 보유" value={formatNumber(selectedProfileConfig.deepLossHoldWeight)} />
-	                  <ProfileMetric label="주기 입금" value={formatWon(selectedProfileConfig.recurringDepositAmount)} />
-	                  <ProfileMetric label="입금 주기" value={`${formatNumber(selectedProfileConfig.recurringDepositIntervalValue)}${formatRecurringCashIntervalUnit(selectedProfileConfig.recurringDepositIntervalUnit)}`} />
+	                  <ProfileMetric label="주기 입금" value={isDividendReinvestorProfileSelected ? "배당 이벤트만 사용" : formatWon(selectedProfileConfig.recurringDepositAmount)} />
+	                  <ProfileMetric label="입금 주기" value={isDividendReinvestorProfileSelected ? "-" : `${formatNumber(selectedProfileConfig.recurringDepositIntervalValue)}${formatRecurringCashIntervalUnit(selectedProfileConfig.recurringDepositIntervalUnit)}`} />
 	                  <ProfileMetric label="수정일" value={selectedProfileConfig.updatedAt ? selectedProfileConfig.updatedAt.slice(0, 10) : "-"} />
                 </div>
                 <div className="mt-4 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
@@ -1484,9 +1737,9 @@ export default function SupplyDemandAdminPage() {
                   <DarkInput label="보유 인내(0-1)" value={profileHoldingPatienceWeight} onChange={setProfileHoldingPatienceWeight} placeholder="0.5" />
 	                  <DarkInput label="손실 보유(0-1)" value={profileDeepLossHoldWeight} onChange={setProfileDeepLossHoldWeight} placeholder="0.5" />
 	                  <DarkInput label="익절 성향(0-1)" value={profileProfitTakingWeight} onChange={setProfileProfitTakingWeight} placeholder="0.8" />
-	                  <DarkInput label="주기 입금" value={profileRecurringDepositAmount} onChange={setProfileRecurringDepositAmount} placeholder="300000" />
-	                  <DarkInput label="입금 주기 값" value={profileRecurringDepositIntervalValue} onChange={setProfileRecurringDepositIntervalValue} placeholder="30" />
-	                  <DarkSelect label="입금 주기 단위" value={profileRecurringDepositIntervalUnit} onChange={(value) => setProfileRecurringDepositIntervalUnit(value as RecurringCashIntervalUnit)}>
+	                  <DarkInput label="주기 입금" value={isDividendReinvestorProfileSelected ? "0" : profileRecurringDepositAmount} onChange={setProfileRecurringDepositAmount} placeholder="300000" disabled={isDividendReinvestorProfileSelected} />
+	                  <DarkInput label="입금 주기 값" value={isDividendReinvestorProfileSelected ? "0" : profileRecurringDepositIntervalValue} onChange={setProfileRecurringDepositIntervalValue} placeholder="30" disabled={isDividendReinvestorProfileSelected} />
+	                  <DarkSelect label="입금 주기 단위" value={isDividendReinvestorProfileSelected ? "DAY" : profileRecurringDepositIntervalUnit} onChange={(value) => setProfileRecurringDepositIntervalUnit(value as RecurringCashIntervalUnit)} disabled={isDividendReinvestorProfileSelected}>
 	                    {RECURRING_CASH_INTERVAL_UNIT_OPTIONS.map((option) => (
 	                      <option key={option.value} value={option.value}>{option.label}</option>
 	                    ))}
@@ -1500,7 +1753,11 @@ export default function SupplyDemandAdminPage() {
                     </button>
                   </div>
                 </div>
-                <p className="mt-2 text-xs font-bold text-[#8b95a1]">심리 행동 가중치는 0-1 사이이며 실제 매수/매도 판단 방향에 직접 들어갑니다. 주문 빈도, 호가 공격성, TTL, 수량은 행동 결과의 빈도와 크기를 조정하고, 주기 입금은 외부 현금 유입을 시뮬레이션합니다.</p>
+                <p className="mt-2 text-xs font-bold text-[#8b95a1]">
+                  {isDividendReinvestorProfileSelected
+                    ? "배당재투자형은 월급/정기 입금을 쓰지 않습니다. 배당 지급 이벤트로 현금이 들어온 뒤 재매수 성향만 강화됩니다."
+                    : "심리 행동 가중치는 0-1 사이이며 실제 매수/매도 판단 방향에 직접 들어갑니다. 주문 빈도, 호가 공격성, TTL, 수량은 행동 결과의 빈도와 크기를 조정하고, 주기 입금은 외부 현금 유입을 시뮬레이션합니다."}
+                </p>
               </div>
             ) : (
               <div className="grid min-h-[220px] place-items-center rounded-md border border-dashed border-white/15 bg-black/15 px-4 py-8 text-center">
@@ -1508,8 +1765,12 @@ export default function SupplyDemandAdminPage() {
               </div>
             )}
           </div>
-        </section>
+          </section>
 
+        </>
+        ) : null}
+
+        {activeAdminSection === "auto-symbols" ? (
         <section className="mt-5 rounded-lg border border-white/10 bg-white/[0.06] p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -1613,6 +1874,9 @@ export default function SupplyDemandAdminPage() {
           </div>
         </section>
 
+        ) : null}
+
+        {activeAdminSection === "listing-auto" ? (
         <section className="mt-5 rounded-lg border border-white/10 bg-white/[0.06] p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -1754,6 +2018,9 @@ export default function SupplyDemandAdminPage() {
           </div>
         </section>
 
+        ) : null}
+
+        {activeAdminSection === "participant-strategies" ? (
         <section className="mt-5 rounded-lg border border-white/10 bg-white/[0.06] p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -1792,6 +2059,14 @@ export default function SupplyDemandAdminPage() {
               {savingStrategy ? "저장 중" : "저장"}
             </button>
           </div>
+          <div className="mt-4 rounded-md border border-white/10 bg-black/20 p-3">
+            <div className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
+              <DarkInput label="전략 검색" value={strategySearch} onChange={setStrategySearch} placeholder="참여자, userKey, 종목" />
+              <div className="self-end rounded-md bg-white/[0.04] px-3 py-3 text-xs font-bold text-[#8b95a1]">
+                표시 <span className="font-black text-white">{filteredParticipantSymbolConfigs.length.toLocaleString("ko-KR")}</span>개 / 전체 {(status?.participantSymbolConfigs.length ?? 0).toLocaleString("ko-KR")}개
+              </div>
+            </div>
+          </div>
           <div className="mt-4 overflow-x-auto rounded-md border border-white/10">
             <table className="min-w-[760px] w-full border-collapse text-sm">
               <thead className="bg-white/10 text-left text-[#b8c2cc]">
@@ -1805,7 +2080,7 @@ export default function SupplyDemandAdminPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/10">
-                {(status?.participantSymbolConfigs ?? []).map((config) => {
+                {filteredParticipantSymbolConfigs.map((config) => {
                   const participant = autoParticipantByUserKey.get(config.userKey);
                   const rowKey = `${config.userKey}:${config.symbol}`;
                   return (
@@ -1861,16 +2136,18 @@ export default function SupplyDemandAdminPage() {
                     </Fragment>
                   );
                 })}
-                {(status?.participantSymbolConfigs ?? []).length === 0 ? (
+                {filteredParticipantSymbolConfigs.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-3 py-4 text-[#8b95a1]">아직 참여자별 종목 전략이 없습니다. 참여자와 종목을 선택해 먼저 저장하세요.</td>
+                    <td colSpan={6} className="px-3 py-4 text-[#8b95a1]">조건에 맞는 참여자별 종목 전략이 없습니다.</td>
                   </tr>
                 ) : null}
               </tbody>
             </table>
           </div>
         </section>
+        ) : null}
 
+        {activeAdminSection === "batch" ? (
         <section className="mt-5 rounded-lg border border-white/10 bg-white/[0.06] p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -1896,9 +2173,9 @@ export default function SupplyDemandAdminPage() {
             <BatchRuntimeMetric label="설정 OFF" value={`${batchRuntimeSummary.schedulerOff.toLocaleString("ko-KR")}개`} tone="muted" />
           </div>
 
-          {batchJobRuntimeControls.length > 0 ? (
+          {supplyDemandBatchJobRuntimeControls.length > 0 ? (
             <div className="mt-4 grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-2">
-              {batchJobRuntimeControls.map((control) => {
+              {supplyDemandBatchJobRuntimeControls.map((control) => {
                 const label = BATCH_JOB_RUNTIME_LABELS[control.jobName] ?? { label: control.jobName, description: "등록된 배치 자동 실행 제어입니다." };
                 const updating = updatingBatchJobName === control.jobName;
                 return (
@@ -1910,14 +2187,6 @@ export default function SupplyDemandAdminPage() {
                     updating={updating}
                     onStart={() => void setBatchJobRuntime(control.jobName, true)}
                     onStop={() => void setBatchJobRuntime(control.jobName, false)}
-                    manualAction={control.jobName === "auto-participant-cash-flow" ? {
-                      label: "수동 월급 지급",
-                      busyLabel: "지급 실행 중",
-                      description: "자동 실행이 중지되어 있어도 관리자가 명시적으로 한 번 지급할 때 사용합니다. 대상은 가동 자동참여자와 ACTIVE 계좌입니다.",
-                      running: runningCashFlow,
-                      resultText: lastCashFlowRun ? `${lastCashFlowRun.status} · ${lastCashFlowRun.processedCount.toLocaleString("ko-KR")}건` : "-",
-                      onRun: () => void runAutoParticipantCashFlowNow(),
-                    } : undefined}
                   />
                 );
               })}
@@ -1928,7 +2197,9 @@ export default function SupplyDemandAdminPage() {
             </div>
           )}
         </section>
+        ) : null}
 
+        {activeAdminSection === "participants" ? (
         <section className="mt-5 rounded-lg border border-white/10 bg-white/[0.06] p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -1960,9 +2231,9 @@ export default function SupplyDemandAdminPage() {
               <option value="true">가동</option>
               <option value="false">정지</option>
             </DarkSelect>
-            <DarkInput label="개별 월급/현금" value={autoParticipantRecurringCashAmount} onChange={setAutoParticipantRecurringCashAmount} placeholder="비우면 프로필" />
-            <DarkInput label="주기 값" value={autoParticipantRecurringCashIntervalValue} onChange={setAutoParticipantRecurringCashIntervalValue} placeholder="0.5" />
-            <DarkSelect label="주기 단위" value={autoParticipantRecurringCashIntervalUnit} onChange={(value) => setAutoParticipantRecurringCashIntervalUnit(value as RecurringCashIntervalUnit)}>
+            <DarkInput label="개별 월급/현금" value={isAutoParticipantRecurringCashDisabled ? "" : autoParticipantRecurringCashAmount} onChange={setAutoParticipantRecurringCashAmount} placeholder={isAutoParticipantRecurringCashDisabled ? "배당 이벤트만 사용" : "비우면 프로필"} disabled={isAutoParticipantRecurringCashDisabled} />
+            <DarkInput label="주기 값" value={isAutoParticipantRecurringCashDisabled ? "" : autoParticipantRecurringCashIntervalValue} onChange={setAutoParticipantRecurringCashIntervalValue} placeholder={isAutoParticipantRecurringCashDisabled ? "-" : "0.5"} disabled={isAutoParticipantRecurringCashDisabled} />
+            <DarkSelect label="주기 단위" value={isAutoParticipantRecurringCashDisabled ? "DAY" : autoParticipantRecurringCashIntervalUnit} onChange={(value) => setAutoParticipantRecurringCashIntervalUnit(value as RecurringCashIntervalUnit)} disabled={isAutoParticipantRecurringCashDisabled}>
               {RECURRING_CASH_INTERVAL_UNIT_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>
               ))}
@@ -2016,6 +2287,23 @@ export default function SupplyDemandAdminPage() {
               </div>
             </div>
           ) : null}
+          <div className="mt-4 grid min-w-0 grid-cols-1 gap-3 rounded-md border border-white/10 bg-black/20 p-3 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,0.8fr)_minmax(0,1fr)]">
+            <DarkInput label="참여자 검색" value={participantSearch} onChange={setParticipantSearch} placeholder="표시명 또는 userKey" />
+            <DarkSelect label="상태 필터" value={participantStatusFilter} onChange={(value) => setParticipantStatusFilter(value as "ALL" | "ENABLED" | "DISABLED")}>
+              <option value="ALL">전체</option>
+              <option value="ENABLED">가동</option>
+              <option value="DISABLED">정지</option>
+            </DarkSelect>
+            <DarkSelect label="프로필 필터" value={participantProfileFilter} onChange={(value) => setParticipantProfileFilter(value as "ALL" | AutoParticipantProfileType)}>
+              <option value="ALL">전체 프로필</option>
+              {AUTO_PARTICIPANT_PROFILE_OPTIONS.map((profile) => (
+                <option key={profile.value} value={profile.value}>{profile.label}</option>
+              ))}
+            </DarkSelect>
+            <p className="text-xs font-bold text-[#8b95a1] sm:col-span-3">
+              표시 {filteredParticipants.length.toLocaleString("ko-KR")}명 / 전체 {(status?.participants.length ?? 0).toLocaleString("ko-KR")}명
+            </p>
+          </div>
           <div className="mt-4 overflow-x-auto rounded-md border border-white/10">
             <table className="min-w-[1120px] w-full border-collapse text-sm">
               <thead className="bg-white/10 text-left text-[#b8c2cc]">
@@ -2031,7 +2319,7 @@ export default function SupplyDemandAdminPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/10">
-                {(status?.participants ?? []).map((participant) => (
+                {filteredParticipants.map((participant) => (
                   <Fragment key={participant.userKey}>
                     <tr>
                       <td className="px-3 py-2">
@@ -2083,9 +2371,9 @@ export default function SupplyDemandAdminPage() {
 	                              <option value="true">가동</option>
 	                              <option value="false">정지</option>
 	                            </DarkSelect>
-	                            <DarkInput label="개별 월급/현금" value={autoParticipantRecurringCashAmount} onChange={setAutoParticipantRecurringCashAmount} placeholder="비우면 프로필" />
-	                            <DarkInput label="주기 값" value={autoParticipantRecurringCashIntervalValue} onChange={setAutoParticipantRecurringCashIntervalValue} placeholder="0.5" />
-	                            <DarkSelect label="주기 단위" value={autoParticipantRecurringCashIntervalUnit} onChange={(value) => setAutoParticipantRecurringCashIntervalUnit(value as RecurringCashIntervalUnit)}>
+	                            <DarkInput label="개별 월급/현금" value={isAutoParticipantRecurringCashDisabled ? "" : autoParticipantRecurringCashAmount} onChange={setAutoParticipantRecurringCashAmount} placeholder={isAutoParticipantRecurringCashDisabled ? "배당 이벤트만 사용" : "비우면 프로필"} disabled={isAutoParticipantRecurringCashDisabled} />
+	                            <DarkInput label="주기 값" value={isAutoParticipantRecurringCashDisabled ? "" : autoParticipantRecurringCashIntervalValue} onChange={setAutoParticipantRecurringCashIntervalValue} placeholder={isAutoParticipantRecurringCashDisabled ? "-" : "0.5"} disabled={isAutoParticipantRecurringCashDisabled} />
+	                            <DarkSelect label="주기 단위" value={isAutoParticipantRecurringCashDisabled ? "DAY" : autoParticipantRecurringCashIntervalUnit} onChange={(value) => setAutoParticipantRecurringCashIntervalUnit(value as RecurringCashIntervalUnit)} disabled={isAutoParticipantRecurringCashDisabled}>
 	                              {RECURRING_CASH_INTERVAL_UNIT_OPTIONS.map((option) => (
 	                                <option key={option.value} value={option.value}>{option.label}</option>
 	                              ))}
@@ -2130,16 +2418,19 @@ export default function SupplyDemandAdminPage() {
                     ) : null}
                   </Fragment>
                 ))}
-                {(status?.participants ?? []).length === 0 ? (
+                {filteredParticipants.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-3 py-4 text-[#8b95a1]">등록된 자동 참여자가 없습니다.</td>
+                    <td colSpan={8} className="px-3 py-4 text-[#8b95a1]">조건에 맞는 자동 참여자가 없습니다.</td>
                   </tr>
                 ) : null}
               </tbody>
             </table>
           </div>
         </section>
+        ) : null}
 
+        {activeAdminTab === "events" ? (
+        <>
         <section className="mt-5 rounded-lg border border-white/10 bg-white/[0.06] p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -2410,7 +2701,10 @@ export default function SupplyDemandAdminPage() {
             </table>
           </div>
         </section>
+        </>
+        ) : null}
 
+        {activeAdminTab === "market" ? (
         <div className="mt-5 overflow-x-auto rounded-lg border border-white/10">
           <table className="min-w-[900px] w-full border-collapse text-sm">
             <thead className="bg-white/10 text-left text-[#b8c2cc]">
@@ -2461,8 +2755,506 @@ export default function SupplyDemandAdminPage() {
             </tbody>
           </table>
         </div>
+        ) : null}
       </section>
     </main>
+  );
+}
+
+function SalaryEligibilityPanel({
+  rows,
+  receivableCount,
+  policyCount,
+  accountCheckCount,
+  excludedCount,
+  loading,
+  error,
+  running,
+  lastRun,
+  onRun,
+}: {
+  rows: SalaryEligibilityRow[];
+  receivableCount: number;
+  policyCount: number;
+  accountCheckCount: number;
+  excludedCount: number;
+  loading: boolean;
+  error: boolean;
+  running: boolean;
+  lastRun: StockBatchJobRun | null;
+  onRun: () => void;
+}) {
+  return (
+    <section className="mt-5 rounded-lg border border-white/10 bg-white/[0.06] p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-base font-black">월급 지급 대상</h2>
+          <p className="mt-1 text-xs font-bold text-[#8b95a1]">수동 지급과 자동 지급 모두 가동 자동참여자, 유효한 월급 정책, ACTIVE 계좌 조건을 만족해야 실제 입금됩니다.</p>
+        </div>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <span className="rounded-md bg-[#19324a] px-2 py-1 text-xs font-black text-[#64a8ff]">
+            {loading ? "계좌 상태 갱신 중" : `${receivableCount.toLocaleString("ko-KR")}명 지급 가능`}
+          </span>
+          <button
+            type="button"
+            onClick={onRun}
+            disabled={running}
+            className="min-h-10 rounded-md bg-white px-3 py-2 text-xs font-black text-[#101418] disabled:cursor-wait disabled:opacity-55"
+          >
+            {running ? "지급 실행 중" : "수동 월급 지급"}
+          </button>
+        </div>
+      </div>
+      <p className="mt-2 text-xs font-bold text-[#8b95a1]">
+        자동 실행이 중지되어 있어도 관리자가 명시적으로 한 번 지급할 수 있습니다. 마지막 수동 실행 {lastRun ? `${lastRun.status} · ${lastRun.processedCount.toLocaleString("ko-KR")}건` : "-"}
+      </p>
+
+      {error ? (
+        <p className="mt-3 rounded-md bg-[#3a1f1b] px-3 py-2 text-xs font-bold text-[#ffb4a8]">
+          자동참여자 계좌 overview를 조회하지 못했습니다. 월급 정책은 표시하지만 ACTIVE 계좌 여부는 확인 필요로 남습니다.
+        </p>
+      ) : null}
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <SalaryMetric label="지급 가능" value={`${receivableCount.toLocaleString("ko-KR")}명`} tone="good" />
+        <SalaryMetric label="월급 정책 있음" value={`${policyCount.toLocaleString("ko-KR")}명`} tone="neutral" />
+        <SalaryMetric label="계좌 확인 필요" value={`${accountCheckCount.toLocaleString("ko-KR")}명`} tone="warn" />
+        <SalaryMetric label="제외" value={`${excludedCount.toLocaleString("ko-KR")}명`} tone="muted" />
+      </div>
+
+      <div className="mt-4 overflow-x-auto rounded-md border border-white/10">
+        <table className="min-w-[1180px] w-full border-collapse text-sm">
+          <thead className="bg-white/10 text-left text-[#b8c2cc]">
+            <tr>
+              <th className="px-3 py-2">지급 상태</th>
+              <th className="px-3 py-2">참여자</th>
+              <th className="px-3 py-2">프로필</th>
+              <th className="px-3 py-2">지급 기준</th>
+              <th className="px-3 py-2">월급/주기</th>
+              <th className="px-3 py-2">계좌</th>
+              <th className="px-3 py-2">현재 현금</th>
+              <th className="px-3 py-2">제외 사유</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/10">
+            {rows.map((row) => (
+              <tr key={row.participant.userKey} className={row.canReceive ? "bg-[#132019]/35" : undefined}>
+                <td className="px-3 py-2">
+                  <span className={[
+                    "inline-flex rounded-md px-2 py-1 text-xs font-black",
+                    row.canReceive ? "bg-[#12351f] text-[#7bd88f]" : "bg-white/10 text-[#b8c2cc]",
+                  ].join(" ")}>
+                    {row.canReceive ? "지급 가능" : "제외"}
+                  </span>
+                </td>
+                <td className="px-3 py-2">
+                  <p className="font-black text-white">{row.participant.displayName}</p>
+                  <p className="mt-0.5 break-all text-xs font-bold text-[#8b95a1]">{row.participant.userKey}</p>
+                </td>
+                <td className="px-3 py-2">
+                  <p className="font-black text-white">{formatAutoParticipantProfile(row.participant.profileType)}</p>
+                  <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">{row.participant.enabled ? "참여자 가동" : "참여자 정지"}</p>
+                </td>
+                <td className="px-3 py-2">
+                  <p className="font-black text-white">{row.recurringPolicy.sourceLabel}</p>
+                  <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">{row.recurringPolicy.source === "PARTICIPANT" ? "프로필보다 우선" : "개별 설정 비움"}</p>
+                </td>
+                <td className="px-3 py-2 font-bold text-[#b8c2cc]">{formatRecurringCashPolicy(row.recurringPolicy)}</td>
+                <td className="px-3 py-2">
+                  <p className="font-black text-white">{formatAccountStatus(row.accountStatus)}</p>
+                  <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">계좌 ID {row.overview?.accountId ?? "-"}</p>
+                </td>
+                <td className="px-3 py-2 tabular-nums">{row.overview ? formatWon(row.overview.availableCash) : row.participant.cashBalance == null ? "-" : formatWon(row.participant.cashBalance)}</td>
+                <td className="px-3 py-2 text-xs font-bold leading-5 text-[#b8c2cc]">{row.blockers.length > 0 ? row.blockers.join(" / ") : "조건 충족"}</td>
+              </tr>
+            ))}
+            {rows.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="px-3 py-4 text-[#8b95a1]">등록된 자동 참여자가 없습니다.</td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+function AdminFlowOverviewPanel({ overview, onRefresh }: { overview: AdminFlowOverview | null; onRefresh: () => void }) {
+  const fundFlow = overview?.fundFlow;
+  const orderFlow = overview?.orderFlow;
+  const corporateActionFlow = overview?.corporateActionFlow;
+  const topSymbolFlows = overview?.symbolFlows.slice(0, 8) ?? [];
+  const recentCashFlows = overview?.recentCashFlows.slice(0, 8) ?? [];
+
+  return (
+    <section className="mt-5 rounded-lg border border-white/10 bg-white/[0.06] p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-base font-black">전체 흐름 대시보드</h2>
+          <p className="mt-1 text-xs font-bold text-[#8b95a1]">전체 계좌 자금, 주문장 종목 체결, 최근 현금 원장을 한 번에 봅니다.</p>
+        </div>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <span className="rounded-md bg-[#19324a] px-2 py-1 text-xs font-black text-[#64a8ff]">
+            {overview ? `갱신 ${formatDateTime(overview.generatedAt)}` : "조회 필요"}
+          </span>
+          <button
+            type="button"
+            onClick={onRefresh}
+            className="min-h-10 rounded-md bg-white px-3 py-2 text-xs font-black text-[#101418]"
+          >
+            흐름 새로고침
+          </button>
+        </div>
+      </div>
+
+      {fundFlow ? (
+        <>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <SalaryMetric label="활성 계좌" value={`${fundFlow.activeAccountCount.toLocaleString("ko-KR")}개`} tone="neutral" />
+            <SalaryMetric label="전체 현금" value={formatWon(fundFlow.totalCashBalance)} tone="neutral" />
+            <SalaryMetric label="예약 매수 현금" value={formatWon(fundFlow.totalReservedBuyCash)} tone="warn" />
+            <SalaryMetric label="전체 총자산" value={formatWon(fundFlow.totalAsset)} tone="good" />
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <FundFlowLine label="순입금" value={formatWon(fundFlow.netExternalCashFlow)} />
+            <FundFlowLine label="배당 수입" value={formatWon(fundFlow.dividendIncomeAmount)} />
+            <FundFlowLine label="거래 순현금" value={formatWon(fundFlow.tradeNetCashFlow)} />
+            <FundFlowLine label="수수료/세금" value={formatWon(fundFlow.totalFeeAmount + fundFlow.totalTaxAmount)} />
+            <FundFlowLine label="매수 순유출" value={formatWon(fundFlow.buyNetAmount)} />
+            <FundFlowLine label="매도 순유입" value={formatWon(fundFlow.sellNetAmount)} />
+            <FundFlowLine label="실현 손익" value={formatWon(fundFlow.realizedProfit)} />
+            <FundFlowLine label="전체 체결" value={`${fundFlow.executionCount.toLocaleString("ko-KR")}건`} />
+          </div>
+
+          {orderFlow && corporateActionFlow ? (
+            <div className="mt-4 grid gap-3 lg:grid-cols-2">
+              <div className="rounded-md border border-white/10 bg-black/20 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="text-sm font-black text-white">주문 흐름</h3>
+                  <span className="text-xs font-bold text-[#8b95a1]">오늘 {orderFlow.todayOrderCount.toLocaleString("ko-KR")}건</span>
+                </div>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                  <FundFlowLine label="대기 주문" value={`${orderFlow.openOrderCount.toLocaleString("ko-KR")}건`} />
+                  <FundFlowLine label="매수/매도 대기" value={`${orderFlow.openBuyOrderCount.toLocaleString("ko-KR")} / ${orderFlow.openSellOrderCount.toLocaleString("ko-KR")}`} />
+                  <FundFlowLine label="부분체결" value={`${orderFlow.partiallyFilledOrderCount.toLocaleString("ko-KR")}건`} />
+                  <FundFlowLine label="예약 매수금" value={formatWon(orderFlow.reservedBuyCash)} />
+                  <FundFlowLine label="예약 매도수량" value={`${orderFlow.reservedSellQuantity.toLocaleString("ko-KR")}주`} />
+                  <FundFlowLine label="오늘 체결/취소/거절" value={`${orderFlow.todayFilledOrderCount.toLocaleString("ko-KR")} / ${orderFlow.todayCancelledOrderCount.toLocaleString("ko-KR")} / ${orderFlow.todayRejectedOrderCount.toLocaleString("ko-KR")}`} />
+                </div>
+              </div>
+
+              <div className="rounded-md border border-white/10 bg-black/20 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="text-sm font-black text-white">주식 이벤트 흐름</h3>
+                  <span className="text-xs font-bold text-[#8b95a1]">오늘 생성 {corporateActionFlow.todayCreatedCount.toLocaleString("ko-KR")}건</span>
+                </div>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                  <FundFlowLine label="진행 중" value={`${corporateActionFlow.pendingCount.toLocaleString("ko-KR")}건`} />
+                  <FundFlowLine label="공시/권리락" value={`${corporateActionFlow.announcedCount.toLocaleString("ko-KR")} / ${corporateActionFlow.exRightsAppliedCount.toLocaleString("ko-KR")}`} />
+                  <FundFlowLine label="지급 완료" value={`${corporateActionFlow.paidCount.toLocaleString("ko-KR")}건`} />
+                  <FundFlowLine label="상장 완료" value={`${corporateActionFlow.listedCount.toLocaleString("ko-KR")}건`} />
+                  <FundFlowLine label="상장폐지" value={`${corporateActionFlow.delistedCount.toLocaleString("ko-KR")}건`} />
+                  <FundFlowLine label="이벤트 총합" value={`${(
+                    corporateActionFlow.announcedCount
+                    + corporateActionFlow.exRightsAppliedCount
+                    + corporateActionFlow.paidCount
+                    + corporateActionFlow.listedCount
+                    + corporateActionFlow.delistedCount
+                  ).toLocaleString("ko-KR")}건`} />
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </>
+      ) : (
+        <div className="mt-4 rounded-md border border-white/10 bg-black/20 p-4 text-sm font-bold leading-6 text-[#8b95a1]">
+          전체 흐름을 아직 조회하지 못했습니다. 배치/백엔드 상태를 확인한 뒤 흐름 새로고침을 눌러 주세요.
+        </div>
+      )}
+
+      <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,0.8fr)]">
+        <div className="min-w-0 rounded-md border border-white/10 bg-black/20 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className="text-sm font-black text-white">종목 흐름</h3>
+            <span className="text-xs font-bold text-[#8b95a1]">거래대금 상위 {topSymbolFlows.length.toLocaleString("ko-KR")}개</span>
+          </div>
+          <div className="mt-3 overflow-x-auto rounded-md border border-white/10">
+            <table className="min-w-[980px] w-full border-collapse text-sm">
+              <thead className="bg-white/10 text-left text-[#b8c2cc]">
+                <tr>
+                  <th className="px-3 py-2">종목</th>
+                  <th className="px-3 py-2">장</th>
+                  <th className="px-3 py-2 text-right">현재가</th>
+                  <th className="px-3 py-2 text-right">등락</th>
+                  <th className="px-3 py-2 text-right">거래대금</th>
+                  <th className="px-3 py-2 text-right">체결</th>
+                  <th className="px-3 py-2 text-right">대기주문</th>
+                  <th className="px-3 py-2 text-right">보유자</th>
+                  <th className="px-3 py-2">최근 체결</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/10">
+                {topSymbolFlows.map((flow) => (
+                  <tr key={flow.symbol}>
+                    <td className="px-3 py-2">
+                      <p className="font-black text-white">{flow.name}</p>
+                      <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">{flow.symbol}</p>
+                    </td>
+                    <td className="px-3 py-2 text-xs font-bold text-[#b8c2cc]">{formatFlowMarketStatus(flow.marketStatus)}</td>
+                    <td className="px-3 py-2 text-right font-black tabular-nums text-white">{formatWon(flow.currentPrice)}</td>
+                    <td className={flow.changeRate >= 0 ? "px-3 py-2 text-right font-black tabular-nums text-[#ffb4a8]" : "px-3 py-2 text-right font-black tabular-nums text-[#64a8ff]"}>
+                      {formatSignedPercent(flow.changeRate)}
+                    </td>
+                    <td className="px-3 py-2 text-right font-bold tabular-nums text-[#b8c2cc]">{formatWon(flow.turnoverAmount)}</td>
+                    <td className="px-3 py-2 text-right font-bold tabular-nums text-[#b8c2cc]">{flow.executionCount.toLocaleString("ko-KR")}건</td>
+                    <td className="px-3 py-2 text-right font-bold tabular-nums text-[#b8c2cc]">{flow.openOrderCount.toLocaleString("ko-KR")}건</td>
+                    <td className="px-3 py-2 text-right font-bold tabular-nums text-[#b8c2cc]">{flow.holderCount.toLocaleString("ko-KR")}명</td>
+                    <td className="px-3 py-2 text-xs font-bold text-[#8b95a1]">{formatDateTime(flow.lastExecutedAt)}</td>
+                  </tr>
+                ))}
+                {topSymbolFlows.length === 0 ? (
+                  <tr>
+                    <td colSpan={9} className="px-3 py-6 text-center text-sm font-bold text-[#8b95a1]">주문장 종목 흐름이 없습니다.</td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="min-w-0 rounded-md border border-white/10 bg-black/20 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className="text-sm font-black text-white">최근 현금 원장</h3>
+            <span className="text-xs font-bold text-[#8b95a1]">{recentCashFlows.length.toLocaleString("ko-KR")}건</span>
+          </div>
+          <div className="mt-3 space-y-2">
+            {recentCashFlows.map((cashFlow) => (
+              <div key={cashFlow.id} className="rounded-md border border-white/10 bg-white/[0.04] px-3 py-2">
+                <div className="flex min-w-0 items-center justify-between gap-3">
+                  <p className="min-w-0 truncate text-xs font-black text-white">{cashFlow.userKey ?? `계좌 ${cashFlow.accountId}`}</p>
+                  <span className={cashFlow.flowType === "WITHDRAW" ? "shrink-0 text-sm font-black tabular-nums text-[#ffb4a8]" : "shrink-0 text-sm font-black tabular-nums text-[#6ee7a8]"}>
+                    {cashFlow.flowType === "WITHDRAW" ? "-" : "+"}{formatWon(cashFlow.amount)}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs font-bold text-[#8b95a1]">{formatCashFlowReason(cashFlow.reason)} · {formatDateTime(cashFlow.createdAt)}</p>
+              </div>
+            ))}
+            {recentCashFlows.length === 0 ? (
+              <p className="rounded-md bg-white/[0.04] px-3 py-4 text-sm font-bold text-[#8b95a1]">최근 현금 원장이 없습니다.</p>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function AdminFundFlowPanel({ userKey, fundFlow }: { userKey: string; fundFlow: FundFlow }) {
+  return (
+    <div className="mt-4 rounded-md border border-white/10 bg-black/20 p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-black text-white">자금 흐름</h3>
+          <p className="mt-1 break-all text-xs font-bold text-[#8b95a1]">{userKey}</p>
+        </div>
+        <span className="rounded-md bg-[#19324a] px-2 py-1 text-xs font-black text-[#64a8ff]">
+          {fundFlow.executionCount.toLocaleString("ko-KR")}체결
+        </span>
+      </div>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <SalaryMetric label="현재 현금" value={formatWon(fundFlow.cashBalance)} tone="neutral" />
+        <SalaryMetric label="예약 현금" value={formatWon(fundFlow.reservedBuyCash)} tone="warn" />
+        <SalaryMetric label="평가 금액" value={formatWon(fundFlow.marketValue)} tone="neutral" />
+        <SalaryMetric label="총 자산" value={formatWon(fundFlow.totalAsset)} tone="good" />
+      </div>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <FundFlowLine label="순입금" value={formatWon(fundFlow.netExternalCashFlow)} />
+        <FundFlowLine label="배당 수입" value={formatWon(fundFlow.dividendIncomeAmount)} />
+        <FundFlowLine label="거래 순현금" value={formatWon(fundFlow.tradeNetCashFlow)} />
+        <FundFlowLine label="수수료/세금" value={formatWon(fundFlow.totalFeeAmount + fundFlow.totalTaxAmount)} />
+        <FundFlowLine label="매수 순유출" value={formatWon(fundFlow.buyNetAmount)} />
+        <FundFlowLine label="매도 순유입" value={formatWon(fundFlow.sellNetAmount)} />
+        <FundFlowLine label="실현 손익" value={formatWon(fundFlow.realizedProfit)} />
+        <FundFlowLine label="평가 손익" value={formatWon(fundFlow.unrealizedProfit)} />
+      </div>
+
+      <div className="mt-4 overflow-x-auto rounded-md border border-white/10">
+        <table className="min-w-[720px] w-full border-collapse text-sm">
+          <thead className="bg-white/10 text-left text-[#b8c2cc]">
+            <tr>
+              <th className="px-3 py-2">일시</th>
+              <th className="px-3 py-2">구분</th>
+              <th className="px-3 py-2">사유</th>
+              <th className="px-3 py-2 text-right">금액</th>
+              <th className="px-3 py-2">처리자</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/10">
+            {fundFlow.recentCashFlows.slice(0, 10).map((cashFlow) => (
+              <tr key={cashFlow.id}>
+                <td className="px-3 py-2 text-xs font-bold text-[#8b95a1]">{formatDateTime(cashFlow.createdAt)}</td>
+                <td className="px-3 py-2 font-black text-white">{cashFlow.flowType === "WITHDRAW" ? "회수" : "입금"}</td>
+                <td className="px-3 py-2 text-[#b8c2cc]">{formatCashFlowReason(cashFlow.reason)}</td>
+                <td className={cashFlow.flowType === "WITHDRAW" ? "px-3 py-2 text-right font-black tabular-nums text-[#ffb4a8]" : "px-3 py-2 text-right font-black tabular-nums text-[#6ee7a8]"}>
+                  {cashFlow.flowType === "WITHDRAW" ? "-" : "+"}{formatWon(cashFlow.amount)}
+                </td>
+                <td className="px-3 py-2 text-xs font-bold text-[#8b95a1]">{cashFlow.createdBy ?? "-"}</td>
+              </tr>
+            ))}
+            {fundFlow.recentCashFlows.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-3 py-6 text-center text-sm font-bold text-[#8b95a1]">현금 흐름 원장 내역이 없습니다.</td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function FundFlowLine({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md border border-white/10 bg-white/[0.04] px-3 py-2">
+      <p className="text-[11px] font-bold text-[#8b95a1]">{label}</p>
+      <p className="mt-1 text-sm font-black tabular-nums text-white">{value}</p>
+    </div>
+  );
+}
+
+function SalaryMetric({ label, value, tone }: { label: string; value: string; tone: "good" | "neutral" | "warn" | "muted" }) {
+  const toneClass = {
+    good: "text-[#7bd88f]",
+    neutral: "text-white",
+    warn: "text-[#ffd166]",
+    muted: "text-[#8b95a1]",
+  }[tone];
+  return (
+    <div className="rounded-md border border-white/10 bg-black/20 px-3 py-3">
+      <p className="text-[11px] font-black text-[#8b95a1]">{label}</p>
+      <p className={["mt-1 text-lg font-black tabular-nums", toneClass].join(" ")}>{value}</p>
+    </div>
+  );
+}
+
+function resolveAdminTabFromPath(pathname: string | null): AdminTab {
+  if (pathname?.startsWith("/supply-demand/admin/accounts")) {
+    return "accounts";
+  }
+  if (pathname?.startsWith("/supply-demand/admin/automation")) {
+    return "automation";
+  }
+  if (pathname?.startsWith("/supply-demand/admin/events")) {
+    return "events";
+  }
+  return "market";
+}
+
+function resolveAdminSectionFromPath(pathname: string | null): AdminSection {
+  if (pathname?.startsWith("/supply-demand/admin/accounts/participants")) {
+    return "participants";
+  }
+  if (pathname?.startsWith("/supply-demand/admin/accounts/salary")) {
+    return "salary";
+  }
+  if (pathname?.startsWith("/supply-demand/admin/accounts")) {
+    return "account-cash";
+  }
+  if (pathname?.startsWith("/supply-demand/admin/automation/symbols")) {
+    return "auto-symbols";
+  }
+  if (pathname?.startsWith("/supply-demand/admin/automation/listing-auto")) {
+    return "listing-auto";
+  }
+  if (pathname?.startsWith("/supply-demand/admin/automation/strategies")) {
+    return "participant-strategies";
+  }
+  if (pathname?.startsWith("/supply-demand/admin/automation/batch")) {
+    return "batch";
+  }
+  if (pathname?.startsWith("/supply-demand/admin/automation")) {
+    return "profiles";
+  }
+  if (pathname?.startsWith("/supply-demand/admin/events")) {
+    return "events";
+  }
+  return "market";
+}
+
+function AdminTabNav({
+  tabs,
+  activeTab,
+}: {
+  tabs: AdminTabItem[];
+  activeTab: AdminTab;
+}) {
+  return (
+    <nav className="mt-4 overflow-x-auto rounded-lg border border-white/10 bg-black/20 p-2" aria-label="관리자 설정 영역">
+      <div className="grid min-w-[760px] grid-cols-4 gap-2">
+        {tabs.map((tab) => {
+          const active = tab.value === activeTab;
+          return (
+            <Link
+              key={tab.value}
+              href={tab.href}
+              aria-current={active ? "page" : undefined}
+              className={[
+                "min-h-[76px] rounded-md px-3 py-3 text-left transition-colors",
+                active
+                  ? "border border-[#64a8ff]/60 bg-[#10233a] text-white shadow-[0_0_0_1px_rgba(100,168,255,0.16)]"
+                  : "border border-transparent bg-white/[0.04] text-[#b8c2cc] hover:bg-white/[0.07]",
+              ].join(" ")}
+            >
+              <span className="flex min-w-0 items-center justify-between gap-3">
+                <span className="truncate text-sm font-black">{tab.label}</span>
+                <span className={active ? "rounded-md bg-[#3182f6] px-2 py-1 text-[11px] font-black text-white" : "rounded-md bg-white/10 px-2 py-1 text-[11px] font-black text-[#8b95a1]"}>
+                  {tab.metric}
+                </span>
+              </span>
+              <span className="mt-2 block truncate text-xs font-bold text-[#8b95a1]">{tab.description}</span>
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
+  );
+}
+
+function AdminSubTabNav({
+  tabs,
+  activeSection,
+}: {
+  tabs: AdminSubTabItem[];
+  activeSection: AdminSection;
+}) {
+  return (
+    <nav className="mt-3 overflow-x-auto rounded-lg border border-white/10 bg-white/[0.04] p-2" aria-label="관리자 세부 설정 영역">
+      <div className="flex min-w-max gap-2">
+        {tabs.map((tab) => {
+          const active = tab.value === activeSection;
+          return (
+            <Link
+              key={tab.value}
+              href={tab.href}
+              aria-current={active ? "page" : undefined}
+              className={[
+                "inline-flex min-h-11 min-w-[132px] items-center justify-between gap-3 rounded-md px-3 text-sm font-black transition-colors",
+                active
+                  ? "bg-white text-[#101418]"
+                  : "bg-black/20 text-[#b8c2cc] hover:bg-white/[0.08] hover:text-white",
+              ].join(" ")}
+            >
+              <span>{tab.label}</span>
+              <span className={active ? "text-[#3182f6]" : "text-[#8b95a1]"}>{tab.metric}</span>
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
   );
 }
 
@@ -2541,7 +3333,6 @@ function BatchRuntimeControlCard({
   updating,
   onStart,
   onStop,
-  manualAction,
 }: {
   control: BatchJobRuntimeStatus;
   label: string;
@@ -2549,14 +3340,6 @@ function BatchRuntimeControlCard({
   updating: boolean;
   onStart: () => void;
   onStop: () => void;
-  manualAction?: {
-    label: string;
-    busyLabel: string;
-    description: string;
-    running: boolean;
-    resultText: string;
-    onRun: () => void;
-  };
 }) {
   return (
     <article className="grid min-w-0 gap-4 rounded-md border border-white/10 bg-black/20 p-4">
@@ -2603,22 +3386,6 @@ function BatchRuntimeControlCard({
         </button>
       </div>
 
-      {manualAction ? (
-        <div className="rounded-md border border-white/10 bg-white/[0.04] p-3">
-          <p className="text-xs font-bold leading-5 text-[#b8c2cc]">{manualAction.description}</p>
-          <button
-            type="button"
-            onClick={manualAction.onRun}
-            disabled={manualAction.running}
-            className="mt-3 min-h-11 w-full rounded-md bg-white px-3 py-3 text-sm font-black text-[#101418] disabled:cursor-wait disabled:opacity-55"
-          >
-            {manualAction.running ? manualAction.busyLabel : manualAction.label}
-          </button>
-          <p className="mt-2 text-xs font-bold text-[#8b95a1]">
-            마지막 수동 실행 {manualAction.resultText}
-          </p>
-        </div>
-      ) : null}
     </article>
   );
 }
@@ -2847,6 +3614,16 @@ function formatNumber(value: number | null | undefined) {
   });
 }
 
+function formatMarketEnabledStatus(status: { enabled: boolean; configs: unknown[] } | null) {
+  if (!status) {
+    return "-";
+  }
+  if (status.configs.length === 0) {
+    return "미등록";
+  }
+  return status.enabled ? "가동" : "정지";
+}
+
 function optionalText(value: string) {
   const normalized = value.trim();
   return normalized ? normalized : null;
@@ -2881,11 +3658,22 @@ function parseAutoParticipantRecurringCashDraft(
   };
 }
 
+function emptyAutoParticipantRecurringCashPayload() {
+  return {
+    recurringCashAmount: null,
+    recurringCashIntervalValue: null,
+    recurringCashIntervalUnit: null,
+  };
+}
+
 function formatRecurringCashIntervalUnit(value: RecurringCashIntervalUnit | null | undefined) {
   return RECURRING_CASH_INTERVAL_UNIT_OPTIONS.find((option) => option.value === value)?.label ?? "-";
 }
 
 function formatParticipantRecurringCash(participant: AutoParticipant) {
+  if (participant.profileType === "DIVIDEND_REINVESTOR") {
+    return "배당 이벤트만 사용";
+  }
   if (participant.recurringCashAmount == null) {
     return "프로필 기본값";
   }
@@ -2893,6 +3681,218 @@ function formatParticipantRecurringCash(participant: AutoParticipant) {
     return "개별 지급 없음";
   }
   return `${formatWon(participant.recurringCashAmount)} / ${formatNumber(participant.recurringCashIntervalValue)}${formatRecurringCashIntervalUnit(participant.recurringCashIntervalUnit)}`;
+}
+
+function filterAutoParticipants(
+  participants: AutoParticipant[],
+  filters: {
+    profileType: "ALL" | AutoParticipantProfileType;
+    search: string;
+    status: "ALL" | "ENABLED" | "DISABLED";
+  },
+) {
+  const search = filters.search.trim().toLowerCase();
+  return participants.filter((participant) => {
+    if (filters.status === "ENABLED" && !participant.enabled) {
+      return false;
+    }
+    if (filters.status === "DISABLED" && participant.enabled) {
+      return false;
+    }
+    if (filters.profileType !== "ALL" && participant.profileType !== filters.profileType) {
+      return false;
+    }
+    if (!search) {
+      return true;
+    }
+    return [
+      participant.userKey,
+      participant.displayName,
+      formatAutoParticipantProfile(participant.profileType),
+    ].some((value) => value.toLowerCase().includes(search));
+  });
+}
+
+function filterParticipantSymbolConfigs(
+  configs: AutoParticipantSymbolConfig[],
+  participantByUserKey: Map<string, AutoParticipant>,
+  searchValue: string,
+) {
+  const search = searchValue.trim().toLowerCase();
+  if (!search) {
+    return configs;
+  }
+  return configs.filter((config) => {
+    const participant = participantByUserKey.get(config.userKey);
+    return [
+      config.userKey,
+      config.symbol,
+      participant?.displayName ?? "",
+      participant ? formatAutoParticipantProfile(participant.profileType) : "",
+    ].some((value) => value.toLowerCase().includes(search));
+  });
+}
+
+function resolveSalaryEligibilityRows(
+  participants: AutoParticipant[],
+  profileConfigByType: Map<AutoParticipantProfileType, AutoParticipantProfileConfig>,
+  overviewByUserKey: Map<string, AutoParticipantOverview>,
+): SalaryEligibilityRow[] {
+  return participants.map((participant) => {
+    const recurringPolicy = resolveRecurringCashPolicy(participant, profileConfigByType.get(participant.profileType) ?? null);
+    const overview = overviewByUserKey.get(participant.userKey) ?? null;
+    const accountStatus = overview?.accountStatus ?? null;
+    const blockers: string[] = [];
+    if (!participant.enabled) {
+      blockers.push("참여자 정지");
+    }
+    if (participant.withdrawnAt) {
+      blockers.push("탈퇴 처리");
+    }
+    if (!recurringPolicy.payable) {
+      blockers.push(recurringPolicy.reason);
+    }
+    if (accountStatus === null) {
+      blockers.push("계좌 확인 필요");
+    } else if (accountStatus !== "ACTIVE") {
+      blockers.push(`계좌 ${accountStatus}`);
+    }
+    return {
+      participant,
+      overview,
+      recurringPolicy,
+      accountStatus,
+      canReceive: blockers.length === 0,
+      blockers,
+    };
+  }).sort((left, right) => {
+    if (left.canReceive !== right.canReceive) {
+      return left.canReceive ? -1 : 1;
+    }
+    return left.participant.userKey.localeCompare(right.participant.userKey);
+  });
+}
+
+function resolveRecurringCashPolicy(
+  participant: AutoParticipant,
+  profileConfig: AutoParticipantProfileConfig | null,
+): RecurringCashPolicyResolution {
+  if (participant.profileType === "DIVIDEND_REINVESTOR") {
+    return {
+      payable: false,
+      source: "PROFILE",
+      sourceLabel: "배당 이벤트",
+      amount: 0,
+      intervalValue: null,
+      intervalUnit: null,
+      reason: "배당 지급 기능 사용",
+    };
+  }
+  if (participant.recurringCashAmount != null) {
+    return resolveRecurringCashValues({
+      source: "PARTICIPANT",
+      sourceLabel: "개별 설정",
+      amount: participant.recurringCashAmount,
+      intervalValue: participant.recurringCashIntervalValue ?? null,
+      intervalUnit: participant.recurringCashIntervalUnit ?? null,
+    });
+  }
+  if (!profileConfig) {
+    return {
+      payable: false,
+      source: "PROFILE",
+      sourceLabel: "프로필 기본값",
+      amount: 0,
+      intervalValue: null,
+      intervalUnit: null,
+      reason: "프로필 설정 없음",
+    };
+  }
+  return resolveRecurringCashValues({
+    source: "PROFILE",
+    sourceLabel: "프로필 기본값",
+    amount: profileConfig.recurringDepositAmount,
+    intervalValue: profileConfig.recurringDepositIntervalValue,
+    intervalUnit: profileConfig.recurringDepositIntervalUnit,
+  });
+}
+
+function resolveRecurringCashValues(options: {
+  source: "PARTICIPANT" | "PROFILE";
+  sourceLabel: string;
+  amount: number | null | undefined;
+  intervalValue: number | null | undefined;
+  intervalUnit: RecurringCashIntervalUnit | null | undefined;
+}): RecurringCashPolicyResolution {
+  const amount = Number(options.amount ?? 0);
+  const intervalValue = options.intervalValue == null ? null : Number(options.intervalValue);
+  const intervalUnit = options.intervalUnit ?? null;
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return {
+      payable: false,
+      source: options.source,
+      sourceLabel: options.sourceLabel,
+      amount: Number.isFinite(amount) ? amount : 0,
+      intervalValue,
+      intervalUnit,
+      reason: options.source === "PARTICIPANT" ? "개별 미지급" : "프로필 미지급",
+    };
+  }
+  if (!Number.isFinite(intervalValue) || intervalValue === null || intervalValue <= 0 || intervalUnit === null) {
+    return {
+      payable: false,
+      source: options.source,
+      sourceLabel: options.sourceLabel,
+      amount,
+      intervalValue,
+      intervalUnit,
+      reason: "지급 주기 미설정",
+    };
+  }
+  return {
+    payable: true,
+    source: options.source,
+    sourceLabel: options.sourceLabel,
+    amount,
+    intervalValue,
+    intervalUnit,
+    reason: "지급 정책 유효",
+  };
+}
+
+function formatRecurringCashPolicy(policy: RecurringCashPolicyResolution) {
+  if (!policy.payable) {
+    return policy.reason;
+  }
+  return `${formatWon(policy.amount)} / ${formatNumber(policy.intervalValue)}${formatRecurringCashIntervalUnit(policy.intervalUnit)}`;
+}
+
+function formatAccountStatus(status: string | null) {
+  if (status === null) {
+    return "확인 필요";
+  }
+  if (status === "ACTIVE") {
+    return "ACTIVE";
+  }
+  return status;
+}
+
+function formatFlowMarketStatus(status: string) {
+  if (status === "OPEN") {
+    return "정규장";
+  }
+  if (status === "CLOSED") {
+    return "마감";
+  }
+  if (status === "HALTED") {
+    return "거래정지";
+  }
+  return status;
+}
+
+function formatSignedPercent(value: number) {
+  const sign = value > 0 ? "+" : "";
+  return `${sign}${value.toLocaleString("ko-KR", { maximumFractionDigits: 2 })}%`;
 }
 
 function isKnownOrderBookSymbol(instruments: OrderBookInstrument[], symbol: string) {
@@ -2995,6 +3995,25 @@ function formatDateTime(value: string | null | undefined) {
   });
 }
 
+function formatCashFlowReason(reason: string) {
+  switch (reason) {
+    case "OPENING_GRANT":
+      return "계좌 개설 지급";
+    case "ADMIN_DEPOSIT":
+      return "관리자 입금";
+    case "ADMIN_WITHDRAW":
+      return "관리자 회수";
+    case "DIVIDEND_PAYMENT":
+      return "배당 지급";
+    case "AUTO_PROFILE_RECURRING_DEPOSIT":
+      return "프로필 정기 지급";
+    case "AUTO_PARTICIPANT_RECURRING_DEPOSIT":
+      return "자동 참여자 정기 지급";
+    default:
+      return reason;
+  }
+}
+
 function formatCorporateActionType(actionType: CorporateActionType): string {
   switch (actionType) {
     case "INITIAL_ISSUE":
@@ -3049,6 +4068,9 @@ function formatCorporateActionValue(action: CorporateAction): string {
 }
 
 function formatCorporateActionPrice(action: CorporateAction): string {
+  if (action.actionType === "CASH_DIVIDEND") {
+    return "가격 조정 없음";
+  }
   if (!action.basePrice || !action.theoreticalExRightsPrice) {
     return "-";
   }
