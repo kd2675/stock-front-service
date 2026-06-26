@@ -57,6 +57,49 @@ export type OrderBook = {
   asks: OrderBookLevel[];
 };
 
+export type OrderBookTradeSummary = {
+  symbol: string;
+  todayExecutionCount: number;
+  todayVolume: number;
+  todayTurnover: number;
+  vwap: number;
+  highPrice: number;
+  lowPrice: number;
+  buyVolume: number;
+  sellVolume: number;
+  buyTurnover: number;
+  sellTurnover: number;
+  executionStrength: number;
+  lastPrice: number;
+  lastExecutedAt?: string | null;
+};
+
+export type OrderBookRecentExecution = {
+  id: number;
+  symbol: string;
+  side: OrderSide;
+  quantity: number;
+  price: number;
+  grossAmount: number;
+  priceChange: number;
+  executedAt: string;
+};
+
+export type OrderBookCandleInterval = "1M" | "5M" | "15M" | "1D" | "1W";
+
+export type OrderBookCandle = {
+  symbol: string;
+  interval: OrderBookCandleInterval;
+  bucketStart: string;
+  openPrice: number;
+  highPrice: number;
+  lowPrice: number;
+  closePrice: number;
+  volume: number;
+  turnover: number;
+  executionCount: number;
+};
+
 export type Account = {
   accountId: number;
   userKey?: string | null;

@@ -10,13 +10,16 @@ import {
   getInstrumentReports,
   getInstruments,
   getOrderBook,
+  getOrderBookCandles,
   getOrderBookInstruments,
   getOrderBookMarketStatus,
+  getOrderBookTradeSummary,
   getOrders,
   getPortfolio,
   getPortfolioSnapshots,
   getPrices,
   getPriceTicks,
+  getRecentOrderBookExecutions,
   getProfitSummary,
   getRankings,
   getStockUserProfile,
@@ -24,7 +27,7 @@ import {
 } from "@/app/lib/stock";
 import { stockKeys } from "@/app/lib/react-query/stockKeys";
 import { unwrapStockResult } from "@/app/lib/react-query/stockResult";
-import type { Execution, MarketType } from "@/app/types/stock";
+import type { Execution, MarketType, OrderBookCandleInterval } from "@/app/types/stock";
 
 const FAST_MARKET_REFETCH_MS = 2_000;
 const USER_ACTIVITY_REFETCH_MS = 5_000;
@@ -65,6 +68,33 @@ export function orderBookQueryOptions(symbol: string) {
     queryFn: async () => unwrapStockResult(await getOrderBook(symbol), "호가를 조회하지 못했습니다."),
     enabled: Boolean(symbol),
     refetchInterval: FAST_MARKET_REFETCH_MS,
+  });
+}
+
+export function orderBookTradeSummaryQueryOptions(symbol: string) {
+  return queryOptions({
+    queryKey: stockKeys.orderBookTradeSummary(symbol),
+    queryFn: async () => unwrapStockResult(await getOrderBookTradeSummary(symbol), "거래 요약을 조회하지 못했습니다."),
+    enabled: Boolean(symbol),
+    refetchInterval: FAST_MARKET_REFETCH_MS,
+  });
+}
+
+export function orderBookRecentExecutionsQueryOptions(symbol: string) {
+  return queryOptions({
+    queryKey: stockKeys.orderBookRecentExecutions(symbol),
+    queryFn: async () => unwrapStockResult(await getRecentOrderBookExecutions(symbol), "최근 체결을 조회하지 못했습니다."),
+    enabled: Boolean(symbol),
+    refetchInterval: FAST_MARKET_REFETCH_MS,
+  });
+}
+
+export function orderBookCandlesQueryOptions(symbol: string, interval: OrderBookCandleInterval) {
+  return queryOptions({
+    queryKey: stockKeys.orderBookCandles(symbol, interval),
+    queryFn: async () => unwrapStockResult(await getOrderBookCandles(symbol, interval), "차트 데이터를 조회하지 못했습니다."),
+    enabled: Boolean(symbol),
+    refetchInterval: interval === "1M" || interval === "5M" ? FAST_MARKET_REFETCH_MS : USER_ACTIVITY_REFETCH_MS,
   });
 }
 

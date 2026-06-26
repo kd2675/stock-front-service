@@ -1,6 +1,6 @@
 import { STOCK_API_BASE, deleteJson, getJson, patchJson, postJson, type ApiResult } from "@/app/lib/api";
 import { clearAccessToken, getUserFromToken, notifyAuthExpired, refreshAccessToken } from "@/app/lib/auth";
-import type { Account, AccountCashAdjustment, AccountStatus, AdminFlowOverview, AutoMarketStatus, AutoParticipantCashAdjustment, AutoParticipantCashFlowStatus, AutoParticipantOverview, AutoParticipantProfileType, BatchJobRuntimeStatus, CorporateAction, CorporateActionEntitlement, CorporateActionType, Execution, FundFlow, Holding, Instrument, InstrumentReport, ListingAutoPosition, MarketSessionStatus, MarketType, Order, OrderBook, OrderBookInstrument, OrderBookMarketStatus, OrderSide, OrderType, Portfolio, PortfolioSnapshot, Price, PriceTick, ProfitSummary, Ranking, RecurringCashIntervalUnit, StockBatchJobRun, StockUserProfile, SymbolMarketConfig, VirtualMarketStatus } from "@/app/types/stock";
+import type { Account, AccountCashAdjustment, AccountStatus, AdminFlowOverview, AutoMarketStatus, AutoParticipantCashAdjustment, AutoParticipantCashFlowStatus, AutoParticipantOverview, AutoParticipantProfileType, BatchJobRuntimeStatus, CorporateAction, CorporateActionEntitlement, CorporateActionType, Execution, FundFlow, Holding, Instrument, InstrumentReport, ListingAutoPosition, MarketSessionStatus, MarketType, Order, OrderBook, OrderBookCandle, OrderBookCandleInterval, OrderBookInstrument, OrderBookMarketStatus, OrderBookRecentExecution, OrderBookTradeSummary, OrderSide, OrderType, Portfolio, PortfolioSnapshot, Price, PriceTick, ProfitSummary, Ranking, RecurringCashIntervalUnit, StockBatchJobRun, StockUserProfile, SymbolMarketConfig, VirtualMarketStatus } from "@/app/types/stock";
 
 function authHeaders(token: string): Record<string, string> {
   const user = getUserFromToken(token);
@@ -174,6 +174,18 @@ export function getPriceTicks(symbol: string) {
 
 export function getOrderBook(symbol: string) {
   return getJson<OrderBook>(`/api/stock/v1/markets/order-books/${encodeURIComponent(symbol)}`);
+}
+
+export function getOrderBookTradeSummary(symbol: string) {
+  return getJson<OrderBookTradeSummary>(`/api/stock/v1/markets/order-books/${encodeURIComponent(symbol)}/trade-summary`);
+}
+
+export function getRecentOrderBookExecutions(symbol: string) {
+  return getJson<OrderBookRecentExecution[]>(`/api/stock/v1/markets/order-books/${encodeURIComponent(symbol)}/executions/recent`);
+}
+
+export function getOrderBookCandles(symbol: string, interval: OrderBookCandleInterval) {
+  return getJson<OrderBookCandle[]>(`/api/stock/v1/markets/order-books/${encodeURIComponent(symbol)}/candles/${encodeURIComponent(interval)}`);
 }
 
 export function getRankings() {

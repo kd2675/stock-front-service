@@ -10,16 +10,25 @@ import useAuthSession from "@/app/hooks/useAuthSession";
 import { getAccessToken, isAdminRole } from "@/app/lib/auth";
 import { ASSET_PERCENT_OPTIONS, calculateAssetPercentQuantity, resolveOrderSizingPrice } from "@/app/lib/orderSizing";
 import { cancelOrderMutationOptions, placeOrderMutationOptions } from "@/app/lib/react-query/stockMutations";
-import { accountStatusQueryOptions, autoMarketStatusQueryOptions, executionsQueryOptions, holdingsQueryOptions, orderBookInstrumentsQueryOptions, orderBookMarketStatusQueryOptions, orderBookQueryOptions, ordersQueryOptions, portfolioQueryOptions } from "@/app/lib/react-query/stockQueries";
+import { accountStatusQueryOptions, autoMarketStatusQueryOptions, executionsQueryOptions, holdingsQueryOptions, orderBookCandlesQueryOptions, orderBookInstrumentsQueryOptions, orderBookMarketStatusQueryOptions, orderBookQueryOptions, orderBookRecentExecutionsQueryOptions, orderBookTradeSummaryQueryOptions, ordersQueryOptions, portfolioQueryOptions } from "@/app/lib/react-query/stockQueries";
 import { stockKeys } from "@/app/lib/react-query/stockKeys";
 import { parseOrderTicket } from "@/app/lib/validation/orderSchemas";
 import { useStockUiStore } from "@/app/stores/stockUiStore";
-import type { AutoMarketConfig, Execution, MarketSessionStatus, Order, OrderBookInstrument, OrderSide, OrderType, SymbolMarketConfig } from "@/app/types/stock";
+import type { AutoMarketConfig, Execution, MarketSessionStatus, Order, OrderBookCandle, OrderBookCandleInterval, OrderBookInstrument, OrderBookLevel, OrderBookRecentExecution, OrderBookTradeSummary, OrderSide, OrderType, SymbolMarketConfig } from "@/app/types/stock";
 
 const ORDER_BOOK_VISIBLE_LEVELS = 8;
 const EMPTY_ORDER_BOOK_INSTRUMENTS: OrderBookInstrument[] = [];
 const EMPTY_ORDERS: Order[] = [];
 const EMPTY_EXECUTIONS: Execution[] = [];
+const EMPTY_RECENT_ORDER_BOOK_EXECUTIONS: OrderBookRecentExecution[] = [];
+const EMPTY_ORDER_BOOK_CANDLES: OrderBookCandle[] = [];
+const CANDLE_INTERVAL_OPTIONS: { value: OrderBookCandleInterval; label: string }[] = [
+  { value: "1M", label: "1분" },
+  { value: "5M", label: "5분" },
+  { value: "15M", label: "15분" },
+  { value: "1D", label: "일봉" },
+  { value: "1W", label: "주봉" },
+];
 
 type InstrumentSummary = {
   instrument: OrderBookInstrument;
@@ -33,6 +42,8 @@ export default function SupplyDemandPage() {
   const { isHydrated, authStatus, user } = useAuthSession();
   const [message, setMessage] = useState<string | null>(null);
   const [flashingOrderBookLevel, setFlashingOrderBookLevel] = useState<{ price: number; side: "bid" | "ask"; nonce: number } | null>(null);
+  const [orderBookLayout, setOrderBookLayout] = useState<"split" | "stacked">("split");
+  const [candleInterval, setCandleInterval] = useState<OrderBookCandleInterval>("1M");
   const orderBookTicket = useStockUiStore((state) => state.orderBookTicket);
   const setOrderBookTicket = useStockUiStore((state) => state.setOrderBookTicket);
   const { limitPrice, orderType, quantity, selectedSymbol, side } = orderBookTicket;
@@ -59,6 +70,18 @@ export default function SupplyDemandPage() {
     ...orderBookQueryOptions(selectedSymbol),
     enabled: hasTradingAccount && Boolean(selectedSymbol),
   });
+  const orderBookTradeSummaryQuery = useQuery({
+    ...orderBookTradeSummaryQueryOptions(selectedSymbol),
+    enabled: hasTradingAccount && Boolean(selectedSymbol),
+  });
+  const orderBookRecentExecutionsQuery = useQuery({
+    ...orderBookRecentExecutionsQueryOptions(selectedSymbol),
+    enabled: hasTradingAccount && Boolean(selectedSymbol),
+  });
+  const orderBookCandlesQuery = useQuery({
+    ...orderBookCandlesQueryOptions(selectedSymbol, candleInterval),
+    enabled: hasTradingAccount && Boolean(selectedSymbol),
+  });
   const ordersQuery = useQuery(ordersQueryOptions(token, { marketType: "ORDER_BOOK", enabled: hasTradingAccount }));
   const executionsQuery = useQuery(executionsQueryOptions(token, { source: "INTERNAL_ORDER_BOOK", enabled: hasTradingAccount }));
   const portfolioQuery = useQuery(portfolioQueryOptions(token, hasTradingAccount));
@@ -67,6 +90,9 @@ export default function SupplyDemandPage() {
   const autoMarket = autoMarketQuery.data ?? null;
   const orderBookMarket = orderBookMarketQuery.data ?? null;
   const orderBook = orderBookQuery.data ?? null;
+  const orderBookTradeSummary = orderBookTradeSummaryQuery.data ?? null;
+  const orderBookRecentExecutions = orderBookRecentExecutionsQuery.data ?? EMPTY_RECENT_ORDER_BOOK_EXECUTIONS;
+  const orderBookCandles = orderBookCandlesQuery.data ?? EMPTY_ORDER_BOOK_CANDLES;
   const orders = ordersQuery.data ?? EMPTY_ORDERS;
   const executions = executionsQuery.data ?? EMPTY_EXECUTIONS;
   const portfolio = portfolioQuery.data ?? null;
@@ -79,6 +105,9 @@ export default function SupplyDemandPage() {
     autoMarketQuery.dataUpdatedAt,
     orderBookMarketQuery.dataUpdatedAt,
     orderBookQuery.dataUpdatedAt,
+    orderBookTradeSummaryQuery.dataUpdatedAt,
+    orderBookRecentExecutionsQuery.dataUpdatedAt,
+    orderBookCandlesQuery.dataUpdatedAt,
     ordersQuery.dataUpdatedAt,
     executionsQuery.dataUpdatedAt,
     portfolioQuery.dataUpdatedAt,
@@ -191,6 +220,9 @@ export default function SupplyDemandPage() {
       queryClient.invalidateQueries({ queryKey: stockKeys.orders({ marketType: "ORDER_BOOK" }) }),
       queryClient.invalidateQueries({ queryKey: stockKeys.executions({ source: "INTERNAL_ORDER_BOOK" }) }),
       selectedInstrument?.symbol ? queryClient.invalidateQueries({ queryKey: stockKeys.orderBook(selectedInstrument.symbol) }) : Promise.resolve(),
+      selectedInstrument?.symbol ? queryClient.invalidateQueries({ queryKey: stockKeys.orderBookTradeSummary(selectedInstrument.symbol) }) : Promise.resolve(),
+      selectedInstrument?.symbol ? queryClient.invalidateQueries({ queryKey: stockKeys.orderBookRecentExecutions(selectedInstrument.symbol) }) : Promise.resolve(),
+      selectedInstrument?.symbol ? queryClient.invalidateQueries({ queryKey: stockKeys.orderBookCandles(selectedInstrument.symbol, candleInterval) }) : Promise.resolve(),
     ]);
   };
 
@@ -397,20 +429,37 @@ export default function SupplyDemandPage() {
               </select>
             </div>
 
-            <div className="mt-5 grid gap-3 sm:grid-cols-4">
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <Metric label="현재가" value={formatWon(selectedInstrument?.currentPrice)} />
               <Metric label="제한 기준가" value={formatWon(selectedInstrument?.priceLimitBase)} />
               <Metric label="장 상태" value={formatMarketSessionStatus(selectedOrderBookConfig?.marketStatus)} tone={isSelectedMarketOpen ? "blue" : "red"} />
-              <Metric label="주문장 주문" value={orderBookMarket ? `${orderBookMarket.openOrderCount}건` : "-"} />
+              <Metric label="거래량" value={`${formatNumber(orderBookTradeSummary?.todayVolume ?? 0)}주`} />
+              <Metric label="거래대금" value={formatWon(orderBookTradeSummary?.todayTurnover)} />
+              <Metric label="VWAP" value={formatWon(orderBookTradeSummary?.vwap)} />
+              <Metric label="고가 / 저가" value={`${formatPriceOrDash(orderBookTradeSummary?.highPrice)} / ${formatPriceOrDash(orderBookTradeSummary?.lowPrice)}`} />
+              <Metric label="체결강도" value={formatExecutionStrength(orderBookTradeSummary)} tone={resolveExecutionStrengthTone(orderBookTradeSummary)} />
             </div>
 
             {message ? <p className="mt-4 rounded-md bg-[#fff3f0] px-3 py-2 text-sm font-bold text-[#d34b36]">{message}</p> : null}
           </div>
 
-          <div className="grid gap-5 md:grid-cols-2">
-            <OrderBookSide title="매도" flashingLevel={flashingOrderBookLevel} levels={orderBook?.asks ?? []} side="ask" onFlashEnd={() => setFlashingOrderBookLevel(null)} onPriceSelect={selectOrderBookPrice} />
-            <OrderBookSide title="매수" flashingLevel={flashingOrderBookLevel} levels={orderBook?.bids ?? []} side="bid" onFlashEnd={() => setFlashingOrderBookLevel(null)} onPriceSelect={selectOrderBookPrice} />
-          </div>
+          <MarketChartPanel
+            candles={orderBookCandles}
+            interval={candleInterval}
+            isLoading={orderBookCandlesQuery.isLoading}
+            summary={orderBookTradeSummary}
+            onIntervalChange={setCandleInterval}
+          />
+
+          <OrderBookPanel
+            currentPrice={selectedInstrument.currentPrice}
+            flashingLevel={flashingOrderBookLevel}
+            layout={orderBookLayout}
+            orderBook={orderBook}
+            onFlashEnd={() => setFlashingOrderBookLevel(null)}
+            onLayoutChange={setOrderBookLayout}
+            onPriceSelect={selectOrderBookPrice}
+          />
         </div>
 
         <aside className="space-y-5">
@@ -444,9 +493,12 @@ export default function SupplyDemandPage() {
               <StatusRow label="자동 강도" value={selectedConfig ? `${selectedConfig.intensity}/10` : "-"} />
               <StatusRow label="자동 참여자" value={autoMarket ? `${autoMarket.enabledParticipantCount}명` : "-"} />
               <StatusRow label="오늘 자동 체결" value={autoMarket ? `${autoMarket.todayAutoExecutionCount}건` : "-"} />
+              <StatusRow label="전체 대기 주문" value={orderBookMarket ? `${orderBookMarket.openOrderCount}건` : "-"} />
               <StatusRow label="마지막 갱신" value={updatedAt ? updatedAt.toLocaleTimeString("ko-KR") : loading ? "조회 중" : "-"} />
             </div>
           </div>
+
+          <MarketTapePanel executions={orderBookRecentExecutions} isLoading={orderBookRecentExecutionsQuery.isLoading} />
 
           <div className="rounded-lg border border-[#e5e8eb] bg-white p-4">
             <h3 className="text-base font-black">종목별 자동장</h3>
@@ -657,6 +709,135 @@ function SelectionInfoRow({ label, value }: { label: string; value: string }) {
     <div className="grid min-w-0 grid-cols-[76px_minmax(0,1fr)] items-center gap-2 rounded-md bg-[#f7f8fa] px-3 py-2">
       <span className="text-[#8b95a1]">{label}</span>
       <span className="min-w-0 truncate text-right text-[#333d4b]">{value}</span>
+    </div>
+  );
+}
+
+function MarketChartPanel({
+  candles,
+  interval,
+  isLoading,
+  summary,
+  onIntervalChange,
+}: {
+  candles: OrderBookCandle[];
+  interval: OrderBookCandleInterval;
+  isLoading: boolean;
+  summary: OrderBookTradeSummary | null;
+  onIntervalChange: (interval: OrderBookCandleInterval) => void;
+}) {
+  return (
+    <section className="rounded-lg border border-[#e5e8eb] bg-white p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-bold text-[#8b95a1]">PRICE / VOLUME</p>
+          <h3 className="mt-1 text-base font-black">가격 흐름</h3>
+        </div>
+        <div className="grid grid-cols-5 rounded-md bg-[#f2f4f6] p-1">
+          {CANDLE_INTERVAL_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => onIntervalChange(option.value)}
+              className={interval === option.value
+                ? "h-9 rounded-md bg-[#191f28] px-2 text-xs font-black text-white"
+                : "h-9 rounded-md px-2 text-xs font-black text-[#6b7684] hover:bg-white"}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_180px]">
+        <MarketCandleChart candles={candles} isLoading={isLoading} />
+        <div className="grid gap-2 rounded-md bg-[#f7f8fa] p-3 text-sm">
+          <StatusRow label="체결" value={summary ? `${formatNumber(summary.todayExecutionCount)}건` : "-"} />
+          <StatusRow label="거래량" value={`${formatNumber(summary?.todayVolume ?? 0)}주`} />
+          <StatusRow label="거래대금" value={formatWon(summary?.todayTurnover)} />
+          <StatusRow label="VWAP" value={formatWon(summary?.vwap)} />
+          <StatusRow label="최근 체결" value={summary?.lastExecutedAt ? formatTime(summary.lastExecutedAt) : "-"} />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function MarketCandleChart({ candles, isLoading }: { candles: OrderBookCandle[]; isLoading: boolean }) {
+  if (isLoading && candles.length === 0) {
+    return (
+      <div className="grid h-[300px] place-items-center rounded-md bg-[#f7f8fa] text-sm font-bold text-[#8b95a1]">
+        차트 데이터를 불러오는 중입니다.
+      </div>
+    );
+  }
+  if (candles.length < 2) {
+    return (
+      <div className="grid h-[300px] place-items-center rounded-md bg-[#f7f8fa] px-4 text-center text-sm font-bold leading-6 text-[#8b95a1]">
+        가격 이력과 체결이 더 쌓이면 일봉/주봉 차트와 거래량이 표시됩니다.
+      </div>
+    );
+  }
+
+  const width = 720;
+  const priceHeight = 200;
+  const volumeHeight = 68;
+  const gap = 18;
+  const height = priceHeight + gap + volumeHeight;
+  const prices = candles.flatMap((candle) => [candle.highPrice, candle.lowPrice]);
+  const minPrice = Math.min(...prices);
+  const maxPrice = Math.max(...prices);
+  const priceRange = maxPrice - minPrice || 1;
+  const maxVolume = Math.max(1, ...candles.map((candle) => candle.volume));
+  const slotWidth = width / candles.length;
+  const candleWidth = Math.max(3, Math.min(12, slotWidth * 0.56));
+  const yPrice = (price: number) => priceHeight - ((price - minPrice) / priceRange) * priceHeight;
+  const last = candles[candles.length - 1];
+  const first = candles[0];
+  const changeRate = calculateChangeRate(last.closePrice, first.openPrice);
+
+  return (
+    <div className="rounded-md border border-[#eef0f2] bg-[#fbfcfd] p-3">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-xs font-bold text-[#8b95a1]">최근 {candles.length}개 구간</p>
+          <p className="mt-0.5 text-sm font-black tabular-nums text-[#191f28]">
+            {formatWon(last.closePrice)}
+          </p>
+        </div>
+        <span className={changeRate >= 0 ? "text-sm font-black tabular-nums text-[#f04452]" : "text-sm font-black tabular-nums text-[#3182f6]"}>
+          {formatSignedPercent(changeRate)}
+        </span>
+      </div>
+      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="가격 캔들 및 거래량 차트" className="h-[260px] w-full">
+        <line x1="0" x2={width} y1="0" y2="0" stroke="#eef0f2" strokeWidth="1" />
+        <line x1="0" x2={width} y1={priceHeight} y2={priceHeight} stroke="#e5e8eb" strokeWidth="1" />
+        <line x1="0" x2={width} y1={priceHeight + gap + volumeHeight} y2={priceHeight + gap + volumeHeight} stroke="#eef0f2" strokeWidth="1" />
+        {candles.map((candle, index) => {
+          const x = index * slotWidth + slotWidth / 2;
+          const openY = yPrice(candle.openPrice);
+          const closeY = yPrice(candle.closePrice);
+          const highY = yPrice(candle.highPrice);
+          const lowY = yPrice(candle.lowPrice);
+          const up = candle.closePrice >= candle.openPrice;
+          const color = up ? "#f04452" : "#3182f6";
+          const bodyTop = Math.min(openY, closeY);
+          const bodyHeight = Math.max(2, Math.abs(closeY - openY));
+          const volumeBarHeight = Math.max(1, candle.volume / maxVolume * volumeHeight);
+          return (
+            <g key={`${candle.bucketStart}-${index}`}>
+              <line x1={x} x2={x} y1={highY} y2={lowY} stroke={color} strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+              <rect x={x - candleWidth / 2} y={bodyTop} width={candleWidth} height={bodyHeight} rx="1" fill={up ? color : "white"} stroke={color} strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+              <rect x={x - candleWidth / 2} y={priceHeight + gap + volumeHeight - volumeBarHeight} width={candleWidth} height={volumeBarHeight} rx="1" fill={up ? "#ffd6d9" : "#dcecff"} />
+            </g>
+          );
+        })}
+      </svg>
+      <div className="mt-2 flex items-center justify-between gap-3 text-[11px] font-bold text-[#8b95a1]">
+        <span>{formatShortDateTime(candles[0].bucketStart)}</span>
+        <span>고가 {formatWon(maxPrice)} · 저가 {formatWon(minPrice)}</span>
+        <span>{formatShortDateTime(last.bucketStart)}</span>
+      </div>
     </div>
   );
 }
@@ -974,6 +1155,76 @@ function Metric({ label, value, tone = "default" }: { label: string; value: stri
   );
 }
 
+function OrderBookPanel({
+  currentPrice,
+  flashingLevel,
+  layout,
+  orderBook,
+  onFlashEnd,
+  onLayoutChange,
+  onPriceSelect,
+}: {
+  currentPrice: number;
+  flashingLevel: { price: number; side: "bid" | "ask"; nonce: number } | null;
+  layout: "split" | "stacked";
+  orderBook: { bids: OrderBookLevel[]; asks: OrderBookLevel[] } | null;
+  onFlashEnd: () => void;
+  onLayoutChange: (layout: "split" | "stacked") => void;
+  onPriceSelect: (price: number, side: "bid" | "ask") => void;
+}) {
+  const bids = orderBook?.bids ?? [];
+  const asks = orderBook?.asks ?? [];
+  const totalBidQuantity = bids.reduce((total, level) => total + level.quantity, 0);
+  const totalAskQuantity = asks.reduce((total, level) => total + level.quantity, 0);
+  const imbalance = totalAskQuantity <= 0 ? 0 : totalBidQuantity / totalAskQuantity;
+
+  return (
+    <section className="rounded-lg border border-[#e5e8eb] bg-white p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-bold text-[#8b95a1]">ORDER BOOK DEPTH</p>
+          <h3 className="mt-1 text-base font-black">호가 그래프</h3>
+          <p className="mt-1 text-xs font-bold text-[#8b95a1]">
+            매수 {formatNumber(totalBidQuantity)}주 · 매도 {formatNumber(totalAskQuantity)}주 · {formatOrderBookBias(imbalance)}
+          </p>
+        </div>
+        <div className="grid grid-cols-2 rounded-md bg-[#f2f4f6] p-1">
+          <button
+            type="button"
+            onClick={() => onLayoutChange("split")}
+            className={layout === "split" ? "h-9 rounded-md bg-[#191f28] px-3 text-xs font-black text-white" : "h-9 rounded-md px-3 text-xs font-black text-[#6b7684] hover:bg-white"}
+          >
+            좌우
+          </button>
+          <button
+            type="button"
+            onClick={() => onLayoutChange("stacked")}
+            className={layout === "stacked" ? "h-9 rounded-md bg-[#191f28] px-3 text-xs font-black text-white" : "h-9 rounded-md px-3 text-xs font-black text-[#6b7684] hover:bg-white"}
+          >
+            상하
+          </button>
+        </div>
+      </div>
+
+      {layout === "split" ? (
+        <div className="mt-4 grid gap-5 md:grid-cols-2">
+          <OrderBookSide title="매도" flashingLevel={flashingLevel} levels={asks} side="ask" onFlashEnd={onFlashEnd} onPriceSelect={onPriceSelect} />
+          <OrderBookSide title="매수" flashingLevel={flashingLevel} levels={bids} side="bid" onFlashEnd={onFlashEnd} onPriceSelect={onPriceSelect} />
+        </div>
+      ) : (
+        <StackedOrderBook
+          asks={asks}
+          bids={bids}
+          currentPrice={currentPrice}
+          flashingLevel={flashingLevel}
+          onFlashEnd={onFlashEnd}
+          onPriceSelect={onPriceSelect}
+        />
+      )}
+    </section>
+  );
+}
+
 function OrderBookSide({
   flashingLevel,
   title,
@@ -992,19 +1243,21 @@ function OrderBookSide({
   const color = side === "bid" ? "text-[#f04452]" : "text-[#3182f6]";
   const depthLevels = toFixedOrderBookLevels(levels);
   const maxQuantity = Math.max(1, ...levels.map((level) => level.quantity));
+  const cumulativeLevels = addCumulativeQuantity(depthLevels);
   return (
-    <div className="rounded-lg border border-[#e5e8eb] bg-white p-4">
+    <div className="rounded-md border border-[#eef0f2] bg-[#fbfcfd] p-3">
       <div className="flex items-center justify-between gap-3">
         <h3 className={`text-base font-black ${color}`}>{title}</h3>
         <span className="shrink-0 text-xs font-bold text-[#8b95a1]">고정 {ORDER_BOOK_VISIBLE_LEVELS}호가</span>
       </div>
       <div className="mt-3 grid h-[376px] grid-rows-[24px_repeat(8,40px)] gap-1 overflow-hidden">
-        <div className="grid grid-cols-[minmax(78px,1fr)_minmax(68px,1fr)_48px] items-center gap-2 px-3 text-[11px] font-bold text-[#8b95a1] sm:grid-cols-[108px_minmax(0,1fr)_64px]">
+        <div className="grid grid-cols-[minmax(78px,1fr)_minmax(58px,0.9fr)_minmax(58px,0.9fr)_42px] items-center gap-2 px-3 text-[11px] font-bold text-[#8b95a1] sm:grid-cols-[100px_minmax(0,1fr)_minmax(0,1fr)_52px]">
           <span>가격</span>
           <span className="text-right">잔량</span>
+          <span className="text-right">누적</span>
           <span className="text-right">주문</span>
         </div>
-        {depthLevels.map((level, index) => (
+        {cumulativeLevels.map((level, index) => (
           <OrderBookRow
             key={`${side}-slot-${index}`}
             flashNonce={level && flashingLevel?.side === side && flashingLevel.price === level.price ? flashingLevel.nonce : null}
@@ -1029,7 +1282,7 @@ function OrderBookRow({
   side,
 }: {
   flashNonce: number | null;
-  level: { price: number; quantity: number; orderCount: number } | null;
+  level: (OrderBookLevel & { cumulativeQuantity: number }) | null;
   maxQuantity: number;
   onFlashEnd: () => void;
   onPriceSelect: (price: number, side: "bid" | "ask") => void;
@@ -1050,7 +1303,7 @@ function OrderBookRow({
           onPriceSelect(level.price, side);
         }
       }}
-      className="relative grid h-10 min-w-0 grid-cols-[minmax(78px,1fr)_minmax(68px,1fr)_48px] items-center gap-2 overflow-hidden rounded-md bg-[#f7f8fa] px-3 text-left text-xs transition enabled:cursor-pointer enabled:hover:bg-[#eef6ff] enabled:focus:outline-none enabled:focus-visible:bg-[#eef6ff] disabled:cursor-default sm:grid-cols-[108px_minmax(0,1fr)_64px] sm:text-sm"
+      className="relative grid h-10 min-w-0 grid-cols-[minmax(78px,1fr)_minmax(58px,0.9fr)_minmax(58px,0.9fr)_42px] items-center gap-2 overflow-hidden rounded-md bg-[#f7f8fa] px-3 text-left text-xs transition enabled:cursor-pointer enabled:hover:bg-[#eef6ff] enabled:focus:outline-none enabled:focus-visible:bg-[#eef6ff] disabled:cursor-default sm:grid-cols-[100px_minmax(0,1fr)_minmax(0,1fr)_52px] sm:text-sm"
     >
       {level ? (
         <span
@@ -1072,6 +1325,9 @@ function OrderBookRow({
       <span className={`relative z-20 min-w-0 truncate text-right font-bold tabular-nums ${level ? "text-[#333d4b]" : "text-[#b0b8c1]"}`} title={level ? `${formatNumber(level.quantity)}주` : undefined}>
         {level ? formatNumber(level.quantity) : "-"}
       </span>
+      <span className={`relative z-20 min-w-0 truncate text-right font-bold tabular-nums ${level ? "text-[#5f6b76]" : "text-[#b0b8c1]"}`} title={level ? `누적 ${formatNumber(level.cumulativeQuantity)}주` : undefined}>
+        {level ? formatNumber(level.cumulativeQuantity) : "-"}
+      </span>
       <span className={`relative z-20 min-w-0 truncate text-right font-bold tabular-nums ${level ? "text-[#8b95a1]" : "text-[#b0b8c1]"}`} title={level ? `${formatNumber(level.orderCount)}건` : undefined}>
         {level ? formatNumber(level.orderCount) : "-"}
       </span>
@@ -1079,8 +1335,133 @@ function OrderBookRow({
   );
 }
 
-function toFixedOrderBookLevels(levels: { price: number; quantity: number; orderCount: number }[]) {
+function StackedOrderBook({
+  asks,
+  bids,
+  currentPrice,
+  flashingLevel,
+  onFlashEnd,
+  onPriceSelect,
+}: {
+  asks: OrderBookLevel[];
+  bids: OrderBookLevel[];
+  currentPrice: number;
+  flashingLevel: { price: number; side: "bid" | "ask"; nonce: number } | null;
+  onFlashEnd: () => void;
+  onPriceSelect: (price: number, side: "bid" | "ask") => void;
+}) {
+  const askLevels = addCumulativeQuantity(toFixedOrderBookLevels([...asks].reverse()));
+  const bidLevels = addCumulativeQuantity(toFixedOrderBookLevels(bids));
+  const maxQuantity = Math.max(1, ...asks.map((level) => level.quantity), ...bids.map((level) => level.quantity));
+  return (
+    <div className="mt-4 rounded-md border border-[#eef0f2] bg-[#fbfcfd] p-3">
+      <div className="grid grid-cols-[minmax(82px,1fr)_minmax(64px,0.8fr)_minmax(64px,0.8fr)_44px] items-center gap-2 px-3 text-[11px] font-bold text-[#8b95a1] sm:grid-cols-[112px_minmax(0,1fr)_minmax(0,1fr)_58px]">
+        <span>가격</span>
+        <span className="text-right">잔량</span>
+        <span className="text-right">누적</span>
+        <span className="text-right">주문</span>
+      </div>
+      <div className="mt-2 grid gap-1">
+        {askLevels.map((level, index) => (
+          <OrderBookRow
+            key={`stacked-ask-${index}`}
+            flashNonce={level && flashingLevel?.side === "ask" && flashingLevel.price === level.price ? flashingLevel.nonce : null}
+            level={level}
+            maxQuantity={maxQuantity}
+            onFlashEnd={onFlashEnd}
+            onPriceSelect={onPriceSelect}
+            side="ask"
+          />
+        ))}
+        <div className="my-1 grid min-h-12 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-md border border-[#d1d6db] bg-white px-3">
+          <div>
+            <p className="text-[11px] font-bold text-[#8b95a1]">중앙 현재가</p>
+            <p className="mt-0.5 text-lg font-black tabular-nums text-[#191f28]">{formatWon(currentPrice)}</p>
+          </div>
+          <span className="rounded-sm bg-[#f2f4f6] px-2 py-1 text-xs font-black text-[#333d4b]">매도 위 / 매수 아래</span>
+        </div>
+        {bidLevels.map((level, index) => (
+          <OrderBookRow
+            key={`stacked-bid-${index}`}
+            flashNonce={level && flashingLevel?.side === "bid" && flashingLevel.price === level.price ? flashingLevel.nonce : null}
+            level={level}
+            maxQuantity={maxQuantity}
+            onFlashEnd={onFlashEnd}
+            onPriceSelect={onPriceSelect}
+            side="bid"
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function toFixedOrderBookLevels(levels: OrderBookLevel[]) {
   return Array.from({ length: ORDER_BOOK_VISIBLE_LEVELS }, (_, index) => levels[index] ?? null);
+}
+
+function addCumulativeQuantity(levels: (OrderBookLevel | null)[]) {
+  let cumulativeQuantity = 0;
+  return levels.map((level) => {
+    if (!level) {
+      return null;
+    }
+    cumulativeQuantity += level.quantity;
+    return {
+      ...level,
+      cumulativeQuantity,
+    };
+  });
+}
+
+function MarketTapePanel({ executions, isLoading }: { executions: OrderBookRecentExecution[]; isLoading: boolean }) {
+  return (
+    <div className="rounded-lg border border-[#e5e8eb] bg-white p-4">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-xs font-bold text-[#8b95a1]">MARKET TAPE</p>
+          <h3 className="mt-1 text-base font-black">전체 체결</h3>
+        </div>
+        <span className="rounded-sm bg-[#f2f4f6] px-2 py-1 text-xs font-black text-[#6b7684]">
+          최근 {executions.length}건
+        </span>
+      </div>
+      <div className="mt-3 max-h-[360px] space-y-2 overflow-y-auto pr-1">
+        {executions.map((execution) => {
+          const up = execution.priceChange >= 0;
+          return (
+            <article key={execution.id} className="rounded-md bg-[#f7f8fa] px-3 py-2">
+              <div className="flex min-w-0 items-center justify-between gap-3">
+                <span className={execution.side === "BUY" ? "shrink-0 text-xs font-black text-[#f04452]" : "shrink-0 text-xs font-black text-[#3182f6]"}>
+                  {execution.side === "BUY" ? "매수체결" : "매도체결"}
+                </span>
+                <span className="min-w-0 truncate text-right text-xs font-bold text-[#8b95a1]">{formatTime(execution.executedAt)}</span>
+              </div>
+              <div className="mt-1 flex min-w-0 items-end justify-between gap-3">
+                <div className="min-w-0">
+                  <p className={up ? "text-sm font-black tabular-nums text-[#f04452]" : "text-sm font-black tabular-nums text-[#3182f6]"}>
+                    {formatWon(execution.price)}
+                  </p>
+                  <p className="mt-0.5 text-[11px] font-bold text-[#8b95a1]">
+                    {up ? "+" : ""}{formatNumber(execution.priceChange)}원
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-black tabular-nums text-[#191f28]">{formatNumber(execution.quantity)}주</p>
+                  <p className="mt-0.5 text-[11px] font-bold text-[#8b95a1]">{formatWon(execution.grossAmount)}</p>
+                </div>
+              </div>
+            </article>
+          );
+        })}
+        {executions.length === 0 ? (
+          <p className="rounded-md bg-[#f7f8fa] px-3 py-4 text-sm font-bold leading-6 text-[#8b95a1]">
+            {isLoading ? "전체 체결을 불러오는 중입니다." : "아직 종목 전체 체결이 없습니다."}
+          </p>
+        ) : null}
+      </div>
+    </div>
+  );
 }
 
 function StatusRow({ label, value }: { label: string; value: string }) {
@@ -1092,7 +1473,7 @@ function StatusRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function formatWon(value?: number) {
+function formatWon(value?: number | null) {
   if (value === undefined || value === null) {
     return "-";
   }
@@ -1101,6 +1482,63 @@ function formatWon(value?: number) {
 
 function formatPrice(value: number) {
   return Math.round(value).toLocaleString("ko-KR");
+}
+
+function formatPriceOrDash(value?: number | null) {
+  if (value === undefined || value === null || value <= 0) {
+    return "-";
+  }
+  return formatPrice(value);
+}
+
+function formatTime(value: string) {
+  return new Date(value).toLocaleTimeString("ko-KR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+}
+
+function formatShortDateTime(value: string) {
+  return new Date(value).toLocaleString("ko-KR", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function formatExecutionStrength(summary: OrderBookTradeSummary | null) {
+  if (!summary || summary.executionStrength <= 0) {
+    return "-";
+  }
+  return `${formatNumber(summary.executionStrength)}%`;
+}
+
+function resolveExecutionStrengthTone(summary: OrderBookTradeSummary | null): "default" | "red" | "blue" {
+  if (!summary || summary.executionStrength <= 0) {
+    return "default";
+  }
+  if (summary.executionStrength >= 120) {
+    return "red";
+  }
+  if (summary.executionStrength <= 80) {
+    return "blue";
+  }
+  return "default";
+}
+
+function formatOrderBookBias(imbalance: number) {
+  if (!Number.isFinite(imbalance) || imbalance <= 0) {
+    return "잔량 없음";
+  }
+  if (imbalance >= 1.25) {
+    return "매수 잔량 우위";
+  }
+  if (imbalance <= 0.8) {
+    return "매도 잔량 우위";
+  }
+  return "잔량 균형";
 }
 
 function formatOrderInputPrice(value: number) {
