@@ -1,6 +1,6 @@
 import { STOCK_API_BASE, deleteJson, getJson, patchJson, postJson, type ApiResult } from "@/app/lib/api";
 import { clearAccessToken, getUserFromToken, notifyAuthExpired, refreshAccessToken } from "@/app/lib/auth";
-import type { Account, AccountCashAdjustment, AccountStatus, AdminCashFlowPage, AdminFlowOverview, AutoMarketStatus, AutoParticipantCashAdjustment, AutoParticipantCashFlowStatus, AutoParticipantOverview, AutoParticipantProfileType, BatchJobRuntimeStatus, CorporateAction, CorporateActionEntitlement, CorporateActionType, Execution, FundFlow, Holding, Instrument, InstrumentReport, ListingAutoPosition, MarketSessionStatus, MarketType, Order, OrderBook, OrderBookCandle, OrderBookCandleInterval, OrderBookInstrument, OrderBookMarketStatus, OrderBookRecentExecution, OrderBookTradeSummary, OrderSide, OrderType, Portfolio, PortfolioSnapshot, Price, PriceTick, ProfitSummary, Ranking, RecurringCashIntervalUnit, StockBatchJobRun, StockUserProfile, SymbolMarketConfig, VirtualMarketStatus } from "@/app/types/stock";
+import type { Account, AccountCashAdjustment, AccountStatus, AdminCashFlowPage, AdminFlowOverview, AdminFundFlowSummary, AdminSymbolFlowList, AutoMarketStatus, AutoParticipantCashAdjustment, AutoParticipantCashFlowStatus, AutoParticipantHoldingGroup, AutoParticipantOverview, AutoParticipantProfileOverview, AutoParticipantProfileType, BatchJobRuntimeStatus, CorporateAction, CorporateActionEntitlement, CorporateActionType, Execution, FundFlow, Holding, Instrument, InstrumentReport, ListingAutoPosition, MarketSessionStatus, MarketType, Order, OrderBook, OrderBookCandle, OrderBookCandleInterval, OrderBookInstrument, OrderBookMarketStatus, OrderBookRecentExecution, OrderBookTradeSummary, OrderSide, OrderType, Portfolio, PortfolioSnapshot, Price, PriceTick, ProfitSummary, Ranking, RecurringCashIntervalUnit, StockBatchJobRun, StockUserProfile, SymbolMarketConfig, VirtualMarketStatus } from "@/app/types/stock";
 
 function authHeaders(token: string): Record<string, string> {
   const user = getUserFromToken(token);
@@ -11,11 +11,24 @@ function authHeaders(token: string): Record<string, string> {
   };
 }
 
-function toQuery(params: Record<string, string | undefined>) {
+type QueryParamValue = string | number | boolean | readonly string[] | null | undefined;
+
+function stringifyQueryParam(value: QueryParamValue) {
+  if (value == null) {
+    return null;
+  }
+  if (Array.isArray(value)) {
+    return value.length === 0 ? null : value.join(",");
+  }
+  return String(value);
+}
+
+function toQuery(params: Record<string, QueryParamValue>) {
   const query = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
-    if (value) {
-      query.set(key, value);
+    const queryValue = stringifyQueryParam(value);
+    if (queryValue) {
+      query.set(key, queryValue);
     }
   });
   const queryString = query.toString();
@@ -196,32 +209,109 @@ export function getVirtualMarketStatus() {
   return getJson<VirtualMarketStatus>("/api/stock/v1/markets/virtual-market");
 }
 
-export function getOrderBookMarketStatus() {
-  return getJson<OrderBookMarketStatus>("/api/stock/v1/markets/order-book-market");
+export function getOrderBookMarketStatus(options?: { includeConfigs?: boolean; includeTodayExecution?: boolean }) {
+  const query = options == null
+    ? ""
+    : toQuery({
+        includeConfigs: options.includeConfigs,
+        includeTodayExecution: options.includeTodayExecution,
+      });
+  return getJson<OrderBookMarketStatus>(`/api/stock/v1/markets/order-book-market${query}`);
 }
 
-export function getAutoMarketStatus() {
-  return getJson<AutoMarketStatus>("/api/stock/v1/markets/auto-market");
+export function getAutoMarketStatus(options?: {
+  includeConfigs?: boolean;
+  includeParticipants?: boolean;
+  includeParticipantSymbolConfigs?: boolean;
+  includeParticipantProfileConfigs?: boolean;
+  includeListingAutoAccounts?: boolean;
+  includeRuntimeMetrics?: boolean;
+  includeSalaryEligibility?: boolean;
+  participantSymbolConfigUserKey?: string;
+}) {
+  const query = options == null
+    ? ""
+    : toQuery({
+        includeConfigs: options.includeConfigs,
+        includeParticipants: options.includeParticipants,
+        includeParticipantSymbolConfigs: options.includeParticipantSymbolConfigs,
+        includeParticipantProfileConfigs: options.includeParticipantProfileConfigs,
+        includeListingAutoAccounts: options.includeListingAutoAccounts,
+        includeRuntimeMetrics: options.includeRuntimeMetrics,
+        includeSalaryEligibility: options.includeSalaryEligibility,
+        participantSymbolConfigUserKey: options.participantSymbolConfigUserKey,
+      });
+  return getJson<AutoMarketStatus>(`/api/stock/v1/markets/auto-market${query}`);
 }
 
-export function getAdminFlowOverview(token: string) {
+export function getAdminFlowOverview(token: string, options?: { symbolFlowLimit?: number; includeFundFlow?: boolean; includeSymbolFlows?: boolean }) {
+  const query = options == null
+    ? ""
+    : toQuery({
+        symbolFlowLimit: options.symbolFlowLimit,
+        includeFundFlow: options.includeFundFlow,
+        includeSymbolFlows: options.includeSymbolFlows,
+      });
   return withAuthRefresh(token, (nextToken) =>
-    getJson<AdminFlowOverview>("/api/stock/v1/markets/admin/flow-overview", authHeaders(nextToken)),
+    getJson<AdminFlowOverview>(`/api/stock/v1/markets/admin/flow-overview${query}`, authHeaders(nextToken)),
+  );
+}
+
+export function getAdminFundFlowSummary(token: string) {
+  return withAuthRefresh(token, (nextToken) =>
+    getJson<AdminFundFlowSummary>("/api/stock/v1/markets/admin/fund-flow-summary", authHeaders(nextToken)),
+  );
+}
+
+export function getAdminSymbolFlows(token: string, options?: { limit?: number }) {
+  const query = options == null
+    ? ""
+    : toQuery({
+        limit: options.limit,
+      });
+  return withAuthRefresh(token, (nextToken) =>
+    getJson<AdminSymbolFlowList>(`/api/stock/v1/markets/admin/symbol-flows${query}`, authHeaders(nextToken)),
   );
 }
 
 export function getAdminCashFlows(token: string, page: number, size: number) {
   return withAuthRefresh(token, (nextToken) =>
     getJson<AdminCashFlowPage>(`/api/stock/v1/markets/admin/cash-flows${toQuery({
-      page: String(page),
-      size: String(size),
+      page,
+      size,
     })}`, authHeaders(nextToken)),
   );
 }
 
-export function getAutoParticipantOverviews(token: string) {
+export function getAutoParticipantOverviews(token: string, options?: { includeHoldings?: boolean; userKeys?: string[] }) {
+  const normalizedUserKeys = options?.userKeys == null
+    ? []
+    : [...new Set(options.userKeys.map((userKey) => userKey.trim()).filter(Boolean))];
+  const query = options == null
+    ? ""
+    : toQuery({
+        includeHoldings: options.includeHoldings,
+        userKeys: normalizedUserKeys,
+      });
   return withAuthRefresh(token, (nextToken) =>
-    getJson<AutoParticipantOverview[]>("/api/stock/v1/markets/auto-market/participants/overviews", authHeaders(nextToken)),
+    getJson<AutoParticipantOverview[]>(`/api/stock/v1/markets/auto-market/participants/overviews${query}`, authHeaders(nextToken)),
+  );
+}
+
+export function getAutoParticipantHoldings(token: string, userKeys: string[]) {
+  const normalizedUserKeys = [...new Set(userKeys.map((userKey) => userKey.trim()).filter(Boolean))];
+  if (normalizedUserKeys.length === 0) {
+    return Promise.resolve({ ok: true, data: [] as AutoParticipantHoldingGroup[] });
+  }
+  const query = toQuery({ userKeys: normalizedUserKeys });
+  return withAuthRefresh(token, (nextToken) =>
+    getJson<AutoParticipantHoldingGroup[]>(`/api/stock/v1/markets/auto-market/participants/holdings${query}`, authHeaders(nextToken)),
+  );
+}
+
+export function getAutoParticipantProfileOverviews(token: string) {
+  return withAuthRefresh(token, (nextToken) =>
+    getJson<AutoParticipantProfileOverview[]>("/api/stock/v1/markets/auto-market/participants/profile-overviews", authHeaders(nextToken)),
   );
 }
 

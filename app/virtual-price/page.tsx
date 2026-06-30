@@ -14,6 +14,7 @@ import { amendOrderMutationOptions, cancelOrderMutationOptions, cancelOrderParti
 import { accountStatusQueryOptions, corporateActionEntitlementsQueryOptions, executionsQueryOptions, holdingsQueryOptions, instrumentsQueryOptions, orderBookQueryOptions, ordersQueryOptions, portfolioQueryOptions, portfolioSnapshotsQueryOptions, priceTicksQueryOptions, pricesQueryOptions, profitSummaryQueryOptions, profileQueryOptions, rankingsQueryOptions } from "@/app/lib/react-query/stockQueries";
 import { stockKeys } from "@/app/lib/react-query/stockKeys";
 import { getPriceStreamUrl } from "@/app/lib/stock";
+import { formatOrderPrice, formatOrderStatus, formatWon } from "@/app/lib/stockFormatters";
 import { useStockUiStore } from "@/app/stores/stockUiStore";
 import type { CorporateActionEntitlement, CorporateActionType, Execution, Instrument, Order, OrderBook, OrderBookLevel, PortfolioSnapshot, Price, PriceStreamEvent, PriceTick } from "@/app/types/stock";
 
@@ -1126,13 +1127,6 @@ function toFiniteNumber(value: unknown): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function formatWon(value?: number | null): string {
-  if (value === undefined || value === null || Number.isNaN(value)) {
-    return "-";
-  }
-  return `${Math.round(value).toLocaleString("ko-KR")}원`;
-}
-
 function formatCompactWon(value?: number | null): string {
   if (value === undefined || value === null || Number.isNaN(value)) {
     return "-";
@@ -1223,31 +1217,6 @@ function formatNumber(value?: number | null): string {
 function formatSignedWon(value: number): string {
   const prefix = value > 0 ? "+" : "";
   return `${prefix}${formatWon(value)}`;
-}
-
-function formatOrderPrice(order: Order): string {
-  if (order.limitPrice !== undefined && order.limitPrice !== null) {
-    return formatWon(order.limitPrice);
-  }
-  if (order.averageFillPrice !== undefined && order.averageFillPrice !== null) {
-    return formatWon(order.averageFillPrice);
-  }
-  return "시장가";
-}
-
-function formatOrderStatus(status: Order["status"]): string {
-  switch (status) {
-    case "PENDING":
-      return "대기";
-    case "PARTIALLY_FILLED":
-      return "부분 체결";
-    case "FILLED":
-      return "체결";
-    case "CANCELLED":
-      return "취소";
-    case "REJECTED":
-      return "거절";
-  }
 }
 
 function orderStatusClassName(status: Order["status"]): string {

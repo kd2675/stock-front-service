@@ -8,6 +8,7 @@ import MarketModeTabs from "@/app/components/MarketModeTabs";
 import useAuthSession from "@/app/hooks/useAuthSession";
 import { clearAccessToken, getAccessToken, logout } from "@/app/lib/auth";
 import { accountStatusQueryOptions, holdingsQueryOptions, portfolioQueryOptions, profileQueryOptions } from "@/app/lib/react-query/stockQueries";
+import { formatWon } from "@/app/lib/stockFormatters";
 import type { Holding, Portfolio, StockUserProfile } from "@/app/types/stock";
 
 type MarketMode = "virtual-price" | "order-book";
@@ -181,13 +182,6 @@ function initialOf(username?: string | null) {
     return "U";
   }
   return value.slice(0, 1).toUpperCase();
-}
-
-function formatWon(value?: number | null) {
-  if (value === undefined || value === null || !Number.isFinite(value)) {
-    return "-";
-  }
-  return `${Math.round(value).toLocaleString("ko-KR")}원`;
 }
 
 function formatNumber(value?: number | null) {

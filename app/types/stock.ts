@@ -85,7 +85,7 @@ export type OrderBookRecentExecution = {
   executedAt: string;
 };
 
-export type OrderBookCandleInterval = "1M" | "5M" | "15M" | "1D" | "1W";
+export type OrderBookCandleInterval = "1M" | "5M" | "15M" | "1H" | "1D" | "1W";
 
 export type OrderBookCandle = {
   symbol: string;
@@ -98,6 +98,7 @@ export type OrderBookCandle = {
   volume: number;
   turnover: number;
   executionCount: number;
+  hasExecution: boolean;
 };
 
 export type Account = {
@@ -291,12 +292,18 @@ export type AdminCashFlowPage = {
 };
 
 export type AdminFlowOverview = {
-  fundFlow: AdminFundFlowSummary;
+  fundFlow?: AdminFundFlowSummary | null;
   orderFlow: AdminOrderFlowSummary;
   corporateActionFlow: AdminCorporateActionFlowSummary;
+  symbolFlowTotalCount: number;
   symbolFlows: AdminSymbolFlow[];
   recentCashFlows: AdminRecentCashFlow[];
   generatedAt: string;
+};
+
+export type AdminSymbolFlowList = {
+  totalCount: number;
+  symbolFlows: AdminSymbolFlow[];
 };
 
 export type StockUserProfile = {
@@ -462,6 +469,8 @@ export type AutoParticipant = {
   recurringCashAmount?: number | null;
   recurringCashIntervalValue?: number | null;
   recurringCashIntervalUnit?: RecurringCashIntervalUnit | null;
+  accountId?: number | null;
+  accountStatus?: string | null;
   cashBalance?: number | null;
   createdAt: string;
   updatedAt: string;
@@ -513,6 +522,54 @@ export type AutoParticipantHolding = {
   currentPrice: number;
   marketValue: number;
   unrealizedProfit: number;
+};
+
+export type AutoParticipantHoldingGroup = {
+  userKey: string;
+  accountId?: number | null;
+  holdings: AutoParticipantHolding[];
+};
+
+export type AutoParticipantProfileSymbolHolding = {
+  symbol: string;
+  holderCount: number;
+  quantity: number;
+  reservedQuantity: number;
+  availableQuantity: number;
+  marketValue: number;
+  unrealizedProfit: number;
+};
+
+export type AutoParticipantProfileOverview = {
+  profileType: AutoParticipantProfileType;
+  totalCount: number;
+  enabledCount: number;
+  disabledCount: number;
+  accountCount: number;
+  availableCash: number;
+  reservedBuyCash: number;
+  holdingMarketValue: number;
+  estimatedTotalAsset: number;
+  netCashFlow: number;
+  totalProfit: number;
+  returnRate: number;
+  holdingCount: number;
+  totalHoldingQuantity: number;
+  reservedSellQuantity: number;
+  openOrderCount: number;
+  openBuyOrderCount: number;
+  openSellOrderCount: number;
+  openBuyQuantity: number;
+  openSellQuantity: number;
+  todayExecutionCount: number;
+  todayBuyQuantity: number;
+  todaySellQuantity: number;
+  todayGrossAmount: number;
+  strategyCount: number;
+  enabledStrategyCount: number;
+  lastOrderAt?: string | null;
+  lastExecutionAt?: string | null;
+  symbolHoldings: AutoParticipantProfileSymbolHolding[];
 };
 
 export type AutoParticipantCashAdjustment = {
@@ -621,6 +678,9 @@ export type VirtualMarketStatus = {
 
 export type OrderBookMarketStatus = {
   enabled: boolean;
+  configCount: number;
+  openConfigCount: number;
+  instrumentCount: number;
   openOrderCount: number;
   todayExecutionCount: number;
   configs: SymbolMarketConfig[];
@@ -628,7 +688,12 @@ export type OrderBookMarketStatus = {
 
 export type AutoMarketStatus = {
   enabled: boolean;
+  configCount: number;
+  participantCount: number;
+  participantProfileConfigCount: number;
+  listingAutoAccountCount: number;
   enabledParticipantCount: number;
+  salaryEligibleParticipantCount: number;
   openAutoOrderCount: number;
   todayAutoExecutionCount: number;
   configs: AutoMarketConfig[];

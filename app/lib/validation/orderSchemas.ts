@@ -1,4 +1,6 @@
 import { z } from "zod";
+
+import { formatNumber, formatWon } from "@/app/lib/stockFormatters";
 import type { OrderBookInstrument, OrderType } from "@/app/types/stock";
 
 export const orderTicketSchema = z.object({
@@ -46,12 +48,4 @@ function isWithinPriceLimit(price: number, basePrice: number, limitRate: number)
   const lowerLimit = (basePrice * (100 - limitRate)) / 100;
   const upperLimit = (basePrice * (100 + limitRate)) / 100;
   return price >= lowerLimit && price <= upperLimit;
-}
-
-function formatNumber(value: number) {
-  return new Intl.NumberFormat("ko-KR").format(value);
-}
-
-function formatWon(value: number) {
-  return `${formatNumber(Math.round(value))}원`;
 }

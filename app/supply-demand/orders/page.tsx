@@ -11,6 +11,7 @@ import { getAccessToken, isAdminRole } from "@/app/lib/auth";
 import { cancelOrderMutationOptions, cancelOrderPartiallyMutationOptions } from "@/app/lib/react-query/stockMutations";
 import { accountStatusQueryOptions, orderBookInstrumentsQueryOptions, orderBookMarketStatusQueryOptions, ordersQueryOptions, portfolioQueryOptions } from "@/app/lib/react-query/stockQueries";
 import { stockKeys } from "@/app/lib/react-query/stockKeys";
+import { formatNumber, formatOrderPrice, formatOrderStatus, formatWon } from "@/app/lib/stockFormatters";
 import type { Order, OrderBookInstrument } from "@/app/types/stock";
 
 const EMPTY_ORDERS: Order[] = [];
@@ -35,7 +36,7 @@ export default function SupplyDemandOrdersPage() {
     enabled: hasTradingAccount,
   });
   const orderBookMarketQuery = useQuery({
-    ...orderBookMarketStatusQueryOptions(),
+    ...orderBookMarketStatusQueryOptions({ includeConfigs: false, includeTodayExecution: false }),
     enabled: hasTradingAccount,
   });
   const portfolioQuery = useQuery(portfolioQueryOptions(token, hasTradingAccount));
@@ -71,7 +72,7 @@ export default function SupplyDemandOrdersPage() {
       queryClient.invalidateQueries({ queryKey: stockKeys.orders({ marketType: "ORDER_BOOK" }) }),
       queryClient.invalidateQueries({ queryKey: stockKeys.portfolio() }),
       queryClient.invalidateQueries({ queryKey: stockKeys.holdings() }),
-      queryClient.invalidateQueries({ queryKey: stockKeys.orderBookMarketStatus() }),
+      queryClient.invalidateQueries({ queryKey: stockKeys.orderBookMarketStatusRoot() }),
       ...symbols.map((symbol) => queryClient.invalidateQueries({ queryKey: stockKeys.orderBook(symbol) })),
     ]);
   };
@@ -363,42 +364,6 @@ function isOpenOrder(order: Order) {
 
 function getRemainingQuantity(order: Order) {
   return Math.max(0, order.quantity - order.filledQuantity);
-}
-
-function formatOrderStatus(status: Order["status"]) {
-  switch (status) {
-    case "PENDING":
-      return "대기";
-    case "PARTIALLY_FILLED":
-      return "부분 체결";
-    case "FILLED":
-      return "체결";
-    case "CANCELLED":
-      return "취소";
-    case "REJECTED":
-      return "거절";
-  }
-}
-
-function formatOrderPrice(order: Order) {
-  if (order.limitPrice !== undefined && order.limitPrice !== null) {
-    return formatWon(order.limitPrice);
-  }
-  if (order.averageFillPrice !== undefined && order.averageFillPrice !== null) {
-    return formatWon(order.averageFillPrice);
-  }
-  return "시장가";
-}
-
-function formatWon(value: number | null | undefined) {
-  const normalizedValue = Number.isFinite(value) ? Number(value) : 0;
-  return `${Math.round(normalizedValue).toLocaleString("ko-KR")}원`;
-}
-
-function formatNumber(value: number) {
-  return value.toLocaleString("ko-KR", {
-    maximumFractionDigits: 2,
-  });
 }
 
 function formatDateTime(value: string) {
