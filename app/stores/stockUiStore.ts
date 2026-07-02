@@ -1,7 +1,9 @@
 import { create } from "zustand";
+import { useShallow } from "zustand/react/shallow";
+
 import type { OrderSide, OrderType } from "@/app/types/stock";
 
-type OrderTicketState = {
+export type OrderTicketState = {
   selectedSymbol: string;
   side: OrderSide;
   orderType: OrderType;
@@ -29,7 +31,7 @@ export const useStockUiStore = create<StockUiState>((set) => ({
     ...defaultTicket,
     limitPrice: "72000",
   },
-  orderBookTicket: defaultTicket,
+  orderBookTicket: { ...defaultTicket },
   setVirtualOrderTicket: (patch) =>
     set((state) => ({
       virtualOrderTicket: { ...state.virtualOrderTicket, ...patch },
@@ -39,3 +41,21 @@ export const useStockUiStore = create<StockUiState>((set) => ({
       orderBookTicket: { ...state.orderBookTicket, ...patch },
     })),
 }));
+
+export function useVirtualOrderTicketState() {
+  return useStockUiStore(
+    useShallow((state) => ({
+      ticket: state.virtualOrderTicket,
+      setTicket: state.setVirtualOrderTicket,
+    })),
+  );
+}
+
+export function useOrderBookTicketState() {
+  return useStockUiStore(
+    useShallow((state) => ({
+      ticket: state.orderBookTicket,
+      setTicket: state.setOrderBookTicket,
+    })),
+  );
+}

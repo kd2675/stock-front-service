@@ -13,9 +13,7 @@ import {
   scheduleTokenExpiry,
 } from "@/app/lib/auth";
 import { onAuthChanged } from "@/app/lib/authEvents";
-import type { AuthUser } from "@/app/types/auth";
-
-type AuthStatus = "unknown" | "in" | "out";
+import type { AuthStatus, AuthUser } from "@/app/types/auth";
 
 export default function useAuthSession() {
   const readSnapshot = (): { status: AuthStatus; user: AuthUser | null } => {

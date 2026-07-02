@@ -1,4 +1,4 @@
-import { formatMarketEnabledStatus } from "@/app/supply-demand/admin/AdminFormatters";
+import { formatCount, formatMarketEnabledStatus } from "@/app/supply-demand/admin/AdminFormatters";
 import { DarkMetric } from "@/app/supply-demand/admin/AdminMetricCards";
 import type { AutoMarketStatus, OrderBookMarketStatus } from "@/app/types/stock";
 
@@ -23,11 +23,11 @@ export function AdminMarketSummaryPanel({
       </div>
       <div className="grid gap-4 sm:grid-cols-3">
         <DarkMetric label="주문장 시장" value={formatMarketEnabledStatus(orderBookMarketSummary)} />
-        <DarkMetric label="주문장 종목" value={`${orderBookInstrumentCount.toLocaleString("ko-KR")}종목`} />
-        <DarkMetric label="정규장 종목" value={`${openOrderBookConfigCount.toLocaleString("ko-KR")}종목`} />
-        <DarkMetric label="주문장 대기 주문" value={orderBookMarketSummary ? `${orderBookMarketSummary.openOrderCount ?? 0}건` : "-"} />
-        <DarkMetric label="오늘 주문장 체결" value={orderBookMarketSummary ? `${(orderBookMarketSummary.todayExecutionCount ?? 0).toLocaleString("ko-KR")}건` : "-"} />
-        <DarkMetric label="가동 자동 참여자" value={autoMarketSummary ? `${(autoMarketSummary.enabledParticipantCount ?? 0).toLocaleString("ko-KR")}명` : "-"} />
+        <DarkMetric label="주문장 종목" value={formatCount(orderBookInstrumentCount, "종목")} />
+        <DarkMetric label="정규장 종목" value={formatCount(openOrderBookConfigCount, "종목")} />
+        <DarkMetric label="주문장 대기 주문" value={orderBookMarketSummary ? formatCount(orderBookMarketSummary.openOrderCount ?? 0, "건") : "-"} />
+        <DarkMetric label="2시간 주문장 체결" value={orderBookMarketSummary ? formatCount(orderBookMarketSummary.todayExecutionCount ?? 0, "건") : "-"} />
+        <DarkMetric label="가동 자동 참여자" value={autoMarketSummary ? formatCount(autoMarketSummary.enabledParticipantCount ?? 0, "명") : "-"} />
       </div>
     </section>
   );

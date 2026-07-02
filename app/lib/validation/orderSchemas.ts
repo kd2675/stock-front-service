@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { isWithinPriceLimit, matchesTickSize } from "@/app/lib/orderBookPricing";
 import { formatNumber, formatWon } from "@/app/lib/stockFormatters";
 import type { OrderBookInstrument, OrderType } from "@/app/types/stock";
 
@@ -38,14 +39,4 @@ export function parseOrderTicket(input: {
     }
   }
   return { ok: true as const, data: parsed.data };
-}
-
-function matchesTickSize(price: number, tickSize: number) {
-  return Math.abs(price / tickSize - Math.round(price / tickSize)) < 0.000001;
-}
-
-function isWithinPriceLimit(price: number, basePrice: number, limitRate: number) {
-  const lowerLimit = (basePrice * (100 - limitRate)) / 100;
-  const upperLimit = (basePrice * (100 + limitRate)) / 100;
-  return price >= lowerLimit && price <= upperLimit;
 }

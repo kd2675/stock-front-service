@@ -1,4 +1,4 @@
-import { Fragment, type Dispatch, type SetStateAction } from "react";
+import { Fragment } from "react";
 
 import { formatListingAutoPosition, formatNumber, formatWon } from "@/app/supply-demand/admin/AdminFormatters";
 import { DarkInput, DarkSelect } from "@/app/supply-demand/admin/AdminFormControls";
@@ -16,14 +16,14 @@ export type ListingAutoAccountDraft = {
 };
 
 export type ListingAutoAccountDraftSetters = {
-  setSymbol: Dispatch<SetStateAction<string>>;
-  setDisplayName: Dispatch<SetStateAction<string>>;
-  setEnabled: Dispatch<SetStateAction<boolean>>;
-  setPositionSide: Dispatch<SetStateAction<ListingAutoPosition>>;
-  setMaxOrderQuantity: Dispatch<SetStateAction<string>>;
-  setOrderTtlSeconds: Dispatch<SetStateAction<string>>;
-  setPriceOffsetTicks: Dispatch<SetStateAction<string>>;
-  setEditingSymbol: Dispatch<SetStateAction<string | null>>;
+  setSymbol: (value: string) => void;
+  setDisplayName: (value: string) => void;
+  setEnabled: (value: boolean) => void;
+  setPositionSide: (value: ListingAutoPosition) => void;
+  setMaxOrderQuantity: (value: string) => void;
+  setOrderTtlSeconds: (value: string) => void;
+  setPriceOffsetTicks: (value: string) => void;
+  setEditingSymbol: (value: string | null) => void;
 };
 
 type AdminListingAutoAccountPanelProps = {

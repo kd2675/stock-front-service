@@ -1,4 +1,4 @@
-import { formatNumber, formatWon } from "@/app/supply-demand/admin/AdminFormatters";
+import { formatCount, formatNumber, formatWon } from "@/app/supply-demand/admin/AdminFormatters";
 import type { MarketSessionStatus, OrderBookInstrument, OrderBookMarketStatus } from "@/app/types/stock";
 
 type AdminOrderBookInstrumentTableProps = {
@@ -49,8 +49,8 @@ export function AdminOrderBookInstrumentTable({
                     <option value="HALTED">거래정지</option>
                   </select>
                 </td>
-                <td className="px-4 py-3 tabular-nums">{instrument.issuedShares.toLocaleString("ko-KR")}주</td>
-                <td className="px-4 py-3 tabular-nums">{instrument.tradableShares.toLocaleString("ko-KR")}주</td>
+                <td className="px-4 py-3 tabular-nums">{formatCount(instrument.issuedShares, "주")}</td>
+                <td className="px-4 py-3 tabular-nums">{formatCount(instrument.tradableShares, "주")}</td>
                 <td className="px-4 py-3 tabular-nums">{formatWon(instrument.currentPrice)}</td>
                 <td className="px-4 py-3 tabular-nums">{formatWon(instrument.initialPrice)}</td>
                 <td className="px-4 py-3 tabular-nums">{formatNumber(instrument.tickSize)}원 / {formatNumber(instrument.priceLimitRate)}%</td>

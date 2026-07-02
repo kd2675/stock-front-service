@@ -1,6 +1,6 @@
 import { postAuthJson, STOCK_CLIENT_ID } from "@/app/lib/api";
 import { emitAuthChanged, emitAuthExpired } from "@/app/lib/authEvents";
-import type { AuthUser, LoginResponse } from "@/app/types/auth";
+import type { AuthStatus, AuthUser, LoginResponse } from "@/app/types/auth";
 
 const TOKEN_EXPIRY_LEEWAY_SECONDS = 300;
 let accessTokenMemory: string | null = null;
@@ -18,6 +18,10 @@ export type AuthActionResult = {
 
 export function getAccessToken(): string | null {
   return accessTokenMemory;
+}
+
+export function getAccessTokenForAuthStatus(authStatus: AuthStatus): string | null {
+  return authStatus === "in" ? getAccessToken() : null;
 }
 
 export function setAccessToken(token: string): void {

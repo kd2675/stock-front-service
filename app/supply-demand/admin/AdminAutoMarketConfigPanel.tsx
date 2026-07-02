@@ -1,4 +1,4 @@
-import { Fragment, type Dispatch, type SetStateAction } from "react";
+import { Fragment } from "react";
 
 import { formatAutoIntensityDirection } from "@/app/supply-demand/admin/AdminFormatters";
 import { EnabledToggleButton, DarkInput, DarkSelect } from "@/app/supply-demand/admin/AdminFormControls";
@@ -14,12 +14,12 @@ export type AutoMarketConfigDraft = {
 };
 
 export type AutoMarketConfigDraftSetters = {
-  setSymbol: Dispatch<SetStateAction<string>>;
-  setEnabled: Dispatch<SetStateAction<boolean>>;
-  setIntensity: Dispatch<SetStateAction<string>>;
-  setMaxOrderQuantity: Dispatch<SetStateAction<string>>;
-  setOrderTtlSeconds: Dispatch<SetStateAction<string>>;
-  setEditingSymbol: Dispatch<SetStateAction<string | null>>;
+  setSymbol: (value: string) => void;
+  setEnabled: (value: boolean) => void;
+  setIntensity: (value: string) => void;
+  setMaxOrderQuantity: (value: string) => void;
+  setOrderTtlSeconds: (value: string) => void;
+  setEditingSymbol: (value: string | null) => void;
 };
 
 type AdminAutoMarketConfigPanelProps = {
@@ -79,6 +79,9 @@ export function AdminAutoMarketConfigPanel({
           {updating ? "저장 중" : "저장"}
         </button>
       </div>
+      <p className="mt-2 text-xs font-bold leading-5 text-[#8b95a1]">
+        미체결 호가 TTL은 실제 서버 시간이 아니라 시뮬레이션 시간 기준입니다. 예: 시뮬레이션 하루가 현실 2시간이면 TTL 60초는 현실 약 5초 후 만료됩니다.
+      </p>
       <AutoMarketConfigGuide />
       <div className="mt-4 overflow-x-auto rounded-md border border-white/10">
         <table className="min-w-[760px] w-full border-collapse text-sm">

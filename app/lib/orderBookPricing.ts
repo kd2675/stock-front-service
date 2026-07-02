@@ -1,4 +1,5 @@
 import type { OrderBookInstrument } from "@/app/types/stock";
+import { isPositiveFiniteNumber, parsePositiveNumberInput } from "@/app/lib/numberParsing";
 
 type PricedInstrument = Pick<OrderBookInstrument, "currentPrice" | "priceLimitBase" | "priceLimitRate" | "tickSize">;
 type LimitInstrument = Pick<OrderBookInstrument, "priceLimitBase" | "priceLimitRate" | "tickSize">;
@@ -41,21 +42,26 @@ export function resolveSteppedLimitPrice({
   return clampLimitPriceToInstrument(nextRawPrice, instrument, tickSize);
 }
 
+export function matchesTickSize(price: number, tickSize: number) {
+  return isAlignedToTick(price, resolvePositivePriceUnit(tickSize));
+}
+
+export function isWithinPriceLimit(price: number, basePrice: number, limitRate: number) {
+  const lowerLimit = (basePrice * (100 - limitRate)) / 100;
+  const upperLimit = (basePrice * (100 + limitRate)) / 100;
+  return price >= lowerLimit && price <= upperLimit;
+}
+
 function parseOrderPriceInput(value: string) {
-  const trimmed = value.trim();
-  if (!/^\d+(\.\d+)?$/.test(trimmed)) {
-    return null;
-  }
-  const parsed = Number(trimmed);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  return parsePositiveNumberInput(value);
 }
 
 function resolvePositivePrice(value: number) {
-  return Number.isFinite(value) && value > 0 ? value : null;
+  return isPositiveFiniteNumber(value) ? value : null;
 }
 
 function resolvePositivePriceUnit(value: number) {
-  return Number.isFinite(value) && value > 0 ? value : 1;
+  return isPositiveFiniteNumber(value) ? value : 1;
 }
 
 function isAlignedToTick(price: number, tickSize: number) {

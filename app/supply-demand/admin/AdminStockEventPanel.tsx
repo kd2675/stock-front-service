@@ -1,42 +1,20 @@
 import type { UseFormReturn } from "react-hook-form";
 
-import { DarkFormInput, DarkFormSelect, DarkInput, DarkSelect } from "@/app/supply-demand/admin/AdminFormControls";
-import type { CreateInstrumentFormValues } from "@/app/lib/validation/adminSchemas";
+import type {
+  CreateInstrumentFormValues,
+  CreateInstrumentPayload,
+} from "@/app/lib/validation/adminSchemas";
+import { AdminCorporateActionFormPanel } from "@/app/supply-demand/admin/AdminCorporateActionFormPanel";
+import { DarkSelect } from "@/app/supply-demand/admin/AdminFormControls";
+import { AdminInitialIssueFormPanel } from "@/app/supply-demand/admin/AdminInitialIssueFormPanel";
+import type { StockEventDraft, StockEventDraftSetters } from "@/app/supply-demand/admin/AdminStockEventTypes";
 import type { CorporateActionType, OrderBookInstrument } from "@/app/types/stock";
 
-export type StockEventDraft = {
-  actionType: CorporateActionType;
-  actionSymbol: string;
-  actionShares: string;
-  actionIssuePrice: string;
-  actionDividendAmount: string;
-  exRightsDate: string;
-  paymentDate: string;
-  listingDate: string;
-  delistingDate: string;
-  splitFrom: string;
-  splitTo: string;
-  actionDescription: string;
-};
-
-export type StockEventDraftSetters = {
-  setActionType: (value: CorporateActionType) => void;
-  setActionSymbol: (value: string) => void;
-  setActionShares: (value: string) => void;
-  setActionIssuePrice: (value: string) => void;
-  setActionDividendAmount: (value: string) => void;
-  setExRightsDate: (value: string) => void;
-  setPaymentDate: (value: string) => void;
-  setListingDate: (value: string) => void;
-  setDelistingDate: (value: string) => void;
-  setSplitFrom: (value: string) => void;
-  setSplitTo: (value: string) => void;
-  setActionDescription: (value: string) => void;
-};
+export type { StockEventDraft, StockEventDraftSetters } from "@/app/supply-demand/admin/AdminStockEventTypes";
 
 type AdminStockEventPanelProps = {
   instruments: OrderBookInstrument[];
-  createInstrumentForm: UseFormReturn<CreateInstrumentFormValues>;
+  createInstrumentForm: UseFormReturn<CreateInstrumentFormValues, unknown, CreateInstrumentPayload>;
   draft: StockEventDraft;
   draftSetters: StockEventDraftSetters;
   creatingInitialIssue: boolean;
@@ -100,97 +78,18 @@ export function AdminStockEventPanel({
       </div>
 
       {isInitialIssue ? (
-        <div className="mt-4 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <DarkFormInput label="종목 코드" registration={createInstrumentForm.register("symbol")} placeholder="예: DEMO001" error={createInstrumentForm.formState.errors.symbol?.message} />
-          <DarkFormInput label="종목명" registration={createInstrumentForm.register("name")} placeholder="예: 제로큐 주문장" error={createInstrumentForm.formState.errors.name?.message} className="sm:col-span-2 lg:col-span-2" />
-          <DarkFormInput label="시장" registration={createInstrumentForm.register("market")} placeholder="ORDERBOOK" error={createInstrumentForm.formState.errors.market?.message} />
-          <DarkFormInput label="초기 가격" registration={createInstrumentForm.register("initialPrice")} placeholder="70000" error={createInstrumentForm.formState.errors.initialPrice?.message} />
-          <DarkFormInput label="발행주식수" registration={createInstrumentForm.register("issuedShares")} placeholder="100000" error={createInstrumentForm.formState.errors.issuedShares?.message} />
-          <DarkFormInput label="호가 단위" registration={createInstrumentForm.register("tickSize")} placeholder="100" error={createInstrumentForm.formState.errors.tickSize?.message} />
-          <DarkFormInput label="가격제한폭(%)" registration={createInstrumentForm.register("priceLimitRate")} placeholder="30" error={createInstrumentForm.formState.errors.priceLimitRate?.message} />
-          <DarkFormInput label="주관사 표시명" registration={createInstrumentForm.register("listingAutoDisplayName")} placeholder="미입력 시 자동 생성" error={createInstrumentForm.formState.errors.listingAutoDisplayName?.message} className="sm:col-span-2" />
-          <DarkFormSelect label="주관사 상태" registration={createInstrumentForm.register("listingAutoEnabled")}>
-            <option value="true">가동</option>
-            <option value="false">정지</option>
-          </DarkFormSelect>
-          <DarkFormSelect label="주관사 포지션" registration={createInstrumentForm.register("listingAutoPositionSide")}>
-            <option value="SELL_ONLY">매도 전용</option>
-            <option value="BUY_ONLY">매수 전용</option>
-          </DarkFormSelect>
-          <DarkFormInput label="주관사 최대 수량" registration={createInstrumentForm.register("listingAutoMaxOrderQuantity")} placeholder="100" error={createInstrumentForm.formState.errors.listingAutoMaxOrderQuantity?.message} />
-          <DarkFormInput label="주관사 호가 TTL(초)" registration={createInstrumentForm.register("listingAutoOrderTtlSeconds")} placeholder="30" error={createInstrumentForm.formState.errors.listingAutoOrderTtlSeconds?.message} />
-          <DarkFormInput label="가격 분산 틱" registration={createInstrumentForm.register("listingAutoPriceOffsetTicks")} placeholder="3" error={createInstrumentForm.formState.errors.listingAutoPriceOffsetTicks?.message} />
-          <button type="button" onClick={onSubmit} disabled={creatingInitialIssue} className="min-h-11 min-w-0 self-end rounded-md bg-white px-3 py-3 text-sm font-black text-[#101418] disabled:opacity-50 sm:col-span-2 lg:col-span-1">
-            {creatingInitialIssue ? "적용 중" : "이벤트 적용"}
-          </button>
-        </div>
+        <AdminInitialIssueFormPanel
+          createInstrumentForm={createInstrumentForm}
+          creatingInitialIssue={creatingInitialIssue}
+          onSubmit={onSubmit}
+        />
       ) : (
-        <>
-          <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_1fr_1fr_1.4fr_auto]">
-            {draft.actionType === "STOCK_SPLIT" ? (
-              <>
-                <DarkInput label="분할 전" value={draft.splitFrom} onChange={draftSetters.setSplitFrom} placeholder="1" />
-                <DarkInput label="분할 후" value={draft.splitTo} onChange={draftSetters.setSplitTo} placeholder="5" />
-                <div />
-              </>
-            ) : draft.actionType === "CASH_DIVIDEND" ? (
-              <>
-                <DarkInput label="1주당 배당금" value={draft.actionDividendAmount} onChange={draftSetters.setActionDividendAmount} placeholder="1000" />
-                <div />
-                <div />
-              </>
-            ) : draft.actionType === "BONUS_ISSUE" || draft.actionType === "STOCK_DIVIDEND" ? (
-              <>
-                <DarkInput label="배정 주식수" value={draft.actionShares} onChange={draftSetters.setActionShares} placeholder="10000" />
-                <div />
-                <div />
-              </>
-            ) : draft.actionType === "DELISTING" ? (
-              <>
-                <DarkInput label="상장폐지일" value={draft.delistingDate} onChange={draftSetters.setDelistingDate} placeholder="2026-06-26" type="date" />
-                <div />
-                <div />
-              </>
-            ) : (
-              <>
-                <DarkInput label="발행수" value={draft.actionShares} onChange={draftSetters.setActionShares} placeholder="50000" />
-                <DarkInput label="발행가" value={draft.actionIssuePrice} onChange={draftSetters.setActionIssuePrice} placeholder="50000" />
-                <div />
-              </>
-            )}
-            <DarkInput label="메모" value={draft.actionDescription} onChange={draftSetters.setActionDescription} placeholder="선택 입력" />
-            <button type="button" onClick={onSubmit} disabled={applyingAction} className="rounded-md bg-white px-3 py-3 text-sm font-black text-[#101418] disabled:opacity-50">
-              {applyingAction ? "적용 중" : "이벤트 적용"}
-            </button>
-          </div>
-          <div className="mt-3 grid gap-3 md:grid-cols-3">
-            {draft.actionType === "PAID_IN_CAPITAL_INCREASE" ? (
-              <>
-                <DarkInput label="권리락일" value={draft.exRightsDate} onChange={draftSetters.setExRightsDate} placeholder="2026-06-22" type="date" />
-                <DarkInput label="납입일" value={draft.paymentDate} onChange={draftSetters.setPaymentDate} placeholder="2026-06-24" type="date" />
-                <DarkInput label="신주상장일" value={draft.listingDate} onChange={draftSetters.setListingDate} placeholder="2026-06-26" type="date" />
-              </>
-            ) : null}
-            {draft.actionType === "ADDITIONAL_ISSUE" ? (
-              <DarkInput label="신주상장일" value={draft.listingDate} onChange={draftSetters.setListingDate} placeholder="2026-06-26" type="date" />
-            ) : null}
-            {draft.actionType === "STOCK_SPLIT" ? (
-              <DarkInput label="효력일" value={draft.listingDate} onChange={draftSetters.setListingDate} placeholder="2026-06-26" type="date" />
-            ) : null}
-            {draft.actionType === "CASH_DIVIDEND" ? (
-              <>
-                <DarkInput label="배당락일" value={draft.exRightsDate} onChange={draftSetters.setExRightsDate} placeholder="2026-06-22" type="date" />
-                <DarkInput label="지급일" value={draft.paymentDate} onChange={draftSetters.setPaymentDate} placeholder="2026-06-26" type="date" />
-              </>
-            ) : null}
-            {draft.actionType === "BONUS_ISSUE" || draft.actionType === "STOCK_DIVIDEND" ? (
-              <>
-                <DarkInput label="권리락일" value={draft.exRightsDate} onChange={draftSetters.setExRightsDate} placeholder="2026-06-22" type="date" />
-                <DarkInput label="신주상장일" value={draft.listingDate} onChange={draftSetters.setListingDate} placeholder="2026-06-26" type="date" />
-              </>
-            ) : null}
-          </div>
-        </>
+        <AdminCorporateActionFormPanel
+          applyingAction={applyingAction}
+          draft={draft}
+          draftSetters={draftSetters}
+          onSubmit={onSubmit}
+        />
       )}
     </section>
   );

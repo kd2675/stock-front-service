@@ -3,6 +3,7 @@ import type { Execution, MarketType } from "@/app/types/stock";
 export const stockKeys = {
   all: ["stock"] as const,
   market: () => [...stockKeys.all, "market"] as const,
+  simulationClock: () => [...stockKeys.market(), "simulation-clock"] as const,
   instruments: () => [...stockKeys.market(), "instruments"] as const,
   orderBookInstruments: () => [...stockKeys.market(), "order-book-instruments"] as const,
   prices: () => [...stockKeys.market(), "prices"] as const,
@@ -12,7 +13,6 @@ export const stockKeys = {
   orderBookRecentExecutions: (symbol: string) => [...stockKeys.orderBook(symbol), "executions", "recent"] as const,
   orderBookCandles: (symbol: string, interval: string) => [...stockKeys.orderBook(symbol), "candles", interval] as const,
   rankings: () => [...stockKeys.market(), "rankings"] as const,
-  virtualMarketStatus: () => [...stockKeys.market(), "virtual-market"] as const,
   orderBookMarketStatusRoot: () => [...stockKeys.market(), "order-book-market"] as const,
   orderBookMarketStatus: (options?: { includeConfigs?: boolean; includeTodayExecution?: boolean }) => [...stockKeys.market(), "order-book-market", options?.includeConfigs ?? true, options?.includeTodayExecution ?? true] as const,
   adminFundFlowSummary: () => [...stockKeys.market(), "admin", "fund-flow-summary"] as const,
@@ -37,6 +37,7 @@ export const stockKeys = {
   adminUserFundFlow: (userKey: string) => [...stockKeys.market(), "admin", "user-fund-flow", userKey] as const,
   batchJobRuntimeControls: () => [...stockKeys.market(), "batch-jobs", "runtime-controls"] as const,
   autoMarketStatus: () => [...stockKeys.market(), "auto-market"] as const,
+  autoMarketStatusDetailsRoot: () => [...stockKeys.autoMarketStatus(), "details"] as const,
   autoMarketStatusDetails: (options?: {
     includeConfigs?: boolean;
     includeParticipants?: boolean;
@@ -47,20 +48,19 @@ export const stockKeys = {
     includeSalaryEligibility?: boolean;
     participantSymbolConfigUserKey?: string;
   }) => [
-    ...stockKeys.autoMarketStatus(),
-    "details",
+    ...stockKeys.autoMarketStatusDetailsRoot(),
     options?.includeConfigs ?? true,
-    options?.includeParticipants ?? true,
-    options?.includeParticipantSymbolConfigs ?? true,
-    options?.includeParticipantProfileConfigs ?? true,
-    options?.includeListingAutoAccounts ?? true,
+    options?.includeParticipants ?? false,
+    options?.includeParticipantSymbolConfigs ?? false,
+    options?.includeParticipantProfileConfigs ?? false,
+    options?.includeListingAutoAccounts ?? false,
     options?.includeRuntimeMetrics ?? true,
-    options?.includeSalaryEligibility ?? true,
+    options?.includeSalaryEligibility ?? false,
     options?.participantSymbolConfigUserKey ?? "",
   ] as const,
+  autoMarketSummaryStatusRoot: () => [...stockKeys.autoMarketStatus(), "summary"] as const,
   autoMarketSummaryStatus: (options?: { includeRuntimeMetrics?: boolean; includeSalaryEligibility?: boolean }) => [
-    ...stockKeys.autoMarketStatus(),
-    "summary",
+    ...stockKeys.autoMarketSummaryStatusRoot(),
     options?.includeRuntimeMetrics ?? true,
     options?.includeSalaryEligibility ?? false,
   ] as const,
@@ -68,8 +68,9 @@ export const stockKeys = {
   autoParticipantOverviews: (options?: { includeHoldings?: boolean; userKeys?: string[] }) => [
     ...stockKeys.autoParticipantOverviewsRoot(),
     options?.includeHoldings ?? true,
-    [...(options?.userKeys ?? [])].sort().join(","),
+    [...(options?.userKeys ?? [])].sort(),
   ] as const,
+  autoParticipants: () => [...stockKeys.autoMarketStatus(), "participants", "list"] as const,
   autoParticipantProfileOverviews: () => [...stockKeys.autoMarketStatus(), "participants", "profile-overviews"] as const,
   corporateActions: (symbol: string) => [...stockKeys.orderBookInstruments(), symbol, "corporate-actions"] as const,
   instrumentReports: (symbol: string) => [...stockKeys.orderBookInstruments(), symbol, "reports"] as const,
@@ -81,6 +82,20 @@ export const stockKeys = {
   profitSummary: () => [...stockKeys.portfolio(), "profit-summary"] as const,
   holdings: () => [...stockKeys.account(), "holdings"] as const,
   corporateActionEntitlements: () => [...stockKeys.account(), "corporate-action-entitlements"] as const,
-  orders: (options?: { marketType?: MarketType }) => [...stockKeys.account(), "orders", options?.marketType ?? "ALL"] as const,
-  executions: (options?: { source?: Execution["source"] }) => [...stockKeys.account(), "executions", options?.source ?? "ALL"] as const,
+  ordersRoot: () => [...stockKeys.account(), "orders"] as const,
+  ordersByMarketType: (marketType: MarketType) => [...stockKeys.ordersRoot(), marketType] as const,
+  orders: (options?: { marketType?: MarketType; symbol?: string; limit?: number }) => [
+    ...stockKeys.ordersRoot(),
+    options?.marketType ?? "ALL",
+    options?.symbol ?? "ALL",
+    options?.limit ?? 50,
+  ] as const,
+  executionsRoot: () => [...stockKeys.account(), "executions"] as const,
+  executionsBySource: (source: Execution["source"]) => [...stockKeys.executionsRoot(), source] as const,
+  executions: (options?: { source?: Execution["source"]; symbol?: string; limit?: number }) => [
+    ...stockKeys.executionsRoot(),
+    options?.source ?? "ALL",
+    options?.symbol ?? "ALL",
+    options?.limit ?? 50,
+  ] as const,
 };

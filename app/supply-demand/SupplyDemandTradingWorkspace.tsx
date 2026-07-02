@@ -1,0 +1,113 @@
+import { SupplyDemandMarketColumn, type SupplyDemandMarketColumnProps } from "@/app/supply-demand/SupplyDemandMarketColumn";
+import { SupplyDemandSideColumn, type SupplyDemandSideColumnProps } from "@/app/supply-demand/SupplyDemandSideColumn";
+
+type SupplyDemandTradingWorkspaceProps = SupplyDemandMarketColumnProps & SupplyDemandSideColumnProps;
+
+export function SupplyDemandTradingWorkspace({
+  autoMarket,
+  cancellingOrderId,
+  candles,
+  candleInterval,
+  chartExpanded,
+  estimatedOrderAmount,
+  flashingOrderBookLevel,
+  instruments,
+  isCandlesLoading,
+  isLoading,
+  isRecentExecutionsLoading,
+  isSelectedMarketOpen,
+  limitPrice,
+  message,
+  orderBook,
+  orderBookExecutions,
+  orderBookLayout,
+  orderBookMarket,
+  orderBookOrders,
+  orderBookRecentExecutions,
+  orderBookTradeSummary,
+  orderType,
+  placingOrder,
+  portfolio,
+  quantity,
+  selectedConfig,
+  selectedHolding,
+  selectedInstrument,
+  selectedOrderBookConfig,
+  selectedSymbol,
+  side,
+  updatedAt,
+  onAssetPercentSelect,
+  onCancelOrder,
+  onChartExpandedChange,
+  onCandleIntervalChange,
+  onFlashEnd,
+  onLayoutChange,
+  onLimitPriceChange,
+  onLimitPriceStep,
+  onOrderTypeChange,
+  onPriceSelect,
+  onQuantityChange,
+  onSelectInstrument,
+  onSideChange,
+  onSubmitOrder,
+}: SupplyDemandTradingWorkspaceProps) {
+  return (
+    <section className="mx-auto grid max-w-7xl gap-5 px-4 py-5 sm:px-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:px-8">
+      <SupplyDemandMarketColumn
+        candles={candles}
+        candleInterval={candleInterval}
+        chartExpanded={chartExpanded}
+        flashingOrderBookLevel={flashingOrderBookLevel}
+        instruments={instruments}
+        isCandlesLoading={isCandlesLoading}
+        isSelectedMarketOpen={isSelectedMarketOpen}
+        message={message}
+        orderBook={orderBook}
+        orderBookLayout={orderBookLayout}
+        orderBookTradeSummary={orderBookTradeSummary}
+        selectedInstrument={selectedInstrument}
+        selectedOrderBookConfig={selectedOrderBookConfig}
+        selectedSymbol={selectedSymbol}
+        onChartExpandedChange={onChartExpandedChange}
+        onCandleIntervalChange={onCandleIntervalChange}
+        onFlashEnd={onFlashEnd}
+        onLayoutChange={onLayoutChange}
+        onPriceSelect={onPriceSelect}
+        onSelectInstrument={onSelectInstrument}
+      />
+
+      <SupplyDemandSideColumn
+        autoMarket={autoMarket}
+        cancellingOrderId={cancellingOrderId}
+        estimatedOrderAmount={estimatedOrderAmount}
+        isLoading={isLoading}
+        isRecentExecutionsLoading={isRecentExecutionsLoading}
+        isSelectedMarketOpen={isSelectedMarketOpen}
+        limitPrice={limitPrice}
+        orderBookExecutions={orderBookExecutions}
+        orderBookMarket={orderBookMarket}
+        orderBookOrders={orderBookOrders}
+        orderBookRecentExecutions={orderBookRecentExecutions}
+        orderType={orderType}
+        placingOrder={placingOrder}
+        portfolio={portfolio}
+        quantity={quantity}
+        selectedConfig={selectedConfig}
+        selectedHolding={selectedHolding}
+        selectedInstrument={selectedInstrument}
+        selectedOrderBookConfig={selectedOrderBookConfig}
+        side={side}
+        updatedAt={updatedAt}
+        onAssetPercentSelect={onAssetPercentSelect}
+        onCancelOrder={onCancelOrder}
+        onLimitPriceChange={onLimitPriceChange}
+        onLimitPriceStep={onLimitPriceStep}
+        onOrderTypeChange={onOrderTypeChange}
+        onQuantityChange={onQuantityChange}
+        onSelectInstrument={onSelectInstrument}
+        onSideChange={onSideChange}
+        onSubmitOrder={onSubmitOrder}
+      />
+    </section>
+  );
+}

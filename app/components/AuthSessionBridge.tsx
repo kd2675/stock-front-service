@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import useAuthSession from "@/app/hooks/useAuthSession";
-import { stockKeys } from "@/app/lib/react-query/stockKeys";
+import { clearStockQueryCache, invalidateAccountQueries } from "@/app/lib/react-query/stockInvalidations";
 
 export default function AuthSessionBridge() {
   const queryClient = useQueryClient();
@@ -12,13 +12,13 @@ export default function AuthSessionBridge() {
 
   useEffect(() => {
     if (authStatus === "out") {
-      queryClient.clear();
+      clearStockQueryCache(queryClient);
     }
   }, [authStatus, queryClient]);
 
   useEffect(() => {
     if (user?.userKey) {
-      void queryClient.invalidateQueries({ queryKey: stockKeys.account() });
+      void invalidateAccountQueries(queryClient);
     }
   }, [queryClient, user?.userKey]);
 

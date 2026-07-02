@@ -13,11 +13,39 @@ export class StockApiError extends Error {
   }
 }
 
-export function unwrapStockResult<T>(result: ApiResult<T>, fallbackMessage: string): T {
+function unwrapStockResult<T>(result: ApiResult<T>, fallbackMessage: string): T {
   if (!result.ok) {
     throw new StockApiError(result, fallbackMessage);
   }
   return result.data as T;
+}
+
+export function getStockErrorMessage(error: unknown, fallbackMessage: string) {
+  return error instanceof Error ? error.message : fallbackMessage;
+}
+
+export function createStockErrorMessageHandler(
+  setMessage: (message: string) => void,
+  fallbackMessage: string,
+) {
+  return (error: unknown) => {
+    setMessage(getStockErrorMessage(error, fallbackMessage));
+  };
+}
+
+export async function unwrapStockRequest<T>(
+  request: Promise<ApiResult<T>>,
+  fallbackMessage: string,
+): Promise<T> {
+  return unwrapStockResult(await request, fallbackMessage);
+}
+
+export async function unwrapAuthenticatedStockRequest<T>(
+  request: (token: string) => Promise<ApiResult<T>>,
+  fallbackMessage: string,
+): Promise<T> {
+  const token = await requireAccessToken();
+  return unwrapStockRequest(request(token), fallbackMessage);
 }
 
 export async function requireAccessToken(): Promise<string> {

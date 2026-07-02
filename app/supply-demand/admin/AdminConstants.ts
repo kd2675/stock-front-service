@@ -59,8 +59,7 @@ export const ADMIN_SYMBOL_FLOW_PREVIEW_SIZE = 8;
 export const ADMIN_PARTICIPANT_PAGE_SIZE = 12;
 export const ADMIN_SALARY_PAGE_SIZE = 20;
 export const ADMIN_LIVE_SUMMARY_REFETCH_MS = 2_000;
-export const ADMIN_PARTICIPANT_DETAIL_REFETCH_MS = 10_000;
-export const ADMIN_PROFILE_OVERVIEW_REFETCH_MS = 15_000;
+export const ADMIN_PARTICIPANT_DETAIL_REFETCH_MS = 30_000;
 export const ADMIN_AUTO_GENERATE_CONCURRENCY = 5;
 
 export const DEFAULT_CREATE_INSTRUMENT_FORM_VALUES: CreateInstrumentFormValues = {
@@ -75,7 +74,7 @@ export const DEFAULT_CREATE_INSTRUMENT_FORM_VALUES: CreateInstrumentFormValues =
   listingAutoEnabled: "true",
   listingAutoPositionSide: "SELL_ONLY",
   listingAutoMaxOrderQuantity: "100",
-  listingAutoOrderTtlSeconds: "30",
+  listingAutoOrderTtlSeconds: "90",
   listingAutoPriceOffsetTicks: "3",
 };
 
@@ -88,7 +87,7 @@ export const DEFAULT_AUTO_MARKET_MAX_ORDER_QUANTITY = "4";
 export const DEFAULT_AUTO_MARKET_ORDER_TTL_SECONDS = "15";
 export const DEFAULT_LISTING_AUTO_POSITION_SIDE: ListingAutoPosition = "SELL_ONLY";
 export const DEFAULT_LISTING_AUTO_MAX_ORDER_QUANTITY = "100";
-export const DEFAULT_LISTING_AUTO_ORDER_TTL_SECONDS = "30";
+export const DEFAULT_LISTING_AUTO_ORDER_TTL_SECONDS = "90";
 export const DEFAULT_LISTING_AUTO_PRICE_OFFSET_TICKS = "3";
 export const DEFAULT_AUTO_PARTICIPANT_PROFILE_TYPE: AutoParticipantProfileType = "NOISE_TRADER";
 export const DEFAULT_RECURRING_CASH_INTERVAL_UNIT: RecurringCashIntervalUnit = "DAY";

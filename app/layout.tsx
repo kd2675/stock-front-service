@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import SimulationTimeBadge from "@/app/components/SimulationTimeBadge";
 import Providers from "@/app/providers";
 import "./globals.css";
 
@@ -15,7 +16,10 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body>
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <SimulationTimeBadge />
+        </Providers>
       </body>
     </html>
   );

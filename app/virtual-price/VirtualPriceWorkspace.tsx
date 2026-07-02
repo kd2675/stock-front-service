@@ -1,0 +1,120 @@
+import { VirtualPriceMainColumn, type VirtualPriceMainColumnProps } from "@/app/virtual-price/VirtualPriceMainColumn";
+import { VirtualPriceSideColumn, type VirtualPriceSideColumnProps } from "@/app/virtual-price/VirtualPriceSideColumn";
+
+export type VirtualPriceWorkspaceProps = VirtualPriceMainColumnProps & VirtualPriceSideColumnProps;
+
+export function VirtualPriceWorkspace({
+  amend,
+  amendingOrderId,
+  cancel,
+  cancelPartially,
+  cancellingOrderId,
+  chronologicalTicks,
+  corporateActionEntitlements,
+  estimatedOrderValue,
+  instrumentMap,
+  instruments,
+  lastUpdatedAt,
+  limitPrice,
+  message,
+  orderActionClassName,
+  orderBook,
+  orderDrafts,
+  orderType,
+  orderValidationMessage,
+  partialCancellingOrderId,
+  pendingOrderCount,
+  placingOrder,
+  portfolio,
+  portfolioSnapshots,
+  priceStreamConnected,
+  priceTicks,
+  prices,
+  profile,
+  profitSummary,
+  quantity,
+  rankings,
+  recentOrders,
+  refreshError,
+  refreshing,
+  selectedHolding,
+  selectedInstrument,
+  selectedPrice,
+  selectedSymbol,
+  side,
+  user,
+  visibleHoldings,
+  executions,
+  onApplyAssetPercent,
+  onLimitPriceChange,
+  onOrderTypeChange,
+  onQuantityChange,
+  onSelectPrice,
+  onSelectSymbol,
+  onSideChange,
+  onSubmitOrder,
+  updateOrderDraft,
+}: VirtualPriceWorkspaceProps) {
+  return (
+    <section className="mx-auto grid w-full max-w-7xl gap-5 px-4 py-5 sm:px-5 lg:grid-cols-[minmax(0,1fr)_minmax(340px,420px)] lg:px-8">
+      <VirtualPriceMainColumn
+        chronologicalTicks={chronologicalTicks}
+        corporateActionEntitlements={corporateActionEntitlements}
+        instrumentMap={instrumentMap}
+        lastUpdatedAt={lastUpdatedAt}
+        portfolio={portfolio}
+        portfolioSnapshots={portfolioSnapshots}
+        priceStreamConnected={priceStreamConnected}
+        priceTicks={priceTicks}
+        prices={prices}
+        profile={profile}
+        profitSummary={profitSummary}
+        refreshError={refreshError}
+        refreshing={refreshing}
+        selectedInstrument={selectedInstrument}
+        selectedPrice={selectedPrice}
+        selectedSymbol={selectedSymbol}
+        user={user}
+        visibleHoldings={visibleHoldings}
+        onSelectPrice={onSelectPrice}
+      />
+
+      <VirtualPriceSideColumn
+        amend={amend}
+        amendingOrderId={amendingOrderId}
+        cancel={cancel}
+        cancelPartially={cancelPartially}
+        cancellingOrderId={cancellingOrderId}
+        estimatedOrderValue={estimatedOrderValue}
+        executions={executions}
+        instruments={instruments}
+        limitPrice={limitPrice}
+        message={message}
+        orderActionClassName={orderActionClassName}
+        orderBook={orderBook}
+        orderDrafts={orderDrafts}
+        orderType={orderType}
+        orderValidationMessage={orderValidationMessage}
+        partialCancellingOrderId={partialCancellingOrderId}
+        pendingOrderCount={pendingOrderCount}
+        placingOrder={placingOrder}
+        portfolio={portfolio}
+        quantity={quantity}
+        rankings={rankings}
+        recentOrders={recentOrders}
+        selectedHolding={selectedHolding}
+        selectedPrice={selectedPrice}
+        selectedSymbol={selectedSymbol}
+        side={side}
+        onApplyAssetPercent={onApplyAssetPercent}
+        onLimitPriceChange={onLimitPriceChange}
+        onOrderTypeChange={onOrderTypeChange}
+        onQuantityChange={onQuantityChange}
+        onSelectSymbol={onSelectSymbol}
+        onSideChange={onSideChange}
+        onSubmitOrder={onSubmitOrder}
+        updateOrderDraft={updateOrderDraft}
+      />
+    </section>
+  );
+}

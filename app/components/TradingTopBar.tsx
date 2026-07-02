@@ -6,9 +6,9 @@ import { type ReactNode, useState } from "react";
 
 import MarketModeTabs from "@/app/components/MarketModeTabs";
 import useAuthSession from "@/app/hooks/useAuthSession";
-import { clearAccessToken, getAccessToken, logout } from "@/app/lib/auth";
-import { accountStatusQueryOptions, holdingsQueryOptions, portfolioQueryOptions, profileQueryOptions } from "@/app/lib/react-query/stockQueries";
-import { formatWon } from "@/app/lib/stockFormatters";
+import { clearAccessToken, getAccessTokenForAuthStatus, logout } from "@/app/lib/auth";
+import { accountStatusQueryOptions, holdingsQueryOptions, portfolioQueryOptions, profileQueryOptions } from "@/app/lib/react-query/stockAccountQueries";
+import { formatNumber, formatWon } from "@/app/lib/stockFormatters";
 import type { Holding, Portfolio, StockUserProfile } from "@/app/types/stock";
 
 type MarketMode = "virtual-price" | "order-book";
@@ -17,7 +17,7 @@ export default function TradingTopBar({ active, actions }: { active: MarketMode;
   const router = useRouter();
   const { authStatus, user } = useAuthSession();
   const [accountPanelOpen, setAccountPanelOpen] = useState(false);
-  const token = authStatus === "in" ? getAccessToken() : null;
+  const token = getAccessTokenForAuthStatus(authStatus);
   const accountStatusQuery = useQuery(accountStatusQueryOptions(token));
   const hasAccount = accountStatusQuery.data?.hasAccount === true;
   const profileQuery = useQuery(profileQueryOptions(token));
@@ -182,13 +182,4 @@ function initialOf(username?: string | null) {
     return "U";
   }
   return value.slice(0, 1).toUpperCase();
-}
-
-function formatNumber(value?: number | null) {
-  if (value === undefined || value === null || !Number.isFinite(value)) {
-    return "0";
-  }
-  return value.toLocaleString("ko-KR", {
-    maximumFractionDigits: 2,
-  });
 }

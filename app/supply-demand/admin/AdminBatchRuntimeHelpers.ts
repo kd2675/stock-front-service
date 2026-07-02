@@ -1,0 +1,51 @@
+import { formatCount } from "@/app/supply-demand/admin/AdminFormatters";
+import type { BatchJobRuntimeStatus, StockBatchJobRun } from "@/app/types/stock";
+
+export type BatchManualAction = {
+  label: string;
+  description: string;
+  buttonLabel: string;
+  runningLabel: string;
+  running: boolean;
+  lastRunText: string;
+  onRun: () => void;
+};
+
+export function summarizeBatchRuntimeControls(controls: BatchJobRuntimeStatus[]) {
+  return controls.reduce(
+    (summary, control) => ({
+      total: summary.total + 1,
+      effective: summary.effective + (control.effectiveEnabled ? 1 : 0),
+      runtimeOff: summary.runtimeOff + (!control.runtimeEnabled ? 1 : 0),
+      schedulerOff: summary.schedulerOff + (!control.schedulerConfigured ? 1 : 0),
+    }),
+    {
+      total: 0,
+      effective: 0,
+      runtimeOff: 0,
+      schedulerOff: 0,
+    },
+  );
+}
+
+export function resolveBatchManualAction(
+  jobName: string,
+  options: {
+    lastCashFlowRun: StockBatchJobRun | null;
+    runningCashFlow: boolean;
+    onRunCashFlow: () => void;
+  },
+): BatchManualAction | null {
+  if (jobName === "auto-participant-cash-flow") {
+    return {
+      label: "월급 수동 지급",
+      description: "자동 실행이 중지되어 있어도 관리자가 명시적으로 한 번 지급할 수 있습니다.",
+      buttonLabel: "수동 월급 지급",
+      runningLabel: "지급 실행 중",
+      running: options.runningCashFlow,
+      lastRunText: `마지막 수동 실행 ${options.lastCashFlowRun ? `${options.lastCashFlowRun.status} · ${formatCount(options.lastCashFlowRun.processedCount, "건")}` : "-"}`,
+      onRun: options.onRunCashFlow,
+    };
+  }
+  return null;
+}

@@ -1,6 +1,20 @@
 import type { OrderSide, OrderType } from "@/app/types/stock";
+import { isPositiveFiniteNumber, parsePositiveIntegerInput, parsePositiveNumberInput } from "@/app/lib/numberParsing";
 
 export const ASSET_PERCENT_OPTIONS = [10, 25, 50, 100] as const;
+
+export type AssetPercentQuantityFailureReason = "missingSelection" | "missingPrice" | "missingAsset";
+
+export type AssetPercentQuantityResult =
+  | {
+      ok: true;
+      normalizedLimitPrice?: string;
+      quantity: number;
+    }
+  | {
+      ok: false;
+      reason: AssetPercentQuantityFailureReason;
+    };
 
 export function resolveOrderSizingPrice({
   currentPrice,
@@ -12,13 +26,13 @@ export function resolveOrderSizingPrice({
   orderType: OrderType;
 }): { price: number; normalizedLimitPrice?: string } | null {
   if (orderType === "LIMIT") {
-    const parsedLimitPrice = parseStrictPositiveNumber(limitPrice);
+    const parsedLimitPrice = parsePositiveNumberInput(limitPrice);
     if (parsedLimitPrice !== null) {
       return { price: parsedLimitPrice };
     }
   }
 
-  if (currentPrice !== undefined && currentPrice !== null && Number.isFinite(currentPrice) && currentPrice > 0) {
+  if (isPositiveFiniteNumber(currentPrice)) {
     return {
       price: currentPrice,
       normalizedLimitPrice: orderType === "LIMIT" ? String(Math.round(currentPrice)) : undefined,
@@ -26,6 +40,69 @@ export function resolveOrderSizingPrice({
   }
 
   return null;
+}
+
+export function resolveAssetPercentQuantity({
+  availableCash,
+  availableSellQuantity,
+  currentPrice,
+  hasSelection,
+  limitPrice,
+  orderType,
+  percent,
+  side,
+  totalAsset,
+}: {
+  availableCash?: number | null;
+  availableSellQuantity?: number | null;
+  currentPrice?: number | null;
+  hasSelection: boolean;
+  limitPrice: string;
+  orderType: OrderType;
+  percent: number;
+  side: OrderSide;
+  totalAsset?: number | null;
+}): AssetPercentQuantityResult {
+  if (!hasSelection) {
+    return { ok: false, reason: "missingSelection" };
+  }
+
+  const resolvedPrice = resolveOrderSizingPrice({
+    currentPrice,
+    limitPrice,
+    orderType,
+  });
+  if (!resolvedPrice) {
+    return { ok: false, reason: "missingPrice" };
+  }
+
+  const quantity = calculateAssetPercentQuantity({
+    availableCash,
+    availableSellQuantity,
+    percent,
+    price: resolvedPrice.price,
+    side,
+    totalAsset,
+  });
+  if (quantity === null) {
+    return { ok: false, reason: "missingAsset" };
+  }
+
+  return {
+    ok: true,
+    normalizedLimitPrice: resolvedPrice.normalizedLimitPrice,
+    quantity,
+  };
+}
+
+export function getAssetPercentQuantityErrorMessage(reason: AssetPercentQuantityFailureReason) {
+  if (reason === "missingSelection") {
+    return "종목을 선택해 주세요.";
+  }
+  if (reason === "missingPrice") {
+    return "현재가 또는 주문가를 확인해 주세요.";
+  }
+  return "자산 정보를 불러온 뒤 다시 선택해 주세요.";
 }
 
 export function calculateAssetPercentQuantity({
@@ -43,32 +120,42 @@ export function calculateAssetPercentQuantity({
   side: OrderSide;
   totalAsset?: number | null;
 }): number | null {
-  if (!Number.isFinite(percent) || percent <= 0) {
+  if (!isPositiveFiniteNumber(percent)) {
     return null;
   }
 
   if (side === "BUY") {
-    if (!Number.isFinite(price) || price <= 0 || totalAsset === undefined || totalAsset === null || !Number.isFinite(totalAsset) || totalAsset <= 0) {
+    if (!isPositiveFiniteNumber(price) || !isPositiveFiniteNumber(totalAsset)) {
       return null;
     }
-    if (availableCash === undefined || availableCash === null || !Number.isFinite(availableCash) || availableCash <= 0) {
+    if (!isPositiveFiniteNumber(availableCash)) {
       return 0;
     }
     const targetAmount = totalAsset * (percent / 100);
     return Math.floor(Math.min(targetAmount, availableCash) / price);
   }
 
-  if (availableSellQuantity === undefined || availableSellQuantity === null || !Number.isFinite(availableSellQuantity) || availableSellQuantity <= 0) {
+  if (!isPositiveFiniteNumber(availableSellQuantity)) {
     return 0;
   }
   return Math.min(availableSellQuantity, Math.floor(availableSellQuantity * (percent / 100)));
 }
 
-function parseStrictPositiveNumber(value: string): number | null {
-  const trimmed = value.trim();
-  if (!/^\d+(\.\d+)?$/.test(trimmed)) {
+export function calculateEstimatedOrderAmount({
+  currentPrice,
+  limitPrice,
+  orderType,
+  quantity,
+}: {
+  currentPrice?: number | null;
+  limitPrice: string;
+  orderType: OrderType;
+  quantity: string;
+}): number | null {
+  const parsedQuantity = parsePositiveIntegerInput(quantity);
+  const parsedPrice = orderType === "LIMIT" ? parsePositiveNumberInput(limitPrice) : currentPrice;
+  if (parsedQuantity === null || !isPositiveFiniteNumber(parsedPrice)) {
     return null;
   }
-  const parsed = Number(trimmed);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  return parsedQuantity * parsedPrice;
 }

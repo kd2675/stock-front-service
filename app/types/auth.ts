@@ -1,3 +1,5 @@
+export type AuthStatus = "unknown" | "in" | "out";
+
 export type LoginResponse = {
   accessToken: string;
   refreshToken?: string;

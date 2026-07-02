@@ -1,211 +1,253 @@
 import { mutationOptions } from "@tanstack/react-query";
+
+import type { ApiResult } from "@/app/lib/api";
 import {
   amendOrder,
   applyCorporateAction,
+  adjustAutoParticipantCash,
+  adjustUserAccountCash,
   cancelOrder,
   cancelOrderPartially,
   createOrderBookInstrument,
   deleteInstrumentReport,
-  detachStockAccount,
   openStockAccount,
   placeOrder,
   publishInstrumentReport,
   reconnectStockAccount,
+  runAutoParticipantCashFlow,
   updateAutoMarketConfig,
+  updateAutoParticipantProfileConfig,
   updateAutoParticipantSymbolConfig,
+  updateBatchJobRuntimeControl,
   updateInstrumentReport,
+  updateListingAutoAccountConfig,
   updateMarketStatus,
   upsertAutoParticipant,
   withdrawAutoParticipant,
 } from "@/app/lib/stock";
-import { requireAccessToken, unwrapStockResult } from "@/app/lib/react-query/stockResult";
-import type { Account, AutoMarketStatus, CorporateActionType, InstrumentReport, ListingAutoPosition, MarketSessionStatus, MarketType, OrderSide, OrderType, SymbolMarketConfig } from "@/app/types/stock";
+import type {
+  StockAutoMarketConfigPayload,
+  StockAccountCashAdjustmentPayload,
+  StockAutoParticipantCashAdjustmentPayload,
+  StockAutoParticipantPayload,
+  StockAutoParticipantProfileConfigPayload,
+  StockAutoParticipantSymbolConfigPayload,
+  StockBatchJobRuntimeControlPayload,
+  StockCorporateActionPayload,
+  StockInstrumentReportPayload,
+  StockListingAutoAccountConfigPayload,
+  StockMarketStatusPayload,
+  StockOrderAmendPayload,
+  StockOrderBookInstrumentCreatePayload,
+  StockOrderPartialCancelPayload,
+  StockOrderPlacePayload,
+} from "@/app/lib/stock";
+import { unwrapAuthenticatedStockRequest } from "@/app/lib/react-query/stockResult";
+import type { AutoParticipantProfileType, MarketType } from "@/app/types/stock";
 
-export type PlaceOrderVariables = {
-  symbol: string;
-  marketType?: MarketType;
-  side: OrderSide;
-  orderType: OrderType;
-  limitPrice?: number;
-  quantity: number;
-  clientOrderId?: string;
-};
+type PlaceOrderVariables = StockOrderPlacePayload;
 
-export function openAccountMutationOptions() {
+function authenticatedNoVariablesMutationOptions<TData>(
+  request: (token: string) => Promise<ApiResult<TData>>,
+  fallbackMessage: string,
+) {
   return mutationOptions({
-    mutationFn: async (): Promise<Account> => unwrapStockResult(await openStockAccount(await requireAccessToken()), "계좌 개설에 실패했습니다."),
+    mutationFn: () => unwrapAuthenticatedStockRequest(request, fallbackMessage),
   });
 }
 
-export function detachAccountMutationOptions() {
+function authenticatedMutationOptions<TVariables, TData>(
+  request: (token: string, variables: TVariables) => Promise<ApiResult<TData>>,
+  fallbackMessage: string,
+) {
   return mutationOptions({
-    mutationFn: async (): Promise<Account> => unwrapStockResult(await detachStockAccount(await requireAccessToken()), "계좌 분리에 실패했습니다."),
+    mutationFn: (variables: TVariables) =>
+      unwrapAuthenticatedStockRequest((token) => request(token, variables), fallbackMessage),
   });
+}
+
+function adminNoVariablesMutationOptions<TData>(
+  request: (token: string) => Promise<ApiResult<TData>>,
+) {
+  return mutationOptions({
+    mutationFn: (variables: { token: string }) => request(variables.token),
+  });
+}
+
+function adminMutationOptions<TVariables extends object, TData>(
+  request: (token: string, variables: TVariables) => Promise<ApiResult<TData>>,
+) {
+  return mutationOptions({
+    mutationFn: ({ token, ...variables }: { token: string } & TVariables) =>
+      request(token, variables as TVariables),
+  });
+}
+
+export function openAccountMutationOptions() {
+  return authenticatedNoVariablesMutationOptions(openStockAccount, "계좌 개설에 실패했습니다.");
 }
 
 export function reconnectAccountMutationOptions() {
-  return mutationOptions({
-    mutationFn: async (payload: { accountCode: string; recoveryCode: string }): Promise<Account> =>
-      unwrapStockResult(await reconnectStockAccount(await requireAccessToken(), payload), "계좌 복구 연결에 실패했습니다."),
-  });
+  return authenticatedMutationOptions(
+    reconnectStockAccount,
+    "계좌 복구 연결에 실패했습니다.",
+  );
 }
 
 export function placeOrderMutationOptions() {
-  return mutationOptions({
-    mutationFn: async (payload: PlaceOrderVariables) => unwrapStockResult(await placeOrder(await requireAccessToken(), payload), "주문 접수에 실패했습니다."),
-  });
+  return authenticatedMutationOptions(
+    (token, payload: PlaceOrderVariables) => placeOrder(token, payload),
+    "주문 접수에 실패했습니다.",
+  );
 }
 
 export function cancelOrderMutationOptions() {
-  return mutationOptions({
-    mutationFn: async (orderId: number) => unwrapStockResult(await cancelOrder(await requireAccessToken(), orderId), "주문 취소에 실패했습니다."),
-  });
+  return authenticatedMutationOptions(cancelOrder, "주문 취소에 실패했습니다.");
 }
 
 export function amendOrderMutationOptions() {
-  return mutationOptions({
-    mutationFn: async (variables: { orderId: number; quantity?: number; limitPrice?: number }) =>
-      unwrapStockResult(await amendOrder(await requireAccessToken(), variables.orderId, { quantity: variables.quantity, limitPrice: variables.limitPrice }), "주문 정정에 실패했습니다."),
-  });
+  return authenticatedMutationOptions(
+    (token, variables: { orderId: number } & StockOrderAmendPayload) =>
+      amendOrder(token, variables.orderId, { quantity: variables.quantity, limitPrice: variables.limitPrice }),
+    "주문 정정에 실패했습니다.",
+  );
 }
 
 export function cancelOrderPartiallyMutationOptions() {
-  return mutationOptions({
-    mutationFn: async (variables: { orderId: number; quantity: number }) =>
-      unwrapStockResult(await cancelOrderPartially(await requireAccessToken(), variables.orderId, variables.quantity), "부분 취소에 실패했습니다."),
-  });
+  return authenticatedMutationOptions(
+    (token, variables: { orderId: number } & StockOrderPartialCancelPayload) =>
+      cancelOrderPartially(token, variables.orderId, variables.quantity),
+    "부분 취소에 실패했습니다.",
+  );
 }
 
 export function createOrderBookInstrumentMutationOptions() {
-  return mutationOptions({
-    mutationFn: async (payload: {
-      symbol: string;
-      name: string;
-      market?: string;
-      initialPrice: number;
-      issuedShares: number;
-      tickSize?: number;
-      priceLimitRate?: number;
-      listingAutoAccount?: {
-        displayName?: string;
-        enabled?: boolean;
-        positionSide?: ListingAutoPosition;
-        maxOrderQuantity?: number;
-        orderTtlSeconds?: number;
-        priceOffsetTicks?: number;
-      };
-    }) => unwrapStockResult(await createOrderBookInstrument(await requireAccessToken(), payload), "주문장 종목 생성에 실패했습니다."),
-  });
+  return authenticatedMutationOptions(
+    (token, payload: StockOrderBookInstrumentCreatePayload) => createOrderBookInstrument(token, payload),
+    "주문장 종목 생성에 실패했습니다.",
+  );
 }
 
-export function applyCorporateActionMutationOptions() {
-  return mutationOptions({
-    mutationFn: async (variables: {
-      symbol: string;
-      payload: {
-        actionType: CorporateActionType;
-        shareQuantity?: number;
-        issuePrice?: number;
-        splitFrom?: number;
-        splitTo?: number;
-        exRightsDate?: string;
-        paymentDate?: string;
-        listingDate?: string;
-        delistingDate?: string;
-        dividendAmount?: number;
-        description?: string;
-      };
-    }) => unwrapStockResult(await applyCorporateAction(await requireAccessToken(), variables.symbol, variables.payload), "주식 이벤트 적용에 실패했습니다."),
-  });
-}
-
-export function updateMarketStatusMutationOptions() {
-  return mutationOptions({
-    mutationFn: async (variables: {
+export function adminUpdateMarketStatusMutationOptions() {
+  return adminMutationOptions(
+    (token, variables: {
       marketType: MarketType;
       symbol: string;
-      payload: {
-        enabled?: boolean;
-        marketStatus?: MarketSessionStatus;
-      };
-    }): Promise<SymbolMarketConfig> =>
-      unwrapStockResult(await updateMarketStatus(await requireAccessToken(), variables.marketType, variables.symbol, variables.payload), "장 상태 변경에 실패했습니다."),
-  });
+      payload: StockMarketStatusPayload;
+    }) => updateMarketStatus(token, variables.marketType, variables.symbol, variables.payload),
+  );
 }
 
-export function updateAutoMarketConfigMutationOptions() {
-  return mutationOptions({
-    mutationFn: async (variables: {
+export function adminUpdateAutoMarketConfigMutationOptions() {
+  return adminMutationOptions(
+    (token, variables: {
       symbol: string;
-      payload: {
-        enabled?: boolean;
-        intensity?: number;
-        maxOrderQuantity?: number;
-        orderTtlSeconds?: number;
-      };
-    }): Promise<AutoMarketStatus["configs"][number]> =>
-      unwrapStockResult(await updateAutoMarketConfig(await requireAccessToken(), variables.symbol, variables.payload), "자동장 설정 변경에 실패했습니다."),
-  });
+      payload: StockAutoMarketConfigPayload;
+    }) => updateAutoMarketConfig(token, variables.symbol, variables.payload),
+  );
 }
 
-export function upsertAutoParticipantMutationOptions() {
-  return mutationOptions({
-    mutationFn: async (variables: {
+export function adminUpdateListingAutoAccountConfigMutationOptions() {
+  return adminMutationOptions(
+    (token, variables: {
+      symbol: string;
+      payload: StockListingAutoAccountConfigPayload;
+    }) => updateListingAutoAccountConfig(token, variables.symbol, variables.payload),
+  );
+}
+
+export function adminAdjustUserAccountCashMutationOptions() {
+  return adminMutationOptions(
+    (token, variables: {
       userKey: string;
-      payload: {
-        displayName: string;
-        enabled?: boolean;
-      };
-    }): Promise<AutoMarketStatus["participants"][number]> =>
-      unwrapStockResult(await upsertAutoParticipant(await requireAccessToken(), variables.userKey, variables.payload), "자동 참여자 저장에 실패했습니다."),
-  });
+      payload: StockAccountCashAdjustmentPayload;
+    }) => adjustUserAccountCash(token, variables.userKey, variables.payload),
+  );
 }
 
-export function withdrawAutoParticipantMutationOptions() {
-  return mutationOptions({
-    mutationFn: async (userKey: string): Promise<AutoMarketStatus["participants"][number]> =>
-      unwrapStockResult(await withdrawAutoParticipant(await requireAccessToken(), userKey), "자동 참여자 탈퇴 처리에 실패했습니다."),
-  });
+export function adminUpsertAutoParticipantMutationOptions() {
+  return adminMutationOptions(
+    (token, variables: {
+      userKey: string;
+      payload: StockAutoParticipantPayload;
+    }) => upsertAutoParticipant(token, variables.userKey, variables.payload),
+  );
 }
 
-export function updateAutoParticipantSymbolConfigMutationOptions() {
-  return mutationOptions({
-    mutationFn: async (variables: {
+export function adminWithdrawAutoParticipantMutationOptions() {
+  return adminMutationOptions(
+    (token, variables: {
+      userKey: string;
+    }) => withdrawAutoParticipant(token, variables.userKey),
+  );
+}
+
+export function adminAdjustAutoParticipantCashMutationOptions() {
+  return adminMutationOptions(
+    (token, variables: {
+      userKey: string;
+      payload: StockAutoParticipantCashAdjustmentPayload;
+    }) => adjustAutoParticipantCash(token, variables.userKey, variables.payload),
+  );
+}
+
+export function adminApplyCorporateActionMutationOptions() {
+  return adminMutationOptions(
+    (token, variables: {
+      symbol: string;
+      payload: StockCorporateActionPayload;
+    }) => applyCorporateAction(token, variables.symbol, variables.payload),
+  );
+}
+
+export function adminUpdateAutoParticipantProfileConfigMutationOptions() {
+  return adminMutationOptions(
+    (token, variables: {
+      profileType: AutoParticipantProfileType;
+      payload: StockAutoParticipantProfileConfigPayload;
+    }) => updateAutoParticipantProfileConfig(token, variables.profileType, variables.payload),
+  );
+}
+
+export function adminUpdateAutoParticipantSymbolConfigMutationOptions() {
+  return adminMutationOptions(
+    (token, variables: {
       userKey: string;
       symbol: string;
-      payload: {
-        enabled?: boolean;
-        intensity?: number;
-      };
-    }): Promise<AutoMarketStatus["participantSymbolConfigs"][number]> =>
-      unwrapStockResult(await updateAutoParticipantSymbolConfig(await requireAccessToken(), variables.userKey, variables.symbol, variables.payload), "참여자별 종목 전략 저장에 실패했습니다."),
-  });
+      payload: StockAutoParticipantSymbolConfigPayload;
+    }) => updateAutoParticipantSymbolConfig(token, variables.userKey, variables.symbol, variables.payload),
+  );
 }
 
-export function saveInstrumentReportMutationOptions(mode: "publish" | "update") {
-  return mutationOptions({
-    mutationFn: async (variables: {
+export function adminUpdateBatchJobRuntimeControlMutationOptions() {
+  return adminMutationOptions(
+    (token, variables: {
+      jobName: string;
+      payload: StockBatchJobRuntimeControlPayload;
+    }) => updateBatchJobRuntimeControl(token, variables.jobName, variables.payload),
+  );
+}
+
+export function adminRunAutoParticipantCashFlowMutationOptions() {
+  return adminNoVariablesMutationOptions(runAutoParticipantCashFlow);
+}
+
+export function adminSaveInstrumentReportMutationOptions() {
+  return adminMutationOptions(
+    (token, variables: {
+      mode: "publish" | "update";
       symbol: string;
-      payload: {
-        title: string;
-        summary: string;
-        score: number;
-        riseReason?: string | null;
-        fallReason?: string | null;
-      };
-    }): Promise<InstrumentReport> => {
-      const token = await requireAccessToken();
-      const result = mode === "publish"
-        ? await publishInstrumentReport(token, variables.symbol, variables.payload)
-        : await updateInstrumentReport(token, variables.symbol, variables.payload);
-      return unwrapStockResult(result, "평가 보고서 저장에 실패했습니다.");
-    },
-  });
+      payload: StockInstrumentReportPayload;
+    }) => variables.mode === "publish"
+      ? publishInstrumentReport(token, variables.symbol, variables.payload)
+      : updateInstrumentReport(token, variables.symbol, variables.payload),
+  );
 }
 
-export function deleteInstrumentReportMutationOptions() {
-  return mutationOptions({
-    mutationFn: async (symbol: string): Promise<InstrumentReport> =>
-      unwrapStockResult(await deleteInstrumentReport(await requireAccessToken(), symbol), "평가 보고서 삭제에 실패했습니다."),
-  });
+export function adminDeleteInstrumentReportMutationOptions() {
+  return adminMutationOptions(
+    (token, variables: {
+      symbol: string;
+    }) => deleteInstrumentReport(token, variables.symbol),
+  );
 }

@@ -1,4 +1,3 @@
-import axios from "axios";
 import type { ResponseEnvelope } from "@/app/types/response";
 
 const API_MODE = process.env.NEXT_PUBLIC_API_MODE ?? "direct";
@@ -20,6 +19,7 @@ export const AUTH_API_BASE =
 
 export const API_BASE = STOCK_API_BASE;
 export const STOCK_CLIENT_ID = "stock-front-service";
+const DEFAULT_REQUEST_TIMEOUT_MS = 30_000;
 
 export type ApiResult<T> = {
   ok: boolean;
@@ -35,25 +35,8 @@ type RequestOptions = {
   headers?: Record<string, string>;
   credentials?: RequestCredentials;
   baseUrl?: string;
+  timeoutMs?: number;
 };
-
-const stockApiClient = axios.create({
-  baseURL: STOCK_API_BASE,
-  withCredentials: true,
-  validateStatus: () => true,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
-const authApiClient = axios.create({
-  baseURL: AUTH_API_BASE,
-  withCredentials: true,
-  validateStatus: () => true,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
 
 function isEnvelope<T>(value: unknown): value is ResponseEnvelope<T> {
   if (!value || typeof value !== "object") {
@@ -78,25 +61,38 @@ function parseResponseBody(text: string): unknown {
   }
 }
 
+function buildRequestUrl(baseUrl: string, path: string) {
+  const normalizedBaseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${normalizedBaseUrl}${normalizedPath}`;
+}
+
+function isAbortError(error: unknown) {
+  return error instanceof DOMException && error.name === "AbortError";
+}
+
 async function requestJson<T>(path: string, options: RequestOptions = {}): Promise<ApiResult<T>> {
   const method = options.method ?? "GET";
   const baseUrl = options.baseUrl ?? STOCK_API_BASE;
-  const client = baseUrl === AUTH_API_BASE ? authApiClient : stockApiClient;
+  const controller = new AbortController();
+  const timeoutId = globalThis.setTimeout(
+    () => controller.abort(),
+    options.timeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS,
+  );
 
   try {
-    const response = await client.request({
-      url: path,
+    const response = await fetch(buildRequestUrl(baseUrl, path), {
       method,
-      baseURL: baseUrl,
       headers: {
         "Content-Type": "application/json",
         ...(options.headers ?? {}),
       },
-      withCredentials: (options.credentials ?? "include") === "include",
-      data: options.body,
+      credentials: options.credentials ?? "include",
+      body: options.body === undefined ? undefined : JSON.stringify(options.body),
+      signal: controller.signal,
     });
 
-    const parsed = typeof response.data === "string" ? parseResponseBody(response.data) : response.data ?? null;
+    const parsed = parseResponseBody(await response.text());
     if (isEnvelope<T>(parsed)) {
       return {
         ok: response.status >= 200 && response.status < 300 && parsed.success,
@@ -124,8 +120,12 @@ async function requestJson<T>(path: string, options: RequestOptions = {}): Promi
     return {
       ok: false,
       data: null,
-      message: error instanceof Error ? error.message : "알 수 없는 네트워크 오류가 발생했습니다.",
+      message: isAbortError(error)
+        ? "요청 시간이 초과되었습니다."
+        : error instanceof Error ? error.message : "알 수 없는 네트워크 오류가 발생했습니다.",
     };
+  } finally {
+    globalThis.clearTimeout(timeoutId);
   }
 }
 

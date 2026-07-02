@@ -1,3 +1,3 @@
-import SupplyDemandAdminPage from "../page";
+import AdminPageClient from "@/app/supply-demand/admin/AdminPageClient";
 
-export default SupplyDemandAdminPage;
+export default AdminPageClient;

@@ -1,7 +1,7 @@
 import { formatAutoParticipantProfile } from "@/app/lib/autoParticipantProfiles";
-import { formatAccountStatus, formatWon } from "@/app/supply-demand/admin/AdminFormatters";
-import { formatRecurringCashPolicy, type SalaryEligibilityRow } from "@/app/supply-demand/admin/AdminHelpers";
+import { formatAccountStatus, formatCount, formatInteger, formatWon } from "@/app/supply-demand/admin/AdminFormatters";
 import { SalaryMetric } from "@/app/supply-demand/admin/AdminMetricCards";
+import { formatRecurringCashPolicy, type SalaryEligibilityRow } from "@/app/supply-demand/admin/AdminParticipantPolicyHelpers";
 import type { StockBatchJobRun } from "@/app/types/stock";
 
 export function SalaryEligibilityPanel({
@@ -48,7 +48,7 @@ export function SalaryEligibilityPanel({
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
           <span className="rounded-md bg-[#19324a] px-2 py-1 text-xs font-black text-[#64a8ff]">
-            {loading ? "계좌 상태 갱신 중" : `${receivableCount.toLocaleString("ko-KR")}명 지급 가능`}
+            {loading ? "계좌 상태 갱신 중" : `${formatInteger(receivableCount)}명 지급 가능`}
           </span>
           <button
             type="button"
@@ -61,7 +61,7 @@ export function SalaryEligibilityPanel({
         </div>
       </div>
       <p className="mt-2 text-xs font-bold text-[#8b95a1]">
-        자동 실행이 중지되어 있어도 관리자가 명시적으로 한 번 지급할 수 있습니다. 마지막 수동 실행 {lastRun ? `${lastRun.status} · ${lastRun.processedCount.toLocaleString("ko-KR")}건` : "-"}
+        자동 실행이 중지되어 있어도 관리자가 명시적으로 한 번 지급할 수 있습니다. 마지막 수동 실행 {lastRun ? `${lastRun.status} · ${formatCount(lastRun.processedCount, "건")}` : "-"}
       </p>
 
       {error ? (
@@ -71,15 +71,15 @@ export function SalaryEligibilityPanel({
       ) : null}
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <SalaryMetric label="지급 가능" value={`${receivableCount.toLocaleString("ko-KR")}명`} tone="good" />
-        <SalaryMetric label="월급 정책 있음" value={`${policyCount.toLocaleString("ko-KR")}명`} tone="neutral" />
-        <SalaryMetric label="계좌 확인 필요" value={`${accountCheckCount.toLocaleString("ko-KR")}명`} tone="warn" />
-        <SalaryMetric label="제외" value={`${excludedCount.toLocaleString("ko-KR")}명`} tone="muted" />
+        <SalaryMetric label="지급 가능" value={formatCount(receivableCount, "명")} tone="good" />
+        <SalaryMetric label="월급 정책 있음" value={formatCount(policyCount, "명")} tone="neutral" />
+        <SalaryMetric label="계좌 확인 필요" value={formatCount(accountCheckCount, "명")} tone="warn" />
+        <SalaryMetric label="제외" value={formatCount(excludedCount, "명")} tone="muted" />
       </div>
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-white/10 bg-black/20 px-3 py-2">
         <p className="text-xs font-bold text-[#8b95a1]">
-          표시 {pageStart.toLocaleString("ko-KR")}-{pageEnd.toLocaleString("ko-KR")}명 / 전체 {totalCount.toLocaleString("ko-KR")}명
+          표시 {formatInteger(pageStart)}-{formatCount(pageEnd, "명")} / 전체 {formatCount(totalCount, "명")}
         </p>
         <div className="flex items-center gap-2">
           <button
@@ -91,7 +91,7 @@ export function SalaryEligibilityPanel({
             이전
           </button>
           <span className="text-xs font-black text-[#b8c2cc]">
-            {totalPages === 0 ? "0 / 0" : `${(currentPage + 1).toLocaleString("ko-KR")} / ${totalPages.toLocaleString("ko-KR")}`}
+            {totalPages === 0 ? "0 / 0" : `${formatInteger(currentPage + 1)} / ${formatInteger(totalPages)}`}
           </span>
           <button
             type="button"

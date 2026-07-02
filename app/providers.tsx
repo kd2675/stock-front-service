@@ -7,13 +7,15 @@ import AuthSessionBridge from "@/app/components/AuthSessionBridge";
 import AuthWatcher from "@/app/components/AuthWatcher";
 import { createQueryClient } from "@/app/lib/queryClient";
 
-const ReactQueryDevtools = dynamic(
-  () =>
-    import("@tanstack/react-query-devtools").then((module) => ({
-      default: module.ReactQueryDevtools,
-    })),
-  { ssr: false },
-);
+const ReactQueryDevtools = process.env.NODE_ENV === "development"
+  ? dynamic(
+    () =>
+      import("@tanstack/react-query-devtools").then((module) => ({
+        default: module.ReactQueryDevtools,
+      })),
+    { ssr: false },
+  )
+  : null;
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => createQueryClient());
@@ -23,7 +25,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       <AuthSessionBridge />
       <AuthWatcher />
       {children}
-      {process.env.NODE_ENV === "development" ? (
+      {ReactQueryDevtools ? (
         <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-right" />
       ) : null}
     </QueryClientProvider>

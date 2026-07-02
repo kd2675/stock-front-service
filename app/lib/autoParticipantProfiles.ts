@@ -18,7 +18,7 @@ export const AUTO_PARTICIPANT_PROFILE_OPTIONS: AutoParticipantProfileOption[] = 
   { value: "NOISE_TRADER", label: "노이즈형", description: "랜덤성이 크지만 현금/보유 제약은 지킴", behavior: "방향성보다 무작위성이 크지만 현금 부족, 보유 부족, 예약 수량 제한은 반드시 지킵니다." },
   { value: "VALUE_ANCHOR", label: "가치기준형", description: "기준가와 괴리를 보고 천천히 반응", behavior: "기준가보다 많이 오르면 매도, 많이 내리면 매수 쪽으로 움직이는 기준가 회귀형입니다." },
   { value: "SCALPER", label: "단타형", description: "짧은 흐름에 자주 반응", behavior: "주문 빈도와 익절 성향이 높고 TTL이 짧습니다. 첫 주문은 짧은 신호에 강하게 반응하고 후속 주문은 수익률과 호가 압력을 다시 봅니다." },
-  { value: "DAY_TRADER", label: "데이 트레이더형", description: "하루 안의 흐름에 빠르게 사고팔음", behavior: "단타형보다 주문 빈도가 더 높습니다. 강한 장중 신호에는 먼저 반응하되 후속 주문은 확률적으로 분산됩니다." },
+  { value: "DAY_TRADER", label: "데이 트레이더형", description: "시뮬레이션 하루 안의 흐름에 빠르게 사고팔음", behavior: "단타형보다 주문 빈도가 더 높습니다. 강한 장중 신호에는 먼저 반응하되 후속 주문은 확률적으로 분산됩니다." },
   { value: "SWING_TRADER", label: "스윙형", description: "며칠 단위 추세와 반전 신호를 함께 봄", behavior: "추세와 역추세를 섞어 보고 큰 미실현 수익이 생기면 첫 반응은 익절 쪽으로 움직이며, 후속 주문은 상태 기반 편향을 따릅니다." },
   { value: "LONG_TERM_HOLDER", label: "장기투자형", description: "매도 빈도가 낮고 하락에도 보유 성향이 큼", behavior: "중립 신호에서는 쉬고, 큰 손실은 성급히 팔지 않으며 큰 수익 구간에서는 추가 매수보다 보유나 일부 익절 쪽으로 물러납니다." },
   { value: "PAYDAY_ACCUMULATOR", label: "월급매수형", description: "설정한 입금 주기마다 현금 유입 후 꾸준히 매수", behavior: "설정 주기마다 자동 입금 원장을 만들고 첫 반응은 매수 편향을 유지합니다. 손실 구간은 무리한 반복 매수보다 1회 매수/보유로 제한하고, 수익이 커진 보유분은 후속 주문에서 일부 익절할 수 있습니다." },
@@ -37,14 +37,18 @@ export const AUTO_PARTICIPANT_PROFILE_OPTIONS: AutoParticipantProfileOption[] = 
   { value: "OBSERVER", label: "관망형", description: "강한 신호가 아니면 거의 움직이지 않음", behavior: "중립 신호에서는 주문을 쉬고 강한 신호에서도 작은 주문 한두 개만 냅니다." },
 ];
 
+const AUTO_PARTICIPANT_PROFILE_OPTION_BY_TYPE = new Map<AutoParticipantProfileType, AutoParticipantProfileOption>(
+  AUTO_PARTICIPANT_PROFILE_OPTIONS.map((profile) => [profile.value, profile]),
+);
+
 export function formatAutoParticipantProfile(profileType: AutoParticipantProfileType): string {
-  return AUTO_PARTICIPANT_PROFILE_OPTIONS.find((profile) => profile.value === profileType)?.label ?? "노이즈형";
+  return AUTO_PARTICIPANT_PROFILE_OPTION_BY_TYPE.get(profileType)?.label ?? "노이즈형";
 }
 
 export function formatAutoParticipantProfileDescription(profileType: AutoParticipantProfileType): string {
-  return AUTO_PARTICIPANT_PROFILE_OPTIONS.find((profile) => profile.value === profileType)?.description ?? "랜덤성이 크지만 현금/보유 제약은 지킴";
+  return AUTO_PARTICIPANT_PROFILE_OPTION_BY_TYPE.get(profileType)?.description ?? "랜덤성이 크지만 현금/보유 제약은 지킴";
 }
 
 export function formatAutoParticipantProfileBehavior(profileType: AutoParticipantProfileType): string {
-  return AUTO_PARTICIPANT_PROFILE_OPTIONS.find((profile) => profile.value === profileType)?.behavior ?? "무작위성이 크지만 현금, 보유수량, 예약 수량 제한은 반드시 지킵니다.";
+  return AUTO_PARTICIPANT_PROFILE_OPTION_BY_TYPE.get(profileType)?.behavior ?? "무작위성이 크지만 현금, 보유수량, 예약 수량 제한은 반드시 지킵니다.";
 }
