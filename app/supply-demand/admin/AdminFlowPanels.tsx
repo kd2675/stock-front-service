@@ -1,5 +1,3 @@
-import { useState } from "react";
-
 import { ADMIN_SYMBOL_FLOW_PREVIEW_SIZE } from "@/app/supply-demand/admin/AdminConstants";
 import { formatDateTime } from "@/app/supply-demand/admin/AdminFormatters";
 import { AdminFlowFundSummaryPanel } from "@/app/supply-demand/admin/AdminFlowFundSummaryPanel";
@@ -12,10 +10,12 @@ export function AdminFlowOverviewPanel({
   overview,
   fundFlow,
   allFundFlow,
+  allSymbolFlowList,
   loadingFundFlow,
   loadingAllFundFlow,
   fundFlowError,
   allFundFlowError,
+  allSymbolFlowError,
   symbolFlowList,
   loadingSymbolFlows,
   loadingAllSymbolFlows,
@@ -26,10 +26,12 @@ export function AdminFlowOverviewPanel({
   overview: AdminFlowOverview | null;
   fundFlow: AdminFundFlowSummary | null;
   allFundFlow: AdminFundFlowSummary | null;
+  allSymbolFlowList: AdminSymbolFlowList | null;
   loadingFundFlow: boolean;
   loadingAllFundFlow: boolean;
   fundFlowError: boolean;
   allFundFlowError: boolean;
+  allSymbolFlowError: boolean;
   symbolFlowList: AdminSymbolFlowList;
   loadingSymbolFlows: boolean;
   loadingAllSymbolFlows: boolean;
@@ -37,15 +39,11 @@ export function AdminFlowOverviewPanel({
   onLoadAllSymbolFlows: () => void;
   onRefresh: () => void;
 }) {
-  const [showAllSymbolFlows, setShowAllSymbolFlows] = useState(false);
   const orderFlow = overview?.orderFlow;
   const corporateActionFlow = overview?.corporateActionFlow;
   const symbolFlows = symbolFlowList.symbolFlows;
   const symbolFlowTotalCount = symbolFlowList.totalCount;
-  const hasMoreSymbolFlows = symbolFlowTotalCount > symbolFlows.length;
-  const canToggleSymbolFlows = symbolFlowTotalCount > ADMIN_SYMBOL_FLOW_PREVIEW_SIZE;
-  const isShowingAllSymbolFlows = showAllSymbolFlows && !hasMoreSymbolFlows;
-  const visibleSymbolFlows = isShowingAllSymbolFlows ? symbolFlows : symbolFlows.slice(0, ADMIN_SYMBOL_FLOW_PREVIEW_SIZE);
+  const visibleSymbolFlows = symbolFlows.slice(0, ADMIN_SYMBOL_FLOW_PREVIEW_SIZE);
   const recentCashFlows = overview?.recentCashFlows.slice(0, 8) ?? [];
 
   return (
@@ -53,7 +51,7 @@ export function AdminFlowOverviewPanel({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-black">전체 흐름 대시보드</h2>
-          <p className="mt-1 text-xs font-bold text-[#8b95a1]">전체 계좌 자금, 주문장 종목 체결, 최근 현금 원장을 봅니다. 자금 흐름은 기본적으로 시뮬레이션 하루 기준입니다.</p>
+          <p className="mt-1 text-xs font-bold text-[#8b95a1]">전체 계좌 자금, 주문장 종목 체결, 최근 현금 원장을 봅니다. 자금과 종목 흐름은 기본적으로 시뮬레이션 하루 기준입니다.</p>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
           <span className="rounded-md bg-[#19324a] px-2 py-1 text-xs font-black text-[#64a8ff]">
@@ -88,13 +86,11 @@ export function AdminFlowOverviewPanel({
 
       <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,0.8fr)]">
         <AdminSymbolFlowTablePanel
-          canToggle={canToggleSymbolFlows}
-          hasMore={hasMoreSymbolFlows}
-          isShowingAll={isShowingAllSymbolFlows}
+          allError={allSymbolFlowError}
+          allSymbolFlowList={allSymbolFlowList}
           loading={loadingSymbolFlows}
           loadingAll={loadingAllSymbolFlows}
           onLoadAll={onLoadAllSymbolFlows}
-          onSetShowAll={setShowAllSymbolFlows}
           symbolFlowTotalCount={symbolFlowTotalCount}
           visibleSymbolFlows={visibleSymbolFlows}
         />

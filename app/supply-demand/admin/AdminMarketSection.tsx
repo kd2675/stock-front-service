@@ -23,10 +23,12 @@ type AdminMarketSectionProps = {
   adminFlowOverview: AdminFlowOverview | null;
   fundFlow: AdminFundFlowSummary | null;
   allFundFlow: AdminFundFlowSummary | null;
+  allSymbolFlowList: AdminSymbolFlowList | null;
   loadingFundFlow: boolean;
   loadingAllFundFlow: boolean;
   fundFlowError: boolean;
   allFundFlowError: boolean;
+  allSymbolFlowError: boolean;
   symbolFlowList: AdminSymbolFlowList;
   loadingSymbolFlows: boolean;
   loadingAllSymbolFlows: boolean;
@@ -52,10 +54,12 @@ export function AdminMarketSection({
   adminFlowOverview,
   fundFlow,
   allFundFlow,
+  allSymbolFlowList,
   loadingFundFlow,
   loadingAllFundFlow,
   fundFlowError,
   allFundFlowError,
+  allSymbolFlowError,
   symbolFlowList,
   loadingSymbolFlows,
   loadingAllSymbolFlows,
@@ -90,10 +94,12 @@ export function AdminMarketSection({
         overview={adminFlowOverview}
         fundFlow={fundFlow}
         allFundFlow={allFundFlow}
+        allSymbolFlowList={allSymbolFlowList}
         loadingFundFlow={loadingFundFlow}
         loadingAllFundFlow={loadingAllFundFlow}
         fundFlowError={fundFlowError}
         allFundFlowError={allFundFlowError}
+        allSymbolFlowError={allSymbolFlowError}
         symbolFlowList={symbolFlowList}
         loadingSymbolFlows={loadingSymbolFlows}
         loadingAllSymbolFlows={loadingAllSymbolFlows}

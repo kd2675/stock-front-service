@@ -120,10 +120,12 @@ export function useAdminPageQueries({
     enabled: queryFlags.shouldUseAdminFlowOverview,
     includeFundFlow: false,
     includeSymbolFlows: true,
+    symbolFlowScope: "RECENT_SIMULATION_DAY",
     symbolFlowLimit: ADMIN_SYMBOL_FLOW_PREVIEW_SIZE,
   }));
   const adminSymbolFlowsQuery = useQuery(adminSymbolFlowsQueryOptions(accessToken, {
     enabled: false,
+    scope: "ALL",
   }));
   const adminCashFlowPageQuery = useQuery(adminCashFlowsQueryOptions(accessToken, adminCashFlowPageIndex, ADMIN_CASH_FLOW_PAGE_SIZE, {
     enabled: isAdminAllowed && queryFlags.isCashFlowLedgerSection,

@@ -76,12 +76,13 @@ export type StockAutoParticipantCashAdjustmentPayload = {
 
 export type AutoParticipantActivityScope = "RECENT_SIMULATION_DAY" | "ALL";
 
-export function getAdminFlowOverview(token: string, options?: { symbolFlowLimit?: number; includeFundFlow?: boolean; includeSymbolFlows?: boolean; fundFlowScope?: AdminFundFlowScope }) {
+export function getAdminFlowOverview(token: string, options?: { symbolFlowLimit?: number; includeFundFlow?: boolean; includeSymbolFlows?: boolean; fundFlowScope?: AdminFundFlowScope; symbolFlowScope?: AdminFundFlowScope }) {
   const query = toQuery({
     symbolFlowLimit: options?.symbolFlowLimit,
     includeFundFlow: options?.includeFundFlow,
     includeSymbolFlows: options?.includeSymbolFlows,
     fundFlowScope: options?.fundFlowScope,
+    symbolFlowScope: options?.symbolFlowScope,
   });
   return authenticatedGetJson<AdminFlowOverview>(token, `/api/stock/v1/markets/admin/flow-overview${query}`);
 }
@@ -93,9 +94,10 @@ export function getAdminFundFlowSummary(token: string, options?: { scope?: Admin
   return authenticatedGetJson<AdminFundFlowSummary>(token, `/api/stock/v1/markets/admin/fund-flow-summary${query}`);
 }
 
-export function getAdminSymbolFlows(token: string, options?: { limit?: number }) {
+export function getAdminSymbolFlows(token: string, options?: { limit?: number; scope?: AdminFundFlowScope }) {
   const query = toQuery({
     limit: options?.limit,
+    scope: options?.scope,
   });
   return authenticatedGetJson<AdminSymbolFlowList>(token, `/api/stock/v1/markets/admin/symbol-flows${query}`);
 }

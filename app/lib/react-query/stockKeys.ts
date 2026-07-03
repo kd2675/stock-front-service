@@ -18,17 +18,19 @@ export const stockKeys = {
   adminFundFlowSummaryRoot: () => [...stockKeys.market(), "admin", "fund-flow-summary"] as const,
   adminFundFlowSummary: (options?: { scope?: AdminFundFlowScope }) => [...stockKeys.adminFundFlowSummaryRoot(), options?.scope ?? "RECENT_SIMULATION_DAY"] as const,
   adminFlowOverviewRoot: () => [...stockKeys.market(), "admin", "flow-overview"] as const,
-  adminFlowOverview: (options?: { symbolFlowLimit?: number; includeFundFlow?: boolean; includeSymbolFlows?: boolean; fundFlowScope?: AdminFundFlowScope }) => [
+  adminFlowOverview: (options?: { symbolFlowLimit?: number; includeFundFlow?: boolean; includeSymbolFlows?: boolean; fundFlowScope?: AdminFundFlowScope; symbolFlowScope?: AdminFundFlowScope }) => [
     ...stockKeys.adminFlowOverviewRoot(),
     options?.symbolFlowLimit ?? 0,
     options?.includeFundFlow ?? true,
     options?.includeSymbolFlows ?? true,
     options?.fundFlowScope ?? "RECENT_SIMULATION_DAY",
+    options?.symbolFlowScope ?? "RECENT_SIMULATION_DAY",
   ] as const,
   adminSymbolFlowsRoot: () => [...stockKeys.market(), "admin", "symbol-flows"] as const,
-  adminSymbolFlows: (options?: { limit?: number }) => [
+  adminSymbolFlows: (options?: { limit?: number; scope?: AdminFundFlowScope }) => [
     ...stockKeys.adminSymbolFlowsRoot(),
     options?.limit ?? 0,
+    options?.scope ?? "RECENT_SIMULATION_DAY",
   ] as const,
   adminCashFlowsRoot: () => [...stockKeys.market(), "admin", "cash-flows"] as const,
   adminCashFlows: (options?: { page?: number; size?: number }) => [

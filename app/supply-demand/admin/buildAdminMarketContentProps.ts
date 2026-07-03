@@ -36,7 +36,9 @@ export function buildAdminMarketContentProps({
   return {
     adminFlowOverview,
     allFundFlow: adminAllFundFlowSummaryQuery.data ?? null,
+    allSymbolFlowList: adminSymbolFlowList,
     allFundFlowError: adminAllFundFlowSummaryQuery.isError,
+    allSymbolFlowError: adminSymbolFlowsQuery.isError,
     autoMarketSummary,
     fundFlow: adminFundFlowSummaryQuery.data ?? adminFlowOverview?.fundFlow ?? null,
     fundFlowError: adminFundFlowSummaryQuery.isError,
@@ -45,7 +47,7 @@ export function buildAdminMarketContentProps({
     loadingAllSymbolFlows: adminSymbolFlowsQuery.isFetching,
     loadingAllFundFlow: adminAllFundFlowSummaryQuery.isFetching,
     loadingFundFlow: adminFundFlowSummaryQuery.isFetching,
-    loadingSymbolFlows: adminFlowOverviewQuery.isFetching && adminSymbolFlowList === null,
+    loadingSymbolFlows: adminFlowOverviewQuery.isFetching && adminFlowOverview === null,
     onChangeMarketStatus: (symbol, marketStatus) => void changeOrderBookMarketStatus(symbol, marketStatus),
     onLoadAllFundFlow: () => void adminAllFundFlowSummaryQuery.refetch(),
     onUpdateTradingRules: updateOrderBookInstrumentTradingRules,
@@ -57,7 +59,7 @@ export function buildAdminMarketContentProps({
     orderBookInstrumentCount,
     orderBookMarketSummary,
     simulationClock: simulationClockQuery.data ?? null,
-    symbolFlowList: adminSymbolFlowList ?? {
+    symbolFlowList: {
       totalCount: adminFlowOverview?.symbolFlowTotalCount ?? 0,
       symbolFlows: adminFlowOverview?.symbolFlows ?? [],
     },

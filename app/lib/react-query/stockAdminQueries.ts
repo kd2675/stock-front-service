@@ -70,20 +70,23 @@ export function adminFlowOverviewQueryOptions(
     includeFundFlow?: boolean;
     includeSymbolFlows?: boolean;
     fundFlowScope?: AdminFundFlowScope;
+    symbolFlowScope?: AdminFundFlowScope;
     symbolFlowLimit?: number;
   } = {},
 ) {
   const includeFundFlow = options.includeFundFlow ?? true;
   const includeSymbolFlows = options.includeSymbolFlows ?? true;
   const fundFlowScope = options.fundFlowScope ?? "RECENT_SIMULATION_DAY";
+  const symbolFlowScope = options.symbolFlowScope ?? "RECENT_SIMULATION_DAY";
   const symbolFlowLimit = options.symbolFlowLimit;
   return adminAuthenticatedQueryOptions(token, {
-    queryKey: stockKeys.adminFlowOverview({ fundFlowScope, includeFundFlow, includeSymbolFlows, symbolFlowLimit }),
+    queryKey: stockKeys.adminFlowOverview({ fundFlowScope, includeFundFlow, includeSymbolFlows, symbolFlowLimit, symbolFlowScope }),
     request: (nextToken) => getAdminFlowOverview(nextToken, {
       fundFlowScope,
       includeFundFlow,
       includeSymbolFlows,
       symbolFlowLimit,
+      symbolFlowScope,
     }),
     fallbackMessage: "전체 흐름을 조회하지 못했습니다.",
     enabled: options.enabled,
@@ -95,12 +98,14 @@ export function adminSymbolFlowsQueryOptions(
   options: {
     enabled?: boolean;
     limit?: number;
+    scope?: AdminFundFlowScope;
   } = {},
 ) {
   const limit = options.limit;
+  const scope = options.scope ?? "RECENT_SIMULATION_DAY";
   return adminAuthenticatedQueryOptions(token, {
-    queryKey: stockKeys.adminSymbolFlows({ limit }),
-    request: (nextToken) => getAdminSymbolFlows(nextToken, { limit }),
+    queryKey: stockKeys.adminSymbolFlows({ limit, scope }),
+    request: (nextToken) => getAdminSymbolFlows(nextToken, { limit, scope }),
     fallbackMessage: "종목별 흐름을 조회하지 못했습니다.",
     enabled: options.enabled,
   });
