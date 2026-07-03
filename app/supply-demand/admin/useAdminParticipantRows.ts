@@ -53,6 +53,7 @@ export function useAdminParticipantRows(options: AdminParticipantRowsOptions) {
   const visibleParticipantOverviewsQuery = useQuery({
     ...autoParticipantOverviewsQueryOptions(options.accessToken, {
       enabled: options.adminStatus === "allowed" && options.enabled && visibleParticipantUserKeys.length > 0,
+      activityScope: "RECENT_SIMULATION_DAY",
       includeHoldings: true,
       refetchIntervalMs: ADMIN_PARTICIPANT_DETAIL_REFETCH_MS,
       userKeys: visibleParticipantUserKeys,

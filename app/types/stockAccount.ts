@@ -125,6 +125,8 @@ export type AdminFundFlowSummary = {
   executionCount: number;
 };
 
+export type AdminFundFlowScope = "RECENT_SIMULATION_DAY" | "ALL";
+
 export type AdminOrderFlowSummary = {
   openOrderCount: number;
   openBuyOrderCount: number;

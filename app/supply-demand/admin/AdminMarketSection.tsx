@@ -22,17 +22,23 @@ type AdminMarketSectionProps = {
   openOrderBookConfigCount: number;
   adminFlowOverview: AdminFlowOverview | null;
   fundFlow: AdminFundFlowSummary | null;
+  allFundFlow: AdminFundFlowSummary | null;
   loadingFundFlow: boolean;
+  loadingAllFundFlow: boolean;
   fundFlowError: boolean;
+  allFundFlowError: boolean;
   symbolFlowList: AdminSymbolFlowList;
   loadingSymbolFlows: boolean;
   loadingAllSymbolFlows: boolean;
+  onLoadAllFundFlow: () => void;
   onLoadAllSymbolFlows: () => void;
   onRefreshFlow: () => void;
   instruments: OrderBookInstrument[];
   orderBookConfigBySymbol: ReadonlyMap<string, OrderBookMarketStatus["configs"][number]>;
   updatingStatusSymbol: string | null;
+  updatingTradingRulesSymbol: string | null;
   onChangeMarketStatus: (symbol: string, marketStatus: MarketSessionStatus) => void;
+  onUpdateTradingRules: (symbol: string, payload: { priceLimitRate: number }) => Promise<boolean>;
   jumpingSimulationClockAction: SimulationClockJumpAction | null;
   onJumpSimulationClock: (action: SimulationClockJumpAction) => void;
 };
@@ -45,17 +51,23 @@ export function AdminMarketSection({
   openOrderBookConfigCount,
   adminFlowOverview,
   fundFlow,
+  allFundFlow,
   loadingFundFlow,
+  loadingAllFundFlow,
   fundFlowError,
+  allFundFlowError,
   symbolFlowList,
   loadingSymbolFlows,
   loadingAllSymbolFlows,
+  onLoadAllFundFlow,
   onLoadAllSymbolFlows,
   onRefreshFlow,
   instruments,
   orderBookConfigBySymbol,
   updatingStatusSymbol,
+  updatingTradingRulesSymbol,
   onChangeMarketStatus,
+  onUpdateTradingRules,
   jumpingSimulationClockAction,
   onJumpSimulationClock,
 }: AdminMarketSectionProps) {
@@ -77,11 +89,15 @@ export function AdminMarketSection({
       <AdminFlowOverviewPanel
         overview={adminFlowOverview}
         fundFlow={fundFlow}
+        allFundFlow={allFundFlow}
         loadingFundFlow={loadingFundFlow}
+        loadingAllFundFlow={loadingAllFundFlow}
         fundFlowError={fundFlowError}
+        allFundFlowError={allFundFlowError}
         symbolFlowList={symbolFlowList}
         loadingSymbolFlows={loadingSymbolFlows}
         loadingAllSymbolFlows={loadingAllSymbolFlows}
+        onLoadAllFundFlow={onLoadAllFundFlow}
         onLoadAllSymbolFlows={onLoadAllSymbolFlows}
         onRefresh={onRefreshFlow}
       />
@@ -89,8 +105,11 @@ export function AdminMarketSection({
       <AdminOrderBookInstrumentTable
         instruments={instruments}
         orderBookConfigBySymbol={orderBookConfigBySymbol}
+        simulationClock={simulationClock}
         updatingStatusSymbol={updatingStatusSymbol}
+        updatingTradingRulesSymbol={updatingTradingRulesSymbol}
         onChangeMarketStatus={onChangeMarketStatus}
+        onUpdateTradingRules={onUpdateTradingRules}
       />
     </>
   );

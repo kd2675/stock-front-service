@@ -9,6 +9,7 @@ export function buildAdminMarketContentProps({
 }: AdminPageContentBuilderContext): NonNullable<AdminPageContentProps["marketProps"]> {
   const { reloadAdminMarketFlowState } = queryInvalidations;
   const {
+    adminAllFundFlowSummaryQuery,
     adminFlowOverview,
     adminFlowOverviewQuery,
     adminFundFlowSummaryQuery,
@@ -28,19 +29,26 @@ export function buildAdminMarketContentProps({
     jumpingSimulationClockAction,
     loadAllAdminSymbolFlows,
     updatingStatusSymbol,
+    updatingTradingRulesSymbol,
+    updateOrderBookInstrumentTradingRules,
   } = actions;
 
   return {
     adminFlowOverview,
+    allFundFlow: adminAllFundFlowSummaryQuery.data ?? null,
+    allFundFlowError: adminAllFundFlowSummaryQuery.isError,
     autoMarketSummary,
     fundFlow: adminFundFlowSummaryQuery.data ?? adminFlowOverview?.fundFlow ?? null,
     fundFlowError: adminFundFlowSummaryQuery.isError,
     instruments,
     jumpingSimulationClockAction,
     loadingAllSymbolFlows: adminSymbolFlowsQuery.isFetching,
+    loadingAllFundFlow: adminAllFundFlowSummaryQuery.isFetching,
     loadingFundFlow: adminFundFlowSummaryQuery.isFetching,
     loadingSymbolFlows: adminFlowOverviewQuery.isFetching && adminSymbolFlowList === null,
     onChangeMarketStatus: (symbol, marketStatus) => void changeOrderBookMarketStatus(symbol, marketStatus),
+    onLoadAllFundFlow: () => void adminAllFundFlowSummaryQuery.refetch(),
+    onUpdateTradingRules: updateOrderBookInstrumentTradingRules,
     onJumpSimulationClock: (action) => void jumpSimulationClock(action),
     onLoadAllSymbolFlows: () => void loadAllAdminSymbolFlows(),
     onRefreshFlow: reloadAdminMarketFlowState,
@@ -54,5 +62,6 @@ export function buildAdminMarketContentProps({
       symbolFlows: adminFlowOverview?.symbolFlows ?? [],
     },
     updatingStatusSymbol,
+    updatingTradingRulesSymbol,
   };
 }

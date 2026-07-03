@@ -78,7 +78,6 @@ export const DEFAULT_CREATE_INSTRUMENT_FORM_VALUES: CreateInstrumentFormValues =
   market: "ORDERBOOK",
   initialPrice: "",
   issuedShares: "",
-  tickSize: "100",
   priceLimitRate: "30",
   listingAutoDisplayName: "",
   listingAutoEnabled: "true",

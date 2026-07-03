@@ -6,7 +6,9 @@ import {
   authenticatedPostJson,
   toQuery,
 } from "@/app/lib/stock-api/core";
-import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowSummary, AdminSymbolFlowList, AutoMarketStatus, AutoParticipant, AutoParticipantCashAdjustment, AutoParticipantOverview, AutoParticipantProfileOverview, AutoParticipantProfileType, BatchJobRuntimeStatus, ListingAutoPosition, RecurringCashIntervalUnit, StockBatchJobRun } from "@/app/types/stock";
+import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowScope, AdminFundFlowSummary, AdminSymbolFlowList, AutoMarketStatus, AutoParticipant, AutoParticipantCashAdjustment, AutoParticipantOverview, AutoParticipantProfileOverview, AutoParticipantProfileType, BatchJobRuntimeStatus, ListingAutoPosition, RecurringCashIntervalUnit, StockBatchJobRun } from "@/app/types/stock";
+
+export type { AdminFundFlowScope } from "@/app/types/stock";
 
 export type StockBatchJobRuntimeControlPayload = {
   runtimeEnabled: boolean;
@@ -72,17 +74,23 @@ export type StockAutoParticipantCashAdjustmentPayload = {
   amount: number;
 };
 
-export function getAdminFlowOverview(token: string, options?: { symbolFlowLimit?: number; includeFundFlow?: boolean; includeSymbolFlows?: boolean }) {
+export type AutoParticipantActivityScope = "RECENT_SIMULATION_DAY" | "ALL";
+
+export function getAdminFlowOverview(token: string, options?: { symbolFlowLimit?: number; includeFundFlow?: boolean; includeSymbolFlows?: boolean; fundFlowScope?: AdminFundFlowScope }) {
   const query = toQuery({
     symbolFlowLimit: options?.symbolFlowLimit,
     includeFundFlow: options?.includeFundFlow,
     includeSymbolFlows: options?.includeSymbolFlows,
+    fundFlowScope: options?.fundFlowScope,
   });
   return authenticatedGetJson<AdminFlowOverview>(token, `/api/stock/v1/markets/admin/flow-overview${query}`);
 }
 
-export function getAdminFundFlowSummary(token: string) {
-  return authenticatedGetJson<AdminFundFlowSummary>(token, "/api/stock/v1/markets/admin/fund-flow-summary");
+export function getAdminFundFlowSummary(token: string, options?: { scope?: AdminFundFlowScope }) {
+  const query = toQuery({
+    scope: options?.scope,
+  });
+  return authenticatedGetJson<AdminFundFlowSummary>(token, `/api/stock/v1/markets/admin/fund-flow-summary${query}`);
 }
 
 export function getAdminSymbolFlows(token: string, options?: { limit?: number }) {
@@ -102,9 +110,10 @@ export function getAdminCashFlows(token: string, page: number, size: number) {
   );
 }
 
-export function getAutoParticipantOverviews(token: string, options?: { includeHoldings?: boolean; userKeys?: string[] }) {
+export function getAutoParticipantOverviews(token: string, options?: { activityScope?: AutoParticipantActivityScope; includeHoldings?: boolean; userKeys?: string[] }) {
   const normalizedUserKeys = normalizeStringList(options?.userKeys);
   const query = toQuery({
+    activityScope: options?.activityScope,
     includeHoldings: options?.includeHoldings,
     userKeys: normalizedUserKeys,
   });
@@ -115,8 +124,13 @@ export function getAutoParticipants(token: string) {
   return authenticatedGetJson<AutoParticipant[]>(token, "/api/stock/v1/markets/auto-market/participants");
 }
 
-export function getAutoParticipantProfileOverviews(token: string) {
-  return authenticatedGetJson<AutoParticipantProfileOverview[]>(token, "/api/stock/v1/markets/auto-market/participants/profile-overviews");
+export function getAutoParticipantProfileOverviews(token: string, options?: { activityScope?: AutoParticipantActivityScope; profileTypes?: string[] }) {
+  const normalizedProfileTypes = normalizeStringList(options?.profileTypes);
+  const query = toQuery({
+    activityScope: options?.activityScope,
+    profileTypes: normalizedProfileTypes,
+  });
+  return authenticatedGetJson<AutoParticipantProfileOverview[]>(token, `/api/stock/v1/markets/auto-market/participants/profile-overviews${query}`);
 }
 
 export function runAutoParticipantCashFlow(token: string) {

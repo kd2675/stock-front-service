@@ -14,7 +14,6 @@ export type StockOrderBookInstrumentCreatePayload = {
   market?: string;
   initialPrice: number;
   issuedShares: number;
-  tickSize?: number;
   priceLimitRate?: number;
   listingAutoAccount?: {
     displayName?: string;
@@ -24,6 +23,10 @@ export type StockOrderBookInstrumentCreatePayload = {
     orderTtlSeconds?: number;
     priceOffsetTicks?: number;
   };
+};
+
+export type StockOrderBookInstrumentTradingRulesPayload = {
+  priceLimitRate: number;
 };
 
 export type StockCorporateActionPayload = {
@@ -70,6 +73,18 @@ export function createOrderBookInstrument(
   payload: StockOrderBookInstrumentCreatePayload,
 ) {
   return authenticatedPostJson<OrderBookInstrument>(token, "/api/stock/v1/markets/order-book-instruments", payload);
+}
+
+export function updateOrderBookInstrumentTradingRules(
+  token: string,
+  symbol: string,
+  payload: StockOrderBookInstrumentTradingRulesPayload,
+) {
+  return authenticatedPatchJson<OrderBookInstrument>(
+    token,
+    `/api/stock/v1/markets/order-book-instruments/${encodeURIComponent(symbol)}/trading-rules`,
+    payload,
+  );
 }
 
 export function applyCorporateAction(

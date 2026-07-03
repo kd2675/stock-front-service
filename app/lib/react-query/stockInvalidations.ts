@@ -52,7 +52,7 @@ async function invalidateAdminFlowImpactedQueries(
   await invalidateQueryGroup(queryClient, [
     ...queryKeys,
     stockKeys.adminFlowOverviewRoot(),
-    ...(options.includeFundFlowSummary ? [stockKeys.adminFundFlowSummary()] : []),
+    ...(options.includeFundFlowSummary ? [stockKeys.adminFundFlowSummaryRoot()] : []),
   ]);
 }
 
@@ -196,7 +196,7 @@ export async function invalidateAutoMarketDetailsQueries(queryClient: QueryClien
 export async function invalidateAdminCashFlowQueries(queryClient: QueryClient) {
   await invalidateQueryGroup(queryClient, [
     stockKeys.adminCashFlowsRoot(),
-    stockKeys.adminFundFlowSummary(),
+    stockKeys.adminFundFlowSummaryRoot(),
     stockKeys.adminFlowOverviewRoot(),
   ]);
 }
@@ -211,7 +211,7 @@ export async function invalidateAdminUserCashAdjustmentQueries(
       stockKeys.account(),
       stockKeys.portfolio(),
       stockKeys.adminCashFlowsRoot(),
-      stockKeys.adminFundFlowSummary(),
+      stockKeys.adminFundFlowSummaryRoot(),
       stockKeys.adminFlowOverviewRoot(),
     ]),
     ...userKeys.map((nextUserKey) => invalidateQuery(queryClient, stockKeys.adminUserFundFlow(nextUserKey))),
@@ -229,7 +229,7 @@ export async function invalidateSimulationClockQueries(queryClient: QueryClient)
     stockKeys.simulationClock(),
     stockKeys.orderBookMarketStatusRoot(),
     stockKeys.adminFlowOverviewRoot(),
-    stockKeys.adminFundFlowSummary(),
+    stockKeys.adminFundFlowSummaryRoot(),
   ]);
 }
 

@@ -21,6 +21,7 @@ import {
   updateAutoParticipantSymbolConfig,
   updateBatchJobRuntimeControl,
   updateInstrumentReport,
+  updateOrderBookInstrumentTradingRules,
   updateListingAutoAccountConfig,
   updateMarketStatus,
   upsertAutoParticipant,
@@ -40,6 +41,7 @@ import type {
   StockMarketStatusPayload,
   StockOrderAmendPayload,
   StockOrderBookInstrumentCreatePayload,
+  StockOrderBookInstrumentTradingRulesPayload,
   StockOrderPartialCancelPayload,
   StockOrderPlacePayload,
   StockSimulationClockJumpPayload,
@@ -127,6 +129,15 @@ export function createOrderBookInstrumentMutationOptions() {
   return authenticatedMutationOptions(
     (token, payload: StockOrderBookInstrumentCreatePayload) => createOrderBookInstrument(token, payload),
     "주문장 종목 생성에 실패했습니다.",
+  );
+}
+
+export function adminUpdateOrderBookInstrumentTradingRulesMutationOptions() {
+  return adminMutationOptions(
+    (token, variables: {
+      symbol: string;
+      payload: StockOrderBookInstrumentTradingRulesPayload;
+    }) => updateOrderBookInstrumentTradingRules(token, variables.symbol, variables.payload),
   );
 }
 

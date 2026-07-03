@@ -1,4 +1,4 @@
-import type { Execution, MarketType } from "@/app/types/stock";
+import type { AdminFundFlowScope, Execution, MarketType } from "@/app/types/stock";
 
 export const stockKeys = {
   all: ["stock"] as const,
@@ -15,13 +15,15 @@ export const stockKeys = {
   rankings: () => [...stockKeys.market(), "rankings"] as const,
   orderBookMarketStatusRoot: () => [...stockKeys.market(), "order-book-market"] as const,
   orderBookMarketStatus: (options?: { includeConfigs?: boolean; includeTodayExecution?: boolean }) => [...stockKeys.market(), "order-book-market", options?.includeConfigs ?? true, options?.includeTodayExecution ?? true] as const,
-  adminFundFlowSummary: () => [...stockKeys.market(), "admin", "fund-flow-summary"] as const,
+  adminFundFlowSummaryRoot: () => [...stockKeys.market(), "admin", "fund-flow-summary"] as const,
+  adminFundFlowSummary: (options?: { scope?: AdminFundFlowScope }) => [...stockKeys.adminFundFlowSummaryRoot(), options?.scope ?? "RECENT_SIMULATION_DAY"] as const,
   adminFlowOverviewRoot: () => [...stockKeys.market(), "admin", "flow-overview"] as const,
-  adminFlowOverview: (options?: { symbolFlowLimit?: number; includeFundFlow?: boolean; includeSymbolFlows?: boolean }) => [
+  adminFlowOverview: (options?: { symbolFlowLimit?: number; includeFundFlow?: boolean; includeSymbolFlows?: boolean; fundFlowScope?: AdminFundFlowScope }) => [
     ...stockKeys.adminFlowOverviewRoot(),
     options?.symbolFlowLimit ?? 0,
     options?.includeFundFlow ?? true,
     options?.includeSymbolFlows ?? true,
+    options?.fundFlowScope ?? "RECENT_SIMULATION_DAY",
   ] as const,
   adminSymbolFlowsRoot: () => [...stockKeys.market(), "admin", "symbol-flows"] as const,
   adminSymbolFlows: (options?: { limit?: number }) => [
@@ -65,13 +67,20 @@ export const stockKeys = {
     options?.includeSalaryEligibility ?? false,
   ] as const,
   autoParticipantOverviewsRoot: () => [...stockKeys.autoMarketStatus(), "participants", "overviews"] as const,
-  autoParticipantOverviews: (options?: { includeHoldings?: boolean; userKeys?: string[] }) => [
+  autoParticipantOverviews: (options?: { activityScope?: string; includeHoldings?: boolean; userKeys?: string[] }) => [
     ...stockKeys.autoParticipantOverviewsRoot(),
+    options?.activityScope ?? "RECENT_SIMULATION_DAY",
     options?.includeHoldings ?? true,
     [...(options?.userKeys ?? [])].sort(),
   ] as const,
   autoParticipants: () => [...stockKeys.autoMarketStatus(), "participants", "list"] as const,
-  autoParticipantProfileOverviews: () => [...stockKeys.autoMarketStatus(), "participants", "profile-overviews"] as const,
+  autoParticipantProfileOverviews: (options?: { activityScope?: string; profileTypes?: string[] }) => [
+    ...stockKeys.autoMarketStatus(),
+    "participants",
+    "profile-overviews",
+    options?.activityScope ?? "RECENT_SIMULATION_DAY",
+    [...(options?.profileTypes ?? [])].sort(),
+  ] as const,
   corporateActions: (symbol: string) => [...stockKeys.orderBookInstruments(), symbol, "corporate-actions"] as const,
   instrumentReports: (symbol: string) => [...stockKeys.orderBookInstruments(), symbol, "reports"] as const,
   account: () => [...stockKeys.all, "account"] as const,

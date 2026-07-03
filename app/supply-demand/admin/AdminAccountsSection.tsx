@@ -19,6 +19,7 @@ type AdminAccountsSectionProps = {
   loadingSalaryEligibility: boolean;
   onRefreshCashFlowPage: () => void;
   onRefreshProfileOverviews: () => void;
+  onLoadAllProfileOverviews: () => void;
   onCashFlowPageChange: (page: number) => void;
   userCashKey: string;
   userCashAmount: string;
@@ -36,8 +37,11 @@ type AdminAccountsSectionProps = {
   lastCashFlowRun: StockBatchJobRun | null;
   onRunCashFlow: () => void;
   profileOverviewSummaries: ParticipantProfileOverviewSummary[];
+  profileOverviewAllSummaries: ParticipantProfileOverviewSummary[];
   loadingProfileOverviews: boolean;
+  loadingProfileOverviewAll: boolean;
   profileOverviewError: boolean;
+  profileOverviewAllError: boolean;
 };
 
 export function AdminAccountsSection({
@@ -47,6 +51,7 @@ export function AdminAccountsSection({
   loadingSalaryEligibility,
   onRefreshCashFlowPage,
   onRefreshProfileOverviews,
+  onLoadAllProfileOverviews,
   onCashFlowPageChange,
   userCashKey,
   userCashAmount,
@@ -64,8 +69,11 @@ export function AdminAccountsSection({
   lastCashFlowRun,
   onRunCashFlow,
   profileOverviewSummaries,
+  profileOverviewAllSummaries,
   loadingProfileOverviews,
+  loadingProfileOverviewAll,
   profileOverviewError,
+  profileOverviewAllError,
 }: AdminAccountsSectionProps) {
   if (activeSection === "cash-flow-ledger") {
     return (
@@ -125,6 +133,10 @@ export function AdminAccountsSection({
         loading={loadingProfileOverviews}
         error={profileOverviewError}
         onRefresh={onRefreshProfileOverviews}
+        allSummaries={profileOverviewAllSummaries}
+        loadingAll={loadingProfileOverviewAll}
+        allError={profileOverviewAllError}
+        onLoadAll={onLoadAllProfileOverviews}
       />
     );
   }

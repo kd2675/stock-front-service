@@ -127,7 +127,7 @@ export function OrderTicketPanel({
           <span className="min-w-0 truncate text-right font-black tabular-nums">{formatWon(estimatedOrderAmount)}</span>
         </div>
         <div className="mt-2 flex items-center justify-between gap-3 text-xs font-bold text-[#8b95a1]">
-          <span>호가단위</span>
+          <span>현재 호가단위</span>
           <span className="tabular-nums">{selectedInstrument ? `${formatNumber(selectedInstrument.tickSize)}원` : "-"}</span>
         </div>
       </div>

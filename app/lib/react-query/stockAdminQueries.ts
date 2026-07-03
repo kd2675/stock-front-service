@@ -2,6 +2,8 @@ import { keepPreviousData } from "@tanstack/react-query";
 
 import { normalizeStringList } from "@/app/lib/stringLists";
 import {
+  type AdminFundFlowScope,
+  type AutoParticipantActivityScope,
   getAdminCashFlows,
   getAdminFlowOverview,
   getAdminFundFlowSummary,
@@ -49,11 +51,13 @@ export function adminFundFlowSummaryQueryOptions(
   token: string | null,
   options: {
     enabled?: boolean;
+    scope?: AdminFundFlowScope;
   } = {},
 ) {
+  const scope = options.scope ?? "RECENT_SIMULATION_DAY";
   return adminAuthenticatedQueryOptions(token, {
-    queryKey: stockKeys.adminFundFlowSummary(),
-    request: getAdminFundFlowSummary,
+    queryKey: stockKeys.adminFundFlowSummary({ scope }),
+    request: (nextToken) => getAdminFundFlowSummary(nextToken, { scope }),
     fallbackMessage: "전체 자금 흐름을 조회하지 못했습니다.",
     enabled: options.enabled,
   });
@@ -65,15 +69,18 @@ export function adminFlowOverviewQueryOptions(
     enabled?: boolean;
     includeFundFlow?: boolean;
     includeSymbolFlows?: boolean;
+    fundFlowScope?: AdminFundFlowScope;
     symbolFlowLimit?: number;
   } = {},
 ) {
   const includeFundFlow = options.includeFundFlow ?? true;
   const includeSymbolFlows = options.includeSymbolFlows ?? true;
+  const fundFlowScope = options.fundFlowScope ?? "RECENT_SIMULATION_DAY";
   const symbolFlowLimit = options.symbolFlowLimit;
   return adminAuthenticatedQueryOptions(token, {
-    queryKey: stockKeys.adminFlowOverview({ includeFundFlow, includeSymbolFlows, symbolFlowLimit }),
+    queryKey: stockKeys.adminFlowOverview({ fundFlowScope, includeFundFlow, includeSymbolFlows, symbolFlowLimit }),
     request: (nextToken) => getAdminFlowOverview(nextToken, {
+      fundFlowScope,
       includeFundFlow,
       includeSymbolFlows,
       symbolFlowLimit,
@@ -171,6 +178,7 @@ export function autoParticipantOverviewsQueryOptions(
   token: string | null,
   options: {
     enabled?: boolean;
+    activityScope?: AutoParticipantActivityScope;
     includeHoldings?: boolean;
     refetchIntervalMs?: number | false;
     staleTimeMs?: number;
@@ -178,10 +186,11 @@ export function autoParticipantOverviewsQueryOptions(
   } = {},
 ) {
   const includeHoldings = options.includeHoldings ?? true;
+  const activityScope = options.activityScope ?? "RECENT_SIMULATION_DAY";
   const normalizedUserKeys = normalizeStringList(options.userKeys, { sort: true });
   return adminSnapshotQueryOptions(token, {
-    queryKey: stockKeys.autoParticipantOverviews({ includeHoldings, userKeys: normalizedUserKeys }),
-    request: (nextToken) => getAutoParticipantOverviews(nextToken, { includeHoldings, userKeys: normalizedUserKeys }),
+    queryKey: stockKeys.autoParticipantOverviews({ activityScope, includeHoldings, userKeys: normalizedUserKeys }),
+    request: (nextToken) => getAutoParticipantOverviews(nextToken, { activityScope, includeHoldings, userKeys: normalizedUserKeys }),
     fallbackMessage: "자동 참여자 현황을 조회하지 못했습니다.",
     enabled: options.enabled,
     refetchInterval: options.refetchIntervalMs ?? USER_ACTIVITY_REFETCH_MS,
@@ -193,13 +202,17 @@ export function autoParticipantProfileOverviewsQueryOptions(
   token: string | null,
   options: {
     enabled?: boolean;
+    activityScope?: AutoParticipantActivityScope;
+    profileTypes?: string[];
     refetchIntervalMs?: number | false;
     staleTimeMs?: number;
   } = {},
 ) {
+  const activityScope = options.activityScope ?? "RECENT_SIMULATION_DAY";
+  const normalizedProfileTypes = normalizeStringList(options.profileTypes, { sort: true });
   return adminSnapshotQueryOptions(token, {
-    queryKey: stockKeys.autoParticipantProfileOverviews(),
-    request: getAutoParticipantProfileOverviews,
+    queryKey: stockKeys.autoParticipantProfileOverviews({ activityScope, profileTypes: normalizedProfileTypes }),
+    request: (nextToken) => getAutoParticipantProfileOverviews(nextToken, { activityScope, profileTypes: normalizedProfileTypes }),
     fallbackMessage: "프로필별 자동 참여자 현황을 조회하지 못했습니다.",
     enabled: options.enabled,
     refetchInterval: options.refetchIntervalMs ?? false,

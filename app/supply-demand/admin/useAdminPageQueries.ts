@@ -66,7 +66,16 @@ export function useAdminPageQueries({
 
   const autoParticipantProfileOverviewsQuery = useQuery({
     ...autoParticipantProfileOverviewsQueryOptions(accessToken, {
+      activityScope: "RECENT_SIMULATION_DAY",
       enabled: queryFlags.shouldUseAutoParticipantProfileOverviews,
+      refetchIntervalMs: false,
+    }),
+    select: resolveParticipantProfileOverviewSummaries,
+  });
+  const autoParticipantProfileOverviewsAllQuery = useQuery({
+    ...autoParticipantProfileOverviewsQueryOptions(accessToken, {
+      activityScope: "ALL",
+      enabled: false,
       refetchIntervalMs: false,
     }),
     select: resolveParticipantProfileOverviewSummaries,
@@ -101,6 +110,11 @@ export function useAdminPageQueries({
   }));
   const adminFundFlowSummaryQuery = useQuery(adminFundFlowSummaryQueryOptions(accessToken, {
     enabled: isAdminAllowed && queryFlags.isMarketSection,
+    scope: "RECENT_SIMULATION_DAY",
+  }));
+  const adminAllFundFlowSummaryQuery = useQuery(adminFundFlowSummaryQueryOptions(accessToken, {
+    enabled: false,
+    scope: "ALL",
   }));
   const adminFlowOverviewQuery = useQuery(adminFlowOverviewQueryOptions(accessToken, {
     enabled: queryFlags.shouldUseAdminFlowOverview,
@@ -163,12 +177,14 @@ export function useAdminPageQueries({
   return {
     ...queryResults,
     adminCashFlowPageQuery,
+    adminAllFundFlowSummaryQuery,
     adminFlowOverviewQuery,
     adminFundFlowSummaryQuery,
     adminSymbolFlowsQuery,
     autoMarketDetailsQuery,
     autoParticipantsQuery,
     autoParticipantProfileOverviewsQuery,
+    autoParticipantProfileOverviewsAllQuery,
     batchJobRuntimeControlsQuery,
     shouldLoadInstrumentDetails: queryFlags.shouldLoadInstrumentDetails,
     simulationClockQuery,

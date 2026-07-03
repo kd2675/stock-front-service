@@ -60,7 +60,6 @@ export function useAdminInitialIssueActions({
         market: values.market || DEFAULT_CREATE_INSTRUMENT_FORM_VALUES.market,
         initialPrice: values.initialPrice,
         issuedShares: values.issuedShares,
-        tickSize: values.tickSize,
         priceLimitRate: values.priceLimitRate,
         listingAutoAccount: {
           displayName: optionalText(values.listingAutoDisplayName ?? "") ?? undefined,

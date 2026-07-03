@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { isWithinPriceLimit, matchesTickSize } from "@/app/lib/orderBookPricing";
+import { isWithinPriceLimit, matchesTickSize, resolveTickSizeForPrice } from "@/app/lib/orderBookPricing";
 import { formatNumber, formatWon } from "@/app/lib/stockFormatters";
 import type { OrderBookInstrument, OrderType } from "@/app/types/stock";
 
@@ -15,7 +15,7 @@ export function parseOrderTicket(input: {
   orderType: OrderType;
   quantity: string;
   limitPrice: string;
-  instrument?: Pick<OrderBookInstrument, "tickSize" | "priceLimitBase" | "priceLimitRate"> | null;
+  instrument?: Pick<OrderBookInstrument, "market" | "tickSize" | "priceLimitBase" | "priceLimitRate"> | null;
 }) {
   const parsed = orderTicketSchema.safeParse({
     quantity: input.quantity,
@@ -29,8 +29,8 @@ export function parseOrderTicket(input: {
     if (limitPrice === undefined || !Number.isFinite(limitPrice)) {
       return { ok: false as const, message: "주문가는 0보다 큰 숫자로 입력해 주세요." };
     }
-    if (!matchesTickSize(limitPrice, input.instrument.tickSize)) {
-      return { ok: false as const, message: `주문가는 ${formatNumber(input.instrument.tickSize)}원 단위로 입력해 주세요.` };
+    if (!matchesTickSize(limitPrice, input.instrument.tickSize, input.instrument.market)) {
+      return { ok: false as const, message: `주문가는 ${formatNumber(resolveTickSizeForPrice(limitPrice, input.instrument.market))}원 단위로 입력해 주세요.` };
     }
     if (!isWithinPriceLimit(limitPrice, input.instrument.priceLimitBase, input.instrument.priceLimitRate)) {
       const lowerLimit = (input.instrument.priceLimitBase * (100 - input.instrument.priceLimitRate)) / 100;

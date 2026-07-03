@@ -11,21 +11,29 @@ import type { AdminFlowOverview, AdminFundFlowSummary, AdminSymbolFlowList } fro
 export function AdminFlowOverviewPanel({
   overview,
   fundFlow,
+  allFundFlow,
   loadingFundFlow,
+  loadingAllFundFlow,
   fundFlowError,
+  allFundFlowError,
   symbolFlowList,
   loadingSymbolFlows,
   loadingAllSymbolFlows,
+  onLoadAllFundFlow,
   onLoadAllSymbolFlows,
   onRefresh,
 }: {
   overview: AdminFlowOverview | null;
   fundFlow: AdminFundFlowSummary | null;
+  allFundFlow: AdminFundFlowSummary | null;
   loadingFundFlow: boolean;
+  loadingAllFundFlow: boolean;
   fundFlowError: boolean;
+  allFundFlowError: boolean;
   symbolFlowList: AdminSymbolFlowList;
   loadingSymbolFlows: boolean;
   loadingAllSymbolFlows: boolean;
+  onLoadAllFundFlow: () => void;
   onLoadAllSymbolFlows: () => void;
   onRefresh: () => void;
 }) {
@@ -45,17 +53,17 @@ export function AdminFlowOverviewPanel({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-black">전체 흐름 대시보드</h2>
-          <p className="mt-1 text-xs font-bold text-[#8b95a1]">전체 계좌 자금, 주문장 종목 체결, 최근 현금 원장을 봅니다. 누적 자금 요약은 별도 조회로 갱신됩니다.</p>
+          <p className="mt-1 text-xs font-bold text-[#8b95a1]">전체 계좌 자금, 주문장 종목 체결, 최근 현금 원장을 봅니다. 자금 흐름은 기본적으로 시뮬레이션 하루 기준입니다.</p>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
           <span className="rounded-md bg-[#19324a] px-2 py-1 text-xs font-black text-[#64a8ff]">
             {overview ? `갱신 ${formatDateTime(overview.generatedAt)}` : "조회 필요"}
           </span>
           {loadingFundFlow ? (
-            <span className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-[#d8ecff]">자금 요약 조회 중</span>
+            <span className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-[#d8ecff]">하루 자금 조회 중</span>
           ) : null}
           {fundFlowError ? (
-            <span className="rounded-md bg-[#3a1f1b] px-2 py-1 text-xs font-black text-[#ffb4a8]">자금 요약 실패</span>
+            <span className="rounded-md bg-[#3a1f1b] px-2 py-1 text-xs font-black text-[#ffb4a8]">하루 자금 실패</span>
           ) : null}
           <button
             type="button"
@@ -67,7 +75,15 @@ export function AdminFlowOverviewPanel({
         </div>
       </div>
 
-      <AdminFlowFundSummaryPanel fundFlow={fundFlow} loading={loadingFundFlow} error={fundFlowError} />
+      <AdminFlowFundSummaryPanel
+        fundFlow={fundFlow}
+        allFundFlow={allFundFlow}
+        loading={loadingFundFlow}
+        loadingAll={loadingAllFundFlow}
+        error={fundFlowError}
+        allError={allFundFlowError}
+        onLoadAll={onLoadAllFundFlow}
+      />
       <AdminOrderCorporateFlowPanel orderFlow={orderFlow} corporateActionFlow={corporateActionFlow} />
 
       <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,0.8fr)]">

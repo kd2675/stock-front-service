@@ -10,6 +10,7 @@ import { useAdminInitialIssueActions } from "@/app/supply-demand/admin/useAdminI
 import { useAdminInstrumentReportActions } from "@/app/supply-demand/admin/useAdminInstrumentReportActions";
 import { useAdminListingAutoAccountActions } from "@/app/supply-demand/admin/useAdminListingAutoAccountActions";
 import { useAdminMarketStatusActions } from "@/app/supply-demand/admin/useAdminMarketStatusActions";
+import { useAdminOrderBookInstrumentActions } from "@/app/supply-demand/admin/useAdminOrderBookInstrumentActions";
 import type { AdminActionMessageSetter } from "@/app/supply-demand/admin/AdminActionTypes";
 import type { useAdminPageDraftState } from "@/app/supply-demand/admin/useAdminPageDraftState";
 import type { useAdminPageQueries } from "@/app/supply-demand/admin/useAdminPageQueries";
@@ -142,6 +143,12 @@ export function useAdminPageActions({
     requireAdminToken,
     setMessage,
   });
+  const orderBookInstrumentActions = useAdminOrderBookInstrumentActions({
+    queryClient,
+    reloadOrderBookMarketState,
+    requireAdminToken,
+    setMessage,
+  });
   const simulationClockActions = useAdminSimulationClockActions({
     reloadSimulationClockState,
     requireAdminToken,
@@ -245,6 +252,7 @@ export function useAdminPageActions({
     ...batchActions,
     ...instrumentReportActions,
     ...marketStatusActions,
+    ...orderBookInstrumentActions,
     ...simulationClockActions,
     ...autoMarketConfigActions,
     ...listingAutoAccountActions,

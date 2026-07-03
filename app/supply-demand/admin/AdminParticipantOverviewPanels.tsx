@@ -1,4 +1,4 @@
-import { memo, useMemo } from "react";
+import { memo, useMemo, useState } from "react";
 
 import { formatCount, formatDateTime, formatInteger, formatNumber, formatSignedPercent, formatWon } from "@/app/supply-demand/admin/AdminFormatters";
 import { ProfileMiniMetric, ProfileOverviewInfoItem } from "@/app/supply-demand/admin/AdminMetricCards";
@@ -13,14 +13,32 @@ export function ParticipantProfileOverviewPanel({
   loading,
   error,
   onRefresh,
+  allSummaries,
+  loadingAll,
+  allError,
+  onLoadAll,
 }: {
   summaries: ParticipantProfileOverviewSummary[];
   loading: boolean;
   error: boolean;
   onRefresh: () => void;
+  allSummaries: ParticipantProfileOverviewSummary[];
+  loadingAll: boolean;
+  allError: boolean;
+  onLoadAll: () => void;
 }) {
   const total = useMemo(() => resolveParticipantProfileOverviewTotal(summaries), [summaries]);
   const totalReturnRate = useMemo(() => resolveParticipantProfileOverviewReturnRate(total), [total]);
+  const allTotal = useMemo(() => resolveParticipantProfileOverviewTotal(allSummaries), [allSummaries]);
+  const allTotalReturnRate = useMemo(() => resolveParticipantProfileOverviewReturnRate(allTotal), [allTotal]);
+  const [showAllModal, setShowAllModal] = useState(false);
+
+  const openAllModal = () => {
+    setShowAllModal(true);
+    if (allSummaries.length === 0 && !loadingAll) {
+      onLoadAll();
+    }
+  };
 
   return (
     <section className="mt-5 rounded-lg border border-white/10 bg-white/[0.06] p-4">
@@ -28,7 +46,7 @@ export function ParticipantProfileOverviewPanel({
         <div>
           <h2 className="text-base font-black">프로필별 자동참가자 현황</h2>
           <p className="mt-1 text-xs font-bold text-[#8b95a1]">
-            자동참가자를 심리 프로필 기준으로 묶어 현금, 보유 주식, 평가액, 손익, 주문과 체결 흐름을 봅니다.
+            기본 조회는 요청 시점의 시뮬레이션 시간부터 최근 1일만 반영합니다. 전체 이력은 별도 조회로 확인합니다.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs font-black">
@@ -41,6 +59,13 @@ export function ParticipantProfileOverviewPanel({
             className="min-h-8 rounded-md bg-[#f2f4f6] px-3 py-1.5 text-xs font-black text-[#191f28] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? "조회 중" : "새로고침"}
+          </button>
+          <button
+            type="button"
+            onClick={openAllModal}
+            className="min-h-8 rounded-md border border-white/10 px-3 py-1.5 text-xs font-black text-[#d8ecff] transition hover:border-[#64a8ff]/60"
+          >
+            전체 이력
           </button>
         </div>
       </div>
@@ -63,6 +88,57 @@ export function ParticipantProfileOverviewPanel({
           <ParticipantProfileOverviewCard key={summary.profileType} summary={summary} />
         ))}
       </div>
+      {showAllModal ? (
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 px-4 py-8">
+          <div className="w-full max-w-6xl rounded-lg border border-white/10 bg-[#11161d] p-4 shadow-2xl">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h3 className="text-base font-black text-white">프로필별 전체 이력</h3>
+                <p className="mt-1 text-xs font-bold leading-5 text-[#8b95a1]">
+                  요청 시점의 시뮬레이션 시간 이전 전체 주문/체결 이력을 기준으로 최근 활동을 다시 계산합니다. 장중에는 조회가 오래 걸릴 수 있습니다.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 text-xs font-black">
+                {loadingAll ? <span className="rounded-md bg-white/10 px-2 py-1 text-[#d8ecff]">전체 조회 중</span> : null}
+                {allError ? <span className="rounded-md bg-[#3a1f1b] px-2 py-1 text-[#ffb4a8]">전체 조회 실패</span> : null}
+                <button
+                  type="button"
+                  onClick={onLoadAll}
+                  disabled={loadingAll}
+                  className="min-h-8 rounded-md bg-[#f2f4f6] px-3 py-1.5 text-xs font-black text-[#191f28] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  다시 조회
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAllModal(false)}
+                  className="min-h-8 rounded-md border border-white/10 px-3 py-1.5 text-xs font-black text-[#d8ecff] transition hover:border-white/30"
+                >
+                  닫기
+                </button>
+              </div>
+            </div>
+            <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
+              <ProfileMiniMetric label="전체 자동참가자" value={formatCount(allTotal.totalCount, "명")} tone="blue" />
+              <ProfileMiniMetric label="가동 참가자" value={formatCount(allTotal.enabledCount, "명")} tone="green" />
+              <ProfileMiniMetric label="가용 현금" value={formatWon(allTotal.availableCash)} tone="blue" />
+              <ProfileMiniMetric label="보유 평가액" value={formatWon(allTotal.holdingMarketValue)} tone="muted" />
+              <ProfileMiniMetric label="총 손익" value={formatWon(allTotal.totalProfit)} tone={allTotal.totalProfit > 0 ? "green" : allTotal.totalProfit < 0 ? "red" : "muted"} />
+              <ProfileMiniMetric label="전체 수익률" value={formatSignedPercent(allTotalReturnRate)} tone={allTotalReturnRate > 0 ? "green" : allTotalReturnRate < 0 ? "red" : "muted"} />
+            </div>
+            <div className="mt-4 grid min-w-0 gap-3">
+              {allSummaries.map((summary) => (
+                <ParticipantProfileOverviewCard key={summary.profileType} summary={summary} />
+              ))}
+              {allSummaries.length === 0 && !loadingAll ? (
+                <div className="rounded-md border border-white/10 bg-black/20 px-3 py-4 text-sm font-bold text-[#8b95a1]">
+                  전체 이력 조회 결과가 없습니다.
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
