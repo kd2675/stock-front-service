@@ -1,6 +1,6 @@
 import { formatKoKrTimeSecond } from "@/app/lib/localeFormatters";
 import { formatNumber, formatRoundedPriceOrDash, formatWon } from "@/app/lib/stockFormatters";
-import { formatMarketSessionStatus } from "@/app/supply-demand/SupplyDemandFormatters";
+import { formatEffectiveMarketSessionStatus } from "@/app/supply-demand/SupplyDemandFormatters";
 import type {
   AutoMarketConfig,
   AutoMarketStatus,
@@ -53,7 +53,7 @@ export function SelectedOrderBookInstrumentPanel({
       <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Metric label="현재가" value={formatWon(selectedInstrument.currentPrice)} />
         <Metric label="제한 기준가" value={formatWon(selectedInstrument.priceLimitBase)} />
-        <Metric label="장 상태" value={formatMarketSessionStatus(selectedOrderBookConfig?.marketStatus)} tone={isSelectedMarketOpen ? "blue" : "red"} />
+        <Metric label="장 상태" value={formatEffectiveMarketSessionStatus(selectedOrderBookConfig?.marketStatus, isSelectedMarketOpen)} tone={isSelectedMarketOpen ? "blue" : "red"} />
         <Metric label="2시간 거래량" value={`${formatNumber(summary?.todayVolume ?? 0)}주`} />
         <Metric label="2시간 거래대금" value={formatWon(summary?.todayTurnover)} />
         <Metric label="VWAP" value={formatWon(summary?.vwap)} />
@@ -81,13 +81,17 @@ export function AutoMarketStatusPanel({
   selectedOrderBookConfig?: SymbolMarketConfig;
   updatedAt: Date | null;
 }) {
+  const isSelectedOrderBookOpen = orderBookMarket?.enabled === true
+    && selectedOrderBookConfig?.enabled === true
+    && selectedOrderBookConfig.marketStatus === "OPEN";
+
   return (
     <div className="rounded-lg border border-[#e5e8eb] bg-white p-4">
       <h3 className="text-base font-black">자동장 상태</h3>
       <div className="mt-4 space-y-3">
         <StatusRow label="상태" value={autoMarket?.enabled ? "가동" : "정지"} />
         <StatusRow label="주문장 시장" value={orderBookMarket?.enabled ? "가동" : "정지"} />
-        <StatusRow label="선택 종목 장" value={formatMarketSessionStatus(selectedOrderBookConfig?.marketStatus)} />
+        <StatusRow label="선택 종목 장" value={formatEffectiveMarketSessionStatus(selectedOrderBookConfig?.marketStatus, isSelectedOrderBookOpen)} />
         <StatusRow label="자동 강도" value={selectedConfig ? `${selectedConfig.intensity}/10` : "-"} />
         <StatusRow label="자동 참여자" value={autoMarket ? `${autoMarket.enabledParticipantCount}명` : "-"} />
         <StatusRow label="2시간 자동 체결" value={autoMarket ? `${autoMarket.todayAutoExecutionCount}건` : "-"} />

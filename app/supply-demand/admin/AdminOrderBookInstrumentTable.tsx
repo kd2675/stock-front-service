@@ -47,6 +47,7 @@ export function AdminOrderBookInstrumentTable({
                     <option value="OPEN">정규장</option>
                     <option value="CLOSED">마감</option>
                     <option value="HALTED">거래정지</option>
+                    <option value="CIRCUIT_BREAKER">서킷브레이크</option>
                   </select>
                 </td>
                 <td className="px-4 py-3 tabular-nums">{formatCount(instrument.issuedShares, "주")}</td>

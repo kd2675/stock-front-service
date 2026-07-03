@@ -69,7 +69,9 @@ export function useSupplyDemandPageDerivedState({
     })),
     [autoConfigBySymbol, instruments, orderBookMarketConfigBySymbol],
   );
-  const isSelectedMarketOpen = selectedOrderBookConfig?.enabled === true && selectedOrderBookConfig.marketStatus === "OPEN";
+  const isSelectedMarketOpen = orderBookMarket?.enabled === true
+    && selectedOrderBookConfig?.enabled === true
+    && selectedOrderBookConfig.marketStatus === "OPEN";
   const orderBookOrders = orders;
   const orderBookExecutions = executions;
   const estimatedOrderAmount = useMemo(() => calculateEstimatedOrderAmount({

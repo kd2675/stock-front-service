@@ -49,6 +49,10 @@ export type SimulationClock = {
   simulationDate: string;
   simulationDateTime: string;
   simulationDayStart: string;
+  marketSession: "PRE_OPEN" | "REGULAR" | "AFTER_CLOSE";
+  marketOpenTime: string;
+  marketCloseTime: string;
+  postCloseProcessingCompleted: boolean;
   realSecondsPerSimulationDay: number;
   running: boolean;
   stale: boolean;
@@ -57,9 +61,11 @@ export type SimulationClock = {
   lastHeartbeatAt?: string | null;
 };
 
+export type SimulationClockJumpAction = "TODAY_MARKET_CLOSE" | "NEXT_SIMULATION_DAY_START" | "NEXT_MARKET_OPEN";
+
 export type OrderSide = "BUY" | "SELL";
 export type MarketType = "VIRTUAL_PRICE" | "ORDER_BOOK";
-export type MarketSessionStatus = "OPEN" | "CLOSED" | "HALTED";
+export type MarketSessionStatus = "OPEN" | "CLOSED" | "HALTED" | "CIRCUIT_BREAKER";
 
 export type OrderBookLevel = {
   price: number;

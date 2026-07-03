@@ -17,6 +17,7 @@ import {
   instrumentReportsQueryOptions,
   orderBookInstrumentsQueryOptions,
   orderBookMarketStatusQueryOptions,
+  simulationClockQueryOptions,
 } from "@/app/lib/react-query/stockMarketQueries";
 import {
   ADMIN_CASH_FLOW_PAGE_SIZE,
@@ -137,6 +138,10 @@ export function useAdminPageQueries({
     includeTodayExecution: false,
     refetchIntervalMs: false,
   }));
+  const simulationClockQuery = useQuery({
+    ...simulationClockQueryOptions(),
+    enabled: isAdminAllowed && queryFlags.isMarketSection,
+  });
 
   const queryResults = normalizeAdminPageQueryResults({
     adminCashFlowPage: isAdminAllowed && queryFlags.isCashFlowLedgerSection ? adminCashFlowPageQuery.data : null,
@@ -166,6 +171,7 @@ export function useAdminPageQueries({
     autoParticipantProfileOverviewsQuery,
     batchJobRuntimeControlsQuery,
     shouldLoadInstrumentDetails: queryFlags.shouldLoadInstrumentDetails,
+    simulationClockQuery,
     userFundFlowQuery,
   };
 }

@@ -9,6 +9,7 @@ import {
   invalidateAutoParticipantAdminQueries,
   invalidateAutoParticipantStrategyQueries,
   invalidateOrderBookMarketAdminQueries,
+  invalidateSimulationClockQueries,
 } from "@/app/lib/react-query/stockInvalidations";
 
 export function useAdminQueryInvalidations(queryClient: QueryClient) {
@@ -40,6 +41,10 @@ export function useAdminQueryInvalidations(queryClient: QueryClient) {
     void invalidateOrderBookMarketAdminQueries(queryClient);
   }, [queryClient]);
 
+  const reloadSimulationClockState = useCallback(() => {
+    void invalidateSimulationClockQueries(queryClient);
+  }, [queryClient]);
+
   return {
     reloadAdminCashFlowState,
     reloadAdminMarketFlowState,
@@ -48,5 +53,6 @@ export function useAdminQueryInvalidations(queryClient: QueryClient) {
     reloadAutoParticipantState,
     reloadAutoParticipantStrategyState,
     reloadOrderBookMarketState,
+    reloadSimulationClockState,
   };
 }

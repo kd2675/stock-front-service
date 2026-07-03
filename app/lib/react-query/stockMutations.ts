@@ -10,6 +10,7 @@ import {
   cancelOrderPartially,
   createOrderBookInstrument,
   deleteInstrumentReport,
+  jumpSimulationClock,
   openStockAccount,
   placeOrder,
   publishInstrumentReport,
@@ -41,6 +42,7 @@ import type {
   StockOrderBookInstrumentCreatePayload,
   StockOrderPartialCancelPayload,
   StockOrderPlacePayload,
+  StockSimulationClockJumpPayload,
 } from "@/app/lib/stock";
 import { unwrapAuthenticatedStockRequest } from "@/app/lib/react-query/stockResult";
 import type { AutoParticipantProfileType, MarketType } from "@/app/types/stock";
@@ -135,6 +137,12 @@ export function adminUpdateMarketStatusMutationOptions() {
       symbol: string;
       payload: StockMarketStatusPayload;
     }) => updateMarketStatus(token, variables.marketType, variables.symbol, variables.payload),
+  );
+}
+
+export function adminJumpSimulationClockMutationOptions() {
+  return adminMutationOptions(
+    (token, payload: StockSimulationClockJumpPayload) => jumpSimulationClock(token, payload),
   );
 }
 

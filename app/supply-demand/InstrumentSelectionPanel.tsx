@@ -1,7 +1,7 @@
 import { calculateChangeRate } from "@/app/lib/priceMath";
 import { formatKoKrTimeSecond } from "@/app/lib/localeFormatters";
 import { formatNumber, formatWon } from "@/app/lib/stockFormatters";
-import { formatMarketSessionStatus } from "@/app/supply-demand/SupplyDemandFormatters";
+import { formatEffectiveMarketSessionStatus } from "@/app/supply-demand/SupplyDemandFormatters";
 import type { AutoMarketConfig, OrderBookInstrument, SymbolMarketConfig } from "@/app/types/stock";
 
 export type InstrumentSummary = {
@@ -13,6 +13,7 @@ export type InstrumentSummary = {
 type InstrumentSelectionPanelProps = {
   isLoading: boolean;
   isAdmin: boolean;
+  isMarketOpen: boolean;
   summaries: InstrumentSummary[];
   updatedAt: Date | null;
   onAdminClick: () => void;
@@ -22,12 +23,15 @@ type InstrumentSelectionPanelProps = {
 export function InstrumentSelectionPanel({
   isLoading,
   isAdmin,
+  isMarketOpen,
   summaries,
   updatedAt,
   onAdminClick,
   onSelect,
 }: InstrumentSelectionPanelProps) {
-  const openCount = summaries.filter((summary) => summary.marketConfig?.enabled === true && summary.marketConfig.marketStatus === "OPEN").length;
+  const openCount = isMarketOpen
+    ? summaries.filter((summary) => summary.marketConfig?.enabled === true && summary.marketConfig.marketStatus === "OPEN").length
+    : 0;
   const autoEnabledCount = summaries.filter((summary) => summary.autoConfig?.enabled === true).length;
 
   return (
@@ -65,7 +69,7 @@ export function InstrumentSelectionPanel({
       ) : summaries.length ? (
         <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {summaries.map(({ autoConfig, instrument, marketConfig }) => {
-            const isOpen = marketConfig?.enabled === true && marketConfig.marketStatus === "OPEN";
+            const isOpen = isMarketOpen && marketConfig?.enabled === true && marketConfig.marketStatus === "OPEN";
             const changeRate = calculateChangeRate(instrument.currentPrice, instrument.priceLimitBase);
             return (
               <button
@@ -80,7 +84,7 @@ export function InstrumentSelectionPanel({
                     <p className="mt-1 text-xs font-bold text-[#8b95a1]">{instrument.symbol} · {instrument.market}</p>
                   </div>
                   <span className={isOpen ? "shrink-0 rounded-sm bg-[#eff6ff] px-2 py-1 text-xs font-black text-[#3182f6]" : "shrink-0 rounded-sm bg-[#fff3f0] px-2 py-1 text-xs font-black text-[#d34b36]"}>
-                    {formatMarketSessionStatus(marketConfig?.marketStatus)}
+                    {formatEffectiveMarketSessionStatus(marketConfig?.marketStatus, isOpen)}
                   </span>
                 </div>
 

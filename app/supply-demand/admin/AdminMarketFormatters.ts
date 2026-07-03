@@ -38,6 +38,9 @@ export function formatFlowMarketStatus(status: string) {
   if (status === "HALTED") {
     return "거래정지";
   }
+  if (status === "CIRCUIT_BREAKER") {
+    return "서킷브레이크";
+  }
   return status;
 }
 

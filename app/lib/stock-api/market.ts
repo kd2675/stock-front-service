@@ -6,7 +6,7 @@ import {
   authenticatedPostJson,
   toQuery,
 } from "@/app/lib/stock-api/core";
-import type { AutoMarketStatus, CorporateAction, CorporateActionEntitlement, CorporateActionType, Instrument, InstrumentReport, ListingAutoPosition, MarketSessionStatus, MarketType, OrderBook, OrderBookCandle, OrderBookCandleInterval, OrderBookInstrument, OrderBookMarketStatus, OrderBookRecentExecution, OrderBookTradeSummary, Price, PriceTick, Ranking, SimulationClock, SymbolMarketConfig } from "@/app/types/stock";
+import type { AutoMarketStatus, CorporateAction, CorporateActionEntitlement, CorporateActionType, Instrument, InstrumentReport, ListingAutoPosition, MarketSessionStatus, MarketType, OrderBook, OrderBookCandle, OrderBookCandleInterval, OrderBookInstrument, OrderBookMarketStatus, OrderBookRecentExecution, OrderBookTradeSummary, Price, PriceTick, Ranking, SimulationClock, SimulationClockJumpAction, SymbolMarketConfig } from "@/app/types/stock";
 
 export type StockOrderBookInstrumentCreatePayload = {
   symbol: string;
@@ -51,6 +51,10 @@ export type StockInstrumentReportPayload = {
 export type StockMarketStatusPayload = {
   enabled?: boolean;
   marketStatus?: MarketSessionStatus;
+};
+
+export type StockSimulationClockJumpPayload = {
+  action: SimulationClockJumpAction;
 };
 
 export function getInstruments() {
@@ -170,6 +174,13 @@ export function getRankings() {
 
 export function getSimulationClock() {
   return getJson<SimulationClock>("/api/stock/v1/markets/simulation-clock");
+}
+
+export function jumpSimulationClock(
+  token: string,
+  payload: StockSimulationClockJumpPayload,
+) {
+  return authenticatedPatchJson<SimulationClock>(token, "/api/stock/v1/markets/simulation-clock", payload);
 }
 
 export function getOrderBookMarketStatus(options?: { includeConfigs?: boolean; includeTodayExecution?: boolean }) {

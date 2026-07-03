@@ -153,6 +153,7 @@ export default function SupplyDemandPage() {
         <InstrumentSelectionPanel
           isLoading={loading}
           isAdmin={isAdmin}
+          isMarketOpen={orderBookMarket?.enabled === true}
           summaries={instrumentSummaries}
           updatedAt={updatedAt}
           onAdminClick={() => router.push("/supply-demand/admin")}

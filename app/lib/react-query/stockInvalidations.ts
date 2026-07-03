@@ -224,6 +224,15 @@ export async function invalidateAdminMarketFlowQueries(queryClient: QueryClient)
   });
 }
 
+export async function invalidateSimulationClockQueries(queryClient: QueryClient) {
+  await invalidateQueryGroup(queryClient, [
+    stockKeys.simulationClock(),
+    stockKeys.orderBookMarketStatusRoot(),
+    stockKeys.adminFlowOverviewRoot(),
+    stockKeys.adminFundFlowSummary(),
+  ]);
+}
+
 export async function invalidateOrderBookMarketAdminQueries(queryClient: QueryClient) {
   await invalidateAdminFlowImpactedQueries(queryClient, [
     stockKeys.orderBookMarketStatusRoot(),

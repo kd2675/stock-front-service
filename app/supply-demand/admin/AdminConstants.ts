@@ -36,6 +36,14 @@ export const BATCH_JOB_RUNTIME_LABELS: Record<string, { label: string; descripti
     label: "자동장 주문 생성",
     description: "자동참여자와 종목별 자동장 기본값 기준으로 호가를 냅니다.",
   },
+  "auto-market-order-expiry": {
+    label: "자동장 주문 만료",
+    description: "자동장이 낸 오래된 미체결 주문을 정리하고 예약 자산을 해제합니다.",
+  },
+  "listing-auto-market": {
+    label: "상장주관사 주문 공급",
+    description: "상장주관사 자동계정이 초기 유동성 공급 주문을 냅니다.",
+  },
   "auto-participant-cash-flow": {
     label: "월급 지급",
     description: "가동 자동참여자와 ACTIVE 계좌에 반복 현금을 지급합니다.",
@@ -49,6 +57,8 @@ export const BATCH_JOB_RUNTIME_LABELS: Record<string, { label: string; descripti
 export const SUPPLY_DEMAND_BATCH_JOB_NAMES = new Set([
   "order-book-execution",
   "auto-market",
+  "auto-market-order-expiry",
+  "listing-auto-market",
   "auto-participant-cash-flow",
   "corporate-actions",
   "portfolio-settlement",
