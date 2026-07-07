@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { formatCount, formatDateTime, formatFlowMarketStatus, formatSignedPercent, formatWon } from "@/app/supply-demand/admin/AdminFormatters";
-import type { AdminSymbolFlow, AdminSymbolFlowList } from "@/app/types/stock";
+import type { AdminSymbolFlow, AdminSymbolFlowDailyCumulative, AdminSymbolFlowList } from "@/app/types/stock";
 
 export function AdminSymbolFlowTablePanel({
   allError,
@@ -21,9 +21,17 @@ export function AdminSymbolFlowTablePanel({
   visibleSymbolFlows: AdminSymbolFlow[];
 }) {
   const [showAllCumulativeFlows, setShowAllCumulativeFlows] = useState(false);
+  const [showWeeklyCumulativeFlows, setShowWeeklyCumulativeFlows] = useState(false);
 
   const openAllCumulativeFlows = () => {
     setShowAllCumulativeFlows(true);
+    if (!allSymbolFlowList && !loadingAll) {
+      onLoadAll();
+    }
+  };
+
+  const openWeeklyCumulativeFlows = () => {
+    setShowWeeklyCumulativeFlows(true);
     if (!allSymbolFlowList && !loadingAll) {
       onLoadAll();
     }
@@ -43,6 +51,13 @@ export function AdminSymbolFlowTablePanel({
             </span>
             <button
               type="button"
+              onClick={openWeeklyCumulativeFlows}
+              className="min-h-9 rounded-md border border-white/15 px-3 py-2 text-xs font-black text-[#d8ecff] transition hover:border-[#64a8ff] hover:text-white"
+            >
+              최근 7일 누적 보기
+            </button>
+            <button
+              type="button"
               onClick={openAllCumulativeFlows}
               className="min-h-9 rounded-md border border-white/15 px-3 py-2 text-xs font-black text-[#d8ecff] transition hover:border-[#64a8ff] hover:text-white"
             >
@@ -60,7 +75,94 @@ export function AdminSymbolFlowTablePanel({
         onClose={() => setShowAllCumulativeFlows(false)}
         onRefresh={onLoadAll}
       />
+      <AdminWeeklySymbolFlowModal
+        error={allError}
+        loading={loadingAll}
+        open={showWeeklyCumulativeFlows}
+        dailyCumulativeFlows={allSymbolFlowList?.dailyCumulativeFlows ?? []}
+        onClose={() => setShowWeeklyCumulativeFlows(false)}
+        onRefresh={onLoadAll}
+      />
     </>
+  );
+}
+
+function AdminWeeklySymbolFlowModal({
+  dailyCumulativeFlows,
+  error,
+  loading,
+  open,
+  onClose,
+  onRefresh,
+}: {
+  dailyCumulativeFlows: AdminSymbolFlowDailyCumulative[];
+  error: boolean;
+  loading: boolean;
+  open: boolean;
+  onClose: () => void;
+  onRefresh: () => void;
+}) {
+  if (!open) {
+    return null;
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 px-4 py-8 backdrop-blur-sm">
+      <div className="mx-auto w-full max-w-6xl rounded-lg border border-white/10 bg-[#11161d] p-4 shadow-2xl">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="text-base font-black text-white">최근 7일 누적 종목 흐름</h3>
+            <p className="mt-1 text-xs font-bold leading-5 text-[#8b95a1]">시뮬레이션 일자별 주문장 체결 누적입니다. 현재가, 대기주문, 보유자는 현재 스냅샷입니다.</p>
+          </div>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {loading ? (
+              <span className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-[#d8ecff]">조회 중</span>
+            ) : null}
+            {error ? (
+              <span className="rounded-md bg-[#3a1f1b] px-2 py-1 text-xs font-black text-[#ffb4a8]">조회 실패</span>
+            ) : null}
+            <button
+              type="button"
+              onClick={onRefresh}
+              className="min-h-9 rounded-md border border-white/15 px-3 py-2 text-xs font-black text-[#d8ecff] transition hover:border-[#64a8ff] hover:text-white"
+            >
+              다시 조회
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="min-h-9 rounded-md bg-white px-3 py-2 text-xs font-black text-[#101418]"
+            >
+              닫기
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-4 space-y-5">
+          {dailyCumulativeFlows.map((dailyFlow) => (
+            <section key={dailyFlow.simulationTradeDate} className="rounded-md border border-white/10 bg-black/20 p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h4 className="text-sm font-black text-white">{dailyFlow.simulationTradeDate}</h4>
+                  <p className="mt-1 text-xs font-bold text-[#8b95a1]">
+                    {formatDateTime(dailyFlow.rangeStart)} - {formatDateTime(dailyFlow.rangeEnd)}
+                  </p>
+                </div>
+                <span className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-[#d8ecff]">
+                  전체 {formatCount(dailyFlow.totalCount, "개")}
+                </span>
+              </div>
+              <AdminSymbolFlowTable flows={dailyFlow.symbolFlows} loading={loading} loadingMessage="최근 7일 누적 종목 흐름을 조회하고 있습니다." emptyMessage="해당 시뮬레이션 일자의 종목 흐름이 없습니다." />
+            </section>
+          ))}
+          {dailyCumulativeFlows.length === 0 ? (
+            <div className="rounded-md border border-white/10 px-3 py-8 text-center text-sm font-bold text-[#8b95a1]">
+              {loading ? "최근 7일 누적 종목 흐름을 조회하고 있습니다." : "최근 7일 누적 종목 흐름이 없습니다."}
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </div>
   );
 }
 

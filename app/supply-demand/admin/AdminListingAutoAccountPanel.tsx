@@ -88,6 +88,7 @@ export function AdminListingAutoAccountPanel({
       </div>
       {selectedAccount ? (
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <DarkMetric label="전체 발행량" value={`${formatNumber(selectedAccount.issuedShares)}주`} />
           <DarkMetric label="주관사 보유 주식" value={`${formatNumber(selectedAccount.holdingQuantity)}주`} />
           <DarkMetric label="예약 매도 수량" value={`${formatNumber(selectedAccount.reservedQuantity)}주`} />
           <DarkMetric label="가용 매도 수량" value={`${formatNumber(selectedAccount.availableQuantity)}주`} />
@@ -102,12 +103,13 @@ export function AdminListingAutoAccountPanel({
         </div>
       )}
       <div className="mt-4 overflow-x-auto rounded-md border border-white/10">
-        <table className="min-w-[1180px] w-full border-collapse text-sm">
+        <table className="min-w-[1280px] w-full border-collapse text-sm">
           <thead className="bg-white/10 text-left text-[#b8c2cc]">
             <tr>
               <th className="px-3 py-2">종목</th>
               <th className="px-3 py-2">계정</th>
               <th className="px-3 py-2">상태</th>
+              <th className="px-3 py-2">전체 발행량</th>
               <th className="px-3 py-2">보유/예약</th>
               <th className="px-3 py-2">가용</th>
               <th className="px-3 py-2">현금</th>
@@ -127,6 +129,7 @@ export function AdminListingAutoAccountPanel({
                     <p className="mt-0.5 text-xs font-bold text-[#5f6b76]">계좌 ID {account.accountId ?? "-"}</p>
                   </td>
                   <td className="px-3 py-2">{account.enabled ? "가동" : "정지"}</td>
+                  <td className="px-3 py-2 tabular-nums">{formatNumber(account.issuedShares)}주</td>
                   <td className="px-3 py-2 tabular-nums">
                     <p className="font-black">{formatNumber(account.holdingQuantity)}주</p>
                     <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">예약 {formatNumber(account.reservedQuantity)}주</p>
@@ -151,7 +154,7 @@ export function AdminListingAutoAccountPanel({
                 </tr>
                 {editingSymbol === account.symbol ? (
                   <tr>
-                    <td colSpan={9} className="bg-black/20 px-3 py-3">
+                    <td colSpan={10} className="bg-black/20 px-3 py-3">
                       <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[1.4fr_0.8fr_0.9fr_0.8fr_0.8fr_0.8fr_auto]">
                         <DarkInput label="표시명" value={draft.displayName} onChange={draftSetters.setDisplayName} placeholder="상장주관사" />
                         <DarkSelect label="상태" value={draft.enabled ? "true" : "false"} onChange={(value) => draftSetters.setEnabled(value === "true")}>
@@ -181,7 +184,7 @@ export function AdminListingAutoAccountPanel({
             ))}
             {accounts.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-3 py-4 text-[#8b95a1]">상장주관사 자동계정이 없습니다. 상장 이벤트를 먼저 적용하세요.</td>
+                <td colSpan={10} className="px-3 py-4 text-[#8b95a1]">상장주관사 자동계정이 없습니다. 상장 이벤트를 먼저 적용하세요.</td>
               </tr>
             ) : null}
           </tbody>

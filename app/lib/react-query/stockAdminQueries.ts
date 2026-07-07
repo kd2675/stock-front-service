@@ -99,13 +99,17 @@ export function adminSymbolFlowsQueryOptions(
     enabled?: boolean;
     limit?: number;
     scope?: AdminFundFlowScope;
+    includeDailyCumulative?: boolean;
+    dailyCumulativeDays?: number;
   } = {},
 ) {
   const limit = options.limit;
   const scope = options.scope ?? "RECENT_SIMULATION_DAY";
+  const includeDailyCumulative = options.includeDailyCumulative ?? false;
+  const dailyCumulativeDays = options.dailyCumulativeDays ?? 7;
   return adminAuthenticatedQueryOptions(token, {
-    queryKey: stockKeys.adminSymbolFlows({ limit, scope }),
-    request: (nextToken) => getAdminSymbolFlows(nextToken, { limit, scope }),
+    queryKey: stockKeys.adminSymbolFlows({ dailyCumulativeDays, includeDailyCumulative, limit, scope }),
+    request: (nextToken) => getAdminSymbolFlows(nextToken, { dailyCumulativeDays, includeDailyCumulative, limit, scope }),
     fallbackMessage: "종목별 흐름을 조회하지 못했습니다.",
     enabled: options.enabled,
   });

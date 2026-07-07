@@ -94,10 +94,12 @@ export function getAdminFundFlowSummary(token: string, options?: { scope?: Admin
   return authenticatedGetJson<AdminFundFlowSummary>(token, `/api/stock/v1/markets/admin/fund-flow-summary${query}`);
 }
 
-export function getAdminSymbolFlows(token: string, options?: { limit?: number; scope?: AdminFundFlowScope }) {
+export function getAdminSymbolFlows(token: string, options?: { limit?: number; scope?: AdminFundFlowScope; includeDailyCumulative?: boolean; dailyCumulativeDays?: number }) {
   const query = toQuery({
     limit: options?.limit,
     scope: options?.scope,
+    includeDailyCumulative: options?.includeDailyCumulative,
+    dailyCumulativeDays: options?.dailyCumulativeDays,
   });
   return authenticatedGetJson<AdminSymbolFlowList>(token, `/api/stock/v1/markets/admin/symbol-flows${query}`);
 }
@@ -172,6 +174,14 @@ export function updateAutoMarketConfig(
     token,
     `/api/stock/v1/markets/auto-market/configs/${encodeURIComponent(symbol)}`,
     payload,
+  );
+}
+
+export function regenerateAutoMarketDailyRegime(token: string, symbol: string) {
+  return authenticatedPostJson<AutoMarketStatus["configs"][number]>(
+    token,
+    `/api/stock/v1/markets/auto-market/configs/${encodeURIComponent(symbol)}/daily-regime/regenerate`,
+    {},
   );
 }
 

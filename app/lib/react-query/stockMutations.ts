@@ -15,6 +15,7 @@ import {
   placeOrder,
   publishInstrumentReport,
   reconnectStockAccount,
+  regenerateAutoMarketDailyRegime,
   runAutoParticipantCashFlow,
   updateAutoMarketConfig,
   updateAutoParticipantProfileConfig,
@@ -163,6 +164,14 @@ export function adminUpdateAutoMarketConfigMutationOptions() {
       symbol: string;
       payload: StockAutoMarketConfigPayload;
     }) => updateAutoMarketConfig(token, variables.symbol, variables.payload),
+  );
+}
+
+export function adminRegenerateAutoMarketDailyRegimeMutationOptions() {
+  return adminMutationOptions(
+    (token, variables: {
+      symbol: string;
+    }) => regenerateAutoMarketDailyRegime(token, variables.symbol),
   );
 }
 

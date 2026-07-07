@@ -33,7 +33,7 @@ export type ListingAutoAccountConfigDraftInput = {
   priceOffsetTicks: string;
 };
 
-const AUTO_MARKET_CONFIG_MESSAGE = "자동장 대상 종목, 기본 방향 강도 1-10, 1회 주문 최대 수량, 미체결 호가 TTL을 올바르게 입력해 주세요.";
+const AUTO_MARKET_CONFIG_MESSAGE = "자동장 대상 종목, 기본 추종 강도 1-10, 1회 주문 최대 수량, 미체결 호가 TTL을 올바르게 입력해 주세요.";
 const LISTING_AUTO_ACCOUNT_CONFIG_MESSAGE = "상장주관사 종목, 최대 수량, TTL, 가격 분산 틱을 올바르게 입력해 주세요.";
 
 const autoMarketConfigSchema = z.object({

@@ -21,9 +21,11 @@ type AdminAutomationSectionProps = {
   editingAutoConfigSymbol: string | null;
   updatingAutoConfig: boolean;
   togglingAutoConfigSymbol: string | null;
+  regeneratingDailyRegimeSymbol: string | null;
   onSelectAutoMarketDraft: (config: AutoMarketConfig) => void;
   onSubmitAutoMarketConfig: () => void;
   onToggleAutoMarketEnabled: (config: AutoMarketConfig) => void;
+  onRegenerateDailyRegime: (config: AutoMarketConfig) => void;
   listingAutoAccounts: ListingAutoAccount[];
   selectedListingAutoAccount: ListingAutoAccount | null;
   listingAutoDraft: ListingAutoAccountDraft;
@@ -60,9 +62,11 @@ export function AdminAutomationSection({
   editingAutoConfigSymbol,
   updatingAutoConfig,
   togglingAutoConfigSymbol,
+  regeneratingDailyRegimeSymbol,
   onSelectAutoMarketDraft,
   onSubmitAutoMarketConfig,
   onToggleAutoMarketEnabled,
+  onRegenerateDailyRegime,
   listingAutoAccounts,
   selectedListingAutoAccount,
   listingAutoDraft,
@@ -115,9 +119,11 @@ export function AdminAutomationSection({
         editingSymbol={editingAutoConfigSymbol}
         updating={updatingAutoConfig}
         togglingSymbol={togglingAutoConfigSymbol}
+        regeneratingRegimeSymbol={regeneratingDailyRegimeSymbol}
         onSelectDraft={onSelectAutoMarketDraft}
         onSubmit={onSubmitAutoMarketConfig}
         onToggleEnabled={onToggleAutoMarketEnabled}
+        onRegenerateRegime={onRegenerateDailyRegime}
       />
     );
   }

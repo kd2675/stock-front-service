@@ -177,6 +177,14 @@ export type AdminSymbolFlow = {
   lastExecutedAt?: string | null;
 };
 
+export type AdminSymbolFlowDailyCumulative = {
+  simulationTradeDate: string;
+  rangeStart: string;
+  rangeEnd: string;
+  totalCount: number;
+  symbolFlows: AdminSymbolFlow[];
+};
+
 export type AdminRecentCashFlow = AccountCashFlow & {
   accountId: number;
   userKey?: string | null;
@@ -205,6 +213,7 @@ export type AdminFlowOverview = {
 export type AdminSymbolFlowList = {
   totalCount: number;
   symbolFlows: AdminSymbolFlow[];
+  dailyCumulativeFlows?: AdminSymbolFlowDailyCumulative[];
 };
 
 export type StockUserProfile = {

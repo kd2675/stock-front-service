@@ -1,11 +1,47 @@
 export type ListingAutoPosition = "SELL_ONLY" | "BUY_ONLY";
 
+export type AutoMarketPriceDirection = "UP" | "DOWN" | "NEUTRAL";
+
+export type AutoMarketAssetPreference = "STOCK" | "CASH" | "BALANCED";
+
+export type AutoMarketRegimePhase = "OPENING" | "MIDDAY";
+
+export type AutoMarketRegimeModifier = {
+  modifierWindowStartAt: string;
+  priceDirectionModifier: number;
+  assetPreferenceModifier: number;
+  directionIntensityModifier: number;
+  volatilityModifier: number;
+  liquidityModifier: number;
+  executionAggressionModifier: number;
+  seed: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AutoMarketDailyRegime = {
+  symbol: string;
+  simulationTradeDate: string;
+  regimePhase: AutoMarketRegimePhase;
+  priceDirection: AutoMarketPriceDirection;
+  assetPreference: AutoMarketAssetPreference;
+  directionIntensity: number;
+  volatilityLevel: number;
+  liquidityLevel: number;
+  executionAggressionLevel: number;
+  seed: string;
+  currentModifier?: AutoMarketRegimeModifier | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type AutoMarketConfig = {
   symbol: string;
   enabled: boolean;
   intensity: number;
   maxOrderQuantity: number;
   orderTtlSeconds: number;
+  dailyRegime?: AutoMarketDailyRegime | null;
 };
 
 export type AutoParticipantProfileType =
@@ -212,6 +248,7 @@ export type ListingAutoAccount = {
   displayName: string;
   enabled: boolean;
   positionSide: ListingAutoPosition;
+  issuedShares: number;
   accountId: number | null;
   cashBalance: number;
   holdingQuantity: number;

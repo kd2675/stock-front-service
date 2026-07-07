@@ -44,7 +44,7 @@ export function useAdminAutoParticipantStrategyActions({
       setMessage(strategyPayload.message);
       return;
     }
-    const token = await requireAdminToken("관리자 로그인 후 참여자 종목별 가격 방향/강도를 저장할 수 있습니다.");
+    const token = await requireAdminToken("관리자 로그인 후 참여자 종목별 추종 강도를 저장할 수 있습니다.");
     if (!token) {
       return;
     }
@@ -54,10 +54,10 @@ export function useAdminAutoParticipantStrategyActions({
       symbol: strategyPayload.symbol,
       payload: strategyPayload.payload,
     });
-    if (reportAdminActionFailure(result, "참여자 종목별 가격 방향/강도 저장에 실패했습니다.", setMessage)) {
+    if (reportAdminActionFailure(result, "참여자 종목별 추종 강도 저장에 실패했습니다.", setMessage)) {
       return;
     }
-    setMessage("참여자 종목별 가격 방향/강도를 저장했습니다.");
+    setMessage("참여자 종목별 추종 강도를 저장했습니다.");
     setEditingStrategyKey(null);
     reloadAutoParticipantStrategyState();
   };
@@ -67,7 +67,7 @@ export function useAdminAutoParticipantStrategyActions({
       return;
     }
     const nextEnabled = !config.enabled;
-    const token = await requireAdminToken("관리자 로그인 후 참여자 종목별 가격 방향/강도 상태를 변경할 수 있습니다.");
+    const token = await requireAdminToken("관리자 로그인 후 참여자 종목별 추종 강도 상태를 변경할 수 있습니다.");
     if (!token) {
       return;
     }
@@ -80,13 +80,13 @@ export function useAdminAutoParticipantStrategyActions({
         intensity: config.intensity,
       },
     });
-    if (reportAdminActionFailure(result, "참여자 종목별 가격 방향/강도 상태 변경에 실패했습니다.", setMessage)) {
+    if (reportAdminActionFailure(result, "참여자 종목별 추종 강도 상태 변경에 실패했습니다.", setMessage)) {
       return;
     }
     if (strategyUserKey === config.userKey && strategySymbol === config.symbol) {
       setStrategyEnabled(nextEnabled);
     }
-    setMessage(nextEnabled ? "참여자 종목별 가격 방향/강도를 가동했습니다." : "참여자 종목별 가격 방향/강도를 정지했습니다.");
+    setMessage(nextEnabled ? "참여자 종목별 추종 강도를 가동했습니다." : "참여자 종목별 추종 강도를 정지했습니다.");
     reloadAutoParticipantStrategyState();
   };
 

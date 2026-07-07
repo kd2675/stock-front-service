@@ -4,9 +4,9 @@ export default function AutoSignalGuide() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs font-black text-[#64a8ff]">AUTO SIGNAL FLOW</p>
-          <h2 className="mt-1 text-base font-black">자동장 강도 계산 기준</h2>
+          <h2 className="mt-1 text-base font-black">자동장 추종 강도 계산 기준</h2>
           <p className="mt-1 max-w-3xl text-xs font-bold leading-5 text-[#b8c2cc]">
-            자동 주문은 종목 기본 강도, 참여자별 종목 전략, 최신 평가 보고서 점수를 순서대로 반영해 최종 매수/매도 압력과 호가 공격성을 정합니다.
+            자동 주문은 장 시작 때 정해진 종목별 일일 방향, 현금/주식 선호, 참여자별 종목 전략, 최신 평가 보고서 점수를 함께 반영해 주문 방향과 호가 공격성을 정합니다.
           </p>
         </div>
         <span className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-[#d8ecff]">1-10 척도</span>
@@ -14,24 +14,24 @@ export default function AutoSignalGuide() {
 
       <div className="mt-4 grid gap-3 lg:grid-cols-3">
         <SignalGuideCard
-          label="종목별 자동 알고리즘 강도"
-          title="종목 기본 분위기"
-          body="참여자별 전략이 없을 때 쓰는 기본값입니다. 10에 가까우면 매수 우위, 1에 가까우면 매도 우위로 동작합니다."
+          label="종목별 자동 추종 강도"
+          title="종목 기본 추종 강도"
+          body="참여자별 전략이 없을 때 쓰는 기본값입니다. 10에 가까울수록 그날 정해진 방향과 자산 선호를 더 적극적으로 따르고, 1에 가까울수록 소극적으로 움직입니다."
         />
         <SignalGuideCard
-          label="참여자별 종목 전략 강도"
+          label="참여자별 종목 추종 강도"
           title="참여자 실제 성향"
-          body="같은 종목이라도 참여자마다 다르게 줄 수 있는 우선값입니다. 저장된 전략이 있으면 종목 기본 강도보다 먼저 적용됩니다."
+          body="같은 종목이라도 참여자마다 다르게 줄 수 있는 우선값입니다. 저장된 전략이 있으면 종목 기본 추종 강도보다 먼저 적용됩니다."
         />
         <SignalGuideCard
           label="종목 평가 보고서 점수"
           title="최신 관리자 신호"
-          body="주문을 직접 만들지는 않고 참여자 전략을 보정합니다. 뉴스 민감형은 크게 반응하고 관망형은 작게 반응합니다."
+          body="상승/하락 가격 압력에 직접 반영됩니다. 뉴스 민감형은 크게 반응하고 관망형은 작게 반응합니다."
         />
       </div>
 
       <div className="mt-4 rounded-md bg-black/20 px-3 py-3 text-xs font-bold leading-5 text-[#b8c2cc]">
-        최종 강도는 참여자별 전략 강도를 기본으로 하되, 자동 참여자의 심리 프로필에 따라 최신 보고서 점수 반영 비율이 달라집니다. 참여자별 전략이 없으면 종목별 자동 알고리즘 강도가 참여자 전략의 기본값이 됩니다.
+        강도 값은 상승/하락 방향 자체가 아니라 방향을 따르는 적극성입니다. 가격 방향은 장 시작 때 생성되는 일일 방향과 최신 평가 보고서 점수가 만들고, 참여자별 전략이 없으면 종목별 자동 추종 강도가 기본값으로 쓰입니다.
       </div>
     </section>
   );
@@ -48,8 +48,8 @@ export function AutoMarketConfigGuide() {
       description: "가동이면 배치가 이 종목의 자동 주문을 생성합니다. 정지하면 새 자동 주문 생성 대상에서 빠지며, 이미 쌓인 미체결 주문을 즉시 일괄 취소한다는 의미는 아닙니다.",
     },
     {
-      name: "기본 방향 강도(1-10)",
-      description: "종목 기본 가격 압력입니다. 10에 가까울수록 매수 우위와 상승 방향 호가가 강해지고, 1에 가까울수록 매도 우위와 하락 방향 호가가 강해집니다. 참여자별 종목 전략이 있으면 그 값이 우선 적용됩니다.",
+      name: "기본 추종 강도(1-10)",
+      description: "종목 기본 추종 강도입니다. 10에 가까울수록 장 시작 때 정해진 일일 방향과 주식/현금 선호를 더 공격적으로 따르고, 1에 가까울수록 주문 빈도와 호가 공격성이 낮아집니다. 참여자별 종목 전략이 있으면 그 값이 우선 적용됩니다.",
     },
     {
       name: "1회 주문 최대 수량",
@@ -67,7 +67,7 @@ export function AutoMarketConfigGuide() {
         <div>
           <p className="text-sm font-black text-white">항목 설명</p>
           <p className="mt-1 text-xs font-bold leading-5 text-[#8b95a1]">
-            이 설정은 종목 단위 기본값입니다. 실제 주문은 종목 기본값, 참여자별 종목 전략, 심리 프로필, 보고서 점수, 계좌 상태를 함께 계산해 생성됩니다.
+            이 설정은 종목 단위 기본값입니다. 실제 주문은 장 시작 때 정해진 일일 방향, 종목 기본값, 참여자별 종목 전략, 심리 프로필, 보고서 점수, 계좌 상태를 함께 계산해 생성됩니다.
           </p>
         </div>
         <span className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-[#64a8ff]">stock_auto_market_config</span>

@@ -124,7 +124,9 @@ export function useAdminPageQueries({
     symbolFlowLimit: ADMIN_SYMBOL_FLOW_PREVIEW_SIZE,
   }));
   const adminSymbolFlowsQuery = useQuery(adminSymbolFlowsQueryOptions(accessToken, {
+    dailyCumulativeDays: 7,
     enabled: false,
+    includeDailyCumulative: true,
     scope: "ALL",
   }));
   const adminCashFlowPageQuery = useQuery(adminCashFlowsQueryOptions(accessToken, adminCashFlowPageIndex, ADMIN_CASH_FLOW_PAGE_SIZE, {

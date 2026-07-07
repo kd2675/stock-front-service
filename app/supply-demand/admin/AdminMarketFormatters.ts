@@ -1,5 +1,7 @@
 import { RECURRING_CASH_INTERVAL_UNIT_OPTIONS } from "@/app/supply-demand/admin/AdminConstants";
 import type {
+  AutoMarketAssetPreference,
+  AutoMarketPriceDirection,
   ListingAutoPosition,
   RecurringCashIntervalUnit,
 } from "@/app/types/stock";
@@ -44,17 +46,43 @@ export function formatFlowMarketStatus(status: string) {
   return status;
 }
 
-export function formatAutoIntensityDirection(intensity: number): string {
+export function formatAutoIntensityFollowLevel(intensity: number): string {
   if (intensity >= 8) {
-    return "강한 상승";
+    return "매우 적극";
   }
   if (intensity >= 6) {
-    return "상승";
+    return "적극";
   }
   if (intensity <= 3) {
+    return "소극";
+  }
+  return "보통";
+}
+
+export function formatAutoMarketPriceDirection(direction: AutoMarketPriceDirection | null | undefined): string {
+  if (direction === "UP") {
+    return "상승";
+  }
+  if (direction === "DOWN") {
     return "하락";
   }
-  return "중립";
+  if (direction === "NEUTRAL") {
+    return "중립";
+  }
+  return "-";
+}
+
+export function formatAutoMarketAssetPreference(preference: AutoMarketAssetPreference | null | undefined): string {
+  if (preference === "STOCK") {
+    return "주식 보유";
+  }
+  if (preference === "CASH") {
+    return "현금 전환";
+  }
+  if (preference === "BALANCED") {
+    return "균형";
+  }
+  return "-";
 }
 
 export function formatListingAutoPosition(positionSide: ListingAutoPosition): string {

@@ -92,7 +92,7 @@ export function AutoMarketStatusPanel({
         <StatusRow label="상태" value={autoMarket?.enabled ? "가동" : "정지"} />
         <StatusRow label="주문장 시장" value={orderBookMarket?.enabled ? "가동" : "정지"} />
         <StatusRow label="선택 종목 장" value={formatEffectiveMarketSessionStatus(selectedOrderBookConfig?.marketStatus, isSelectedOrderBookOpen)} />
-        <StatusRow label="자동 강도" value={selectedConfig ? `${selectedConfig.intensity}/10` : "-"} />
+        <StatusRow label="추종 강도" value={selectedConfig ? `${selectedConfig.intensity}/10` : "-"} />
         <StatusRow label="자동 참여자" value={autoMarket ? `${autoMarket.enabledParticipantCount}명` : "-"} />
         <StatusRow label="2시간 자동 체결" value={autoMarket ? `${autoMarket.todayAutoExecutionCount}건` : "-"} />
         <StatusRow label="전체 대기 주문" value={orderBookMarket ? `${orderBookMarket.openOrderCount}건` : "-"} />
@@ -122,7 +122,7 @@ export function AutoMarketConfigListPanel({
           >
             <span className="font-bold">{config.symbol}</span>
             <span className={config.enabled ? "font-black text-[#3182f6]" : "font-bold text-[#8b95a1]"}>
-              {config.enabled ? `강도 ${config.intensity}` : "정지"}
+              {config.enabled ? `추종 ${config.intensity}/10` : "정지"}
             </span>
           </button>
         )) : (

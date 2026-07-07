@@ -13,7 +13,7 @@ export type AutoParticipantStrategyPayloadInput = {
   intensity: string;
 };
 
-const AUTO_PARTICIPANT_STRATEGY_MESSAGE = "참여자, 종목, 강도 1-10을 올바르게 입력해 주세요.";
+const AUTO_PARTICIPANT_STRATEGY_MESSAGE = "참여자, 종목, 추종 강도 1-10을 올바르게 입력해 주세요.";
 
 const autoParticipantStrategySchema = z.object({
   userKey: requiredTrimmedString(),

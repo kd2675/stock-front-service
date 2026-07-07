@@ -50,7 +50,7 @@ export function AdminInstrumentReportPanel({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-black">종목 평가 보고서</h2>
-          <p className="mt-1 text-xs font-bold text-[#8b95a1]">최신 보고서 점수는 자동 참여자 성향과 함께 자동장 매수/매도 압력에 반영됩니다.</p>
+          <p className="mt-1 text-xs font-bold text-[#8b95a1]">최신 보고서 점수는 자동 참여자 성향과 함께 자동장 상승/하락 가격 압력에 반영됩니다.</p>
         </div>
         <span className="text-xs font-bold text-[#64a8ff]">{reports.length}개 이벤트</span>
       </div>

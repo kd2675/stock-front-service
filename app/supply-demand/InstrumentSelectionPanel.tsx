@@ -101,7 +101,7 @@ export function InstrumentSelectionPanel({
                 <div className="mt-4 grid gap-2 text-xs font-bold text-[#6b7684]">
                   <SelectionInfoRow label="발행 / 유통" value={`${formatNumber(instrument.issuedShares)}주 / ${formatNumber(instrument.tradableShares)}주`} />
                   <SelectionInfoRow label="현재 호가 / 제한폭" value={`${formatNumber(instrument.tickSize)}원 / ${formatNumber(instrument.priceLimitRate)}%`} />
-                  <SelectionInfoRow label="자동장" value={autoConfig?.enabled ? `강도 ${autoConfig.intensity}, 최대 ${formatNumber(autoConfig.maxOrderQuantity)}주` : "정지"} />
+                  <SelectionInfoRow label="자동장" value={autoConfig?.enabled ? `추종 ${autoConfig.intensity}/10, 최대 ${formatNumber(autoConfig.maxOrderQuantity)}주` : "정지"} />
                 </div>
               </button>
             );

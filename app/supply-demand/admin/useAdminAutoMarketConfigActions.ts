@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 
-import { adminUpdateAutoMarketConfigMutationOptions } from "@/app/lib/react-query/stockMutations";
+import { adminRegenerateAutoMarketDailyRegimeMutationOptions, adminUpdateAutoMarketConfigMutationOptions } from "@/app/lib/react-query/stockMutations";
 import { reportAdminActionFailure } from "@/app/supply-demand/admin/AdminActionResultHelpers";
 import type { AdminActionMessageSetter, RequireAdminToken } from "@/app/supply-demand/admin/AdminActionTypes";
 import type { AutoMarketConfigDraft } from "@/app/supply-demand/admin/AdminAutoMarketConfigPanel";
@@ -26,6 +26,7 @@ export function useAdminAutoMarketConfigActions({
 }) {
   const submitAutoConfigMutation = useMutation(adminUpdateAutoMarketConfigMutationOptions());
   const toggleAutoConfigMutation = useMutation(adminUpdateAutoMarketConfigMutationOptions());
+  const regenerateDailyRegimeMutation = useMutation(adminRegenerateAutoMarketDailyRegimeMutationOptions());
 
   const submitAutoConfig = async () => {
     if (submitAutoConfigMutation.isPending) {
@@ -82,7 +83,28 @@ export function useAdminAutoMarketConfigActions({
     reloadAutoMarketConfigurationState();
   };
 
+  const regenerateDailyRegime = async (config: AutoMarketConfig) => {
+    if (regenerateDailyRegimeMutation.isPending) {
+      return;
+    }
+    const token = await requireAdminToken("관리자 로그인 후 랜덤값을 변경할 수 있습니다.");
+    if (!token) {
+      return;
+    }
+    const result = await regenerateDailyRegimeMutation.mutateAsync({
+      token,
+      symbol: config.symbol,
+    });
+    if (reportAdminActionFailure(result, "랜덤값 변경에 실패했습니다.", setMessage)) {
+      return;
+    }
+    setMessage(`${config.symbol} 현재 시간대 랜덤값을 다시 생성했습니다.`);
+    reloadAutoMarketConfigurationState();
+  };
+
   return {
+    regeneratingDailyRegimeSymbol: regenerateDailyRegimeMutation.isPending ? regenerateDailyRegimeMutation.variables?.symbol ?? null : null,
+    regenerateDailyRegime,
     submitAutoConfig,
     toggleAutoConfigEnabled,
     togglingAutoConfigSymbol: toggleAutoConfigMutation.isPending ? toggleAutoConfigMutation.variables?.symbol ?? null : null,
