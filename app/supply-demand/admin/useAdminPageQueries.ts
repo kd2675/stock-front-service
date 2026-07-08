@@ -4,7 +4,6 @@ import {
   adminCashFlowsQueryOptions,
   adminFlowOverviewQueryOptions,
   adminFundFlowSummaryQueryOptions,
-  adminSymbolFlowsQueryOptions,
   adminUserFundFlowQueryOptions,
   autoParticipantsQueryOptions,
   autoParticipantProfileOverviewsQueryOptions,
@@ -123,12 +122,6 @@ export function useAdminPageQueries({
     symbolFlowScope: "RECENT_SIMULATION_DAY",
     symbolFlowLimit: ADMIN_SYMBOL_FLOW_PREVIEW_SIZE,
   }));
-  const adminSymbolFlowsQuery = useQuery(adminSymbolFlowsQueryOptions(accessToken, {
-    dailyCumulativeDays: 7,
-    enabled: false,
-    includeDailyCumulative: true,
-    scope: "ALL",
-  }));
   const adminCashFlowPageQuery = useQuery(adminCashFlowsQueryOptions(accessToken, adminCashFlowPageIndex, ADMIN_CASH_FLOW_PAGE_SIZE, {
     enabled: isAdminAllowed && queryFlags.isCashFlowLedgerSection,
   }));
@@ -164,7 +157,7 @@ export function useAdminPageQueries({
   const queryResults = normalizeAdminPageQueryResults({
     adminCashFlowPage: isAdminAllowed && queryFlags.isCashFlowLedgerSection ? adminCashFlowPageQuery.data : null,
     adminFlowOverview: queryFlags.shouldUseAdminFlowOverview ? adminFlowOverviewQuery.data : null,
-    adminSymbolFlowList: queryFlags.shouldUseAdminFlowOverview ? adminSymbolFlowsQuery.data : null,
+    adminSymbolFlowList: null,
     autoMarketDetails: queryFlags.shouldUseAutoMarketDetails ? autoMarketDetailsQuery.data : null,
     autoMarketSummary: queryFlags.shouldUseAutoMarketSummary ? autoMarketSummaryQuery.data : null,
     autoParticipants: queryFlags.shouldUseAutoParticipants ? autoParticipantsQuery.data : null,
@@ -184,7 +177,6 @@ export function useAdminPageQueries({
     adminAllFundFlowSummaryQuery,
     adminFlowOverviewQuery,
     adminFundFlowSummaryQuery,
-    adminSymbolFlowsQuery,
     autoMarketDetailsQuery,
     autoParticipantsQuery,
     autoParticipantProfileOverviewsQuery,

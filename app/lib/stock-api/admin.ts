@@ -94,12 +94,13 @@ export function getAdminFundFlowSummary(token: string, options?: { scope?: Admin
   return authenticatedGetJson<AdminFundFlowSummary>(token, `/api/stock/v1/markets/admin/fund-flow-summary${query}`);
 }
 
-export function getAdminSymbolFlows(token: string, options?: { limit?: number; scope?: AdminFundFlowScope; includeDailyCumulative?: boolean; dailyCumulativeDays?: number }) {
+export function getAdminSymbolFlows(token: string, options?: { limit?: number; scope?: AdminFundFlowScope; includeDailyCumulative?: boolean; dailyCumulativeDays?: number; dailyCumulativeDayOffset?: number }) {
   const query = toQuery({
     limit: options?.limit,
     scope: options?.scope,
     includeDailyCumulative: options?.includeDailyCumulative,
     dailyCumulativeDays: options?.dailyCumulativeDays,
+    dailyCumulativeDayOffset: options?.dailyCumulativeDayOffset,
   });
   return authenticatedGetJson<AdminSymbolFlowList>(token, `/api/stock/v1/markets/admin/symbol-flows${query}`);
 }

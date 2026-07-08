@@ -10,33 +10,27 @@ export function AdminFlowOverviewPanel({
   overview,
   fundFlow,
   allFundFlow,
-  allSymbolFlowList,
   loadingFundFlow,
   loadingAllFundFlow,
   fundFlowError,
   allFundFlowError,
-  allSymbolFlowError,
   symbolFlowList,
   loadingSymbolFlows,
-  loadingAllSymbolFlows,
   onLoadAllFundFlow,
-  onLoadAllSymbolFlows,
+  onLoadWeeklySymbolFlows,
   onRefresh,
 }: {
   overview: AdminFlowOverview | null;
   fundFlow: AdminFundFlowSummary | null;
   allFundFlow: AdminFundFlowSummary | null;
-  allSymbolFlowList: AdminSymbolFlowList | null;
   loadingFundFlow: boolean;
   loadingAllFundFlow: boolean;
   fundFlowError: boolean;
   allFundFlowError: boolean;
-  allSymbolFlowError: boolean;
   symbolFlowList: AdminSymbolFlowList;
   loadingSymbolFlows: boolean;
-  loadingAllSymbolFlows: boolean;
   onLoadAllFundFlow: () => void;
-  onLoadAllSymbolFlows: () => void;
+  onLoadWeeklySymbolFlows: (dayOffset: number) => Promise<AdminSymbolFlowList | null>;
   onRefresh: () => void;
 }) {
   const orderFlow = overview?.orderFlow;
@@ -86,11 +80,8 @@ export function AdminFlowOverviewPanel({
 
       <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,0.8fr)]">
         <AdminSymbolFlowTablePanel
-          allError={allSymbolFlowError}
-          allSymbolFlowList={allSymbolFlowList}
           loading={loadingSymbolFlows}
-          loadingAll={loadingAllSymbolFlows}
-          onLoadAll={onLoadAllSymbolFlows}
+          onLoadWeekly={onLoadWeeklySymbolFlows}
           symbolFlowTotalCount={symbolFlowTotalCount}
           visibleSymbolFlows={visibleSymbolFlows}
         />

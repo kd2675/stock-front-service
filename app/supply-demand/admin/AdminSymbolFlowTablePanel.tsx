@@ -3,37 +3,43 @@ import { useState } from "react";
 import { formatCount, formatDateTime, formatFlowMarketStatus, formatSignedPercent, formatWon } from "@/app/supply-demand/admin/AdminFormatters";
 import type { AdminSymbolFlow, AdminSymbolFlowDailyCumulative, AdminSymbolFlowList } from "@/app/types/stock";
 
+const WEEKLY_CUMULATIVE_DAYS = 7;
+const EMPTY_PRICE_TEXT = "";
+
 export function AdminSymbolFlowTablePanel({
-  allError,
-  allSymbolFlowList,
-  loadingAll,
   loading,
-  onLoadAll,
+  onLoadWeekly,
   symbolFlowTotalCount,
   visibleSymbolFlows,
 }: {
-  allError: boolean;
-  allSymbolFlowList: AdminSymbolFlowList | null;
-  loadingAll: boolean;
   loading: boolean;
-  onLoadAll: () => void;
+  onLoadWeekly: (dayOffset: number) => Promise<AdminSymbolFlowList | null>;
   symbolFlowTotalCount: number;
   visibleSymbolFlows: AdminSymbolFlow[];
 }) {
-  const [showAllCumulativeFlows, setShowAllCumulativeFlows] = useState(false);
   const [showWeeklyCumulativeFlows, setShowWeeklyCumulativeFlows] = useState(false);
+  const [weeklyDayOffset, setWeeklyDayOffset] = useState(0);
+  const [weeklySymbolFlowList, setWeeklySymbolFlowList] = useState<AdminSymbolFlowList | null>(null);
+  const [loadingWeekly, setLoadingWeekly] = useState(false);
+  const [weeklyError, setWeeklyError] = useState(false);
 
-  const openAllCumulativeFlows = () => {
-    setShowAllCumulativeFlows(true);
-    if (!allSymbolFlowList && !loadingAll) {
-      onLoadAll();
+  const loadWeeklyCumulativeFlows = async (dayOffset: number) => {
+    setLoadingWeekly(true);
+    setWeeklyError(false);
+    const nextList = await onLoadWeekly(dayOffset);
+    setLoadingWeekly(false);
+    if (!nextList) {
+      setWeeklyError(true);
+      return;
     }
+    setWeeklyDayOffset(dayOffset);
+    setWeeklySymbolFlowList(nextList);
   };
 
   const openWeeklyCumulativeFlows = () => {
     setShowWeeklyCumulativeFlows(true);
-    if (!allSymbolFlowList && !loadingAll) {
-      onLoadAll();
+    if (!weeklySymbolFlowList && !loadingWeekly) {
+      void loadWeeklyCumulativeFlows(0);
     }
   };
 
@@ -56,55 +62,50 @@ export function AdminSymbolFlowTablePanel({
             >
               최근 7일 누적 보기
             </button>
-            <button
-              type="button"
-              onClick={openAllCumulativeFlows}
-              className="min-h-9 rounded-md border border-white/15 px-3 py-2 text-xs font-black text-[#d8ecff] transition hover:border-[#64a8ff] hover:text-white"
-            >
-              전체 누적 보기
-            </button>
           </div>
         </div>
         <AdminSymbolFlowTable flows={visibleSymbolFlows} loading={loading} loadingMessage="종목 흐름을 조회하고 있습니다." emptyMessage="시뮬레이션 하루 종목 흐름이 없습니다." />
       </div>
-      <AdminAllSymbolFlowModal
-        error={allError}
-        loading={loadingAll}
-        open={showAllCumulativeFlows}
-        symbolFlowList={allSymbolFlowList}
-        onClose={() => setShowAllCumulativeFlows(false)}
-        onRefresh={onLoadAll}
-      />
       <AdminWeeklySymbolFlowModal
-        error={allError}
-        loading={loadingAll}
+        dayOffset={weeklyDayOffset}
+        error={weeklyError}
+        loading={loadingWeekly}
         open={showWeeklyCumulativeFlows}
-        dailyCumulativeFlows={allSymbolFlowList?.dailyCumulativeFlows ?? []}
+        dailyCumulativeFlows={weeklySymbolFlowList?.dailyCumulativeFlows ?? []}
         onClose={() => setShowWeeklyCumulativeFlows(false)}
-        onRefresh={onLoadAll}
+        onLoadOffset={loadWeeklyCumulativeFlows}
       />
     </>
   );
 }
 
 function AdminWeeklySymbolFlowModal({
+  dayOffset,
   dailyCumulativeFlows,
   error,
   loading,
   open,
   onClose,
-  onRefresh,
+  onLoadOffset,
 }: {
+  dayOffset: number;
   dailyCumulativeFlows: AdminSymbolFlowDailyCumulative[];
   error: boolean;
   loading: boolean;
   open: boolean;
   onClose: () => void;
-  onRefresh: () => void;
+  onLoadOffset: (dayOffset: number) => void;
 }) {
   if (!open) {
     return null;
   }
+
+  const rangeLabel = dayOffset === 0
+    ? "최근 7일"
+    : `${dayOffset + 1}일 전 - ${dayOffset + WEEKLY_CUMULATIVE_DAYS}일 전`;
+  const dateRangeLabel = dailyCumulativeFlows.length > 0
+    ? `${dailyCumulativeFlows.at(-1)?.simulationTradeDate} - ${dailyCumulativeFlows[0]?.simulationTradeDate}`
+    : rangeLabel;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 px-4 py-8 backdrop-blur-sm">
@@ -112,9 +113,12 @@ function AdminWeeklySymbolFlowModal({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h3 className="text-base font-black text-white">최근 7일 누적 종목 흐름</h3>
-            <p className="mt-1 text-xs font-bold leading-5 text-[#8b95a1]">시뮬레이션 일자별 주문장 체결 누적입니다. 현재가, 대기주문, 보유자는 현재 스냅샷입니다.</p>
+            <p className="mt-1 text-xs font-bold leading-5 text-[#8b95a1]">
+              시뮬레이션 일자별 주문장 체결 누적입니다. 이전 7일 단위로 과거 구간을 넘겨 볼 수 있습니다.
+            </p>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-2">
+            <span className="rounded-md bg-[#19324a] px-2 py-1 text-xs font-black text-[#64a8ff]">{dateRangeLabel}</span>
             {loading ? (
               <span className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-[#d8ecff]">조회 중</span>
             ) : null}
@@ -123,7 +127,24 @@ function AdminWeeklySymbolFlowModal({
             ) : null}
             <button
               type="button"
-              onClick={onRefresh}
+              onClick={() => onLoadOffset(dayOffset + WEEKLY_CUMULATIVE_DAYS)}
+              disabled={loading}
+              className="min-h-9 rounded-md border border-white/15 px-3 py-2 text-xs font-black text-[#d8ecff] transition hover:border-[#64a8ff] hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              이전 7일
+            </button>
+            <button
+              type="button"
+              onClick={() => onLoadOffset(Math.max(0, dayOffset - WEEKLY_CUMULATIVE_DAYS))}
+              disabled={loading || dayOffset === 0}
+              className="min-h-9 rounded-md border border-white/15 px-3 py-2 text-xs font-black text-[#d8ecff] transition hover:border-[#64a8ff] hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              다음 7일
+            </button>
+            <button
+              type="button"
+              onClick={() => onLoadOffset(dayOffset)}
+              disabled={loading}
               className="min-h-9 rounded-md border border-white/15 px-3 py-2 text-xs font-black text-[#d8ecff] transition hover:border-[#64a8ff] hover:text-white"
             >
               다시 조회
@@ -152,7 +173,7 @@ function AdminWeeklySymbolFlowModal({
                   전체 {formatCount(dailyFlow.totalCount, "개")}
                 </span>
               </div>
-              <AdminSymbolFlowTable flows={dailyFlow.symbolFlows} loading={loading} loadingMessage="최근 7일 누적 종목 흐름을 조회하고 있습니다." emptyMessage="해당 시뮬레이션 일자의 종목 흐름이 없습니다." />
+              <AdminSymbolFlowTable flows={dailyFlow.symbolFlows} loading={loading} loadingMessage="최근 7일 누적 종목 흐름을 조회하고 있습니다." emptyMessage="해당 시뮬레이션 일자의 종목 흐름이 없습니다." priceLabel="종가" />
             </section>
           ))}
           {dailyCumulativeFlows.length === 0 ? (
@@ -166,78 +187,18 @@ function AdminWeeklySymbolFlowModal({
   );
 }
 
-function AdminAllSymbolFlowModal({
-  error,
-  loading,
-  open,
-  symbolFlowList,
-  onClose,
-  onRefresh,
-}: {
-  error: boolean;
-  loading: boolean;
-  open: boolean;
-  symbolFlowList: AdminSymbolFlowList | null;
-  onClose: () => void;
-  onRefresh: () => void;
-}) {
-  if (!open) {
-    return null;
-  }
-
-  const flows = symbolFlowList?.symbolFlows ?? [];
-
-  return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 px-4 py-8 backdrop-blur-sm">
-      <div className="mx-auto w-full max-w-6xl rounded-lg border border-white/10 bg-[#11161d] p-4 shadow-2xl">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h3 className="text-base font-black text-white">전체 누적 종목 흐름</h3>
-            <p className="mt-1 text-xs font-bold leading-5 text-[#8b95a1]">서비스에 쌓인 주문장 전체 체결 기준의 누적 종목 흐름입니다. 현재가, 대기주문, 보유자는 현재 스냅샷입니다.</p>
-          </div>
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <span className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-[#d8ecff]">
-              전체 {formatCount(symbolFlowList?.totalCount ?? flows.length, "개")}
-            </span>
-            {loading ? (
-              <span className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-[#d8ecff]">조회 중</span>
-            ) : null}
-            {error ? (
-              <span className="rounded-md bg-[#3a1f1b] px-2 py-1 text-xs font-black text-[#ffb4a8]">조회 실패</span>
-            ) : null}
-            <button
-              type="button"
-              onClick={onRefresh}
-              className="min-h-9 rounded-md border border-white/15 px-3 py-2 text-xs font-black text-[#d8ecff] transition hover:border-[#64a8ff] hover:text-white"
-            >
-              다시 조회
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="min-h-9 rounded-md bg-white px-3 py-2 text-xs font-black text-[#101418]"
-            >
-              닫기
-            </button>
-          </div>
-        </div>
-
-        <AdminSymbolFlowTable flows={flows} loading={loading} loadingMessage="전체 누적 종목 흐름을 조회하고 있습니다." emptyMessage="전체 누적 종목 흐름이 없습니다." />
-      </div>
-    </div>
-  );
-}
-
 function AdminSymbolFlowTable({
   flows,
   loading,
   loadingMessage,
   emptyMessage,
+  priceLabel = "현재가",
 }: {
   flows: AdminSymbolFlow[];
   loading: boolean;
   loadingMessage: string;
   emptyMessage: string;
+  priceLabel?: string;
 }) {
   return (
     <div className="mt-3 overflow-x-auto rounded-md border border-white/10">
@@ -246,7 +207,7 @@ function AdminSymbolFlowTable({
           <tr>
             <th className="px-3 py-2">종목</th>
             <th className="px-3 py-2">장</th>
-            <th className="px-3 py-2 text-right">현재가</th>
+            <th className="px-3 py-2 text-right">{priceLabel}</th>
             <th className="px-3 py-2 text-right">등락</th>
             <th className="px-3 py-2 text-right">거래대금</th>
             <th className="px-3 py-2 text-right">체결</th>
@@ -263,9 +224,9 @@ function AdminSymbolFlowTable({
                 <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">{flow.symbol}</p>
               </td>
               <td className="px-3 py-2 text-xs font-bold text-[#b8c2cc]">{formatFlowMarketStatus(flow.marketStatus)}</td>
-              <td className="px-3 py-2 text-right font-black tabular-nums text-white">{formatWon(flow.currentPrice)}</td>
-              <td className={flow.changeRate >= 0 ? "px-3 py-2 text-right font-black tabular-nums text-[#ffb4a8]" : "px-3 py-2 text-right font-black tabular-nums text-[#64a8ff]"}>
-                {formatSignedPercent(flow.changeRate)}
+              <td className="px-3 py-2 text-right font-black tabular-nums text-white">{formatOptionalWon(flow.currentPrice)}</td>
+              <td className={changeRateClassName(flow.changeRate)}>
+                {formatOptionalSignedPercent(flow.changeRate)}
               </td>
               <td className="px-3 py-2 text-right font-bold tabular-nums text-[#b8c2cc]">{formatWon(flow.turnoverAmount)}</td>
               <td className="px-3 py-2 text-right font-bold tabular-nums text-[#b8c2cc]">{formatCount(flow.executionCount, "건")}</td>
@@ -285,4 +246,21 @@ function AdminSymbolFlowTable({
       </table>
     </div>
   );
+}
+
+function formatOptionalWon(value: number | null | undefined) {
+  return value == null ? EMPTY_PRICE_TEXT : formatWon(value);
+}
+
+function formatOptionalSignedPercent(value: number | null | undefined) {
+  return value == null ? EMPTY_PRICE_TEXT : formatSignedPercent(value);
+}
+
+function changeRateClassName(value: number | null | undefined) {
+  if (value == null) {
+    return "px-3 py-2 text-right font-black tabular-nums text-[#8b95a1]";
+  }
+  return value >= 0
+    ? "px-3 py-2 text-right font-black tabular-nums text-[#ffb4a8]"
+    : "px-3 py-2 text-right font-black tabular-nums text-[#64a8ff]";
 }

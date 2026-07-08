@@ -157,9 +157,9 @@ export type AdminSymbolFlow = {
   marketStatus: MarketSessionStatus | string;
   issuedShares: number;
   tradableShares: number;
-  currentPrice: number;
-  previousClose: number;
-  changeRate: number;
+  currentPrice: number | null;
+  previousClose: number | null;
+  changeRate: number | null;
   executionCount: number;
   executionQuantity: number;
   turnoverAmount: number;

@@ -228,7 +228,6 @@ export function useAdminPageActions({
     setMessage,
   });
   const symbolFlowActions = useAdminSymbolFlowActions({
-    refetchSymbolFlows: queries.adminSymbolFlowsQuery.refetch,
     requireAdminToken,
     setMessage,
   });

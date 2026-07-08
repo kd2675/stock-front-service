@@ -27,12 +27,13 @@ export const stockKeys = {
     options?.symbolFlowScope ?? "RECENT_SIMULATION_DAY",
   ] as const,
   adminSymbolFlowsRoot: () => [...stockKeys.market(), "admin", "symbol-flows"] as const,
-  adminSymbolFlows: (options?: { limit?: number; scope?: AdminFundFlowScope; includeDailyCumulative?: boolean; dailyCumulativeDays?: number }) => [
+  adminSymbolFlows: (options?: { limit?: number; scope?: AdminFundFlowScope; includeDailyCumulative?: boolean; dailyCumulativeDays?: number; dailyCumulativeDayOffset?: number }) => [
     ...stockKeys.adminSymbolFlowsRoot(),
     options?.limit ?? 0,
     options?.scope ?? "RECENT_SIMULATION_DAY",
     options?.includeDailyCumulative ?? false,
     options?.dailyCumulativeDays ?? 0,
+    options?.dailyCumulativeDayOffset ?? 0,
   ] as const,
   adminCashFlowsRoot: () => [...stockKeys.market(), "admin", "cash-flows"] as const,
   adminCashFlows: (options?: { page?: number; size?: number }) => [
