@@ -119,14 +119,39 @@ function formatChartTime(time: Time, interval: OrderBookCandleInterval, mode: "c
   if (!date) {
     return "";
   }
-  if (interval === "1W") {
-    return mode === "crosshair"
-      ? `시뮬 ${formatYearMonthDay(date)}`
-      : formatMonthDay(date);
+
+  if (mode === "tick") {
+    return formatChartTickDate(date, interval);
   }
-  return mode === "crosshair"
-    ? `시뮬 ${formatMonthDay(date)} ${formatHourMinute(date)}`
-    : formatHourMinute(date);
+
+  return formatChartCrosshairDate(date, interval);
+}
+
+function formatChartTickDate(date: Date, interval: OrderBookCandleInterval) {
+  switch (interval) {
+    case "1M":
+    case "5M":
+    case "15M":
+      return formatHourMinute(date);
+    case "1H":
+      return `${formatMonthDay(date)} ${formatHour(date)}`;
+    case "1D":
+    case "1W":
+      return formatMonthDay(date);
+  }
+}
+
+function formatChartCrosshairDate(date: Date, interval: OrderBookCandleInterval) {
+  switch (interval) {
+    case "1M":
+    case "5M":
+    case "15M":
+    case "1H":
+      return `시뮬 ${formatMonthDay(date)} ${formatHourMinute(date)}`;
+    case "1D":
+    case "1W":
+      return `시뮬 ${formatYearMonthDay(date)}`;
+  }
 }
 
 function resolveChartDate(time: Time) {
@@ -174,6 +199,10 @@ function formatMonthDay(date: Date) {
 
 function formatHourMinute(date: Date) {
   return `${padDatePart(date.getHours())}:${padDatePart(date.getMinutes())}`;
+}
+
+function formatHour(date: Date) {
+  return padDatePart(date.getHours());
 }
 
 function padDatePart(value: number) {
