@@ -34,10 +34,12 @@ type AdminAutoMarketConfigPanelProps = {
   updating: boolean;
   togglingSymbol: string | null;
   regeneratingRegimeSymbol: string | null;
+  regeneratingRegimeModifierSymbol: string | null;
   onSelectDraft: (config: AutoMarketConfig) => void;
   onSubmit: () => void;
   onToggleEnabled: (config: AutoMarketConfig) => void;
   onRegenerateRegime: (config: AutoMarketConfig) => void;
+  onRegenerateRegimeModifier: (config: AutoMarketConfig) => void;
 };
 
 function formatAutoMarketRegimePhase(phase: AutoMarketDailyRegime["regimePhase"]) {
@@ -45,6 +47,14 @@ function formatAutoMarketRegimePhase(phase: AutoMarketDailyRegime["regimePhase"]
     return "장 중간 이후";
   }
   return "장 전반";
+}
+
+function formatAutoMarketRegimeHeader(regime: AutoMarketDailyRegime) {
+  const displayTime = regime.createdAt?.slice(11, 16);
+  if (!displayTime) {
+    return `${regime.simulationTradeDate} · ${formatAutoMarketRegimePhase(regime.regimePhase)}`;
+  }
+  return `${regime.simulationTradeDate} · ${displayTime} · ${formatAutoMarketRegimePhase(regime.regimePhase)}`;
 }
 
 function formatSignedModifier(value: number) {
@@ -241,7 +251,7 @@ function AutoMarketDailyRegimeCell({ regime }: { regime?: AutoMarketDailyRegime 
   return (
     <div className="space-y-2">
       <div className="text-[11px] font-bold leading-none text-[#8b95a1]">
-        {regime.simulationTradeDate} · {formatAutoMarketRegimePhase(regime.regimePhase)}
+        {formatAutoMarketRegimeHeader(regime)}
       </div>
       <div className="flex flex-wrap gap-1.5">
         <RegimeBadge description={regimeBadgeDescriptions.priceDirection} label="가격 방향" tone={directionTone(regime.priceDirection)} value={formatAutoMarketPriceDirection(regime.priceDirection)} />
@@ -301,10 +311,12 @@ export function AdminAutoMarketConfigPanel({
   updating,
   togglingSymbol,
   regeneratingRegimeSymbol,
+  regeneratingRegimeModifierSymbol,
   onSelectDraft,
   onSubmit,
   onToggleEnabled,
   onRegenerateRegime,
+  onRegenerateRegimeModifier,
 }: AdminAutoMarketConfigPanelProps) {
   return (
     <section className="mt-5 rounded-lg border border-white/10 bg-white/[0.06] p-4">
@@ -375,14 +387,24 @@ export function AdminAutoMarketConfigPanel({
                   <td className="px-3 py-2">
                     <div className="flex min-w-[260px] items-start justify-between gap-2">
                       <AutoMarketDailyRegimeCell regime={config.dailyRegime} />
-                      <button
-                        type="button"
-                        onClick={() => onRegenerateRegime(config)}
-                        disabled={regeneratingRegimeSymbol === config.symbol}
-                        className="min-h-8 shrink-0 rounded-md bg-[#f59e0b]/20 px-2 py-1 text-xs font-black text-[#fcd34d] disabled:opacity-50"
-                      >
-                        {regeneratingRegimeSymbol === config.symbol ? "변경 중" : "변경"}
-                      </button>
+                      <div className="grid shrink-0 gap-1">
+                        <button
+                          type="button"
+                          onClick={() => onRegenerateRegime(config)}
+                          disabled={regeneratingRegimeSymbol === config.symbol}
+                          className="min-h-8 rounded-md bg-[#f59e0b]/20 px-2 py-1 text-xs font-black text-[#fcd34d] disabled:opacity-50"
+                        >
+                          {regeneratingRegimeSymbol === config.symbol ? "변경 중" : "주 랜덤"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onRegenerateRegimeModifier(config)}
+                          disabled={!config.dailyRegime || regeneratingRegimeModifierSymbol === config.symbol}
+                          className="min-h-8 rounded-md bg-[#64a8ff]/15 px-2 py-1 text-xs font-black text-[#9ecbff] disabled:opacity-50"
+                        >
+                          {regeneratingRegimeModifierSymbol === config.symbol ? "변경 중" : "보조 랜덤"}
+                        </button>
+                      </div>
                     </div>
                   </td>
                   <td className="px-3 py-2 tabular-nums">{config.maxOrderQuantity}주</td>

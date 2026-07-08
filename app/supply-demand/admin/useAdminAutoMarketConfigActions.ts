@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 
-import { adminRegenerateAutoMarketDailyRegimeMutationOptions, adminUpdateAutoMarketConfigMutationOptions } from "@/app/lib/react-query/stockMutations";
+import { adminRegenerateAutoMarketDailyRegimeMutationOptions, adminRegenerateAutoMarketRegimeModifierMutationOptions, adminUpdateAutoMarketConfigMutationOptions } from "@/app/lib/react-query/stockMutations";
 import { reportAdminActionFailure } from "@/app/supply-demand/admin/AdminActionResultHelpers";
 import type { AdminActionMessageSetter, RequireAdminToken } from "@/app/supply-demand/admin/AdminActionTypes";
 import type { AutoMarketConfigDraft } from "@/app/supply-demand/admin/AdminAutoMarketConfigPanel";
@@ -27,6 +27,7 @@ export function useAdminAutoMarketConfigActions({
   const submitAutoConfigMutation = useMutation(adminUpdateAutoMarketConfigMutationOptions());
   const toggleAutoConfigMutation = useMutation(adminUpdateAutoMarketConfigMutationOptions());
   const regenerateDailyRegimeMutation = useMutation(adminRegenerateAutoMarketDailyRegimeMutationOptions());
+  const regenerateRegimeModifierMutation = useMutation(adminRegenerateAutoMarketRegimeModifierMutationOptions());
 
   const submitAutoConfig = async () => {
     if (submitAutoConfigMutation.isPending) {
@@ -98,13 +99,38 @@ export function useAdminAutoMarketConfigActions({
     if (reportAdminActionFailure(result, "랜덤값 변경에 실패했습니다.", setMessage)) {
       return;
     }
-    setMessage(`${config.symbol} 현재 시간대 랜덤값을 다시 생성했습니다.`);
+    setMessage(`${config.symbol} 주 랜덤값을 다시 생성했습니다.`);
+    reloadAutoMarketConfigurationState();
+  };
+
+  const regenerateRegimeModifier = async (config: AutoMarketConfig) => {
+    if (regenerateRegimeModifierMutation.isPending) {
+      return;
+    }
+    if (!config.dailyRegime) {
+      setMessage("주 랜덤값이 먼저 생성되어야 보조 랜덤값을 변경할 수 있습니다.");
+      return;
+    }
+    const token = await requireAdminToken("관리자 로그인 후 보조 랜덤값을 변경할 수 있습니다.");
+    if (!token) {
+      return;
+    }
+    const result = await regenerateRegimeModifierMutation.mutateAsync({
+      token,
+      symbol: config.symbol,
+    });
+    if (reportAdminActionFailure(result, "보조 랜덤값 변경에 실패했습니다.", setMessage)) {
+      return;
+    }
+    setMessage(`${config.symbol} 현재 30분 보조 랜덤값을 다시 생성했습니다.`);
     reloadAutoMarketConfigurationState();
   };
 
   return {
     regeneratingDailyRegimeSymbol: regenerateDailyRegimeMutation.isPending ? regenerateDailyRegimeMutation.variables?.symbol ?? null : null,
+    regeneratingRegimeModifierSymbol: regenerateRegimeModifierMutation.isPending ? regenerateRegimeModifierMutation.variables?.symbol ?? null : null,
     regenerateDailyRegime,
+    regenerateRegimeModifier,
     submitAutoConfig,
     toggleAutoConfigEnabled,
     togglingAutoConfigSymbol: toggleAutoConfigMutation.isPending ? toggleAutoConfigMutation.variables?.symbol ?? null : null,

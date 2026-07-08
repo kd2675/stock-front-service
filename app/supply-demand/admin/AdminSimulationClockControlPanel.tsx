@@ -55,9 +55,9 @@ export function AdminSimulationClockControlPanel({
         <div className="rounded-md border border-white/10 bg-black/20 px-3 py-2 text-right">
           <p className="text-[11px] font-black text-[#8b95a1]">현재 세션</p>
           <p className="mt-1 text-sm font-black text-white">{sessionLabel}</p>
-          {session === "AFTER_CLOSE" ? (
+          {session === "AFTER_CLOSE" || (session === "PRE_OPEN" && !postCloseReady) ? (
             <p className={["mt-1 text-[11px] font-black", postCloseReady ? "text-[#6ee7a8]" : "text-[#ffd166]"].join(" ")}>
-              {postCloseReady ? "후처리 완료" : "후처리 대기"}
+              {postCloseReady ? "후처리 완료" : session === "PRE_OPEN" ? "전일 후처리 대기" : "후처리 대기"}
             </p>
           ) : null}
         </div>
@@ -107,6 +107,9 @@ function canRunSafeClockAction(
   session: SimulationSession,
   postCloseReady: boolean,
 ) {
+  if (session === "PRE_OPEN" && action === "NEXT_MARKET_OPEN") {
+    return postCloseReady;
+  }
   if (session !== "AFTER_CLOSE") {
     return true;
   }
@@ -140,7 +143,7 @@ function resolveActionDescription(
 ) {
   switch (action) {
     case "NEXT_MARKET_OPEN":
-      return `장전이면 오늘 ${openTimeLabel}, 장마감 후처리 완료 후면 다음날 ${openTimeLabel}으로 이동합니다.`;
+      return `장전이면 전일 후처리 완료 후 오늘 ${openTimeLabel}, 장마감 후처리 완료 후면 다음날 ${openTimeLabel}으로 이동합니다.`;
     case "NEXT_SIMULATION_DAY_START":
       return "장마감 후처리 완료 후 다음 시뮬레이션 일자 00:00으로 이동합니다.";
     case "TODAY_MARKET_CLOSE":

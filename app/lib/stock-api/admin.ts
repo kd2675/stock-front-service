@@ -186,6 +186,14 @@ export function regenerateAutoMarketDailyRegime(token: string, symbol: string) {
   );
 }
 
+export function regenerateAutoMarketRegimeModifier(token: string, symbol: string) {
+  return authenticatedPostJson<AutoMarketStatus["configs"][number]>(
+    token,
+    `/api/stock/v1/markets/auto-market/configs/${encodeURIComponent(symbol)}/regime-modifier/regenerate`,
+    {},
+  );
+}
+
 export function updateAutoParticipantProfileConfig(
   token: string,
   profileType: AutoParticipantProfileType,
