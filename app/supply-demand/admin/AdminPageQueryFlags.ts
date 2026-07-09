@@ -14,6 +14,7 @@ export type AdminPageQueryFlags = {
   isCashFlowLedgerSection: boolean;
   isEventsSection: boolean;
   isMarketSection: boolean;
+  shouldUseBatchRuntimeControls: boolean;
   shouldLoadAdminFlowOverview: boolean;
   shouldLoadAutoMarketDetails: boolean;
   shouldLoadAutoMarketSummary: boolean;
@@ -47,6 +48,7 @@ export function resolveAdminPageQueryFlags({
   const isCashFlowLedgerSection = activeAdminSection === "cash-flow-ledger";
   const isEventsSection = activeAdminSection === "events";
   const isMarketSection = activeAdminSection === "market";
+  const shouldLoadBatchRuntimeControls = activeAdminSection === "batch" || activeAdminSection === "salary";
   const shouldLoadAutoParticipants = activeAdminSection === "salary" || activeAdminSection === "participants";
   const includeParticipants = false;
   const includeParticipantStrategyDetails = activeAdminSection === "participants" && editingAutoParticipantUserKey !== null;
@@ -72,6 +74,7 @@ export function resolveAdminPageQueryFlags({
     isCashFlowLedgerSection,
     isEventsSection,
     isMarketSection,
+    shouldUseBatchRuntimeControls: isAdminAllowed && shouldLoadBatchRuntimeControls,
     shouldLoadAdminFlowOverview: activeAdminSection === "market",
     shouldLoadAutoMarketDetails,
     shouldLoadAutoMarketSummary: activeAdminTab === "market",

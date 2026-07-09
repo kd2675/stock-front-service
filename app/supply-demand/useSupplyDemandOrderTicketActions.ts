@@ -89,7 +89,6 @@ export function useSupplyDemandOrderTicketActions({
       orderType,
       percent,
       side,
-      totalAsset: portfolio?.totalAsset,
     });
     if (!result.ok) {
       setMessage(getAssetPercentQuantityErrorMessage(result.reason));

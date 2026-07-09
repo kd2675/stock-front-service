@@ -6,6 +6,7 @@
 
 - `/`
 - `/login`
+- `/portfolio`
 - `/supply-demand`
 - `/supply-demand/admin`
 

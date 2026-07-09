@@ -1,6 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import useAdminAccess from "@/app/hooks/useAdminAccess";
 import { buildAdminPageContentProps } from "@/app/supply-demand/admin/buildAdminPageContentProps";
@@ -31,11 +31,24 @@ export function useSupplyDemandAdminPageModel() {
     activeAdminTab,
     adminCashFlowPageIndex,
     adminStatus,
-    actionSymbol: drafts.stockEvent.actionSymbol,
     editingAutoParticipantUserKey: drafts.autoParticipant.editingAutoParticipantUserKey,
+    historySymbol: drafts.stockEvent.historySymbol,
     reportSymbol: drafts.instrumentReport.symbol,
     userFundFlowUserKey: drafts.userCashAdjustment.fundFlowUserKey,
   });
+  const stockEventActionType = drafts.stockEvent.actionType;
+  const applyStockEventSimulationDateDefaults = drafts.stockEvent.applySimulationDateDefaults;
+  useEffect(() => {
+    if (activeAdminSection !== "events") {
+      return;
+    }
+    applyStockEventSimulationDateDefaults(queries.simulationClockQuery.data?.simulationDate);
+  }, [
+    activeAdminSection,
+    stockEventActionType,
+    applyStockEventSimulationDateDefaults,
+    queries.simulationClockQuery.data?.simulationDate,
+  ]);
   const actions = useAdminPageActions({
     drafts,
     queryClient,

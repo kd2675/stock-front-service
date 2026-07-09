@@ -91,7 +91,6 @@ export function SupplyDemandSideColumn({
         orderType={orderType}
         placingOrder={placingOrder}
         quantity={quantity}
-        totalAsset={portfolio?.totalAsset}
         availableCash={portfolio?.account.cashBalance}
         availableSellQuantity={selectedHolding?.availableQuantity}
         selectedInstrument={selectedInstrument}

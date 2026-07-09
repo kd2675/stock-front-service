@@ -13,6 +13,7 @@ import type { OrderBookInstrument } from "@/app/types/stock";
 
 export function useAdminCorporateActionActions({
   actionSymbol,
+  currentSimulationDate,
   draft,
   instruments,
   queryClient,
@@ -21,6 +22,7 @@ export function useAdminCorporateActionActions({
   setMessage,
 }: {
   actionSymbol: string;
+  currentSimulationDate?: string;
   draft: StockEventDraft;
   instruments: OrderBookInstrument[];
   queryClient: QueryClient;
@@ -43,7 +45,7 @@ export function useAdminCorporateActionActions({
       setMessage("현재 주문장 종목 목록에 없는 종목입니다. 종목을 다시 선택해 주세요.");
       return;
     }
-    const corporateActionPayload = buildCorporateActionPayload(draft);
+    const corporateActionPayload = buildCorporateActionPayload(draft, currentSimulationDate);
     if (!corporateActionPayload.ok) {
       setMessage(corporateActionPayload.message);
       return;

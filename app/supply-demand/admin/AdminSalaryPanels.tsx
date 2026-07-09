@@ -2,7 +2,7 @@ import { formatAutoParticipantProfile } from "@/app/lib/autoParticipantProfiles"
 import { formatAccountStatus, formatCount, formatInteger, formatWon } from "@/app/supply-demand/admin/AdminFormatters";
 import { SalaryMetric } from "@/app/supply-demand/admin/AdminMetricCards";
 import { formatRecurringCashPolicy, type SalaryEligibilityRow } from "@/app/supply-demand/admin/AdminParticipantPolicyHelpers";
-import type { StockBatchJobRun } from "@/app/types/stock";
+import type { BatchJobRuntimeStatus, StockBatchJobRun } from "@/app/types/stock";
 
 export function SalaryEligibilityPanel({
   rows,
@@ -17,6 +17,7 @@ export function SalaryEligibilityPanel({
   excludedCount,
   loading,
   error,
+  runtimeControl,
   running,
   lastRun,
   onPageChange,
@@ -34,11 +35,20 @@ export function SalaryEligibilityPanel({
   excludedCount: number;
   loading: boolean;
   error: boolean;
+  runtimeControl: BatchJobRuntimeStatus | null;
   running: boolean;
   lastRun: StockBatchJobRun | null;
   onPageChange: (page: number) => void;
   onRun: () => void;
 }) {
+  const automaticCashFlowEnabled = runtimeControl?.effectiveEnabled ?? true;
+  const manualRunDisabled = running || automaticCashFlowEnabled;
+  const manualRunLabel = running
+    ? "지급 실행 중"
+    : automaticCashFlowEnabled
+      ? "자동 지급 ON"
+      : "수동 월급 지급";
+
   return (
     <section className="mt-5 rounded-lg border border-white/10 bg-white/[0.06] p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -53,15 +63,15 @@ export function SalaryEligibilityPanel({
           <button
             type="button"
             onClick={onRun}
-            disabled={running}
-            className="min-h-10 rounded-md bg-white px-3 py-2 text-xs font-black text-[#101418] disabled:cursor-wait disabled:opacity-55"
+            disabled={manualRunDisabled}
+            className="min-h-10 rounded-md bg-white px-3 py-2 text-xs font-black text-[#101418] disabled:cursor-not-allowed disabled:opacity-55"
           >
-            {running ? "지급 실행 중" : "수동 월급 지급"}
+            {manualRunLabel}
           </button>
         </div>
       </div>
       <p className="mt-2 text-xs font-bold text-[#8b95a1]">
-        자동 실행이 중지되어 있어도 관리자가 명시적으로 한 번 지급할 수 있습니다. 마지막 수동 실행 {lastRun ? `${lastRun.status} · ${formatCount(lastRun.processedCount, "건")}` : "-"}
+        수동 지급은 자동 월급 지급이 꺼져 있을 때만 실행할 수 있습니다. 마지막 수동 실행 {lastRun ? `${lastRun.status} · ${formatCount(lastRun.processedCount, "건")}` : "-"}
       </p>
 
       {error ? (

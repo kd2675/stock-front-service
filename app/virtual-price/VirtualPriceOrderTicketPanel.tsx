@@ -88,9 +88,9 @@ export function VirtualPriceOrderTicketPanel({
       </div>
       <div className="mt-4 rounded-md border border-[#3a4553] p-3">
         <div className="flex items-center justify-between gap-3 text-xs font-semibold text-[#b0b8c1]">
-          <span>{side === "SELL" ? "보유 비중 주문" : "자산 비중 주문"}</span>
+          <span>{side === "SELL" ? "보유 비중 주문" : "현금 비중 주문"}</span>
           <span className="min-w-0 break-words text-right tabular-nums">
-            {side === "SELL" ? `매도가능 ${formatNumber(selectedHolding?.availableQuantity ?? 0)}주` : `총자산 ${formatWon(portfolio?.totalAsset)}`}
+            {side === "SELL" ? `매도가능 ${formatNumber(selectedHolding?.availableQuantity ?? 0)}주` : `주문가능 ${formatWon(portfolio?.account.cashBalance)}`}
           </span>
         </div>
         <div className="mt-3 grid grid-cols-4 gap-2">

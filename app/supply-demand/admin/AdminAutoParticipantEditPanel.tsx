@@ -67,7 +67,7 @@ export function AdminAutoParticipantEditPanel({
             {formatAutoParticipantProfile(participant.profileType)} · 현재 현금 {participant.cashBalance == null ? "계좌 미개설" : formatWon(participant.cashBalance)}
           </p>
         </div>
-        <DarkInput label="입금/회수 금액" value={draft.cashAdjustmentAmount} onChange={draftSetters.setCashAdjustmentAmount} placeholder="1000000" />
+        <DarkInput label="입금/회수 금액" value={draft.cashAdjustmentAmount} onChange={draftSetters.setCashAdjustmentAmount} placeholder="1,000,000" />
         <button
           type="button"
           onClick={() => onAdjustCash("DEPOSIT")}

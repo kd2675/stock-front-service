@@ -23,12 +23,14 @@ export function useAdminInitialIssueActions({
   queryClient,
   reportSymbolRef,
   setActionSymbol,
+  setHistorySymbol,
   setMessage,
   setReportSymbol,
 }: {
   queryClient: QueryClient;
   reportSymbolRef: MutableRefObject<string>;
   setActionSymbol: (symbol: string) => void;
+  setHistorySymbol: (symbol: string) => void;
   setMessage: AdminActionMessageSetter;
   setReportSymbol: (symbol: string) => void;
 }) {
@@ -42,6 +44,7 @@ export function useAdminInitialIssueActions({
     onSuccess: async (instrument) => {
       createInstrumentForm.reset(DEFAULT_CREATE_INSTRUMENT_FORM_VALUES);
       setActionSymbol(instrument.symbol);
+      setHistorySymbol(instrument.symbol);
       reportSymbolRef.current = instrument.symbol;
       setReportSymbol(instrument.symbol);
       setMessage("주식 이벤트를 적용했습니다. 신규 상장과 상장주관사 자동계정을 생성했습니다.");

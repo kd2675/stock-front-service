@@ -8,6 +8,7 @@ import { SalaryEligibilityPanel } from "@/app/supply-demand/admin/AdminSalaryPan
 import type { AdminSalaryEligibilityRowsState } from "@/app/supply-demand/admin/useAdminSalaryEligibilityRows";
 import type {
   AdminCashFlowPage,
+  BatchJobRuntimeStatus,
   FundFlow,
   StockBatchJobRun,
 } from "@/app/types/stock";
@@ -33,6 +34,7 @@ type AdminAccountsSectionProps = {
   onAdjustUserCash: (adjustmentType: CashAdjustmentType) => void;
   salaryEligibility: AdminSalaryEligibilityRowsState;
   salaryEligibilityError: boolean;
+  autoParticipantCashFlowRuntimeControl: BatchJobRuntimeStatus | null;
   runningCashFlow: boolean;
   lastCashFlowRun: StockBatchJobRun | null;
   onRunCashFlow: () => void;
@@ -65,6 +67,7 @@ export function AdminAccountsSection({
   onAdjustUserCash,
   salaryEligibility,
   salaryEligibilityError,
+  autoParticipantCashFlowRuntimeControl,
   runningCashFlow,
   lastCashFlowRun,
   onRunCashFlow,
@@ -118,6 +121,7 @@ export function AdminAccountsSection({
         excludedCount={salaryEligibility.summary.excludedCount}
         loading={loadingSalaryEligibility}
         error={salaryEligibilityError}
+        runtimeControl={autoParticipantCashFlowRuntimeControl}
         running={runningCashFlow}
         lastRun={lastCashFlowRun}
         onPageChange={salaryEligibility.setPage}

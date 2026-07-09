@@ -1,10 +1,11 @@
-import { DarkInput } from "@/app/supply-demand/admin/AdminFormControls";
+import { DarkDateInput, DarkInput } from "@/app/supply-demand/admin/AdminFormControls";
 import type { StockEventDraft, StockEventDraftSetters } from "@/app/supply-demand/admin/AdminStockEventTypes";
 
 type AdminCorporateActionFormPanelProps = {
   applyingAction: boolean;
   draft: StockEventDraft;
   draftSetters: StockEventDraftSetters;
+  currentSimulationDate?: string;
   onSubmit: () => void;
 };
 
@@ -12,8 +13,16 @@ export function AdminCorporateActionFormPanel({
   applyingAction,
   draft,
   draftSetters,
+  currentSimulationDate,
   onSubmit,
 }: AdminCorporateActionFormPanelProps) {
+  const exRightsMinDate = currentSimulationDate;
+  const paymentMinDate = maxIsoDate(currentSimulationDate, addIsoDateDays(draft.exRightsDate, 1));
+  const listingMinDate = maxIsoDate(
+    currentSimulationDate,
+    addIsoDateDays(draft.paymentDate || draft.exRightsDate, 1),
+  );
+
   return (
     <>
       <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_1fr_1fr_1.4fr_auto]">
@@ -37,7 +46,7 @@ export function AdminCorporateActionFormPanel({
           </>
         ) : draft.actionType === "DELISTING" ? (
           <>
-            <DarkInput label="상장폐지일" value={draft.delistingDate} onChange={draftSetters.setDelistingDate} placeholder="2026-06-26" type="date" />
+            <DarkDateInput label="상장폐지일" value={draft.delistingDate} onChange={draftSetters.setDelistingDate} placeholder="2026-06-26" minDate={currentSimulationDate} />
             <div />
             <div />
           </>
@@ -56,30 +65,51 @@ export function AdminCorporateActionFormPanel({
       <div className="mt-3 grid gap-3 md:grid-cols-3">
         {draft.actionType === "PAID_IN_CAPITAL_INCREASE" ? (
           <>
-            <DarkInput label="권리락일" value={draft.exRightsDate} onChange={draftSetters.setExRightsDate} placeholder="2026-06-22" type="date" />
-            <DarkInput label="납입일" value={draft.paymentDate} onChange={draftSetters.setPaymentDate} placeholder="2026-06-24" type="date" />
-            <DarkInput label="신주상장일" value={draft.listingDate} onChange={draftSetters.setListingDate} placeholder="2026-06-26" type="date" />
+            <DarkDateInput label="권리락일" value={draft.exRightsDate} onChange={draftSetters.setExRightsDate} placeholder="2026-06-22" minDate={exRightsMinDate} />
+            <DarkDateInput label="납입일" value={draft.paymentDate} onChange={draftSetters.setPaymentDate} placeholder="2026-06-24" minDate={paymentMinDate} />
+            <DarkDateInput label="신주상장일" value={draft.listingDate} onChange={draftSetters.setListingDate} placeholder="2026-06-26" minDate={listingMinDate} />
           </>
         ) : null}
         {draft.actionType === "ADDITIONAL_ISSUE" ? (
-          <DarkInput label="신주상장일" value={draft.listingDate} onChange={draftSetters.setListingDate} placeholder="2026-06-26" type="date" />
+          <DarkDateInput label="신주상장일" value={draft.listingDate} onChange={draftSetters.setListingDate} placeholder="2026-06-26" minDate={currentSimulationDate} />
         ) : null}
         {draft.actionType === "STOCK_SPLIT" ? (
-          <DarkInput label="효력일" value={draft.listingDate} onChange={draftSetters.setListingDate} placeholder="2026-06-26" type="date" />
+          <DarkDateInput label="효력일" value={draft.listingDate} onChange={draftSetters.setListingDate} placeholder="2026-06-26" minDate={currentSimulationDate} />
         ) : null}
         {draft.actionType === "CASH_DIVIDEND" ? (
           <>
-            <DarkInput label="배당락일" value={draft.exRightsDate} onChange={draftSetters.setExRightsDate} placeholder="2026-06-22" type="date" />
-            <DarkInput label="지급일" value={draft.paymentDate} onChange={draftSetters.setPaymentDate} placeholder="2026-06-26" type="date" />
+            <DarkDateInput label="배당락일" value={draft.exRightsDate} onChange={draftSetters.setExRightsDate} placeholder="2026-06-22" minDate={exRightsMinDate} />
+            <DarkDateInput label="지급일" value={draft.paymentDate} onChange={draftSetters.setPaymentDate} placeholder="2026-06-26" minDate={paymentMinDate} />
           </>
         ) : null}
         {draft.actionType === "BONUS_ISSUE" || draft.actionType === "STOCK_DIVIDEND" ? (
           <>
-            <DarkInput label="권리락일" value={draft.exRightsDate} onChange={draftSetters.setExRightsDate} placeholder="2026-06-22" type="date" />
-            <DarkInput label="신주상장일" value={draft.listingDate} onChange={draftSetters.setListingDate} placeholder="2026-06-26" type="date" />
+            <DarkDateInput label="권리락일" value={draft.exRightsDate} onChange={draftSetters.setExRightsDate} placeholder="2026-06-22" minDate={exRightsMinDate} />
+            <DarkDateInput label="신주상장일" value={draft.listingDate} onChange={draftSetters.setListingDate} placeholder="2026-06-26" minDate={listingMinDate} />
           </>
         ) : null}
       </div>
     </>
   );
+}
+
+function maxIsoDate(...values: Array<string | null | undefined>) {
+  return values.filter(isIsoDate).sort().at(-1);
+}
+
+function addIsoDateDays(value: string | null | undefined, days: number) {
+  if (!isIsoDate(value)) {
+    return undefined;
+  }
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day + days));
+  return [
+    date.getUTCFullYear().toString().padStart(4, "0"),
+    (date.getUTCMonth() + 1).toString().padStart(2, "0"),
+    date.getUTCDate().toString().padStart(2, "0"),
+  ].join("-");
+}
+
+function isIsoDate(value: string | null | undefined): value is string {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value ?? "");
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+
 import useAuthSession from "@/app/hooks/useAuthSession";
 import { buildAccountRequiredPath } from "@/app/lib/accountRouting";
 import { isAdminRole } from "@/app/lib/auth";
@@ -40,6 +41,11 @@ export default function StockHomePage() {
             {isAdmin ? (
               <Link href="/supply-demand/admin" className="rounded-md bg-[#191f28] px-3 py-2 text-sm font-bold text-white">
                 관리자 설정
+              </Link>
+            ) : null}
+            {isLoggedIn ? (
+              <Link href="/portfolio" className="rounded-md bg-[#f2f4f6] px-3 py-2 text-sm font-black text-[#333d4b]">
+                내 주식
               </Link>
             ) : null}
             <Link href={isLoggedIn ? "/" : "/login"} className="rounded-md bg-[#3182f6] px-3 py-2 text-sm font-black text-white">

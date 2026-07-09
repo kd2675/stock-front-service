@@ -69,9 +69,13 @@ export function useAdminBatchActions({
       return;
     }
     setLastCashFlowRun(cashFlowRunResult.data);
-    setMessage(cashFlowRunResult.data.status === "QUEUED"
-      ? "월급 지급 배치 실행 신호를 접수했습니다. 배치 서버가 순서대로 처리합니다."
-      : `월급 지급 배치를 실행했습니다. 처리 ${formatCount(cashFlowRunResult.data.processedCount, "건")}`);
+    if (cashFlowRunResult.data.status === "QUEUED") {
+      setMessage("월급 지급 배치 실행 신호를 접수했습니다. 배치 서버가 순서대로 처리합니다.");
+    } else if (cashFlowRunResult.data.status === "SKIPPED") {
+      setMessage(cashFlowRunResult.data.message || "월급 지급 배치가 실행되지 않았습니다.");
+    } else {
+      setMessage(`월급 지급 배치를 실행했습니다. 처리 ${formatCount(cashFlowRunResult.data.processedCount, "건")}`);
+    }
     reloadAdminCashFlowState();
     void invalidateBatchRuntimeControlQueries(queryClient);
     reloadAutoParticipantState();

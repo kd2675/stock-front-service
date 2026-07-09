@@ -10,9 +10,11 @@ type AdminDefaultDraftSelectionsOptions = {
   applyAutoMarketConfigDraft: (draft: ReturnType<typeof resolveAutoMarketConfigDraft>) => void;
   applyListingAutoAccountConfigDraft: (draft: ReturnType<typeof resolveListingAutoAccountConfigDraft>) => void;
   autoConfigSymbol: string;
+  historySymbol: string;
   instruments: OrderBookInstrument[];
   listingAutoSymbol: string;
   reportSymbol: string;
+  setHistorySymbol: (symbol: string) => void;
   setReportSymbol: (symbol: string) => void;
   shouldLoadInstrumentDetails: boolean;
   status: AutoMarketStatus | null | undefined;
@@ -23,14 +25,17 @@ export function useAdminDefaultDraftSelections(options: AdminDefaultDraftSelecti
     applyAutoMarketConfigDraft,
     applyListingAutoAccountConfigDraft,
     autoConfigSymbol,
+    historySymbol,
     instruments,
     listingAutoSymbol,
     reportSymbol,
+    setHistorySymbol,
     setReportSymbol,
     shouldLoadInstrumentDetails,
     status,
   } = options;
   const autoConfigSymbolRef = useRef("");
+  const historySymbolRef = useRef("");
   const listingAutoSymbolRef = useRef("");
   const reportSymbolRef = useRef("");
 
@@ -43,20 +48,39 @@ export function useAdminDefaultDraftSelections(options: AdminDefaultDraftSelecti
   }, [listingAutoSymbol]);
 
   useEffect(() => {
+    historySymbolRef.current = historySymbol;
+  }, [historySymbol]);
+
+  useEffect(() => {
     reportSymbolRef.current = reportSymbol;
   }, [reportSymbol]);
 
   useEffect(() => {
-    if (!shouldLoadInstrumentDetails || reportSymbolRef.current || instruments.length === 0) {
+    if (!shouldLoadInstrumentDetails || instruments.length === 0) {
       return undefined;
     }
     const firstSymbol = instruments[0].symbol;
-    reportSymbolRef.current = firstSymbol;
+    const shouldSetReportSymbol = !reportSymbolRef.current;
+    const shouldSetHistorySymbol = !historySymbolRef.current;
+    if (!shouldSetReportSymbol && !shouldSetHistorySymbol) {
+      return undefined;
+    }
+    if (shouldSetReportSymbol) {
+      reportSymbolRef.current = firstSymbol;
+    }
+    if (shouldSetHistorySymbol) {
+      historySymbolRef.current = firstSymbol;
+    }
     const timer = window.setTimeout(() => {
-      setReportSymbol(firstSymbol);
+      if (shouldSetReportSymbol) {
+        setReportSymbol(firstSymbol);
+      }
+      if (shouldSetHistorySymbol) {
+        setHistorySymbol(firstSymbol);
+      }
     }, 0);
     return () => window.clearTimeout(timer);
-  }, [instruments, setReportSymbol, shouldLoadInstrumentDetails]);
+  }, [instruments, setHistorySymbol, setReportSymbol, shouldLoadInstrumentDetails]);
 
   useEffect(() => {
     if (!status) {
@@ -75,6 +99,7 @@ export function useAdminDefaultDraftSelections(options: AdminDefaultDraftSelecti
   }, [applyAutoMarketConfigDraft, applyListingAutoAccountConfigDraft, status]);
 
   return {
+    historySymbolRef,
     reportSymbolRef,
   };
 }

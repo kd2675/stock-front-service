@@ -16,7 +16,7 @@ export type CashAdjustmentDraftInput = {
 
 const cashAdjustmentPayloadSchema = z.object({
   userKey: z.string().nullable().transform((value) => value ?? "").pipe(requiredTrimmedString()),
-  amount: positiveNumber(),
+  amount: z.preprocess(normalizeCashAmountInput, positiveNumber()),
   adjustmentType: z.enum(["DEPOSIT", "WITHDRAW"]),
 });
 
@@ -41,4 +41,8 @@ export function buildCashAdjustmentPayload(draft: CashAdjustmentDraftInput): Adm
       amount: parsed.data.amount,
     },
   };
+}
+
+function normalizeCashAmountInput(value: unknown) {
+  return typeof value === "string" ? value.trim().replace(/,/g, "") : value;
 }

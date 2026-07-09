@@ -7,9 +7,10 @@ export function buildAdminEventsContentProps({
   queries,
 }: AdminPageContentBuilderContext): NonNullable<AdminPageContentProps["eventsProps"]> {
   const {
-    actionSymbol,
     draft: stockEventDraft,
     draftSetters: stockEventDraftSetters,
+    historySymbol,
+    setHistorySymbol,
   } = drafts.stockEvent;
   const {
     draft: instrumentReportDraft,
@@ -29,18 +30,20 @@ export function buildAdminEventsContentProps({
   } = actions;
 
   return {
-    actionSymbol,
     applyingAction,
     corporateActions,
     createInstrumentForm,
     creatingInitialIssue,
+    currentSimulationDate: queries.simulationClockQuery.data?.simulationDate,
     deletingReport,
     instrumentReportDraft,
     instrumentReportDraftSetters,
     instrumentReports,
     instruments,
+    historySymbol,
     onDeleteReport: () => void removeInstrumentReport(),
     onFillReportDraft: fillReportDraft,
+    onHistorySymbolChange: setHistorySymbol,
     onPublishReport: () => void submitInstrumentReport("publish"),
     onSubmitStockEvent: submitStockEvent,
     onUpdateReport: () => void submitInstrumentReport("update"),

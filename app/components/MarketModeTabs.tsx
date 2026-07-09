@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-type MarketMode = "virtual-price" | "order-book";
+type MarketMode = "virtual-price" | "order-book" | "portfolio";
 
 const MARKET_MODE_TABS: Array<{
   mode: MarketMode;
@@ -17,11 +17,16 @@ const MARKET_MODE_TABS: Array<{
     href: "/supply-demand",
     label: "수요와 공급 주문 체결",
   },
+  {
+    mode: "portfolio",
+    href: "/portfolio",
+    label: "내 주식",
+  },
 ];
 
 export default function MarketModeTabs({ active }: { active: MarketMode }) {
   return (
-    <nav aria-label="체결 방식" className="grid grid-cols-2 gap-1 rounded-lg bg-[#f2f4f6] p-1">
+    <nav aria-label="주식 화면" className="grid grid-cols-3 gap-1 rounded-lg bg-[#f2f4f6] p-1">
       {MARKET_MODE_TABS.map((tab) => {
         const selected = tab.mode === active;
 

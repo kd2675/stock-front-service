@@ -11,7 +11,7 @@ import { accountStatusQueryOptions, holdingsQueryOptions, portfolioQueryOptions,
 import { formatNumber, formatWon } from "@/app/lib/stockFormatters";
 import type { Holding, Portfolio, StockUserProfile } from "@/app/types/stock";
 
-type MarketMode = "virtual-price" | "order-book";
+type MarketMode = "virtual-price" | "order-book" | "portfolio";
 
 export default function TradingTopBar({ active, actions }: { active: MarketMode; actions?: ReactNode }) {
   const router = useRouter();
@@ -103,6 +103,24 @@ function AccountPanel({
   const username = profile?.username ?? fallbackUser?.username ?? "사용자";
   const role = profile?.role ?? fallbackUser?.role ?? "USER";
   const email = profile?.email ?? fallbackUser?.email ?? null;
+  const [userKeyCopied, setUserKeyCopied] = useState(false);
+
+  const copyUserKey = async () => {
+    if (!userKey || userKey === "-") {
+      return;
+    }
+    let copied = false;
+    try {
+      await navigator.clipboard.writeText(userKey);
+      copied = true;
+    } catch {
+      copied = copyTextWithFallback(userKey);
+    }
+    if (copied) {
+      setUserKeyCopied(true);
+      window.setTimeout(() => setUserKeyCopied(false), 1400);
+    }
+  };
 
   return (
     <div className="absolute right-0 top-[calc(100%+8px)] z-40 w-[min(92vw,380px)] rounded-lg border border-[#d1d6db] bg-white p-4 text-[#191f28] shadow-[0_18px_50px_rgba(25,31,40,0.16)]">
@@ -115,7 +133,20 @@ function AccountPanel({
       </div>
 
       <div className="mt-3 grid gap-2 rounded-md bg-[#f7f8fa] p-3 text-xs font-bold text-[#6b7684]">
-        <AccountPanelRow label="식별키" value={userKey} wrap />
+        <div className="grid min-w-0 gap-1">
+          <span>식별키</span>
+          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2">
+            <span className="min-w-0 break-all rounded-sm bg-white px-2 py-1 text-left font-black leading-5 text-[#333d4b]">{userKey}</span>
+            <button
+              type="button"
+              onClick={() => void copyUserKey()}
+              disabled={!userKey || userKey === "-"}
+              className="rounded-sm bg-[#191f28] px-2 py-1 text-xs font-black text-white disabled:cursor-not-allowed disabled:bg-[#d1d6db]"
+            >
+              {userKeyCopied ? "복사됨" : "복사"}
+            </button>
+          </div>
+        </div>
         <AccountPanelRow label="이메일" value={email ?? "-"} />
         <AccountPanelRow label="계좌코드" value={portfolio?.account.accountCode ?? profile?.account?.accountCode ?? "-"} />
       </div>
@@ -182,4 +213,17 @@ function initialOf(username?: string | null) {
     return "U";
   }
   return value.slice(0, 1).toUpperCase();
+}
+
+function copyTextWithFallback(value: string) {
+  const textarea = document.createElement("textarea");
+  textarea.value = value;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.left = "-9999px";
+  document.body.appendChild(textarea);
+  textarea.select();
+  const copied = document.execCommand("copy");
+  document.body.removeChild(textarea);
+  return copied;
 }

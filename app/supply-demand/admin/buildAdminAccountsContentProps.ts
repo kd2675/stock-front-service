@@ -23,6 +23,7 @@ export function buildAdminAccountsContentProps({
     autoParticipantsQuery,
     autoParticipantProfileOverviewsQuery,
     autoParticipantProfileOverviewsAllQuery,
+    batchJobRuntimeControls,
     userFundFlow,
     userFundFlowQuery,
   } = queries;
@@ -42,6 +43,7 @@ export function buildAdminAccountsContentProps({
   return {
     activeSection: activeAdminSection,
     adjustingUserCashType,
+    autoParticipantCashFlowRuntimeControl: batchJobRuntimeControls.find((control) => control.jobName === "auto-participant-cash-flow") ?? null,
     cashFlowPage: adminCashFlowPage,
     lastCashFlowRun,
     loadingCashFlowPage: adminCashFlowPageQuery.isFetching,

@@ -37,7 +37,7 @@ export function AdminUserCashAdjustmentPanel({
       </div>
       <div className="mt-4 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_auto_auto_auto]">
         <DarkInput label="유저 식별키" value={userKey} onChange={onUserKeyChange} placeholder="userKey" />
-        <DarkInput label="입금/회수 금액" value={amount} onChange={onAmountChange} placeholder="1000000" />
+        <DarkInput label="입금/회수 금액" value={amount} onChange={onAmountChange} placeholder="1,000,000" />
         <button
           type="button"
           onClick={onLoadFundFlow}

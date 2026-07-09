@@ -38,8 +38,8 @@ type UseAdminPageQueriesParams = {
   activeAdminTab: AdminTab;
   adminCashFlowPageIndex: number;
   adminStatus: AdminAccessStatus;
-  actionSymbol: string;
   editingAutoParticipantUserKey: string | null;
+  historySymbol: string;
   reportSymbol: string;
   userFundFlowUserKey: string | null;
 };
@@ -50,8 +50,8 @@ export function useAdminPageQueries({
   activeAdminTab,
   adminCashFlowPageIndex,
   adminStatus,
-  actionSymbol,
   editingAutoParticipantUserKey,
+  historySymbol,
   reportSymbol,
   userFundFlowUserKey,
 }: UseAdminPageQueriesParams) {
@@ -86,7 +86,7 @@ export function useAdminPageQueries({
     enabled: queryFlags.shouldUseInstrumentDetails,
   }));
   const instruments = orderBookInstrumentsQuery.data ?? EMPTY_ORDER_BOOK_INSTRUMENTS;
-  const corporateActionSymbol = isKnownOrderBookSymbol(instruments, actionSymbol) ? actionSymbol : "";
+  const corporateActionSymbol = isKnownOrderBookSymbol(instruments, historySymbol) ? historySymbol : "";
   const instrumentReportSymbol = isKnownOrderBookSymbol(instruments, reportSymbol) ? reportSymbol : "";
 
   const corporateActionsQuery = useQuery(corporateActionsQueryOptions(corporateActionSymbol, {
@@ -129,7 +129,7 @@ export function useAdminPageQueries({
     enabled: false,
   }));
   const batchJobRuntimeControlsQuery = useQuery(batchJobRuntimeControlsQueryOptions(accessToken, {
-    enabled: isAdminAllowed && queryFlags.isBatchSection,
+    enabled: queryFlags.shouldUseBatchRuntimeControls,
   }));
   const autoMarketSummaryQuery = useQuery(autoMarketSummaryStatusQueryOptions({
     enabled: queryFlags.shouldUseAutoMarketSummary,
@@ -151,7 +151,7 @@ export function useAdminPageQueries({
   }));
   const simulationClockQuery = useQuery({
     ...simulationClockQueryOptions(),
-    enabled: isAdminAllowed && queryFlags.isMarketSection,
+    enabled: isAdminAllowed && (queryFlags.isMarketSection || queryFlags.isEventsSection),
   });
 
   const queryResults = normalizeAdminPageQueryResults({
@@ -162,7 +162,7 @@ export function useAdminPageQueries({
     autoMarketSummary: queryFlags.shouldUseAutoMarketSummary ? autoMarketSummaryQuery.data : null,
     autoParticipants: queryFlags.shouldUseAutoParticipants ? autoParticipantsQuery.data : null,
     autoParticipantProfileOverviewSummaries: queryFlags.shouldUseAutoParticipantProfileOverviews ? autoParticipantProfileOverviewsQuery.data : null,
-    batchJobRuntimeControls: isAdminAllowed && queryFlags.isBatchSection ? batchJobRuntimeControlsQuery.data : null,
+    batchJobRuntimeControls: queryFlags.shouldUseBatchRuntimeControls ? batchJobRuntimeControlsQuery.data : null,
     corporateActions: isAdminAllowed && queryFlags.isEventsSection ? corporateActionsQuery.data : null,
     instrumentReports: isAdminAllowed && queryFlags.isEventsSection ? instrumentReportsQuery.data : null,
     instruments: queryFlags.shouldUseInstrumentDetails ? orderBookInstrumentsQuery.data : null,

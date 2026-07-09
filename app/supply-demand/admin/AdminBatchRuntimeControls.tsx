@@ -69,6 +69,7 @@ export function AdminBatchRuntimeControlPanel({
             const label = BATCH_JOB_RUNTIME_LABELS[control.jobName] ?? { label: control.jobName, description: "등록된 배치 자동 실행 제어입니다." };
             const updating = updatingBatchJobName === control.jobName;
             const manualAction = resolveBatchManualAction(control.jobName, {
+              control,
               lastCashFlowRun,
               runningCashFlow,
               onRunCashFlow,

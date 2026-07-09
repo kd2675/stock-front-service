@@ -51,7 +51,6 @@ export function resolveAssetPercentQuantity({
   orderType,
   percent,
   side,
-  totalAsset,
 }: {
   availableCash?: number | null;
   availableSellQuantity?: number | null;
@@ -61,7 +60,6 @@ export function resolveAssetPercentQuantity({
   orderType: OrderType;
   percent: number;
   side: OrderSide;
-  totalAsset?: number | null;
 }): AssetPercentQuantityResult {
   if (!hasSelection) {
     return { ok: false, reason: "missingSelection" };
@@ -82,7 +80,6 @@ export function resolveAssetPercentQuantity({
     percent,
     price: resolvedPrice.price,
     side,
-    totalAsset,
   });
   if (quantity === null) {
     return { ok: false, reason: "missingAsset" };
@@ -111,28 +108,26 @@ export function calculateAssetPercentQuantity({
   percent,
   price,
   side,
-  totalAsset,
 }: {
   availableCash?: number | null;
   availableSellQuantity?: number | null;
   percent: number;
   price: number;
   side: OrderSide;
-  totalAsset?: number | null;
 }): number | null {
   if (!isPositiveFiniteNumber(percent)) {
     return null;
   }
 
   if (side === "BUY") {
-    if (!isPositiveFiniteNumber(price) || !isPositiveFiniteNumber(totalAsset)) {
+    if (!isPositiveFiniteNumber(price)) {
       return null;
     }
     if (!isPositiveFiniteNumber(availableCash)) {
       return 0;
     }
-    const targetAmount = totalAsset * (percent / 100);
-    return Math.floor(Math.min(targetAmount, availableCash) / price);
+    const targetAmount = availableCash * (percent / 100);
+    return Math.floor(targetAmount / price);
   }
 
   if (!isPositiveFiniteNumber(availableSellQuantity)) {

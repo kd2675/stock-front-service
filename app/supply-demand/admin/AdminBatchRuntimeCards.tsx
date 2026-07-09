@@ -101,10 +101,10 @@ export function BatchRuntimeControlCard({
             <button
               type="button"
               onClick={manualAction.onRun}
-              disabled={manualAction.running}
-              className="min-h-10 rounded-md bg-white px-3 py-2 text-xs font-black text-[#101418] disabled:cursor-wait disabled:opacity-55"
+              disabled={manualAction.running || manualAction.disabled}
+              className="min-h-10 rounded-md bg-white px-3 py-2 text-xs font-black text-[#101418] disabled:cursor-not-allowed disabled:opacity-55"
             >
-              {manualAction.running ? manualAction.runningLabel : manualAction.buttonLabel}
+              {manualAction.running ? manualAction.runningLabel : manualAction.disabled ? "자동 지급 ON" : manualAction.buttonLabel}
             </button>
           </div>
           <p className="mt-2 text-xs font-bold text-[#6f7a86]">{manualAction.lastRunText}</p>

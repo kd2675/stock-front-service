@@ -19,6 +19,7 @@ type AdminStockEventPanelProps = {
   draftSetters: StockEventDraftSetters;
   creatingInitialIssue: boolean;
   applyingAction: boolean;
+  currentSimulationDate?: string;
   onSubmit: () => void;
 };
 
@@ -29,6 +30,7 @@ export function AdminStockEventPanel({
   draftSetters,
   creatingInitialIssue,
   applyingAction,
+  currentSimulationDate,
   onSubmit,
 }: AdminStockEventPanelProps) {
   const isInitialIssue = draft.actionType === "INITIAL_ISSUE";
@@ -88,6 +90,7 @@ export function AdminStockEventPanel({
           applyingAction={applyingAction}
           draft={draft}
           draftSetters={draftSetters}
+          currentSimulationDate={currentSimulationDate}
           onSubmit={onSubmit}
         />
       )}

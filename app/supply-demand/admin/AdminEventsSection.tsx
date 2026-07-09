@@ -16,6 +16,7 @@ type AdminEventsSectionProps = {
   stockEventDraftSetters: StockEventDraftSetters;
   creatingInitialIssue: boolean;
   applyingAction: boolean;
+  currentSimulationDate?: string;
   onSubmitStockEvent: () => void;
   instrumentReports: InstrumentReport[];
   instrumentReportDraft: InstrumentReportDraft;
@@ -26,7 +27,8 @@ type AdminEventsSectionProps = {
   onUpdateReport: () => void;
   onDeleteReport: () => void;
   onFillReportDraft: (report: InstrumentReport) => void;
-  actionSymbol: string;
+  historySymbol: string;
+  onHistorySymbolChange: (symbol: string) => void;
   corporateActions: CorporateAction[];
 };
 
@@ -37,6 +39,7 @@ export function AdminEventsSection({
   stockEventDraftSetters,
   creatingInitialIssue,
   applyingAction,
+  currentSimulationDate,
   onSubmitStockEvent,
   instrumentReports,
   instrumentReportDraft,
@@ -47,7 +50,8 @@ export function AdminEventsSection({
   onUpdateReport,
   onDeleteReport,
   onFillReportDraft,
-  actionSymbol,
+  historySymbol,
+  onHistorySymbolChange,
   corporateActions,
 }: AdminEventsSectionProps) {
   return (
@@ -59,7 +63,15 @@ export function AdminEventsSection({
         draftSetters={stockEventDraftSetters}
         creatingInitialIssue={creatingInitialIssue}
         applyingAction={applyingAction}
+        currentSimulationDate={currentSimulationDate}
         onSubmit={onSubmitStockEvent}
+      />
+
+      <AdminCorporateActionHistoryPanel
+        instruments={instruments}
+        symbol={historySymbol}
+        onSymbolChange={onHistorySymbolChange}
+        actions={corporateActions}
       />
 
       <AdminInstrumentReportPanel
@@ -74,8 +86,6 @@ export function AdminEventsSection({
         onDelete={onDeleteReport}
         onFillDraft={onFillReportDraft}
       />
-
-      <AdminCorporateActionHistoryPanel symbol={actionSymbol} actions={corporateActions} />
     </>
   );
 }

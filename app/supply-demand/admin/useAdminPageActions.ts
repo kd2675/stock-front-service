@@ -54,8 +54,10 @@ export function useAdminPageActions({
     actionSymbol,
     actionType,
     draft: stockEventDraft,
+    historySymbol,
     resetCorporateActionFields,
     setActionSymbol,
+    setHistorySymbol,
   } = drafts.stockEvent;
   const {
     draft: instrumentReportDraft,
@@ -107,6 +109,7 @@ export function useAdminPageActions({
     autoParticipants,
     instruments,
     shouldLoadInstrumentDetails,
+    simulationClockQuery,
     status,
     userFundFlowQuery,
   } = queries;
@@ -115,9 +118,11 @@ export function useAdminPageActions({
     applyAutoMarketConfigDraft: drafts.autoMarketConfig.applyAutoMarketConfigDraft,
     applyListingAutoAccountConfigDraft: drafts.listingAutoAccount.applyListingAutoAccountConfigDraft,
     autoConfigSymbol,
+    historySymbol,
     instruments,
     listingAutoSymbol,
     reportSymbol,
+    setHistorySymbol,
     setReportSymbol,
     shouldLoadInstrumentDetails,
     status,
@@ -220,6 +225,7 @@ export function useAdminPageActions({
   });
   const corporateActionActions = useAdminCorporateActionActions({
     actionSymbol,
+    currentSimulationDate: simulationClockQuery.data?.simulationDate,
     draft: stockEventDraft,
     instruments,
     queryClient,
@@ -235,6 +241,7 @@ export function useAdminPageActions({
     queryClient,
     reportSymbolRef,
     setActionSymbol,
+    setHistorySymbol,
     setMessage,
     setReportSymbol,
   });

@@ -14,7 +14,6 @@ export function OrderTicketPanel({
   quantity,
   selectedInstrument,
   side,
-  totalAsset,
   onAssetPercentSelect,
   onLimitPriceChange,
   onLimitPriceStep,
@@ -33,7 +32,6 @@ export function OrderTicketPanel({
   quantity: string;
   selectedInstrument?: OrderBookInstrument;
   side: OrderSide;
-  totalAsset?: number;
   onAssetPercentSelect: (percent: number) => void;
   onLimitPriceChange: (value: string) => void;
   onLimitPriceStep: (direction: -1 | 1) => void;
@@ -96,9 +94,9 @@ export function OrderTicketPanel({
 
       <div className="mt-4 rounded-md border border-[#e5e8eb] p-3">
         <div className="flex items-center justify-between gap-3 text-xs font-bold text-[#6b7684]">
-          <span>{side === "SELL" ? "보유 비중 주문" : "자산 비중 주문"}</span>
+          <span>{side === "SELL" ? "보유 비중 주문" : "현금 비중 주문"}</span>
           <span className="min-w-0 truncate text-right tabular-nums">
-            {side === "SELL" ? `매도가능 ${formatNumber(availableSellQuantity ?? 0)}주` : `총자산 ${formatWon(totalAsset)}`}
+            {side === "SELL" ? `매도가능 ${formatNumber(availableSellQuantity ?? 0)}주` : `주문가능 ${formatWon(availableCash)}`}
           </span>
         </div>
         <div className="mt-3 grid grid-cols-4 gap-2">

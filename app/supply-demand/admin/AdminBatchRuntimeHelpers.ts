@@ -7,6 +7,7 @@ export type BatchManualAction = {
   buttonLabel: string;
   runningLabel: string;
   running: boolean;
+  disabled: boolean;
   lastRunText: string;
   onRun: () => void;
 };
@@ -31,6 +32,7 @@ export function summarizeBatchRuntimeControls(controls: BatchJobRuntimeStatus[])
 export function resolveBatchManualAction(
   jobName: string,
   options: {
+    control: BatchJobRuntimeStatus;
     lastCashFlowRun: StockBatchJobRun | null;
     runningCashFlow: boolean;
     onRunCashFlow: () => void;
@@ -39,10 +41,11 @@ export function resolveBatchManualAction(
   if (jobName === "auto-participant-cash-flow") {
     return {
       label: "월급 수동 지급",
-      description: "자동 실행이 중지되어 있어도 관리자가 명시적으로 한 번 지급할 수 있습니다.",
+      description: "자동 월급 지급이 꺼져 있을 때만 관리자가 명시적으로 한 번 지급할 수 있습니다.",
       buttonLabel: "수동 월급 지급",
       runningLabel: "지급 실행 중",
       running: options.runningCashFlow,
+      disabled: options.control.effectiveEnabled,
       lastRunText: `마지막 수동 실행 ${options.lastCashFlowRun ? `${options.lastCashFlowRun.status} · ${formatCount(options.lastCashFlowRun.processedCount, "건")}` : "-"}`,
       onRun: options.onRunCashFlow,
     };
