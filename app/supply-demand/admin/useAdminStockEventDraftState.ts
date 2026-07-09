@@ -123,7 +123,7 @@ function defaultDatesForAction(actionType: StockEventDraft["actionType"], simula
       delistingDate: "",
     };
   }
-  if (actionType === "ADDITIONAL_ISSUE" || actionType === "STOCK_SPLIT") {
+  if (actionType === "STOCK_SPLIT") {
     return {
       exRightsDate: "",
       paymentDate: "",

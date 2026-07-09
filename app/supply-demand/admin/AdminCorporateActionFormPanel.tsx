@@ -70,9 +70,6 @@ export function AdminCorporateActionFormPanel({
             <DarkDateInput label="신주상장일" value={draft.listingDate} onChange={draftSetters.setListingDate} placeholder="2026-06-26" minDate={listingMinDate} />
           </>
         ) : null}
-        {draft.actionType === "ADDITIONAL_ISSUE" ? (
-          <DarkDateInput label="신주상장일" value={draft.listingDate} onChange={draftSetters.setListingDate} placeholder="2026-06-26" minDate={currentSimulationDate} />
-        ) : null}
         {draft.actionType === "STOCK_SPLIT" ? (
           <DarkDateInput label="효력일" value={draft.listingDate} onChange={draftSetters.setListingDate} placeholder="2026-06-26" minDate={currentSimulationDate} />
         ) : null}

@@ -96,8 +96,6 @@ export function formatCorporateActionType(actionType?: CorporateActionType | nul
       return "초기 발행";
     case "PAID_IN_CAPITAL_INCREASE":
       return "유상증자";
-    case "ADDITIONAL_ISSUE":
-      return "추가발행";
     case "STOCK_SPLIT":
       return "액면분할";
     case "CASH_DIVIDEND":

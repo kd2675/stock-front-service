@@ -49,7 +49,6 @@ export function AdminStockEventPanel({
         <DarkSelect label="이벤트 종류" value={draft.actionType} onChange={(value) => draftSetters.setActionType(value as CorporateActionType)}>
           <option value="INITIAL_ISSUE">신규 상장</option>
           <option value="PAID_IN_CAPITAL_INCREASE">유상증자</option>
-          <option value="ADDITIONAL_ISSUE">추가발행</option>
           <option value="STOCK_SPLIT">액면분할</option>
           <option value="CASH_DIVIDEND">현금배당</option>
           <option value="BONUS_ISSUE">무상증자</option>

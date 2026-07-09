@@ -140,27 +140,6 @@ export function buildCorporateActionPayload(draft: CorporateActionDraftInput, cu
       payload.paymentDate = draft.paymentDate;
       payload.listingDate = draft.listingDate;
     }
-    if (draft.actionType === "ADDITIONAL_ISSUE") {
-      if (parsedIssuePrice === null) {
-        return {
-          ok: false,
-          message: "발행가는 0보다 큰 숫자로 입력해 주세요.",
-        };
-      }
-      if (!draft.listingDate) {
-        return {
-          ok: false,
-          message: "추가발행은 신주상장일이 필요합니다.",
-        };
-      }
-      const scheduleValidation = validateScheduleNotBeforeCurrent([
-        ["신주상장일", draft.listingDate],
-      ], currentSimulationDate);
-      if (!scheduleValidation.ok) {
-        return scheduleValidation;
-      }
-      payload.listingDate = draft.listingDate;
-    }
     if (draft.actionType === "BONUS_ISSUE" || draft.actionType === "STOCK_DIVIDEND") {
       if (!draft.exRightsDate || !draft.listingDate) {
         return {
@@ -185,7 +164,7 @@ export function buildCorporateActionPayload(draft: CorporateActionDraftInput, cu
       payload.listingDate = draft.listingDate;
     }
     payload.shareQuantity = parsedShares;
-    if ((draft.actionType === "PAID_IN_CAPITAL_INCREASE" || draft.actionType === "ADDITIONAL_ISSUE") && parsedIssuePrice !== null) {
+    if (draft.actionType === "PAID_IN_CAPITAL_INCREASE" && parsedIssuePrice !== null) {
       payload.issuePrice = parsedIssuePrice;
     }
   }
