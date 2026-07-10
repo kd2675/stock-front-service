@@ -1,12 +1,15 @@
-import type { CorporateActionType } from "@/app/types/stock";
+import type { CapitalIncreaseOfferingType, CorporateActionType } from "@/app/types/stock";
 
 export type StockEventDraft = {
   actionType: CorporateActionType;
   actionSymbol: string;
   actionShares: string;
   actionIssuePrice: string;
+  offeringType: CapitalIncreaseOfferingType;
   actionDividendAmount: string;
   exRightsDate: string;
+  subscriptionStartDate: string;
+  subscriptionEndDate: string;
   paymentDate: string;
   listingDate: string;
   delistingDate: string;
@@ -20,8 +23,11 @@ export type StockEventDraftSetters = {
   setActionSymbol: (value: string) => void;
   setActionShares: (value: string) => void;
   setActionIssuePrice: (value: string) => void;
+  setOfferingType: (value: CapitalIncreaseOfferingType) => void;
   setActionDividendAmount: (value: string) => void;
   setExRightsDate: (value: string) => void;
+  setSubscriptionStartDate: (value: string) => void;
+  setSubscriptionEndDate: (value: string) => void;
   setPaymentDate: (value: string) => void;
   setListingDate: (value: string) => void;
   setDelistingDate: (value: string) => void;

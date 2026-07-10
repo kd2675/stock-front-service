@@ -1,3 +1,4 @@
+import { CorporateActionSubscriptionPanel } from "@/app/supply-demand/CorporateActionSubscriptionPanel";
 import { MarketTapePanel } from "@/app/supply-demand/MarketTapePanel";
 import { OrderTicketPanel } from "@/app/supply-demand/OrderTicketPanel";
 import { OrderBookExecutionPreviewPanel, OrderBookOrderPreviewPanel } from "@/app/supply-demand/SupplyDemandActivityPreviewPanels";
@@ -5,6 +6,8 @@ import { AutoMarketConfigListPanel, AutoMarketStatusPanel } from "@/app/supply-d
 import type {
   AutoMarketConfig,
   AutoMarketStatus,
+  CorporateAction,
+  CorporateActionEntitlement,
   Execution,
   Holding,
   Order,
@@ -20,7 +23,10 @@ import type {
 export type SupplyDemandSideColumnProps = {
   autoMarket: AutoMarketStatus | null;
   cancellingOrderId: number | null;
+  corporateActionEntitlements: CorporateActionEntitlement[];
+  corporateActions: CorporateAction[];
   estimatedOrderAmount?: number;
+  isCorporateActionsLoading: boolean;
   isLoading: boolean;
   isRecentExecutionsLoading: boolean;
   isSelectedMarketOpen: boolean;
@@ -38,6 +44,7 @@ export type SupplyDemandSideColumnProps = {
   selectedInstrument: OrderBookInstrument;
   selectedOrderBookConfig?: SymbolMarketConfig;
   side: OrderSide;
+  subscribingCorporateActionId: number | null;
   updatedAt: Date | null;
   onAssetPercentSelect: (percent: number) => void;
   onCancelOrder: (orderId: number) => void;
@@ -47,13 +54,17 @@ export type SupplyDemandSideColumnProps = {
   onQuantityChange: (value: string) => void;
   onSelectInstrument: (symbol: string) => void;
   onSideChange: (value: OrderSide) => void;
+  onSubscribeCorporateAction: (actionId: number, shareQuantity: number) => void;
   onSubmitOrder: () => void;
 };
 
 export function SupplyDemandSideColumn({
   autoMarket,
   cancellingOrderId,
+  corporateActionEntitlements,
+  corporateActions,
   estimatedOrderAmount,
+  isCorporateActionsLoading,
   isLoading,
   isRecentExecutionsLoading,
   isSelectedMarketOpen,
@@ -71,6 +82,7 @@ export function SupplyDemandSideColumn({
   selectedInstrument,
   selectedOrderBookConfig,
   side,
+  subscribingCorporateActionId,
   updatedAt,
   onAssetPercentSelect,
   onCancelOrder,
@@ -80,6 +92,7 @@ export function SupplyDemandSideColumn({
   onQuantityChange,
   onSelectInstrument,
   onSideChange,
+  onSubscribeCorporateAction,
   onSubmitOrder,
 }: SupplyDemandSideColumnProps) {
   return (
@@ -102,6 +115,15 @@ export function SupplyDemandSideColumn({
         onQuantityChange={onQuantityChange}
         onSideChange={onSideChange}
         onSubmit={onSubmitOrder}
+      />
+
+      <CorporateActionSubscriptionPanel
+        actions={corporateActions}
+        availableCash={portfolio?.account.cashBalance}
+        entitlements={corporateActionEntitlements}
+        isLoading={isCorporateActionsLoading}
+        subscribingActionId={subscribingCorporateActionId}
+        onSubscribe={onSubscribeCorporateAction}
       />
 
       <AutoMarketStatusPanel

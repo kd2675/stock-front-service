@@ -18,6 +18,7 @@ import {
   regenerateAutoMarketDailyRegime,
   regenerateAutoMarketRegimeModifier,
   runAutoParticipantCashFlow,
+  subscribeCorporateAction,
   updateAutoMarketConfig,
   updateAutoParticipantProfileConfig,
   updateAutoParticipantSymbolConfig,
@@ -38,6 +39,7 @@ import type {
   StockAutoParticipantSymbolConfigPayload,
   StockBatchJobRuntimeControlPayload,
   StockCorporateActionPayload,
+  StockCorporateActionSubscriptionPayload,
   StockInstrumentReportPayload,
   StockListingAutoAccountConfigPayload,
   StockMarketStatusPayload,
@@ -234,6 +236,16 @@ export function adminApplyCorporateActionMutationOptions() {
       symbol: string;
       payload: StockCorporateActionPayload;
     }) => applyCorporateAction(token, variables.symbol, variables.payload),
+  );
+}
+
+export function subscribeCorporateActionMutationOptions() {
+  return authenticatedMutationOptions(
+    (token, variables: {
+      actionId: number;
+      payload: StockCorporateActionSubscriptionPayload;
+    }) => subscribeCorporateAction(token, variables.actionId, variables.payload),
+    "기업 이벤트 청약에 실패했습니다.",
   );
 }
 

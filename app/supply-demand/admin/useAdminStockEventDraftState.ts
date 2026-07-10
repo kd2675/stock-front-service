@@ -16,8 +16,11 @@ const DEFAULT_STOCK_EVENT_DRAFT: StockEventDraft = {
   actionSymbol: "",
   actionShares: "",
   actionIssuePrice: "",
+  offeringType: "SHAREHOLDER_ALLOCATION",
   actionDividendAmount: "",
   exRightsDate: "",
+  subscriptionStartDate: "",
+  subscriptionEndDate: "",
   paymentDate: "",
   listingDate: "",
   delistingDate: "",
@@ -36,13 +39,15 @@ export function useAdminStockEventDraftState() {
       return;
     }
     setDraft((previous) => {
-      const defaults = defaultDatesForAction(previous.actionType, simulationDate);
+      const defaults = defaultDatesForAction(previous.actionType, previous.offeringType, simulationDate);
       if (defaults === null) {
         return previous;
       }
       const next = {
         ...previous,
         exRightsDate: previous.exRightsDate || defaults.exRightsDate || "",
+        subscriptionStartDate: previous.subscriptionStartDate || defaults.subscriptionStartDate || "",
+        subscriptionEndDate: previous.subscriptionEndDate || defaults.subscriptionEndDate || "",
         paymentDate: previous.paymentDate || defaults.paymentDate || "",
         listingDate: previous.listingDate || defaults.listingDate || "",
         delistingDate: previous.delistingDate || defaults.delistingDate || "",
@@ -58,6 +63,8 @@ export function useAdminStockEventDraftState() {
       actionIssuePrice: "",
       actionDividendAmount: "",
       exRightsDate: "",
+      subscriptionStartDate: "",
+      subscriptionEndDate: "",
       paymentDate: "",
       listingDate: "",
       delistingDate: "",
@@ -66,12 +73,37 @@ export function useAdminStockEventDraftState() {
   };
 
   const draftSetters: StockEventDraftSetters = useMemo(() => ({
-    setActionType: (value) => setDraftField("actionType", value),
+    setActionType: (value) => setDraft((previous) => {
+      if (previous.actionType === value) {
+        return previous;
+      }
+      return {
+        ...clearCorporateActionDateFields(previous),
+        actionType: value,
+      };
+    }),
     setActionSymbol: (value) => setDraftField("actionSymbol", value),
     setActionShares: (value) => setDraftField("actionShares", value),
     setActionIssuePrice: (value) => setDraftField("actionIssuePrice", value),
+    setOfferingType: (value) => setDraft((previous) => {
+      if (previous.offeringType === value) {
+        return previous;
+      }
+      if (previous.actionType !== "PAID_IN_CAPITAL_INCREASE") {
+        return {
+          ...previous,
+          offeringType: value,
+        };
+      }
+      return {
+        ...clearCorporateActionDateFields(previous),
+        offeringType: value,
+      };
+    }),
     setActionDividendAmount: (value) => setDraftField("actionDividendAmount", value),
     setExRightsDate: (value) => setDraftField("exRightsDate", value),
+    setSubscriptionStartDate: (value) => setDraftField("subscriptionStartDate", value),
+    setSubscriptionEndDate: (value) => setDraftField("subscriptionEndDate", value),
     setPaymentDate: (value) => setDraftField("paymentDate", value),
     setListingDate: (value) => setDraftField("listingDate", value),
     setDelistingDate: (value) => setDraftField("delistingDate", value),
@@ -93,23 +125,52 @@ export function useAdminStockEventDraftState() {
   };
 }
 
-function defaultDatesForAction(actionType: StockEventDraft["actionType"], simulationDate: string) {
+function defaultDatesForAction(
+  actionType: StockEventDraft["actionType"],
+  offeringType: StockEventDraft["offeringType"],
+  simulationDate: string,
+) {
   const nextDate = addIsoDateDays(simulationDate, 1);
-  const laterDate = addIsoDateDays(simulationDate, 2);
-  if (nextDate === null || laterDate === null) {
+  const secondDate = addIsoDateDays(simulationDate, 2);
+  const thirdDate = addIsoDateDays(simulationDate, 3);
+  const fourthDate = addIsoDateDays(simulationDate, 4);
+  const fifthDate = addIsoDateDays(simulationDate, 5);
+  const sixthDate = addIsoDateDays(simulationDate, 6);
+  if (
+    nextDate === null
+    || secondDate === null
+    || thirdDate === null
+    || fourthDate === null
+    || fifthDate === null
+    || sixthDate === null
+  ) {
     return null;
   }
   if (actionType === "PAID_IN_CAPITAL_INCREASE") {
+    if (offeringType === "PUBLIC_OFFERING") {
+      return {
+        exRightsDate: "",
+        subscriptionStartDate: simulationDate,
+        subscriptionEndDate: secondDate,
+        paymentDate: thirdDate,
+        listingDate: fifthDate,
+        delistingDate: "",
+      };
+    }
     return {
       exRightsDate: simulationDate,
-      paymentDate: nextDate,
-      listingDate: laterDate,
+      subscriptionStartDate: nextDate,
+      subscriptionEndDate: thirdDate,
+      paymentDate: fourthDate,
+      listingDate: sixthDate,
       delistingDate: "",
     };
   }
   if (actionType === "CASH_DIVIDEND") {
     return {
       exRightsDate: simulationDate,
+      subscriptionStartDate: "",
+      subscriptionEndDate: "",
       paymentDate: nextDate,
       listingDate: "",
       delistingDate: "",
@@ -118,6 +179,8 @@ function defaultDatesForAction(actionType: StockEventDraft["actionType"], simula
   if (actionType === "BONUS_ISSUE" || actionType === "STOCK_DIVIDEND") {
     return {
       exRightsDate: simulationDate,
+      subscriptionStartDate: "",
+      subscriptionEndDate: "",
       paymentDate: "",
       listingDate: nextDate,
       delistingDate: "",
@@ -126,6 +189,8 @@ function defaultDatesForAction(actionType: StockEventDraft["actionType"], simula
   if (actionType === "STOCK_SPLIT") {
     return {
       exRightsDate: "",
+      subscriptionStartDate: "",
+      subscriptionEndDate: "",
       paymentDate: "",
       listingDate: simulationDate,
       delistingDate: "",
@@ -134,6 +199,8 @@ function defaultDatesForAction(actionType: StockEventDraft["actionType"], simula
   if (actionType === "DELISTING") {
     return {
       exRightsDate: "",
+      subscriptionStartDate: "",
+      subscriptionEndDate: "",
       paymentDate: "",
       listingDate: "",
       delistingDate: simulationDate,
@@ -142,8 +209,22 @@ function defaultDatesForAction(actionType: StockEventDraft["actionType"], simula
   return null;
 }
 
+function clearCorporateActionDateFields(draft: StockEventDraft): StockEventDraft {
+  return {
+    ...draft,
+    exRightsDate: "",
+    subscriptionStartDate: "",
+    subscriptionEndDate: "",
+    paymentDate: "",
+    listingDate: "",
+    delistingDate: "",
+  };
+}
+
 function datesEqual(left: StockEventDraft, right: StockEventDraft) {
   return left.exRightsDate === right.exRightsDate
+    && left.subscriptionStartDate === right.subscriptionStartDate
+    && left.subscriptionEndDate === right.subscriptionEndDate
     && left.paymentDate === right.paymentDate
     && left.listingDate === right.listingDate
     && left.delistingDate === right.delistingDate;

@@ -1,5 +1,6 @@
 "use client";
 
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -8,6 +9,9 @@ import { useAccountRequiredRedirect } from "@/app/hooks/useAccountRequiredRedire
 import useAuthSession from "@/app/hooks/useAuthSession";
 import { useLoginRequiredRedirect } from "@/app/hooks/useLoginRequiredRedirect";
 import { getAccessTokenForAuthStatus, isAdminRole } from "@/app/lib/auth";
+import { invalidateCorporateActionSubscriptionQueries } from "@/app/lib/react-query/stockInvalidations";
+import { subscribeCorporateActionMutationOptions } from "@/app/lib/react-query/stockMutations";
+import { createStockErrorMessageHandler } from "@/app/lib/react-query/stockResult";
 import { useOrderBookTicketState } from "@/app/stores/stockUiStore";
 import { InstrumentSelectionPanel } from "@/app/supply-demand/InstrumentSelectionPanel";
 import { SupplyDemandPageChrome } from "@/app/supply-demand/SupplyDemandPageChrome";
@@ -20,6 +24,7 @@ import type { OrderBookCandleInterval } from "@/app/types/stock";
 
 export default function SupplyDemandPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { isHydrated, authStatus, user } = useAuthSession();
   const [message, setMessage] = useState<string | null>(null);
   const [orderBookLayout, setOrderBookLayout] = useState<"split" | "stacked">("split");
@@ -32,6 +37,10 @@ export default function SupplyDemandPage() {
   const {
     accountStatusQuery,
     autoMarket,
+    corporateActionEntitlements,
+    corporateActionEntitlementsQuery,
+    corporateActions,
+    corporateActionsQuery,
     executions,
     hasTradingAccount,
     holdings,
@@ -53,6 +62,19 @@ export default function SupplyDemandPage() {
     isHydrated,
     selectedSymbol,
     token,
+  });
+  const setCorporateActionErrorMessage = createStockErrorMessageHandler(setMessage, "기업 이벤트 청약에 실패했습니다.");
+  const {
+    isPending: subscribingCorporateAction,
+    mutate: subscribeCorporateAction,
+    variables: subscribingCorporateActionVariables,
+  } = useMutation({
+    ...subscribeCorporateActionMutationOptions(),
+    onSuccess: async () => {
+      setMessage("기업 이벤트 청약이 접수되었습니다.");
+      await invalidateCorporateActionSubscriptionQueries(queryClient, selectedSymbol);
+    },
+    onError: setCorporateActionErrorMessage,
   });
 
   const {
@@ -166,10 +188,13 @@ export default function SupplyDemandPage() {
           candles={orderBookCandles}
           candleInterval={candleInterval}
           chartExpanded={chartExpanded}
+          corporateActionEntitlements={corporateActionEntitlements.filter((entitlement) => entitlement.symbol === selectedSymbol)}
+          corporateActions={corporateActions}
           estimatedOrderAmount={estimatedOrderAmount}
           flashingOrderBookLevel={flashingOrderBookLevel}
           instruments={instruments}
           isCandlesLoading={orderBookCandlesQuery.isLoading}
+          isCorporateActionsLoading={corporateActionsQuery.isLoading || corporateActionEntitlementsQuery.isLoading}
           isLoading={loading}
           isRecentExecutionsLoading={orderBookRecentExecutionsQuery.isLoading}
           isSelectedMarketOpen={isSelectedMarketOpen}
@@ -192,6 +217,7 @@ export default function SupplyDemandPage() {
           selectedOrderBookConfig={selectedOrderBookConfig}
           selectedSymbol={selectedSymbol}
           side={side}
+          subscribingCorporateActionId={subscribingCorporateAction ? subscribingCorporateActionVariables?.actionId ?? null : null}
           updatedAt={updatedAt}
           onAssetPercentSelect={applyAssetPercentQuantity}
           onCancelOrder={cancelOpenOrder}
@@ -206,6 +232,10 @@ export default function SupplyDemandPage() {
           onQuantityChange={updateQuantity}
           onSelectInstrument={selectInstrument}
           onSideChange={updateSide}
+          onSubscribeCorporateAction={(actionId, shareQuantity) => subscribeCorporateAction({
+            actionId,
+            payload: { shareQuantity },
+          })}
           onSubmitOrder={submitOrderBookOrder}
         />
       )}

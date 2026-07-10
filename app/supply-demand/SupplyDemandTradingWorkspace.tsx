@@ -9,10 +9,13 @@ export function SupplyDemandTradingWorkspace({
   candles,
   candleInterval,
   chartExpanded,
+  corporateActionEntitlements,
+  corporateActions,
   estimatedOrderAmount,
   flashingOrderBookLevel,
   instruments,
   isCandlesLoading,
+  isCorporateActionsLoading,
   isLoading,
   isRecentExecutionsLoading,
   isSelectedMarketOpen,
@@ -35,6 +38,7 @@ export function SupplyDemandTradingWorkspace({
   selectedOrderBookConfig,
   selectedSymbol,
   side,
+  subscribingCorporateActionId,
   updatedAt,
   onAssetPercentSelect,
   onCancelOrder,
@@ -49,6 +53,7 @@ export function SupplyDemandTradingWorkspace({
   onQuantityChange,
   onSelectInstrument,
   onSideChange,
+  onSubscribeCorporateAction,
   onSubmitOrder,
 }: SupplyDemandTradingWorkspaceProps) {
   return (
@@ -79,7 +84,10 @@ export function SupplyDemandTradingWorkspace({
       <SupplyDemandSideColumn
         autoMarket={autoMarket}
         cancellingOrderId={cancellingOrderId}
+        corporateActionEntitlements={corporateActionEntitlements}
+        corporateActions={corporateActions}
         estimatedOrderAmount={estimatedOrderAmount}
+        isCorporateActionsLoading={isCorporateActionsLoading}
         isLoading={isLoading}
         isRecentExecutionsLoading={isRecentExecutionsLoading}
         isSelectedMarketOpen={isSelectedMarketOpen}
@@ -97,6 +105,7 @@ export function SupplyDemandTradingWorkspace({
         selectedInstrument={selectedInstrument}
         selectedOrderBookConfig={selectedOrderBookConfig}
         side={side}
+        subscribingCorporateActionId={subscribingCorporateActionId}
         updatedAt={updatedAt}
         onAssetPercentSelect={onAssetPercentSelect}
         onCancelOrder={onCancelOrder}
@@ -106,6 +115,7 @@ export function SupplyDemandTradingWorkspace({
         onQuantityChange={onQuantityChange}
         onSelectInstrument={onSelectInstrument}
         onSideChange={onSideChange}
+        onSubscribeCorporateAction={onSubscribeCorporateAction}
         onSubmitOrder={onSubmitOrder}
       />
     </section>

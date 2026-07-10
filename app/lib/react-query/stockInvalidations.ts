@@ -79,51 +79,6 @@ export async function invalidateOrderBookTradingQueries(
   ]);
 }
 
-export async function invalidateVirtualPriceTradingQueries(
-  queryClient: QueryClient,
-  symbol?: string | null,
-) {
-  const symbols = normalizeStringList([symbol]);
-  await Promise.all([
-    ...invalidateVirtualPriceAccountQueries(queryClient),
-    invalidateQuery(queryClient, stockKeys.rankings(), { exact: true }),
-    ...symbols.map((nextSymbol) => invalidateQuery(queryClient, stockKeys.orderBook(nextSymbol), { exact: true })),
-  ]);
-}
-
-export async function invalidateVirtualPricePageQueries(
-  queryClient: QueryClient,
-  symbol?: string | null,
-) {
-  const symbols = normalizeStringList([symbol]);
-  await Promise.all([
-    ...invalidateQueries(queryClient, [
-      stockKeys.instruments(),
-      stockKeys.prices(),
-      stockKeys.rankings(),
-      stockKeys.accountStatus(),
-      stockKeys.profile(),
-    ], { exact: true }),
-    ...invalidateVirtualPriceAccountQueries(queryClient),
-    ...symbols.flatMap((nextSymbol) => [
-      invalidateQuery(queryClient, stockKeys.priceTicks(nextSymbol), { exact: true }),
-      invalidateQuery(queryClient, stockKeys.orderBook(nextSymbol), { exact: true }),
-    ]),
-  ]);
-}
-
-function invalidateVirtualPriceAccountQueries(queryClient: QueryClient) {
-  return invalidateQueries(queryClient, [
-    stockKeys.portfolio(),
-    stockKeys.portfolioSnapshots(),
-    stockKeys.profitSummary(),
-    stockKeys.holdings(),
-    stockKeys.corporateActionEntitlements(),
-    stockKeys.ordersRoot(),
-    stockKeys.executionsRoot(),
-  ]);
-}
-
 export async function invalidateAccountStatusQueries(queryClient: QueryClient) {
   await invalidateQuery(queryClient, stockKeys.accountStatus(), { exact: true });
 }
@@ -152,6 +107,18 @@ export async function invalidateAdminCorporateActionQueries(
     stockKeys.corporateActions(symbol),
     stockKeys.orderBookInstruments(),
     stockKeys.orderBookMarketStatusRoot(),
+  ]);
+}
+
+export async function invalidateCorporateActionSubscriptionQueries(
+  queryClient: QueryClient,
+  symbol: string,
+) {
+  await invalidateQueryGroup(queryClient, [
+    stockKeys.corporateActionEntitlements(),
+    stockKeys.corporateActions(symbol),
+    stockKeys.portfolio(),
+    stockKeys.holdings(),
   ]);
 }
 

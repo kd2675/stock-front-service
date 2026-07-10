@@ -11,7 +11,7 @@ import { accountStatusQueryOptions, holdingsQueryOptions, portfolioQueryOptions,
 import { formatNumber, formatWon } from "@/app/lib/stockFormatters";
 import type { Holding, Portfolio, StockUserProfile } from "@/app/types/stock";
 
-type MarketMode = "virtual-price" | "order-book" | "portfolio";
+type MarketMode = "order-book" | "portfolio";
 
 export default function TradingTopBar({ active, actions }: { active: MarketMode; actions?: ReactNode }) {
   const router = useRouter();

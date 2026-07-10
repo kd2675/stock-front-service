@@ -51,7 +51,10 @@ export function formatCorporateActionValue(action: CorporateAction): string {
   }
   if (action.shareQuantity) {
     const issuePrice = action.issuePrice ? ` · ${formatWon(action.issuePrice)}` : "";
-    return `${formatCount(action.shareQuantity, "주")}${issuePrice}`;
+    const offering = action.actionType === "PAID_IN_CAPITAL_INCREASE"
+      ? ` · ${action.offeringType === "PUBLIC_OFFERING" ? "일반공모" : "주주배정"}`
+      : "";
+    return `${formatCount(action.shareQuantity, "주")}${issuePrice}${offering}`;
   }
   return "-";
 }
@@ -69,6 +72,7 @@ export function formatCorporateActionPrice(action: CorporateAction): string {
 export function formatCorporateActionSchedule(action: CorporateAction): string {
   const dates = [
     action.exRightsDate ? `권리락 ${action.exRightsDate}` : null,
+    action.subscriptionStartDate && action.subscriptionEndDate ? `청약 ${action.subscriptionStartDate}~${action.subscriptionEndDate}` : null,
     action.paymentDate ? `지급 ${action.paymentDate}` : null,
     action.listingDate ? `상장 ${action.listingDate}` : null,
     action.delistingDate ? `폐지 ${action.delistingDate}` : null,

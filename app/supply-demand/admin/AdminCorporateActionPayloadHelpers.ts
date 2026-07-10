@@ -1,7 +1,7 @@
 import { parsePositiveIntegerInput, parsePositiveNumberInput } from "@/app/lib/numberParsing";
 import type { StockCorporateActionPayload } from "@/app/lib/stock";
 import type { AdminPayloadResult } from "@/app/supply-demand/admin/AdminPayloadResultTypes";
-import type { CorporateActionType } from "@/app/types/stock";
+import type { CapitalIncreaseOfferingType, CorporateActionType } from "@/app/types/stock";
 
 export type CorporateActionPayload = StockCorporateActionPayload;
 
@@ -9,8 +9,11 @@ export type CorporateActionDraftInput = {
   actionType: CorporateActionType;
   actionShares: string;
   actionIssuePrice: string;
+  offeringType: CapitalIncreaseOfferingType;
   actionDividendAmount: string;
   exRightsDate: string;
+  subscriptionStartDate: string;
+  subscriptionEndDate: string;
   paymentDate: string;
   listingDate: string;
   delistingDate: string;
@@ -116,27 +119,50 @@ export function buildCorporateActionPayload(draft: CorporateActionDraftInput, cu
           message: "발행가는 0보다 큰 숫자로 입력해 주세요.",
         };
       }
-      if (!draft.exRightsDate || !draft.paymentDate || !draft.listingDate) {
+      if (!draft.subscriptionStartDate || !draft.subscriptionEndDate || !draft.paymentDate || !draft.listingDate) {
         return {
           ok: false,
-          message: "유상증자는 권리락일, 납입일, 신주상장일이 필요합니다.",
+          message: "유상증자는 청약 시작일, 청약 마감일, 납입일, 신주상장일이 필요합니다.",
         };
       }
-      const scheduleValidation = validateScheduleNotBeforeCurrent([
-        ["권리락일", draft.exRightsDate],
+      const isShareholderAllocation = draft.offeringType === "SHAREHOLDER_ALLOCATION";
+      if (isShareholderAllocation && !draft.exRightsDate) {
+        return {
+          ok: false,
+          message: "주주배정 유상증자는 권리락일이 필요합니다.",
+        };
+      }
+      const scheduleFields: Array<[label: string, value: string]> = [
+        ["청약 시작일", draft.subscriptionStartDate],
+        ["청약 마감일", draft.subscriptionEndDate],
         ["납입일", draft.paymentDate],
         ["신주상장일", draft.listingDate],
-      ], currentSimulationDate);
+      ];
+      if (isShareholderAllocation) {
+        scheduleFields.unshift(["권리락일", draft.exRightsDate]);
+      }
+      const scheduleValidation = validateScheduleNotBeforeCurrent(scheduleFields, currentSimulationDate);
       if (!scheduleValidation.ok) {
         return scheduleValidation;
       }
-      if (draft.paymentDate <= draft.exRightsDate || draft.listingDate <= draft.paymentDate) {
+      if (isShareholderAllocation && draft.subscriptionStartDate <= draft.exRightsDate) {
         return {
           ok: false,
-          message: "유상증자 일정은 권리락일, 납입일, 신주상장일이 각각 다음 날짜 이후여야 합니다.",
+          message: "주주배정 청약 시작일은 권리락일 다음 날짜 이후여야 합니다.",
         };
       }
-      payload.exRightsDate = draft.exRightsDate;
+      if (draft.subscriptionEndDate < draft.subscriptionStartDate || draft.paymentDate <= draft.subscriptionEndDate || draft.listingDate <= draft.paymentDate) {
+        return {
+          ok: false,
+          message: "유상증자 일정은 청약 시작, 청약 마감, 납입, 신주상장 순서이며 납입일은 청약 마감일 다음 날짜 이후여야 합니다.",
+        };
+      }
+      payload.offeringType = draft.offeringType;
+      payload.subscriptionStartDate = draft.subscriptionStartDate;
+      payload.subscriptionEndDate = draft.subscriptionEndDate;
+      if (isShareholderAllocation) {
+        payload.exRightsDate = draft.exRightsDate;
+      }
       payload.paymentDate = draft.paymentDate;
       payload.listingDate = draft.listingDate;
     }

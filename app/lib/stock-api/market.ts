@@ -6,7 +6,7 @@ import {
   authenticatedPostJson,
   toQuery,
 } from "@/app/lib/stock-api/core";
-import type { AutoMarketStatus, CorporateAction, CorporateActionEntitlement, CorporateActionType, Instrument, InstrumentReport, ListingAutoPosition, MarketSessionStatus, MarketType, OrderBook, OrderBookCandle, OrderBookCandleInterval, OrderBookInstrument, OrderBookMarketStatus, OrderBookRecentExecution, OrderBookTradeSummary, Price, PriceTick, Ranking, SimulationClock, SimulationClockJumpAction, SymbolMarketConfig } from "@/app/types/stock";
+import type { AutoMarketStatus, CapitalIncreaseOfferingType, CorporateAction, CorporateActionEntitlement, CorporateActionType, Instrument, InstrumentReport, ListingAutoPosition, MarketSessionStatus, MarketType, OrderBook, OrderBookCandle, OrderBookCandleInterval, OrderBookInstrument, OrderBookMarketStatus, OrderBookRecentExecution, OrderBookTradeSummary, Price, PriceTick, Ranking, SimulationClock, SimulationClockJumpAction, SymbolMarketConfig } from "@/app/types/stock";
 
 export type StockOrderBookInstrumentCreatePayload = {
   symbol: string;
@@ -36,11 +36,18 @@ export type StockCorporateActionPayload = {
   splitFrom?: number;
   splitTo?: number;
   exRightsDate?: string;
+  offeringType?: CapitalIncreaseOfferingType;
+  subscriptionStartDate?: string;
+  subscriptionEndDate?: string;
   paymentDate?: string;
   listingDate?: string;
   delistingDate?: string;
   dividendAmount?: number;
   description?: string;
+};
+
+export type StockCorporateActionSubscriptionPayload = {
+  shareQuantity: number;
 };
 
 export type StockInstrumentReportPayload = {
@@ -101,6 +108,18 @@ export function applyCorporateAction(
 
 export function getCorporateActions(symbol: string) {
   return getJson<CorporateAction[]>(`/api/stock/v1/markets/order-book-instruments/${encodeURIComponent(symbol)}/corporate-actions`);
+}
+
+export function subscribeCorporateAction(
+  token: string,
+  actionId: number,
+  payload: StockCorporateActionSubscriptionPayload,
+) {
+  return authenticatedPostJson<CorporateActionEntitlement>(
+    token,
+    `/api/stock/v1/markets/corporate-actions/${actionId}/subscriptions/me`,
+    payload,
+  );
 }
 
 export function getInstrumentReports(symbol: string) {

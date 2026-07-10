@@ -1,5 +1,5 @@
 import TradingTopBar from "@/app/components/TradingTopBar";
-import { formatAccountNextLabel, isOrderBookPath } from "@/app/lib/accountRouting";
+import { formatAccountNextLabel } from "@/app/lib/accountRouting";
 import { formatDateTimeMinute } from "@/app/lib/stockFormatters";
 import type { AuthUser } from "@/app/types/auth";
 import type { Account } from "@/app/types/stock";
@@ -47,7 +47,7 @@ export function AccountRequiredLayout({
 
   return (
     <main className="min-h-screen bg-[#f6f7f9] text-[#191f28]">
-      <TradingTopBar active={isOrderBookPath(nextPath) ? "order-book" : "virtual-price"} />
+      <TradingTopBar active={nextPath.startsWith("/portfolio") ? "portfolio" : "order-book"} />
 
       <section className="mx-auto grid min-h-[calc(100vh-65px)] w-full max-w-5xl content-center gap-5 px-4 py-8 sm:px-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:px-8">
         <div className="min-w-0 rounded-lg bg-white p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04)] ring-1 ring-[#eef0f2] sm:p-8">

@@ -125,13 +125,16 @@ export type OrderBookCandle = {
 
 export type CorporateActionType = "INITIAL_ISSUE" | "PAID_IN_CAPITAL_INCREASE" | "STOCK_SPLIT" | "CASH_DIVIDEND" | "BONUS_ISSUE" | "STOCK_DIVIDEND" | "DELISTING";
 export type CorporateActionStatus = "ANNOUNCED" | "EX_RIGHTS_APPLIED" | "PAID" | "LISTED" | "DELISTED";
-export type CorporateActionEntitlementStatus = "ANNOUNCED" | "PAID";
+export type CapitalIncreaseOfferingType = "SHAREHOLDER_ALLOCATION" | "PUBLIC_OFFERING";
+export type CorporateActionEntitlementStatus = "ANNOUNCED" | "SUBSCRIBED" | "EXPIRED" | "PAID";
 
 export type CorporateAction = {
   id: number;
   symbol: string;
   actionType: CorporateActionType;
   shareQuantity?: number | null;
+  subscribedShareQuantity?: number | null;
+  remainingShareQuantity?: number | null;
   issuePrice?: number | null;
   dividendAmount?: number | null;
   status: CorporateActionStatus;
@@ -142,6 +145,9 @@ export type CorporateAction = {
   listingDate?: string | null;
   delistingDate?: string | null;
   delistingTreatment?: "ZERO_VALUE" | null;
+  offeringType?: CapitalIncreaseOfferingType | null;
+  subscriptionStartDate?: string | null;
+  subscriptionEndDate?: string | null;
   appliedAt?: string | null;
   paidAt?: string | null;
   listedAt?: string | null;
@@ -160,8 +166,11 @@ export type CorporateActionEntitlement = {
   quantity: number;
   shareQuantity?: number | null;
   cashAmount?: number | null;
+  subscribedShareQuantity?: number | null;
+  subscribedCashAmount?: number | null;
   status: CorporateActionEntitlementStatus;
   createdAt: string;
+  subscribedAt?: string | null;
   paidAt?: string | null;
 };
 

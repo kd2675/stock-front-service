@@ -37,6 +37,7 @@ export function useSupplyDemandAdminPageModel() {
     userFundFlowUserKey: drafts.userCashAdjustment.fundFlowUserKey,
   });
   const stockEventActionType = drafts.stockEvent.actionType;
+  const stockEventOfferingType = drafts.stockEvent.draft.offeringType;
   const applyStockEventSimulationDateDefaults = drafts.stockEvent.applySimulationDateDefaults;
   useEffect(() => {
     if (activeAdminSection !== "events") {
@@ -46,6 +47,7 @@ export function useSupplyDemandAdminPageModel() {
   }, [
     activeAdminSection,
     stockEventActionType,
+    stockEventOfferingType,
     applyStockEventSimulationDateDefaults,
     queries.simulationClockQuery.data?.simulationDate,
   ]);

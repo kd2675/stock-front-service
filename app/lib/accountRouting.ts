@@ -20,5 +20,8 @@ export function formatAccountNextLabel(nextPath: string) {
   if (isOrderBookPath(nextPath)) {
     return "수요와 공급 주문 체결";
   }
-  return "특정가격 자동주문체결";
+  if (nextPath.startsWith("/portfolio")) {
+    return "내 주식";
+  }
+  return "수요와 공급 주문 체결";
 }

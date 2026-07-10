@@ -3,6 +3,7 @@ import { useMemo } from "react";
 
 import {
   accountStatusQueryOptions,
+  corporateActionEntitlementsQueryOptions,
   executionsQueryOptions,
   holdingsQueryOptions,
   ordersQueryOptions,
@@ -10,6 +11,7 @@ import {
 } from "@/app/lib/react-query/stockAccountQueries";
 import {
   autoMarketStatusQueryOptions,
+  corporateActionsQueryOptions,
   orderBookCandlesQueryOptions,
   orderBookInstrumentsQueryOptions,
   orderBookMarketStatusQueryOptions,
@@ -65,6 +67,8 @@ export function useSupplyDemandPageQueries({
   const orderBookTradeSummaryQuery = useQuery(orderBookTradeSummaryQueryOptions(selectedSymbol, { enabled: hasTradingAccount }));
   const orderBookRecentExecutionsQuery = useQuery(orderBookRecentExecutionsQueryOptions(selectedSymbol, { enabled: hasTradingAccount }));
   const orderBookCandlesQuery = useQuery(orderBookCandlesQueryOptions(selectedSymbol, candleInterval, { enabled: hasTradingAccount }));
+  const corporateActionsQuery = useQuery(corporateActionsQueryOptions(selectedSymbol, { enabled: hasTradingAccount }));
+  const corporateActionEntitlementsQuery = useQuery(corporateActionEntitlementsQueryOptions(token, hasTradingAccount));
   const ordersQuery = useQuery(ordersQueryOptions(token, {
     marketType: "ORDER_BOOK",
     symbol: selectedSymbol,
@@ -92,6 +96,8 @@ export function useSupplyDemandPageQueries({
     orderBookTradeSummaryQuery.dataUpdatedAt,
     orderBookRecentExecutionsQuery.dataUpdatedAt,
     orderBookCandlesQuery.dataUpdatedAt,
+    corporateActionsQuery.dataUpdatedAt,
+    corporateActionEntitlementsQuery.dataUpdatedAt,
     ordersQuery.dataUpdatedAt,
     executionsQuery.dataUpdatedAt,
     portfolioQuery.dataUpdatedAt,
@@ -102,6 +108,10 @@ export function useSupplyDemandPageQueries({
     accountStatusQuery,
     autoMarket: autoMarketQuery.data ?? null,
     autoMarketQuery,
+    corporateActionEntitlements: corporateActionEntitlementsQuery.data ?? [],
+    corporateActionEntitlementsQuery,
+    corporateActions: corporateActionsQuery.data ?? [],
+    corporateActionsQuery,
     executions: executionsQuery.data ?? EMPTY_EXECUTIONS,
     executionsQuery,
     hasTradingAccount,

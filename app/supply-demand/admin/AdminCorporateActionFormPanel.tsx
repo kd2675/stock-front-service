@@ -1,4 +1,4 @@
-import { DarkDateInput, DarkInput } from "@/app/supply-demand/admin/AdminFormControls";
+import { DarkDateInput, DarkInput, DarkSelect } from "@/app/supply-demand/admin/AdminFormControls";
 import type { StockEventDraft, StockEventDraftSetters } from "@/app/supply-demand/admin/AdminStockEventTypes";
 
 type AdminCorporateActionFormPanelProps = {
@@ -17,10 +17,14 @@ export function AdminCorporateActionFormPanel({
   onSubmit,
 }: AdminCorporateActionFormPanelProps) {
   const exRightsMinDate = currentSimulationDate;
-  const paymentMinDate = maxIsoDate(currentSimulationDate, addIsoDateDays(draft.exRightsDate, 1));
+  const subscriptionStartMinDate = draft.offeringType === "SHAREHOLDER_ALLOCATION"
+    ? maxIsoDate(currentSimulationDate, addIsoDateDays(draft.exRightsDate, 1))
+    : currentSimulationDate;
+  const subscriptionEndMinDate = maxIsoDate(currentSimulationDate, draft.subscriptionStartDate);
+  const paymentMinDate = maxIsoDate(currentSimulationDate, addIsoDateDays(draft.subscriptionEndDate, 1));
   const listingMinDate = maxIsoDate(
     currentSimulationDate,
-    addIsoDateDays(draft.paymentDate || draft.exRightsDate, 1),
+    addIsoDateDays(draft.paymentDate || draft.subscriptionEndDate || draft.exRightsDate, 1),
   );
 
   return (
@@ -54,7 +58,14 @@ export function AdminCorporateActionFormPanel({
           <>
             <DarkInput label="발행수" value={draft.actionShares} onChange={draftSetters.setActionShares} placeholder="50000" />
             <DarkInput label="발행가" value={draft.actionIssuePrice} onChange={draftSetters.setActionIssuePrice} placeholder="50000" />
-            <div />
+            {draft.actionType === "PAID_IN_CAPITAL_INCREASE" ? (
+              <DarkSelect label="모집 방식" value={draft.offeringType} onChange={(value) => draftSetters.setOfferingType(value as typeof draft.offeringType)}>
+                <option value="SHAREHOLDER_ALLOCATION">주주배정</option>
+                <option value="PUBLIC_OFFERING">일반공모</option>
+              </DarkSelect>
+            ) : (
+              <div />
+            )}
           </>
         )}
         <DarkInput label="메모" value={draft.actionDescription} onChange={draftSetters.setActionDescription} placeholder="선택 입력" />
@@ -65,7 +76,11 @@ export function AdminCorporateActionFormPanel({
       <div className="mt-3 grid gap-3 md:grid-cols-3">
         {draft.actionType === "PAID_IN_CAPITAL_INCREASE" ? (
           <>
-            <DarkDateInput label="권리락일" value={draft.exRightsDate} onChange={draftSetters.setExRightsDate} placeholder="2026-06-22" minDate={exRightsMinDate} />
+            {draft.offeringType === "SHAREHOLDER_ALLOCATION" ? (
+              <DarkDateInput label="권리락일" value={draft.exRightsDate} onChange={draftSetters.setExRightsDate} placeholder="2026-06-22" minDate={exRightsMinDate} />
+            ) : null}
+            <DarkDateInput label="청약 시작일" value={draft.subscriptionStartDate} onChange={draftSetters.setSubscriptionStartDate} placeholder="2026-06-23" minDate={subscriptionStartMinDate} />
+            <DarkDateInput label="청약 마감일" value={draft.subscriptionEndDate} onChange={draftSetters.setSubscriptionEndDate} placeholder="2026-06-24" minDate={subscriptionEndMinDate} />
             <DarkDateInput label="납입일" value={draft.paymentDate} onChange={draftSetters.setPaymentDate} placeholder="2026-06-24" minDate={paymentMinDate} />
             <DarkDateInput label="신주상장일" value={draft.listingDate} onChange={draftSetters.setListingDate} placeholder="2026-06-26" minDate={listingMinDate} />
           </>
