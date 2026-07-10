@@ -104,6 +104,7 @@ export async function invalidateAdminCorporateActionQueries(
   symbol: string,
 ) {
   await invalidateAdminFlowImpactedQueries(queryClient, [
+    stockKeys.corporateActionFeedRoot(),
     stockKeys.corporateActions(symbol),
     stockKeys.orderBookInstruments(),
     stockKeys.orderBookMarketStatusRoot(),
@@ -115,6 +116,7 @@ export async function invalidateCorporateActionSubscriptionQueries(
   symbol: string,
 ) {
   await invalidateQueryGroup(queryClient, [
+    stockKeys.corporateActionFeedRoot(),
     stockKeys.corporateActionEntitlements(),
     stockKeys.corporateActions(symbol),
     stockKeys.portfolio(),

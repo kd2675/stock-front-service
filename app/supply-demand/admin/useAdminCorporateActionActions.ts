@@ -3,7 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 
 import { invalidateAdminCorporateActionQueries } from "@/app/lib/react-query/stockInvalidations";
 import { adminApplyCorporateActionMutationOptions } from "@/app/lib/react-query/stockMutations";
-import { reportAdminActionFailure } from "@/app/supply-demand/admin/AdminActionResultHelpers";
+import { getAdminActionFailureMessage } from "@/app/supply-demand/admin/AdminActionResultHelpers";
 import type { AdminActionMessageSetter, RequireAdminToken } from "@/app/supply-demand/admin/AdminActionTypes";
 import { buildCorporateActionPayload } from "@/app/supply-demand/admin/AdminCorporateActionPayloadHelpers";
 import { normalizeOrderBookSymbol } from "@/app/supply-demand/admin/AdminPayloadTextHelpers";
@@ -38,7 +38,7 @@ export function useAdminCorporateActionActions({
     }
     const normalizedSymbol = normalizeOrderBookSymbol(actionSymbol);
     if (!normalizedSymbol) {
-      setMessage("액션을 적용할 종목을 선택해 주세요.");
+      setMessage("이벤트를 적용할 종목을 선택해 주세요.");
       return;
     }
     if (!isKnownOrderBookSymbol(instruments, normalizedSymbol)) {
@@ -60,7 +60,9 @@ export function useAdminCorporateActionActions({
       symbol: normalizedSymbol,
       payload: corporateActionPayload.payload,
     });
-    if (reportAdminActionFailure(result, "주식 이벤트 적용에 실패했습니다.", setMessage)) {
+    const failureMessage = getAdminActionFailureMessage(result, "주식 이벤트 적용에 실패했습니다.");
+    if (failureMessage) {
+      setMessage(formatCorporateActionAdminFailure(failureMessage));
       return;
     }
     resetCorporateActionFields();
@@ -72,4 +74,15 @@ export function useAdminCorporateActionActions({
     applyingAction: corporateActionMutation.isPending,
     submitCorporateAction,
   };
+}
+
+function formatCorporateActionAdminFailure(message: string) {
+  const normalizedMessage = message.toLowerCase();
+  if (normalizedMessage.includes("requires no open order book orders")) {
+    return "미체결 또는 부분체결 주문을 모두 취소한 뒤 기업 이벤트를 적용해 주세요.";
+  }
+  if (normalizedMessage.includes("instrument-changing corporate action is already in progress")) {
+    return "같은 종목에서 증자·분할·무상배정 또는 상장폐지 이벤트가 진행 중입니다. 기존 이벤트가 끝난 뒤 다시 적용해 주세요.";
+  }
+  return message;
 }

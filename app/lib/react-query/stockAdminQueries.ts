@@ -13,6 +13,7 @@ import {
   getAutoParticipantOverviews,
   getAutoParticipantProfileOverviews,
   getBatchJobRuntimeControls,
+  getLatestAutoParticipantCashFlowRun,
 } from "@/app/lib/stock";
 import { stockKeys } from "@/app/lib/react-query/stockKeys";
 import {
@@ -164,6 +165,26 @@ export function batchJobRuntimeControlsQueryOptions(
     fallbackMessage: "배치 자동 실행 상태를 조회하지 못했습니다.",
     enabled: options.enabled,
     retry: false,
+  });
+}
+
+export function latestManualCashFlowRunQueryOptions(
+  token: string | null,
+  options: {
+    enabled?: boolean;
+  } = {},
+) {
+  return adminAuthenticatedQueryOptions(token, {
+    queryKey: stockKeys.latestManualCashFlowRun(),
+    request: getLatestAutoParticipantCashFlowRun,
+    fallbackMessage: "최근 수동 월급 지급 결과를 조회하지 못했습니다.",
+    enabled: options.enabled,
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      return status === "QUEUED" || status === "PROCESSING" ? 2_000 : false;
+    },
+    retry: false,
+    staleTime: 0,
   });
 }
 

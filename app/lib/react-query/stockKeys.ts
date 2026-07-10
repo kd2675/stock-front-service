@@ -1,4 +1,4 @@
-import type { AdminFundFlowScope, Execution, MarketType } from "@/app/types/stock";
+import type { AdminFundFlowScope, CorporateActionType, Execution, MarketType } from "@/app/types/stock";
 
 export const stockKeys = {
   all: ["stock"] as const,
@@ -43,6 +43,7 @@ export const stockKeys = {
   ] as const,
   adminUserFundFlow: (userKey: string) => [...stockKeys.market(), "admin", "user-fund-flow", userKey] as const,
   batchJobRuntimeControls: () => [...stockKeys.market(), "batch-jobs", "runtime-controls"] as const,
+  latestManualCashFlowRun: () => [...stockKeys.market(), "auto-market", "cash-flow", "run", "latest"] as const,
   autoMarketStatus: () => [...stockKeys.market(), "auto-market"] as const,
   autoMarketStatusDetailsRoot: () => [...stockKeys.autoMarketStatus(), "details"] as const,
   autoMarketStatusDetails: (options?: {
@@ -85,6 +86,12 @@ export const stockKeys = {
     "profile-overviews",
     options?.activityScope ?? "RECENT_SIMULATION_DAY",
     [...(options?.profileTypes ?? [])].sort(),
+  ] as const,
+  corporateActionFeedRoot: () => [...stockKeys.market(), "corporate-actions", "feed"] as const,
+  corporateActionFeed: (options?: { actionType?: CorporateActionType; limit?: number }) => [
+    ...stockKeys.corporateActionFeedRoot(),
+    options?.actionType ?? "ALL",
+    options?.limit ?? 100,
   ] as const,
   corporateActions: (symbol: string) => [...stockKeys.orderBookInstruments(), symbol, "corporate-actions"] as const,
   instrumentReports: (symbol: string) => [...stockKeys.orderBookInstruments(), symbol, "reports"] as const,

@@ -50,6 +50,11 @@ export type StockCorporateActionSubscriptionPayload = {
   shareQuantity: number;
 };
 
+export type StockCorporateActionFeedOptions = {
+  actionType?: CorporateActionType;
+  limit?: number;
+};
+
 export type StockInstrumentReportPayload = {
   title: string;
   summary: string;
@@ -108,6 +113,14 @@ export function applyCorporateAction(
 
 export function getCorporateActions(symbol: string) {
   return getJson<CorporateAction[]>(`/api/stock/v1/markets/order-book-instruments/${encodeURIComponent(symbol)}/corporate-actions`);
+}
+
+export function getCorporateActionFeed(options: StockCorporateActionFeedOptions = {}) {
+  const query = toQuery({
+    actionType: options.actionType,
+    limit: options.limit,
+  });
+  return getJson<CorporateAction[]>(`/api/stock/v1/markets/corporate-actions${query}`);
 }
 
 export function subscribeCorporateAction(

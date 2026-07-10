@@ -244,6 +244,7 @@ export function subscribeCorporateActionMutationOptions() {
     (token, variables: {
       actionId: number;
       payload: StockCorporateActionSubscriptionPayload;
+      symbol: string;
     }) => subscribeCorporateAction(token, variables.actionId, variables.payload),
     "기업 이벤트 청약에 실패했습니다.",
   );

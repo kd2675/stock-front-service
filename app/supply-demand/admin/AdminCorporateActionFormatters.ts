@@ -1,7 +1,6 @@
 import { formatCount, formatWon } from "@/app/supply-demand/admin/AdminNumberFormatters";
 import type {
   CorporateAction,
-  CorporateActionStatus,
   CorporateActionType,
 } from "@/app/types/stock";
 
@@ -24,14 +23,14 @@ export function formatCorporateActionType(actionType: CorporateActionType): stri
   }
 }
 
-export function formatCorporateActionStatus(status: CorporateActionStatus): string {
-  switch (status) {
+export function formatCorporateActionStatus(action: Pick<CorporateAction, "actionType" | "status">): string {
+  switch (action.status) {
     case "ANNOUNCED":
       return "공시";
     case "EX_RIGHTS_APPLIED":
       return "권리락 반영";
     case "PAID":
-      return "지급 완료";
+      return action.actionType === "PAID_IN_CAPITAL_INCREASE" ? "납입 완료" : "지급 완료";
     case "LISTED":
       return "상장 반영";
     case "DELISTED":
@@ -73,9 +72,21 @@ export function formatCorporateActionSchedule(action: CorporateAction): string {
   const dates = [
     action.exRightsDate ? `권리락 ${action.exRightsDate}` : null,
     action.subscriptionStartDate && action.subscriptionEndDate ? `청약 ${action.subscriptionStartDate}~${action.subscriptionEndDate}` : null,
-    action.paymentDate ? `지급 ${action.paymentDate}` : null,
+    action.paymentDate ? `${action.actionType === "PAID_IN_CAPITAL_INCREASE" ? "납입" : "지급"} ${action.paymentDate}` : null,
     action.listingDate ? `상장 ${action.listingDate}` : null,
     action.delistingDate ? `폐지 ${action.delistingDate}` : null,
   ].filter(Boolean);
   return dates.length ? dates.join(" / ") : "-";
+}
+
+export function formatCorporateActionSubscriptionProgress(action: CorporateAction): string {
+  if (action.actionType !== "PAID_IN_CAPITAL_INCREASE") {
+    return "-";
+  }
+  const subscribedShares = action.subscribedShareQuantity ?? 0;
+  const remainingShares = action.remainingShareQuantity;
+  const remaining = remainingShares === undefined || remainingShares === null
+    ? "잔여 -"
+    : `잔여 ${formatCount(remainingShares, "주")}`;
+  return `${formatCount(subscribedShares, "주")} 청약 · ${remaining}`;
 }

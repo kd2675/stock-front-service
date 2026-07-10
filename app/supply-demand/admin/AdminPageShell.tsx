@@ -79,7 +79,7 @@ export function AdminPageShell({
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-5 sm:px-6 lg:px-8">
-        {message ? <p className="rounded-md bg-[#3a1f1b] px-3 py-2 text-sm font-bold text-[#ffb4a8]">{message}</p> : null}
+        {message ? <p aria-live="polite" className="rounded-md bg-[#3a1f1b] px-3 py-2 text-sm font-bold text-[#ffb4a8]">{message}</p> : null}
 
         <AdminTabNav tabs={ADMIN_TABS} activeTab={activeAdminTab} />
         {activeAdminTab === "accounts" ? <AdminSubTabNav tabs={ACCOUNT_SUB_TABS} activeSection={activeAdminSection} /> : null}

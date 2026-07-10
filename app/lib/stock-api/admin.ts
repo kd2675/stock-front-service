@@ -142,6 +142,10 @@ export function runAutoParticipantCashFlow(token: string) {
   return authenticatedPostJson<StockBatchJobRun>(token, "/api/stock/v1/markets/auto-market/cash-flow/run", {});
 }
 
+export function getLatestAutoParticipantCashFlowRun(token: string) {
+  return authenticatedGetJson<StockBatchJobRun | null>(token, "/api/stock/v1/markets/auto-market/cash-flow/run/latest");
+}
+
 export function getBatchJobRuntimeControls(token: string) {
   return authenticatedGetJson<BatchJobRuntimeStatus[]>(token, "/api/stock/v1/markets/batch-jobs/runtime-controls");
 }

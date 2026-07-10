@@ -10,7 +10,10 @@ export function SupplyDemandTradingWorkspace({
   candleInterval,
   chartExpanded,
   corporateActionEntitlements,
+  corporateActionEntitlementsReady,
+  corporateActionsErrorMessage,
   corporateActions,
+  corporateActionCashErrorMessage,
   estimatedOrderAmount,
   flashingOrderBookLevel,
   instruments,
@@ -37,6 +40,7 @@ export function SupplyDemandTradingWorkspace({
   selectedInstrument,
   selectedOrderBookConfig,
   selectedSymbol,
+  simulationClock,
   side,
   subscribingCorporateActionId,
   updatedAt,
@@ -85,7 +89,10 @@ export function SupplyDemandTradingWorkspace({
         autoMarket={autoMarket}
         cancellingOrderId={cancellingOrderId}
         corporateActionEntitlements={corporateActionEntitlements}
+        corporateActionEntitlementsReady={corporateActionEntitlementsReady}
+        corporateActionsErrorMessage={corporateActionsErrorMessage}
         corporateActions={corporateActions}
+        corporateActionCashErrorMessage={corporateActionCashErrorMessage}
         estimatedOrderAmount={estimatedOrderAmount}
         isCorporateActionsLoading={isCorporateActionsLoading}
         isLoading={isLoading}
@@ -104,6 +111,7 @@ export function SupplyDemandTradingWorkspace({
         selectedHolding={selectedHolding}
         selectedInstrument={selectedInstrument}
         selectedOrderBookConfig={selectedOrderBookConfig}
+        simulationClock={simulationClock}
         side={side}
         subscribingCorporateActionId={subscribingCorporateActionId}
         updatedAt={updatedAt}

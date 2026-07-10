@@ -129,6 +129,7 @@ export function useAdminPageActions({
   });
 
   const batchActions = useAdminBatchActions({
+    lastCashFlowRun: queries.latestManualCashFlowRunQuery.data ?? null,
     queryClient,
     reloadAdminCashFlowState,
     reloadAutoParticipantState,

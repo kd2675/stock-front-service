@@ -16,35 +16,39 @@ export function AdminCorporateActionFormPanel({
   currentSimulationDate,
   onSubmit,
 }: AdminCorporateActionFormPanelProps) {
-  const exRightsMinDate = currentSimulationDate;
+  const exRightsMinDate = addIsoDateDays(currentSimulationDate, 1);
   const subscriptionStartMinDate = draft.offeringType === "SHAREHOLDER_ALLOCATION"
     ? maxIsoDate(currentSimulationDate, addIsoDateDays(draft.exRightsDate, 1))
     : currentSimulationDate;
   const subscriptionEndMinDate = maxIsoDate(currentSimulationDate, draft.subscriptionStartDate);
-  const paymentMinDate = maxIsoDate(currentSimulationDate, addIsoDateDays(draft.subscriptionEndDate, 1));
+  const paymentReferenceDate = draft.actionType === "CASH_DIVIDEND"
+    ? draft.exRightsDate
+    : draft.subscriptionEndDate;
+  const paymentMinDate = maxIsoDate(currentSimulationDate, addIsoDateDays(paymentReferenceDate, 1));
   const listingMinDate = maxIsoDate(
     currentSimulationDate,
     addIsoDateDays(draft.paymentDate || draft.subscriptionEndDate || draft.exRightsDate, 1),
   );
+  const simulationDateAvailable = isIsoDate(currentSimulationDate);
 
   return (
     <>
       <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_1fr_1fr_1.4fr_auto]">
         {draft.actionType === "STOCK_SPLIT" ? (
           <>
-            <DarkInput label="분할 전" value={draft.splitFrom} onChange={draftSetters.setSplitFrom} placeholder="1" />
-            <DarkInput label="분할 후" value={draft.splitTo} onChange={draftSetters.setSplitTo} placeholder="5" />
+            <DarkInput label="분할 전" value={draft.splitFrom} onChange={draftSetters.setSplitFrom} placeholder="1" inputMode="numeric" />
+            <DarkInput label="분할 후" value={draft.splitTo} onChange={draftSetters.setSplitTo} placeholder="5" inputMode="numeric" />
             <div />
           </>
         ) : draft.actionType === "CASH_DIVIDEND" ? (
           <>
-            <DarkInput label="1주당 배당금" value={draft.actionDividendAmount} onChange={draftSetters.setActionDividendAmount} placeholder="1000" />
+            <DarkInput label="1주당 배당금" value={draft.actionDividendAmount} onChange={draftSetters.setActionDividendAmount} placeholder="1000" inputMode="decimal" />
             <div />
             <div />
           </>
         ) : draft.actionType === "BONUS_ISSUE" || draft.actionType === "STOCK_DIVIDEND" ? (
           <>
-            <DarkInput label="배정 주식수" value={draft.actionShares} onChange={draftSetters.setActionShares} placeholder="10000" />
+            <DarkInput label="배정 주식수" value={draft.actionShares} onChange={draftSetters.setActionShares} placeholder="10000" inputMode="numeric" />
             <div />
             <div />
           </>
@@ -56,8 +60,8 @@ export function AdminCorporateActionFormPanel({
           </>
         ) : (
           <>
-            <DarkInput label="발행수" value={draft.actionShares} onChange={draftSetters.setActionShares} placeholder="50000" />
-            <DarkInput label="발행가" value={draft.actionIssuePrice} onChange={draftSetters.setActionIssuePrice} placeholder="50000" />
+            <DarkInput label="발행수" value={draft.actionShares} onChange={draftSetters.setActionShares} placeholder="50000" inputMode="numeric" />
+            <DarkInput label="발행가" value={draft.actionIssuePrice} onChange={draftSetters.setActionIssuePrice} placeholder="50000" inputMode="decimal" />
             {draft.actionType === "PAID_IN_CAPITAL_INCREASE" ? (
               <DarkSelect label="모집 방식" value={draft.offeringType} onChange={(value) => draftSetters.setOfferingType(value as typeof draft.offeringType)}>
                 <option value="SHAREHOLDER_ALLOCATION">주주배정</option>
@@ -68,11 +72,23 @@ export function AdminCorporateActionFormPanel({
             )}
           </>
         )}
-        <DarkInput label="메모" value={draft.actionDescription} onChange={draftSetters.setActionDescription} placeholder="선택 입력" />
-        <button type="button" onClick={onSubmit} disabled={applyingAction} className="rounded-md bg-white px-3 py-3 text-sm font-black text-[#101418] disabled:opacity-50">
-          {applyingAction ? "적용 중" : "이벤트 적용"}
+        <DarkInput label={`메모 (${draft.actionDescription.length}/255)`} value={draft.actionDescription} onChange={draftSetters.setActionDescription} placeholder="선택 입력" maxLength={255} />
+        <button type="button" onClick={onSubmit} disabled={applyingAction || !simulationDateAvailable} className="rounded-md bg-white px-3 py-3 text-sm font-black text-[#101418] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64a8ff] disabled:cursor-not-allowed disabled:opacity-50">
+          {applyingAction ? "적용 중" : simulationDateAvailable ? "이벤트 적용" : "시간 확인 중"}
         </button>
       </div>
+      {draft.actionType === "PAID_IN_CAPITAL_INCREASE" ? (
+        <div className="mt-3 grid gap-2 rounded-md border border-[#2b435a] bg-[#111821] p-3 text-xs font-bold leading-5 text-[#b8c2cc] sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+          <p>
+            {draft.offeringType === "SHAREHOLDER_ALLOCATION"
+              ? "주주배정은 권리락 처리로 계좌별 권리를 만든 뒤, 배정 수량 안에서 청약합니다."
+              : "일반공모는 권리락 없이 전체 남은 모집 수량 안에서 선착순으로 청약합니다."}
+          </p>
+          <span className="rounded-sm bg-white/[0.06] px-2 py-1 text-[#64a8ff]">
+            {simulationDateAvailable ? `기준일 ${currentSimulationDate}` : "시뮬레이션 기준일 확인 필요"}
+          </span>
+        </div>
+      ) : null}
       <div className="mt-3 grid gap-3 md:grid-cols-3">
         {draft.actionType === "PAID_IN_CAPITAL_INCREASE" ? (
           <>
@@ -81,7 +97,7 @@ export function AdminCorporateActionFormPanel({
             ) : null}
             <DarkDateInput label="청약 시작일" value={draft.subscriptionStartDate} onChange={draftSetters.setSubscriptionStartDate} placeholder="2026-06-23" minDate={subscriptionStartMinDate} />
             <DarkDateInput label="청약 마감일" value={draft.subscriptionEndDate} onChange={draftSetters.setSubscriptionEndDate} placeholder="2026-06-24" minDate={subscriptionEndMinDate} />
-            <DarkDateInput label="납입일" value={draft.paymentDate} onChange={draftSetters.setPaymentDate} placeholder="2026-06-24" minDate={paymentMinDate} />
+            <DarkDateInput label="납입일" value={draft.paymentDate} onChange={draftSetters.setPaymentDate} placeholder="2026-06-25" minDate={paymentMinDate} />
             <DarkDateInput label="신주상장일" value={draft.listingDate} onChange={draftSetters.setListingDate} placeholder="2026-06-26" minDate={listingMinDate} />
           </>
         ) : null}

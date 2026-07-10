@@ -12,6 +12,13 @@ export type BatchManualAction = {
   onRun: () => void;
 };
 
+export function formatBatchJobRunSummary(run: StockBatchJobRun) {
+  if (run.status !== "COMPLETED") {
+    return run.status;
+  }
+  return `${run.status} · ${formatCount(run.processedCount, "건")}`;
+}
+
 export function summarizeBatchRuntimeControls(controls: BatchJobRuntimeStatus[]) {
   return controls.reduce(
     (summary, control) => ({
@@ -46,7 +53,7 @@ export function resolveBatchManualAction(
       runningLabel: "지급 실행 중",
       running: options.runningCashFlow,
       disabled: options.control.effectiveEnabled,
-      lastRunText: `마지막 수동 실행 ${options.lastCashFlowRun ? `${options.lastCashFlowRun.status} · ${formatCount(options.lastCashFlowRun.processedCount, "건")}` : "-"}`,
+      lastRunText: `마지막 수동 실행 ${options.lastCashFlowRun ? formatBatchJobRunSummary(options.lastCashFlowRun) : "-"}`,
       onRun: options.onRunCashFlow,
     };
   }

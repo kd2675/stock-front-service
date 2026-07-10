@@ -28,6 +28,19 @@ export function buildCorporateActionPayload(draft: CorporateActionDraftInput, cu
 }> {
   const payload: CorporateActionPayload = { actionType: draft.actionType };
 
+  if (!isIsoDate(currentSimulationDate)) {
+    return {
+      ok: false,
+      message: "현재 시뮬레이션 날짜를 확인한 뒤 이벤트를 적용해 주세요.",
+    };
+  }
+  if (draft.actionDescription.trim().length > 255) {
+    return {
+      ok: false,
+      message: "이벤트 메모는 255자 이하로 입력해 주세요.",
+    };
+  }
+
   if (draft.actionType === "INITIAL_ISSUE") {
     return {
       ok: false,
@@ -87,6 +100,14 @@ export function buildCorporateActionPayload(draft: CorporateActionDraftInput, cu
         message: "현금배당은 배당락일과 지급일이 필요합니다.",
       };
     }
+    const snapshotDateValidation = validateSnapshotDateAfterCurrent(
+      "배당락일",
+      draft.exRightsDate,
+      currentSimulationDate,
+    );
+    if (!snapshotDateValidation.ok) {
+      return snapshotDateValidation;
+    }
     const scheduleValidation = validateScheduleNotBeforeCurrent([
       ["배당락일", draft.exRightsDate],
       ["지급일", draft.paymentDate],
@@ -132,6 +153,16 @@ export function buildCorporateActionPayload(draft: CorporateActionDraftInput, cu
           message: "주주배정 유상증자는 권리락일이 필요합니다.",
         };
       }
+      if (isShareholderAllocation) {
+        const snapshotDateValidation = validateSnapshotDateAfterCurrent(
+          "주주배정 권리락일",
+          draft.exRightsDate,
+          currentSimulationDate,
+        );
+        if (!snapshotDateValidation.ok) {
+          return snapshotDateValidation;
+        }
+      }
       const scheduleFields: Array<[label: string, value: string]> = [
         ["청약 시작일", draft.subscriptionStartDate],
         ["청약 마감일", draft.subscriptionEndDate],
@@ -173,6 +204,14 @@ export function buildCorporateActionPayload(draft: CorporateActionDraftInput, cu
           message: "무상증자와 주식배당은 권리락일과 신주상장일이 필요합니다.",
         };
       }
+      const snapshotDateValidation = validateSnapshotDateAfterCurrent(
+        "권리락일",
+        draft.exRightsDate,
+        currentSimulationDate,
+      );
+      if (!snapshotDateValidation.ok) {
+        return snapshotDateValidation;
+      }
       const scheduleValidation = validateScheduleNotBeforeCurrent([
         ["권리락일", draft.exRightsDate],
         ["신주상장일", draft.listingDate],
@@ -203,6 +242,20 @@ export function buildCorporateActionPayload(draft: CorporateActionDraftInput, cu
     ok: true,
     payload,
   };
+}
+
+function validateSnapshotDateAfterCurrent(
+  label: string,
+  value: string,
+  currentSimulationDate: string,
+): AdminPayloadResult<{ ok: true }> {
+  if (value <= currentSimulationDate) {
+    return {
+      ok: false,
+      message: `${label}은 현재 시뮬레이션 날짜(${currentSimulationDate}) 다음 날짜 이후로 설정해 주세요.`,
+    };
+  }
+  return { ok: true };
 }
 
 function validateScheduleNotBeforeCurrent(

@@ -23,5 +23,8 @@ export function formatAccountNextLabel(nextPath: string) {
   if (nextPath.startsWith("/portfolio")) {
     return "내 주식";
   }
+  if (nextPath.startsWith("/corporate-actions")) {
+    return "기업 이벤트";
+  }
   return "수요와 공급 주문 체결";
 }

@@ -1,6 +1,7 @@
 import { formatAutoParticipantProfile } from "@/app/lib/autoParticipantProfiles";
 import { formatAccountStatus, formatCount, formatInteger, formatWon } from "@/app/supply-demand/admin/AdminFormatters";
 import { SalaryMetric } from "@/app/supply-demand/admin/AdminMetricCards";
+import { formatBatchJobRunSummary } from "@/app/supply-demand/admin/AdminBatchRuntimeHelpers";
 import { formatRecurringCashPolicy, type SalaryEligibilityRow } from "@/app/supply-demand/admin/AdminParticipantPolicyHelpers";
 import type { BatchJobRuntimeStatus, StockBatchJobRun } from "@/app/types/stock";
 
@@ -71,7 +72,7 @@ export function SalaryEligibilityPanel({
         </div>
       </div>
       <p className="mt-2 text-xs font-bold text-[#8b95a1]">
-        수동 지급은 자동 월급 지급이 꺼져 있을 때만 실행할 수 있습니다. 마지막 수동 실행 {lastRun ? `${lastRun.status} · ${formatCount(lastRun.processedCount, "건")}` : "-"}
+        수동 지급은 자동 월급 지급이 꺼져 있을 때만 실행할 수 있습니다. 마지막 수동 실행 {lastRun ? formatBatchJobRunSummary(lastRun) : "-"}
       </p>
 
       {error ? (

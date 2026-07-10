@@ -17,6 +17,7 @@ import type {
   OrderSide,
   OrderType,
   Portfolio,
+  SimulationClock,
   SymbolMarketConfig,
 } from "@/app/types/stock";
 
@@ -24,7 +25,10 @@ export type SupplyDemandSideColumnProps = {
   autoMarket: AutoMarketStatus | null;
   cancellingOrderId: number | null;
   corporateActionEntitlements: CorporateActionEntitlement[];
+  corporateActionEntitlementsReady: boolean;
+  corporateActionsErrorMessage: string | null;
   corporateActions: CorporateAction[];
+  corporateActionCashErrorMessage: string | null;
   estimatedOrderAmount?: number;
   isCorporateActionsLoading: boolean;
   isLoading: boolean;
@@ -43,6 +47,7 @@ export type SupplyDemandSideColumnProps = {
   selectedHolding?: Holding;
   selectedInstrument: OrderBookInstrument;
   selectedOrderBookConfig?: SymbolMarketConfig;
+  simulationClock: SimulationClock | null;
   side: OrderSide;
   subscribingCorporateActionId: number | null;
   updatedAt: Date | null;
@@ -54,7 +59,7 @@ export type SupplyDemandSideColumnProps = {
   onQuantityChange: (value: string) => void;
   onSelectInstrument: (symbol: string) => void;
   onSideChange: (value: OrderSide) => void;
-  onSubscribeCorporateAction: (actionId: number, shareQuantity: number) => void;
+  onSubscribeCorporateAction: (action: CorporateAction, shareQuantity: number) => void;
   onSubmitOrder: () => void;
 };
 
@@ -62,7 +67,10 @@ export function SupplyDemandSideColumn({
   autoMarket,
   cancellingOrderId,
   corporateActionEntitlements,
+  corporateActionEntitlementsReady,
+  corporateActionsErrorMessage,
   corporateActions,
+  corporateActionCashErrorMessage,
   estimatedOrderAmount,
   isCorporateActionsLoading,
   isLoading,
@@ -81,6 +89,7 @@ export function SupplyDemandSideColumn({
   selectedHolding,
   selectedInstrument,
   selectedOrderBookConfig,
+  simulationClock,
   side,
   subscribingCorporateActionId,
   updatedAt,
@@ -120,8 +129,15 @@ export function SupplyDemandSideColumn({
       <CorporateActionSubscriptionPanel
         actions={corporateActions}
         availableCash={portfolio?.account.cashBalance}
+        cashErrorMessage={corporateActionCashErrorMessage}
+        currentDate={simulationClock?.simulationDate}
         entitlements={corporateActionEntitlements}
+        entitlementsReady={corporateActionEntitlementsReady}
+        errorMessage={corporateActionsErrorMessage}
         isLoading={isCorporateActionsLoading}
+        marketSession={simulationClock?.marketSession}
+        maxVisibleActions={3}
+        showAllLink
         subscribingActionId={subscribingCorporateActionId}
         onSubscribe={onSubscribeCorporateAction}
       />

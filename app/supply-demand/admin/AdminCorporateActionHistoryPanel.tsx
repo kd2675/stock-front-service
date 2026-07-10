@@ -2,6 +2,7 @@ import {
   formatCorporateActionPrice,
   formatCorporateActionSchedule,
   formatCorporateActionStatus,
+  formatCorporateActionSubscriptionProgress,
   formatCorporateActionType,
   formatCorporateActionValue,
 } from "@/app/supply-demand/admin/AdminFormatters";
@@ -9,39 +10,61 @@ import { DarkSelect } from "@/app/supply-demand/admin/AdminFormControls";
 import type { CorporateAction, OrderBookInstrument } from "@/app/types/stock";
 
 type AdminCorporateActionHistoryPanelProps = {
-  instruments: OrderBookInstrument[];
-  symbol: string;
-  onSymbolChange: (symbol: string) => void;
   actions: CorporateAction[];
+  errorMessage: string | null;
+  instruments: OrderBookInstrument[];
+  loading: boolean;
+  symbol: string;
+  onRetry: () => void;
+  onSymbolChange: (symbol: string) => void;
 };
 
 export function AdminCorporateActionHistoryPanel({
-  instruments,
-  symbol,
-  onSymbolChange,
   actions,
+  errorMessage,
+  instruments,
+  loading,
+  symbol,
+  onRetry,
+  onSymbolChange,
 }: AdminCorporateActionHistoryPanelProps) {
   return (
     <section className="mt-5 rounded-lg border border-white/10 bg-white/[0.06] p-4">
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_240px] lg:items-end">
         <div>
           <h2 className="text-base font-black">선택 종목 이벤트 이력</h2>
-          <p className="mt-1 text-xs font-bold text-[#8b95a1]">이벤트 적용 대상과 별도로 이력을 조회할 종목을 선택합니다.</p>
+          <p className="mt-1 text-xs font-bold text-[#8b95a1]">이벤트 상태, 일정과 유상증자 청약·잔여 수량을 서버 원장 기준으로 조회합니다.</p>
         </div>
         <DarkSelect label="이력 조회 종목" value={symbol} onChange={onSymbolChange}>
           <option value="">선택</option>
           {instruments.map((instrument) => (
-            <option key={instrument.symbol} value={instrument.symbol}>{instrument.symbol}</option>
+            <option key={instrument.symbol} value={instrument.symbol}>{`${instrument.symbol} · ${instrument.name}`}</option>
           ))}
         </DarkSelect>
       </div>
-      <div className="mt-4 overflow-x-auto rounded-md border border-white/10">
-        <table className="min-w-[720px] w-full border-collapse text-sm">
+
+      {errorMessage ? (
+        <div role="alert" className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#f04452]/30 bg-[#3a1f1b] px-3 py-3 text-sm font-bold text-[#ffb4a8]">
+          <span>{errorMessage}</span>
+          <button
+            type="button"
+            onClick={onRetry}
+            className="rounded-md bg-white px-3 py-2 text-xs font-black text-[#3a1f1b] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64a8ff]"
+          >
+            다시 조회
+          </button>
+        </div>
+      ) : null}
+
+      <div className="mt-4 hidden overflow-x-auto rounded-md border border-white/10 md:block">
+        <table className="w-full min-w-[980px] border-collapse text-sm">
+          <caption className="sr-only">선택 종목 기업 이벤트 이력</caption>
           <thead className="bg-white/10 text-left text-[#b8c2cc]">
             <tr>
               <th className="px-3 py-2">이벤트</th>
               <th className="px-3 py-2">상태</th>
               <th className="px-3 py-2">수량/금액</th>
+              <th className="px-3 py-2">청약 현황</th>
               <th className="px-3 py-2">가격 조정</th>
               <th className="px-3 py-2">일정</th>
             </tr>
@@ -49,21 +72,83 @@ export function AdminCorporateActionHistoryPanel({
           <tbody className="divide-y divide-white/10">
             {actions.map((action) => (
               <tr key={action.id}>
-                <td className="px-3 py-2 font-black">{formatCorporateActionType(action.actionType)}</td>
-                <td className="px-3 py-2">{formatCorporateActionStatus(action.status)}</td>
-                <td className="px-3 py-2 tabular-nums">{formatCorporateActionValue(action)}</td>
-                <td className="px-3 py-2 tabular-nums">{formatCorporateActionPrice(action)}</td>
-                <td className="px-3 py-2 text-[#b8c2cc]">{formatCorporateActionSchedule(action)}</td>
+                <td className="px-3 py-3 align-top">
+                  <p className="font-black">{formatCorporateActionType(action.actionType)}</p>
+                  {action.description ? <p className="mt-1 max-w-52 break-words text-xs font-bold leading-5 text-[#8b95a1]">{action.description}</p> : null}
+                </td>
+                <td className="px-3 py-3 align-top">{formatCorporateActionStatus(action)}</td>
+                <td className="px-3 py-3 align-top tabular-nums">{formatCorporateActionValue(action)}</td>
+                <td className="px-3 py-3 align-top tabular-nums">{formatCorporateActionSubscriptionProgress(action)}</td>
+                <td className="px-3 py-3 align-top tabular-nums">{formatCorporateActionPrice(action)}</td>
+                <td className="px-3 py-3 align-top text-[#b8c2cc]">{formatCorporateActionSchedule(action)}</td>
               </tr>
             ))}
-            {actions.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-3 py-4 text-[#8b95a1]">선택한 종목의 이벤트 이력이 없습니다.</td>
-              </tr>
-            ) : null}
+            <AdminCorporateActionEmptyRow actions={actions} loading={loading} symbol={symbol} />
           </tbody>
         </table>
       </div>
+
+      <div className="mt-4 grid gap-3 md:hidden">
+        {actions.map((action) => (
+          <article key={action.id} className="rounded-md border border-white/10 bg-black/10 p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h3 className="font-black">{formatCorporateActionType(action.actionType)}</h3>
+                <p className="mt-1 text-xs font-bold text-[#8b95a1]">{formatCorporateActionValue(action)}</p>
+              </div>
+              <span className="shrink-0 rounded-sm bg-white/10 px-2 py-1 text-xs font-black text-[#d8e2ec]">
+                {formatCorporateActionStatus(action)}
+              </span>
+            </div>
+            <dl className="mt-3 grid gap-2 text-xs">
+              <MobileDetail label="청약 현황" value={formatCorporateActionSubscriptionProgress(action)} />
+              <MobileDetail label="가격 조정" value={formatCorporateActionPrice(action)} />
+              <MobileDetail label="일정" value={formatCorporateActionSchedule(action)} />
+            </dl>
+            {action.description ? <p className="mt-3 break-words text-xs font-bold leading-5 text-[#8b95a1]">{action.description}</p> : null}
+          </article>
+        ))}
+        {actions.length === 0 ? (
+          <p className="rounded-md border border-white/10 bg-black/10 px-3 py-4 text-sm font-bold text-[#8b95a1]">
+            {resolveEmptyMessage(symbol, loading)}
+          </p>
+        ) : null}
+      </div>
     </section>
   );
+}
+
+function AdminCorporateActionEmptyRow({
+  actions,
+  loading,
+  symbol,
+}: {
+  actions: CorporateAction[];
+  loading: boolean;
+  symbol: string;
+}) {
+  if (actions.length > 0) {
+    return null;
+  }
+  return (
+    <tr>
+      <td colSpan={6} className="px-3 py-4 text-[#8b95a1]">{resolveEmptyMessage(symbol, loading)}</td>
+    </tr>
+  );
+}
+
+function MobileDetail({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="grid grid-cols-[72px_minmax(0,1fr)] gap-2">
+      <dt className="font-bold text-[#8b95a1]">{label}</dt>
+      <dd className="min-w-0 break-words font-black text-[#d8e2ec]">{value}</dd>
+    </div>
+  );
+}
+
+function resolveEmptyMessage(symbol: string, loading: boolean) {
+  if (!symbol) {
+    return "이력을 조회할 종목을 선택해 주세요.";
+  }
+  return loading ? "기업 이벤트 이력을 조회하고 있습니다." : "선택한 종목의 이벤트 이력이 없습니다.";
 }

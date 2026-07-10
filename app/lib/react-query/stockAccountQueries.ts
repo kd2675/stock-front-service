@@ -15,7 +15,7 @@ import {
   authenticatedStockQueryOptions,
   type AuthenticatedStockQueryOptionsConfig,
 } from "@/app/lib/react-query/stockQueryCore";
-import type { Execution, Holding, MarketType, Order, Portfolio, PortfolioSnapshot, ProfitSummary } from "@/app/types/stock";
+import type { CorporateActionEntitlement, Execution, Holding, MarketType, Order, Portfolio, PortfolioSnapshot, ProfitSummary } from "@/app/types/stock";
 
 export function profileQueryOptions(
   token: string | null,
@@ -92,7 +92,7 @@ export function holdingsQueryOptions(token: string | null, enabled = true) {
 }
 
 export function corporateActionEntitlementsQueryOptions(token: string | null, enabled = true) {
-  return authenticatedStockQueryOptions(token, {
+  return authenticatedUserActivityQueryOptions<CorporateActionEntitlement[]>(token, {
     queryKey: stockKeys.corporateActionEntitlements(),
     request: getCorporateActionEntitlements,
     fallbackMessage: "권리 내역을 조회하지 못했습니다.",

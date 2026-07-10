@@ -204,7 +204,7 @@ export type StockBatchJobRun = {
   processedCount: number;
   message: string;
   startedAt: string;
-  completedAt: string;
+  completedAt: string | null;
 };
 
 export type AutoParticipantSymbolConfig = {

@@ -18,6 +18,7 @@ import {
   orderBookQueryOptions,
   orderBookRecentExecutionsQueryOptions,
   orderBookTradeSummaryQueryOptions,
+  simulationClockQueryOptions,
 } from "@/app/lib/react-query/stockMarketQueries";
 import { isEnabledWithAuthenticatedSession } from "@/app/lib/react-query/stockQueryCore";
 import type { AuthStatus } from "@/app/types/auth";
@@ -69,6 +70,7 @@ export function useSupplyDemandPageQueries({
   const orderBookCandlesQuery = useQuery(orderBookCandlesQueryOptions(selectedSymbol, candleInterval, { enabled: hasTradingAccount }));
   const corporateActionsQuery = useQuery(corporateActionsQueryOptions(selectedSymbol, { enabled: hasTradingAccount }));
   const corporateActionEntitlementsQuery = useQuery(corporateActionEntitlementsQueryOptions(token, hasTradingAccount));
+  const simulationClockQuery = useQuery(simulationClockQueryOptions());
   const ordersQuery = useQuery(ordersQueryOptions(token, {
     marketType: "ORDER_BOOK",
     symbol: selectedSymbol,
@@ -98,6 +100,7 @@ export function useSupplyDemandPageQueries({
     orderBookCandlesQuery.dataUpdatedAt,
     corporateActionsQuery.dataUpdatedAt,
     corporateActionEntitlementsQuery.dataUpdatedAt,
+    simulationClockQuery.dataUpdatedAt,
     ordersQuery.dataUpdatedAt,
     executionsQuery.dataUpdatedAt,
     portfolioQuery.dataUpdatedAt,
@@ -134,6 +137,8 @@ export function useSupplyDemandPageQueries({
     ordersQuery,
     portfolio: portfolioQuery.data ?? null,
     portfolioQuery,
+    simulationClock: simulationClockQuery.data ?? null,
+    simulationClockQuery,
     updatedAt: updatedAtMs > 0 ? new Date(updatedAtMs) : null,
   };
 }

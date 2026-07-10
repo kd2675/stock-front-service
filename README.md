@@ -7,6 +7,7 @@
 - `/`
 - `/login`
 - `/portfolio`
+- `/corporate-actions`
 - `/supply-demand`
 - `/supply-demand/admin`
 
@@ -21,6 +22,7 @@
 - 미체결/부분체결 주문 정정과 부분 취소 UI
 - 평가 자산, 수익률, 누적 손익 요약
 - 배당/신주 배정 내역 표시
+- 주주배정/일반공모 유상증자 목록, 상세와 청약
 - 장 마감 자산 기록 표시
 - 로그인, 회원가입, Naver/Kakao OAuth 진입
 
@@ -32,6 +34,7 @@ npm run dev
 npm run build
 npm run start
 npm run lint
+npm run verify:corporate-actions
 npm run verify:contract
 ```
 
@@ -62,6 +65,7 @@ NEXT_PUBLIC_AUTH_API_URL=http://localhost:9000
 - Virtual Market API: `/api/stock/v1/markets/virtual-market`
 - Order Book Market API: `/api/stock/v1/markets/order-book-market`
 - Auto Market API: `/api/stock/v1/markets/auto-market`
+- Corporate Action Feed API: `/api/stock/v1/markets/corporate-actions?actionType=PAID_IN_CAPITAL_INCREASE&limit=200`
 - Auth API: `/auth/login`, `/auth/refresh`, `/auth/logout`, `/api/users`
 - OAuth:
   - `/oauth2/authorize/naver-stock`
@@ -76,14 +80,16 @@ NEXT_PUBLIC_AUTH_API_URL=http://localhost:9000
 - 홈 주문 목록은 미체결/부분체결 주문의 전체 취소, 부분 취소, LIMIT 주문 정정을 지원합니다.
 - 홈과 공급/수요 주문 입력은 서버의 호가 단위와 가격제한폭 정책에 맞춰 LIMIT 주문을 사전 검증합니다.
 - 홈 상단 지표는 포트폴리오와 손익 요약 API를 함께 읽어 총자산, 현금, 평가금액, 총 손익, 실현손익, 미체결 수를 표시합니다.
-- 홈 기업 이벤트 패널은 사용자별 현금배당/신주 배정 내역 최근 50건 중 일부를 표시합니다.
+- `/corporate-actions`는 유상증자 공개 이벤트 목록과 사용자 권리 내역을 함께 읽습니다. 주주배정은 계좌별 배정 권리 수량, 일반공모는 전체 남은 모집 수량을 청약 상한으로 표시합니다.
+- 기업 이벤트 feed와 사용자 권리·예수금은 5초 주기로 갱신해 다른 사용자·자동 참여자의 청약 및 배치 상태 전이를 반영합니다.
+- 유상증자 청약은 서버 계약과 동일하게 청약 기간 중 `AFTER_CLOSE` 세션에서만 활성화되며, 접수 후 이벤트·권리·포트폴리오·보유 캐시를 갱신합니다.
 - 홈 최근 체결 카드는 순금액, 비용, 매도 실현손익을 표시합니다.
 - 공급/수요 화면은 브라우저 localStorage 시뮬레이션을 하지 않고 stock-back API와 batch가 만든 실제 주문장/자동장 상태를 읽습니다.
 - 공급/수요 화면은 사용자의 주문장 주문 상태와 최근 주문장 체결 내역을 함께 읽고, 미체결/부분체결 주문의 전체 취소를 지원합니다.
 - 공급/수요 화면의 주문/체결 조회는 `/orders?marketType=ORDER_BOOK`, `/executions?source=INTERNAL_ORDER_BOOK`를 사용합니다. 최근 50건 응답을 받은 뒤 프론트에서 시장을 필터링하지 않습니다.
 - 공급/수요 관리자 화면은 `ADMIN` 계정 로그인 후 접근하는 내부 운영 화면입니다. stock-back 쓰기 API도 `ADMIN` 권한을 요구합니다.
 - 공급/수요 관리자 화면에서 종목별 호가 단위와 가격제한폭을 함께 설정합니다. 기본값은 1원 tick, ±30%입니다.
-- 공급/수요 관리자 화면의 유상증자는 발행수/발행가와 함께 권리락일, 납입일, 신주상장일을 입력해 batch corporate action 흐름으로 처리합니다. 액면분할은 효력일, 현금배당은 1주당 배당금/배당락일/지급일, 무상증자/주식배당은 배정 주식수/권리락일/신주상장일을 입력합니다.
+- 공급/수요 관리자 화면의 유상증자는 주주배정 또는 일반공모만 지원합니다. 두 방식 모두 발행수·발행가·청약 시작/마감일·납입일·신주상장일을 입력하고, 주주배정에만 권리락일을 입력합니다. 보유자 snapshot이 필요한 주주배정·현금배당·무상증자·주식배당의 권리락일은 현재 시뮬레이션 날짜보다 미래만 허용합니다. 액면분할은 효력일, 현금배당은 1주당 배당금/배당락일/지급일, 무상증자/주식배당은 배정 주식수/권리락일/신주상장일을 입력합니다.
 - 공급/수요 관리자 화면은 선택 종목의 기업 이벤트 이력을 조회합니다.
 - 공급/수요 관리자 화면은 주문장 종목별 평가 보고서를 발행, 수정, 삭제할 수 있습니다. 보고서에는 1~10 점수와 상승/하락 이유를 입력하며, batch 자동장은 최신 활성 보고서 점수를 장 시작 시 생성된 일일 방향/자산 선호와 자동 참여자 성향에 함께 사용합니다.
 - local-direct에서는 stock-back이 JWT를 직접 해석하지 않으므로 프론트가 access token payload의 `X-User-Key`, `X-User-Role`을 함께 붙입니다. Gateway 모드에서는 gateway가 같은 헤더를 다시 주입합니다.

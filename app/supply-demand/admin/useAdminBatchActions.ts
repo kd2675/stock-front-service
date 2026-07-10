@@ -1,6 +1,6 @@
-import { useState } from "react";
 import { useMutation, type QueryClient } from "@tanstack/react-query";
 
+import { stockKeys } from "@/app/lib/react-query/stockKeys";
 import { setBatchRuntimeControlQueryData } from "@/app/lib/react-query/stockCacheUpdates";
 import { invalidateBatchRuntimeControlQueries } from "@/app/lib/react-query/stockInvalidations";
 import {
@@ -17,16 +17,17 @@ export function useAdminBatchActions({
   queryClient,
   reloadAdminCashFlowState,
   reloadAutoParticipantState,
+  lastCashFlowRun,
   requireAdminToken,
   setMessage,
 }: {
   queryClient: QueryClient;
   reloadAdminCashFlowState: () => void;
   reloadAutoParticipantState: () => void;
+  lastCashFlowRun: StockBatchJobRun | null;
   requireAdminToken: RequireAdminToken;
   setMessage: AdminActionMessageSetter;
 }) {
-  const [lastCashFlowRun, setLastCashFlowRun] = useState<StockBatchJobRun | null>(null);
   const batchJobRuntimeMutation = useMutation(adminUpdateBatchJobRuntimeControlMutationOptions());
   const runCashFlowMutation = useMutation(adminRunAutoParticipantCashFlowMutationOptions());
 
@@ -68,7 +69,7 @@ export function useAdminBatchActions({
       setMessage(cashFlowRunResult.message);
       return;
     }
-    setLastCashFlowRun(cashFlowRunResult.data);
+    queryClient.setQueryData(stockKeys.latestManualCashFlowRun(), cashFlowRunResult.data);
     if (cashFlowRunResult.data.status === "QUEUED") {
       setMessage("월급 지급 배치 실행 신호를 접수했습니다. 배치 서버가 순서대로 처리합니다.");
     } else if (cashFlowRunResult.data.status === "SKIPPED") {
@@ -77,6 +78,7 @@ export function useAdminBatchActions({
       setMessage(`월급 지급 배치를 실행했습니다. 처리 ${formatCount(cashFlowRunResult.data.processedCount, "건")}`);
     }
     reloadAdminCashFlowState();
+    void queryClient.invalidateQueries({ queryKey: stockKeys.latestManualCashFlowRun() });
     void invalidateBatchRuntimeControlQueries(queryClient);
     reloadAutoParticipantState();
   };

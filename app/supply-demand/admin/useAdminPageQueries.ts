@@ -8,6 +8,7 @@ import {
   autoParticipantsQueryOptions,
   autoParticipantProfileOverviewsQueryOptions,
   batchJobRuntimeControlsQueryOptions,
+  latestManualCashFlowRunQueryOptions,
 } from "@/app/lib/react-query/stockAdminQueries";
 import {
   autoMarketStatusQueryOptions,
@@ -131,6 +132,9 @@ export function useAdminPageQueries({
   const batchJobRuntimeControlsQuery = useQuery(batchJobRuntimeControlsQueryOptions(accessToken, {
     enabled: queryFlags.shouldUseBatchRuntimeControls,
   }));
+  const latestManualCashFlowRunQuery = useQuery(latestManualCashFlowRunQueryOptions(accessToken, {
+    enabled: queryFlags.shouldUseBatchRuntimeControls,
+  }));
   const autoMarketSummaryQuery = useQuery(autoMarketSummaryStatusQueryOptions({
     enabled: queryFlags.shouldUseAutoMarketSummary,
     includeRuntimeMetrics: false,
@@ -182,6 +186,8 @@ export function useAdminPageQueries({
     autoParticipantProfileOverviewsQuery,
     autoParticipantProfileOverviewsAllQuery,
     batchJobRuntimeControlsQuery,
+    latestManualCashFlowRunQuery,
+    corporateActionsQuery,
     shouldLoadInstrumentDetails: queryFlags.shouldLoadInstrumentDetails,
     simulationClockQuery,
     userFundFlowQuery,

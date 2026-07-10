@@ -158,8 +158,8 @@ function defaultDatesForAction(
       };
     }
     return {
-      exRightsDate: simulationDate,
-      subscriptionStartDate: nextDate,
+      exRightsDate: nextDate,
+      subscriptionStartDate: secondDate,
       subscriptionEndDate: thirdDate,
       paymentDate: fourthDate,
       listingDate: sixthDate,
@@ -168,21 +168,21 @@ function defaultDatesForAction(
   }
   if (actionType === "CASH_DIVIDEND") {
     return {
-      exRightsDate: simulationDate,
+      exRightsDate: nextDate,
       subscriptionStartDate: "",
       subscriptionEndDate: "",
-      paymentDate: nextDate,
+      paymentDate: secondDate,
       listingDate: "",
       delistingDate: "",
     };
   }
   if (actionType === "BONUS_ISSUE" || actionType === "STOCK_DIVIDEND") {
     return {
-      exRightsDate: simulationDate,
+      exRightsDate: nextDate,
       subscriptionStartDate: "",
       subscriptionEndDate: "",
       paymentDate: "",
-      listingDate: nextDate,
+      listingDate: secondDate,
       delistingDate: "",
     };
   }

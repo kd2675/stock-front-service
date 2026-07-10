@@ -1,5 +1,6 @@
 import {
   getAutoMarketStatus,
+  getCorporateActionFeed,
   getCorporateActions,
   getInstrumentReports,
   getInstruments,
@@ -14,6 +15,7 @@ import {
   getRecentOrderBookExecutions,
   getSimulationClock,
 } from "@/app/lib/stock";
+import type { StockCorporateActionFeedOptions } from "@/app/lib/stock";
 import { stockKeys } from "@/app/lib/react-query/stockKeys";
 import {
   FAST_MARKET_REFETCH_MS,
@@ -34,6 +36,7 @@ import type {
 
 type MarketQueryToggleOptions = {
   enabled?: boolean;
+  refetchIntervalMs?: number | false;
 };
 
 type AutoMarketStatusIncludeOptions = {
@@ -250,7 +253,22 @@ export function corporateActionsQueryOptions(symbol: string, options: MarketQuer
     queryKey: stockKeys.corporateActions(symbol),
     request: getCorporateActions,
     fallbackMessage: "주식 이벤트를 조회하지 못했습니다.",
+    refetchInterval: options.refetchIntervalMs ?? USER_ACTIVITY_REFETCH_MS,
     symbol,
+  });
+}
+
+export function corporateActionFeedQueryOptions(options: MarketQueryToggleOptions & StockCorporateActionFeedOptions = {}) {
+  const feedOptions = {
+    actionType: options.actionType,
+    limit: options.limit,
+  };
+  return stockQueryOptions({
+    queryKey: stockKeys.corporateActionFeed(feedOptions),
+    request: () => getCorporateActionFeed(feedOptions),
+    fallbackMessage: "기업 이벤트 목록을 조회하지 못했습니다.",
+    enabled: options.enabled,
+    refetchInterval: options.refetchIntervalMs ?? USER_ACTIVITY_REFETCH_MS,
   });
 }
 

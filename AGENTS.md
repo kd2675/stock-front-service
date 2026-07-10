@@ -1,5 +1,5 @@
 <!-- Parent: ../AGENTS.md -->
-<!-- Updated: 2026-06-17 -->
+<!-- Updated: 2026-07-10 -->
 
 # stock-front-service
 
@@ -12,6 +12,7 @@
 - `/`
 - `/login`
 - `/portfolio`
+- `/corporate-actions`
 - `/supply-demand`
 - `/supply-demand/admin`
 
@@ -19,6 +20,7 @@
 
 - `app/page.tsx`
 - `app/login/page.tsx`
+- `app/corporate-actions/page.tsx`
 - `app/supply-demand/page.tsx`
 - `app/supply-demand/admin/page.tsx`
 - `app/globals.css`
@@ -47,6 +49,8 @@ npm run lint
 - `local-direct` 보호 API 호출은 access token과 함께 `X-User-Key`, `X-User-Role` 헤더를 붙입니다.
 - 홈 화면 주문은 `VIRTUAL_PRICE`, 공급/수요 화면 주문은 `ORDER_BOOK`으로 접수합니다.
 - 공급/수요 화면은 stock-back API의 주문장, 가격, 자동장 상태를 읽고 프론트 localStorage 기반 가짜 체결 로직을 만들지 않습니다.
+- 기업 이벤트 화면은 stock-back의 실제 유상증자 이벤트/사용자 권리/시뮬레이션 장 상태를 읽으며, 주주배정과 일반공모만 지원합니다.
+- 청약 버튼은 서버 계약과 동일하게 청약 기간의 `AFTER_CLOSE`에서만 활성화하고, 주주배정은 계좌별 권리 수량, 일반공모는 서버 잔여 수량을 상한으로 사용합니다.
 
 ## For AI Agents
 

@@ -340,6 +340,8 @@ export function DarkInput({
   type = "text",
   className,
   disabled = false,
+  inputMode,
+  maxLength,
 }: {
   label: string;
   value: string;
@@ -348,12 +350,16 @@ export function DarkInput({
   type?: string;
   className?: string;
   disabled?: boolean;
+  inputMode?: "decimal" | "numeric" | "text";
+  maxLength?: number;
 }) {
   return (
     <label className={["grid min-w-0 gap-1 text-xs font-bold text-[#b8c2cc]", className].filter(Boolean).join(" ")}>
       {label}
       <input
         type={type}
+        inputMode={inputMode}
+        maxLength={maxLength}
         value={value}
         disabled={disabled}
         onChange={(event) => onChange(event.target.value)}

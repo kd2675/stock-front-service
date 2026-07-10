@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-type MarketMode = "order-book" | "portfolio";
+export type MarketMode = "order-book" | "portfolio" | "corporate-actions";
 
 const MARKET_MODE_TABS: Array<{
   mode: MarketMode;
@@ -17,11 +17,16 @@ const MARKET_MODE_TABS: Array<{
     href: "/portfolio",
     label: "내 주식",
   },
+  {
+    mode: "corporate-actions",
+    href: "/corporate-actions",
+    label: "기업 이벤트",
+  },
 ];
 
 export default function MarketModeTabs({ active }: { active: MarketMode }) {
   return (
-    <nav aria-label="주식 화면" className="grid grid-cols-2 gap-1 rounded-lg bg-[#f2f4f6] p-1">
+    <nav aria-label="주식 화면" className="grid grid-cols-3 gap-1 rounded-lg bg-[#f2f4f6] p-1">
       {MARKET_MODE_TABS.map((tab) => {
         const selected = tab.mode === active;
 

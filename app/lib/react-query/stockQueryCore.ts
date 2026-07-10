@@ -32,7 +32,7 @@ export type StockQueryOptionsConfig<TData> = {
   request: () => Promise<ApiResult<TData>>;
   fallbackMessage: string;
   enabled?: boolean;
-  refetchInterval?: number | false;
+  refetchInterval?: QueryObserverOptions<TData>["refetchInterval"];
   retry?: boolean | number;
   staleTime?: number;
   placeholderData?: QueryObserverOptions<TData>["placeholderData"];

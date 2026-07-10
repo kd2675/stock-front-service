@@ -30,6 +30,9 @@ type AdminEventsSectionProps = {
   historySymbol: string;
   onHistorySymbolChange: (symbol: string) => void;
   corporateActions: CorporateAction[];
+  corporateActionsErrorMessage: string | null;
+  corporateActionsLoading: boolean;
+  onRetryCorporateActions: () => void;
 };
 
 export function AdminEventsSection({
@@ -53,6 +56,9 @@ export function AdminEventsSection({
   historySymbol,
   onHistorySymbolChange,
   corporateActions,
+  corporateActionsErrorMessage,
+  corporateActionsLoading,
+  onRetryCorporateActions,
 }: AdminEventsSectionProps) {
   return (
     <>
@@ -72,6 +78,9 @@ export function AdminEventsSection({
         symbol={historySymbol}
         onSymbolChange={onHistorySymbolChange}
         actions={corporateActions}
+        errorMessage={corporateActionsErrorMessage}
+        loading={corporateActionsLoading}
+        onRetry={onRetryCorporateActions}
       />
 
       <AdminInstrumentReportPanel

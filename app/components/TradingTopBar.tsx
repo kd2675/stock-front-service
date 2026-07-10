@@ -4,14 +4,12 @@ import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useState } from "react";
 
-import MarketModeTabs from "@/app/components/MarketModeTabs";
+import MarketModeTabs, { type MarketMode } from "@/app/components/MarketModeTabs";
 import useAuthSession from "@/app/hooks/useAuthSession";
 import { clearAccessToken, getAccessTokenForAuthStatus, logout } from "@/app/lib/auth";
 import { accountStatusQueryOptions, holdingsQueryOptions, portfolioQueryOptions, profileQueryOptions } from "@/app/lib/react-query/stockAccountQueries";
 import { formatNumber, formatWon } from "@/app/lib/stockFormatters";
 import type { Holding, Portfolio, StockUserProfile } from "@/app/types/stock";
-
-type MarketMode = "order-book" | "portfolio";
 
 export default function TradingTopBar({ active, actions }: { active: MarketMode; actions?: ReactNode }) {
   const router = useRouter();

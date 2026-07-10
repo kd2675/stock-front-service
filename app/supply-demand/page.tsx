@@ -9,9 +9,10 @@ import { useAccountRequiredRedirect } from "@/app/hooks/useAccountRequiredRedire
 import useAuthSession from "@/app/hooks/useAuthSession";
 import { useLoginRequiredRedirect } from "@/app/hooks/useLoginRequiredRedirect";
 import { getAccessTokenForAuthStatus, isAdminRole } from "@/app/lib/auth";
+import { getCorporateActionSubscriptionErrorMessage } from "@/app/lib/corporateActionSubscriptions";
 import { invalidateCorporateActionSubscriptionQueries } from "@/app/lib/react-query/stockInvalidations";
 import { subscribeCorporateActionMutationOptions } from "@/app/lib/react-query/stockMutations";
-import { createStockErrorMessageHandler } from "@/app/lib/react-query/stockResult";
+import { getStockErrorMessage } from "@/app/lib/react-query/stockResult";
 import { useOrderBookTicketState } from "@/app/stores/stockUiStore";
 import { InstrumentSelectionPanel } from "@/app/supply-demand/InstrumentSelectionPanel";
 import { SupplyDemandPageChrome } from "@/app/supply-demand/SupplyDemandPageChrome";
@@ -55,6 +56,9 @@ export default function SupplyDemandPage() {
     orderBookTradeSummary,
     orders,
     portfolio,
+    portfolioQuery,
+    simulationClock,
+    simulationClockQuery,
     updatedAt,
   } = useSupplyDemandPageQueries({
     authStatus,
@@ -63,19 +67,28 @@ export default function SupplyDemandPage() {
     selectedSymbol,
     token,
   });
-  const setCorporateActionErrorMessage = createStockErrorMessageHandler(setMessage, "기업 이벤트 청약에 실패했습니다.");
   const {
     isPending: subscribingCorporateAction,
     mutate: subscribeCorporateAction,
     variables: subscribingCorporateActionVariables,
   } = useMutation({
     ...subscribeCorporateActionMutationOptions(),
-    onSuccess: async () => {
+    onSuccess: async (_entitlement, variables) => {
       setMessage("기업 이벤트 청약이 접수되었습니다.");
-      await invalidateCorporateActionSubscriptionQueries(queryClient, selectedSymbol);
+      await invalidateCorporateActionSubscriptionQueries(queryClient, variables.symbol);
     },
-    onError: setCorporateActionErrorMessage,
+    onError: (error) => setMessage(getCorporateActionSubscriptionErrorMessage(error)),
   });
+  const corporateActionsErrorMessage = corporateActionsQuery.isError
+    ? getStockErrorMessage(corporateActionsQuery.error, "선택 종목의 기업 이벤트를 조회하지 못했습니다.")
+    : corporateActionEntitlementsQuery.isError
+      ? getStockErrorMessage(corporateActionEntitlementsQuery.error, "내 기업 이벤트 권리를 조회하지 못했습니다.")
+      : simulationClockQuery.isError
+        ? getStockErrorMessage(simulationClockQuery.error, "시뮬레이션 장 상태를 조회하지 못했습니다.")
+        : null;
+  const corporateActionCashErrorMessage = portfolioQuery.isError
+    ? getStockErrorMessage(portfolioQuery.error, "청약 가능 예수금을 조회하지 못했습니다.")
+    : null;
 
   const {
     estimatedOrderAmount,
@@ -189,7 +202,10 @@ export default function SupplyDemandPage() {
           candleInterval={candleInterval}
           chartExpanded={chartExpanded}
           corporateActionEntitlements={corporateActionEntitlements.filter((entitlement) => entitlement.symbol === selectedSymbol)}
+          corporateActionEntitlementsReady={corporateActionEntitlementsQuery.data !== undefined}
+          corporateActionsErrorMessage={corporateActionsErrorMessage}
           corporateActions={corporateActions}
+          corporateActionCashErrorMessage={corporateActionCashErrorMessage}
           estimatedOrderAmount={estimatedOrderAmount}
           flashingOrderBookLevel={flashingOrderBookLevel}
           instruments={instruments}
@@ -216,6 +232,7 @@ export default function SupplyDemandPage() {
           selectedInstrument={selectedInstrument}
           selectedOrderBookConfig={selectedOrderBookConfig}
           selectedSymbol={selectedSymbol}
+          simulationClock={simulationClock}
           side={side}
           subscribingCorporateActionId={subscribingCorporateAction ? subscribingCorporateActionVariables?.actionId ?? null : null}
           updatedAt={updatedAt}
@@ -232,10 +249,14 @@ export default function SupplyDemandPage() {
           onQuantityChange={updateQuantity}
           onSelectInstrument={selectInstrument}
           onSideChange={updateSide}
-          onSubscribeCorporateAction={(actionId, shareQuantity) => subscribeCorporateAction({
-            actionId,
-            payload: { shareQuantity },
-          })}
+          onSubscribeCorporateAction={(action, shareQuantity) => {
+            setMessage(null);
+            subscribeCorporateAction({
+              actionId: action.id,
+              payload: { shareQuantity },
+              symbol: action.symbol,
+            });
+          }}
           onSubmitOrder={submitOrderBookOrder}
         />
       )}

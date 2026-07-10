@@ -32,6 +32,13 @@ const QUICK_LINKS = [
     metrics: ["보유", "평가손익", "수익률"],
   },
   {
+    href: "/corporate-actions",
+    eyebrow: "CORPORATE ACTION",
+    title: "기업 이벤트",
+    description: "주주배정과 일반공모 유상증자의 일정, 내 배정 권리, 남은 모집 수량과 청약 상태를 확인합니다.",
+    metrics: ["주주배정", "일반공모", "청약"],
+  },
+  {
     href: "/supply-demand/admin/accounts/participants",
     eyebrow: "PARTICIPANTS",
     title: "자동참여자",
@@ -70,9 +77,14 @@ export default function StockHomePage() {
               </Link>
             ) : null}
             {isLoggedIn ? (
-              <Link href="/portfolio" className="rounded-md bg-[#f2f4f6] px-3 py-2 text-sm font-black text-[#333d4b]">
-                내 주식
-              </Link>
+              <>
+                <Link href="/corporate-actions" className="rounded-md bg-[#eff6ff] px-3 py-2 text-sm font-black text-[#3182f6]">
+                  기업 이벤트
+                </Link>
+                <Link href="/portfolio" className="rounded-md bg-[#f2f4f6] px-3 py-2 text-sm font-black text-[#333d4b]">
+                  내 주식
+                </Link>
+              </>
             ) : null}
             <Link href={isLoggedIn ? "/supply-demand" : "/login"} className="rounded-md bg-[#3182f6] px-3 py-2 text-sm font-black text-white">
               {isLoggedIn ? "주문장" : "로그인"}
@@ -88,7 +100,7 @@ export default function StockHomePage() {
             자동참여자 수익률로 보는 모의 주식시장
           </h1>
           <p className="mt-5 max-w-2xl text-base font-semibold leading-7 text-[#4e5968]">
-            현재 화면은 수요와 공급 주문장, 내 주식, 자동참여자 성과를 중심으로 구성합니다.
+            현재 화면은 수요와 공급 주문장, 기업 이벤트, 내 주식, 자동참여자 성과를 중심으로 구성합니다.
             자동참여자는 계좌별 총자산, 순입금, 손익, 수익률을 기준으로 비교합니다.
           </p>
 
@@ -107,7 +119,7 @@ export default function StockHomePage() {
         />
       </section>
 
-      <section className="mx-auto grid max-w-7xl gap-4 px-4 pb-10 sm:px-6 lg:grid-cols-3 lg:px-8">
+      <section className="mx-auto grid max-w-7xl gap-4 px-4 pb-10 sm:grid-cols-2 sm:px-6 lg:px-8 xl:grid-cols-4">
         {QUICK_LINKS.filter((link) => isAdmin || !link.href.includes("/admin")).map((link) => (
           <Link
             key={link.href}
@@ -132,7 +144,7 @@ export default function StockHomePage() {
         <div className="grid gap-4 rounded-lg bg-[#191f28] p-5 text-white md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
           <div className="min-w-0">
             <p className="text-xs font-black tracking-[0.18em] text-[#8b95a1]">ACCOUNT GATE</p>
-            <p className="mt-2 text-lg font-black">주문장과 내 주식은 모의투자 계좌 확인 후 진입합니다.</p>
+            <p className="mt-2 text-lg font-black">주문장, 기업 이벤트와 내 주식은 모의투자 계좌 확인 후 진입합니다.</p>
           </div>
           <Link href={buildAccountRequiredPath("/supply-demand")} className="rounded-md bg-white px-4 py-3 text-center text-sm font-black text-[#191f28]">
             계좌 확인

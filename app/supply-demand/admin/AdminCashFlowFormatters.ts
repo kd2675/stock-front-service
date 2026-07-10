@@ -6,6 +6,8 @@ export function formatCashFlowReason(reason: string) {
       return "관리자 입금";
     case "ADMIN_WITHDRAW":
       return "관리자 회수";
+    case "CAPITAL_INCREASE_SUBSCRIPTION":
+      return "유상증자 청약";
     case "DIVIDEND_PAYMENT":
       return "배당 지급";
     case "AUTO_PROFILE_RECURRING_DEPOSIT":
