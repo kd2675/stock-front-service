@@ -2,7 +2,7 @@ import type { QueryClient } from "@tanstack/react-query";
 
 import { calculateChangeRate } from "@/app/lib/priceMath";
 import { stockKeys } from "@/app/lib/react-query/stockKeys";
-import type { BatchJobRuntimeStatus, Price, PriceStreamEvent, PriceTick } from "@/app/types/stock";
+import type { BatchJobRuntimeStatus, Price, PriceStreamEvent, PriceTick, StockBatchJobRun } from "@/app/types/stock";
 
 export function setBatchRuntimeControlQueryData(
   queryClient: QueryClient,
@@ -14,6 +14,13 @@ export function setBatchRuntimeControlQueryData(
       control.jobName === nextControl.jobName ? nextControl : control,
     ) ?? [nextControl],
   );
+}
+
+export function setLatestManualCashFlowRunQueryData(
+  queryClient: QueryClient,
+  latestRun: StockBatchJobRun,
+) {
+  queryClient.setQueryData<StockBatchJobRun>(stockKeys.latestManualCashFlowRun(), latestRun);
 }
 
 export function applyPriceStreamEventQueryData(

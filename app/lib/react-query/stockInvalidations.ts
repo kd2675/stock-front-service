@@ -222,3 +222,7 @@ export async function invalidateInstrumentReportQueries(
 export async function invalidateBatchRuntimeControlQueries(queryClient: QueryClient) {
   await invalidateQuery(queryClient, stockKeys.batchJobRuntimeControls());
 }
+
+export async function invalidateLatestManualCashFlowRunQuery(queryClient: QueryClient) {
+  await invalidateQuery(queryClient, stockKeys.latestManualCashFlowRun());
+}
