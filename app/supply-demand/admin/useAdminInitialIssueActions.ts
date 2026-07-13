@@ -71,6 +71,12 @@ export function useAdminInitialIssueActions({
           maxOrderQuantity: values.listingAutoMaxOrderQuantity,
           orderTtlSeconds: values.listingAutoOrderTtlSeconds,
           priceOffsetTicks: values.listingAutoPriceOffsetTicks,
+          targetBuyQuantity: values.listingAutoTargetBuyQuantity,
+          targetSellQuantity: values.listingAutoTargetSellQuantity,
+          targetHoldingQuantity: values.listingAutoTargetHoldingQuantity,
+          inventoryBandQuantity: values.listingAutoInventoryBandQuantity,
+          buyPriceOffsetDirection: values.listingAutoBuyPriceOffsetDirection,
+          sellPriceOffsetDirection: values.listingAutoSellPriceOffsetDirection,
         },
       });
     },

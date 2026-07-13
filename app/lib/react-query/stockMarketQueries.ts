@@ -3,6 +3,7 @@ import {
   getCorporateActionFeed,
   getCorporateActions,
   getInstrumentReports,
+  getInstrumentMarketReport,
   getInstruments,
   getOrderBook,
   getOrderBookCandles,
@@ -26,6 +27,7 @@ import {
 import type {
   CorporateAction,
   InstrumentReport,
+  InstrumentMarketReport,
   OrderBook,
   OrderBookCandle,
   OrderBookCandleInterval,
@@ -38,6 +40,19 @@ type MarketQueryToggleOptions = {
   enabled?: boolean;
   refetchIntervalMs?: number | false;
 };
+
+function candleRefetchInterval(interval: OrderBookCandleInterval) {
+  if (interval === "1M") {
+    return FAST_MARKET_REFETCH_MS;
+  }
+  if (interval === "5M") {
+    return USER_ACTIVITY_REFETCH_MS;
+  }
+  if (interval === "15M" || interval === "1H") {
+    return 15_000;
+  }
+  return 60_000;
+}
 
 type AutoMarketStatusIncludeOptions = {
   includeConfigs?: boolean;
@@ -167,7 +182,7 @@ export function orderBookCandlesQueryOptions(symbol: string, interval: OrderBook
     queryKey: stockKeys.orderBookCandles(symbol, interval),
     request: (nextSymbol) => getOrderBookCandles(nextSymbol, interval),
     fallbackMessage: "차트 데이터를 조회하지 못했습니다.",
-    refetchInterval: interval === "1M" || interval === "5M" ? FAST_MARKET_REFETCH_MS : USER_ACTIVITY_REFETCH_MS,
+    refetchInterval: candleRefetchInterval(interval),
     symbol,
   });
 }
@@ -278,6 +293,17 @@ export function instrumentReportsQueryOptions(symbol: string, options: MarketQue
     queryKey: stockKeys.instrumentReports(symbol),
     request: getInstrumentReports,
     fallbackMessage: "종목 보고서를 조회하지 못했습니다.",
+    symbol,
+  });
+}
+
+export function instrumentMarketReportQueryOptions(symbol: string, options: MarketQueryToggleOptions = {}) {
+  return symbolMarketQueryOptions<InstrumentMarketReport>({
+    enabled: options.enabled,
+    queryKey: stockKeys.instrumentMarketReport(symbol),
+    request: getInstrumentMarketReport,
+    fallbackMessage: "종목 시장 보고서를 조회하지 못했습니다.",
+    refetchInterval: options.refetchIntervalMs ?? FAST_MARKET_REFETCH_MS,
     symbol,
   });
 }

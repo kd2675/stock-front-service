@@ -190,6 +190,226 @@ export type InstrumentReport = {
   createdAt: string;
 };
 
+export type InstrumentDailyMarketSnapshot = {
+  tradeCount: number;
+  volume: number;
+  turnover: number;
+  turnoverRate: number;
+  vwap: number;
+  openPrice: number;
+  highPrice: number;
+  lowPrice: number;
+  lastPrice: number;
+  lastExecutedAt?: string | null;
+};
+
+export type InstrumentDailyHistoryPoint = {
+  tradeDate: string;
+  closePrice: number;
+  volume: number;
+  turnover: number;
+  issuedShares: number;
+  tradableShares: number;
+  reportDate: boolean;
+};
+
+export type InstrumentPerformanceAnalytics = {
+  availableTradingDays: number;
+  return5Days?: number | null;
+  return20Days?: number | null;
+  return60Days?: number | null;
+  highPrice20Days: number;
+  lowPrice20Days: number;
+  drawdownFrom20DayHigh: number;
+  dailyVolatility20Days?: number | null;
+  averageVolume20Days?: number | null;
+  volumeVsAverage20Days?: number | null;
+  averageTurnover20Days?: number | null;
+  turnoverVsAverage20Days?: number | null;
+  averageTurnoverRate20Days?: number | null;
+  closeTrend20Days: "UP" | "DOWN" | "FLAT" | "INSUFFICIENT_DATA";
+  consecutiveUpDays: number;
+  consecutiveDownDays: number;
+  dailyHistory: InstrumentDailyHistoryPoint[];
+};
+
+export type InstrumentTradingActivityAnalytics = {
+  executionCount20Days: number;
+  executionQuantity20Days: number;
+  averageExecutionQuantity20Days?: number | null;
+  averageSecondsBetweenTrades20Days?: number | null;
+};
+
+export type InstrumentInvestorCategoryFlow = {
+  category: "MANUAL_PARTICIPANT" | "AUTO_PARTICIPANT" | "LISTING_UNDERWRITER";
+  buyQuantity: number;
+  sellQuantity: number;
+  netQuantity: number;
+  buyAmount: number;
+  sellAmount: number;
+  netCashFlow: number;
+  buySellRatio?: number | null;
+  executionShareRate: number;
+};
+
+export type InstrumentInvestorFlowWindow = {
+  window: "1D" | "5D" | "20D";
+  tradingDays: number;
+  startDate: string;
+  endDate: string;
+  categories: InstrumentInvestorCategoryFlow[];
+};
+
+export type InstrumentInvestorFlowAnalytics = {
+  windows: InstrumentInvestorFlowWindow[];
+  autoParticipantExecutionShareRateLatestTradingDay: number;
+  topAccountExecutionShareRate20Days: number;
+};
+
+export type InstrumentShareHistoryPoint = {
+  tradeDate: string;
+  issuedShares: number;
+  tradableShares: number;
+  issuedShareChange: number;
+  tradableShareChange: number;
+};
+
+export type InstrumentOwnershipAnalytics = {
+  holderCount: number;
+  accountedHoldingQuantity: number;
+  holdingCoverageRate: number;
+  topHolderQuantity: number;
+  topHolderRate: number;
+  topFiveHolderQuantity: number;
+  topFiveHolderRate: number;
+  issuedShareChange60Days: number;
+  tradableShareChange60Days: number;
+  shareHistory: InstrumentShareHistoryPoint[];
+};
+
+export type InstrumentCorporateActionMetric = {
+  id: number;
+  actionType: CorporateActionType;
+  status: CorporateActionStatus;
+  offeringType?: CapitalIncreaseOfferingType | null;
+  shareQuantity: number;
+  issuePrice?: number | null;
+  basePrice?: number | null;
+  theoreticalExRightsPrice?: number | null;
+  issueDiscountRate?: number | null;
+  newShareRate?: number | null;
+  estimatedDilutionRate?: number | null;
+  dividendPerShare?: number | null;
+  dividendYield?: number | null;
+  splitRatio?: number | null;
+  exRightsDate?: string | null;
+  subscriptionStartDate?: string | null;
+  subscriptionEndDate?: string | null;
+  paymentDate?: string | null;
+  listingDate?: string | null;
+  delistingDate?: string | null;
+  beforePrice?: number | null;
+  afterPrice?: number | null;
+  beforeIssuedShares?: number | null;
+  afterIssuedShares?: number | null;
+  beforeMarketCapitalization?: number | null;
+  afterMarketCapitalization?: number | null;
+  description?: string | null;
+  createdAt: string;
+};
+
+export type InstrumentCorporateActionAnalytics = {
+  announcedCount: number;
+  completedCount: number;
+  cumulativePaidDividendPerShare: number;
+  cumulativePaidDividendCash: number;
+  events: InstrumentCorporateActionMetric[];
+};
+
+export type InstrumentMetricRank = {
+  rank: number;
+  total: number;
+  value?: number | null;
+  lowerIsBetter: boolean;
+};
+
+export type InstrumentMarketPeer = {
+  symbol: string;
+  name: string;
+  closePrice: number;
+  marketCapitalization: number;
+  changeRate: number;
+};
+
+export type InstrumentRankingAnalytics = {
+  instrumentCount: number;
+  marketCapitalization: InstrumentMetricRank;
+  turnover: InstrumentMetricRank;
+  volume: InstrumentMetricRank;
+  returnRate: InstrumentMetricRank;
+  turnoverRate: InstrumentMetricRank;
+  volatility: InstrumentMetricRank;
+  marketAverageReturnRate: number;
+  relativeReturnRate: number;
+  similarMarketCapitalizationPeers: InstrumentMarketPeer[];
+};
+
+export type InstrumentDataQuality = {
+  level: "FULL" | "PARTIAL" | "LIMITED";
+  notes: string[];
+  limitations: string[];
+  reportDate?: string | null;
+  simulationDateTime: string;
+  closePriceAsOf?: string | null;
+  lastExecutionAt?: string | null;
+  priceProvider?: string | null;
+  executionSource: string;
+  historicalTradingDays: number;
+  historyStartDate?: string | null;
+  historyEndDate?: string | null;
+  hasReportDateTrades: boolean;
+  reportDateMarketCloseCompleted: boolean;
+  latestCompletedMarketCloseDate?: string | null;
+  latestCompletedMarketCloseAt?: string | null;
+};
+
+export type InstrumentMarketAnalytics = {
+  performance: InstrumentPerformanceAnalytics;
+  tradingActivity: InstrumentTradingActivityAnalytics;
+  investorFlow: InstrumentInvestorFlowAnalytics;
+  ownership: InstrumentOwnershipAnalytics;
+  corporateActions: InstrumentCorporateActionAnalytics;
+  rankings: InstrumentRankingAnalytics;
+  dataQuality: InstrumentDataQuality;
+};
+
+export type InstrumentMarketReport = {
+  symbol: string;
+  name: string;
+  market: string;
+  closePrice: number;
+  previousClose: number;
+  changeAmount: number;
+  changeRate: number;
+  initialPrice: number;
+  returnSinceListing: number;
+  issuedShares: number;
+  tradableShares: number;
+  tradableShareRate: number;
+  marketCapitalization: number;
+  tradableMarketCapitalization: number;
+  priceLimitRate: number;
+  lowerLimitPrice: number;
+  upperLimitPrice: number;
+  closePriceTime?: string | null;
+  closePriceProvider?: string | null;
+  reportDate?: string | null;
+  simulationDateTime: string;
+  daily: InstrumentDailyMarketSnapshot;
+  latestEvaluation?: InstrumentReport | null;
+  analytics: InstrumentMarketAnalytics;
+};
+
 export type SymbolMarketConfig = {
   symbol: string;
   enabled: boolean;

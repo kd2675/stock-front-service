@@ -3,6 +3,7 @@ import type {
   AutoMarketAssetPreference,
   AutoMarketPriceDirection,
   ListingAutoPosition,
+  ListingAutoPriceDirection,
   RecurringCashIntervalUnit,
 } from "@/app/types/stock";
 
@@ -86,8 +87,21 @@ export function formatAutoMarketAssetPreference(preference: AutoMarketAssetPrefe
 }
 
 export function formatListingAutoPosition(positionSide: ListingAutoPosition): string {
+  if (positionSide === "TWO_SIDED") {
+    return "양방향 기관 운용";
+  }
   if (positionSide === "BUY_ONLY") {
     return "매수 전용";
   }
   return "매도 전용";
+}
+
+export function formatListingAutoPriceDirection(direction: ListingAutoPriceDirection): string {
+  if (direction === "UP") {
+    return "위";
+  }
+  if (direction === "DOWN") {
+    return "아래";
+  }
+  return "위·아래 무작위";
 }

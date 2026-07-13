@@ -6,7 +6,7 @@ import {
   authenticatedPostJson,
   toQuery,
 } from "@/app/lib/stock-api/core";
-import type { AutoMarketStatus, CapitalIncreaseOfferingType, CorporateAction, CorporateActionEntitlement, CorporateActionType, Instrument, InstrumentReport, ListingAutoPosition, MarketSessionStatus, MarketType, OrderBook, OrderBookCandle, OrderBookCandleInterval, OrderBookInstrument, OrderBookMarketStatus, OrderBookRecentExecution, OrderBookTradeSummary, Price, PriceTick, Ranking, SimulationClock, SimulationClockJumpAction, SymbolMarketConfig } from "@/app/types/stock";
+import type { AutoMarketStatus, CapitalIncreaseOfferingType, CorporateAction, CorporateActionEntitlement, CorporateActionType, Instrument, InstrumentMarketReport, InstrumentReport, ListingAutoPosition, ListingAutoPriceDirection, MarketSessionStatus, MarketType, OrderBook, OrderBookCandle, OrderBookCandleInterval, OrderBookInstrument, OrderBookMarketStatus, OrderBookRecentExecution, OrderBookTradeSummary, Price, PriceTick, Ranking, SimulationClock, SimulationClockJumpAction, SymbolMarketConfig } from "@/app/types/stock";
 
 export type StockOrderBookInstrumentCreatePayload = {
   symbol: string;
@@ -22,6 +22,12 @@ export type StockOrderBookInstrumentCreatePayload = {
     maxOrderQuantity?: number;
     orderTtlSeconds?: number;
     priceOffsetTicks?: number;
+    targetBuyQuantity?: number;
+    targetSellQuantity?: number;
+    targetHoldingQuantity?: number;
+    inventoryBandQuantity?: number;
+    buyPriceOffsetDirection?: ListingAutoPriceDirection;
+    sellPriceOffsetDirection?: ListingAutoPriceDirection;
   };
 };
 
@@ -78,6 +84,10 @@ export function getInstruments() {
 
 export function getOrderBookInstruments() {
   return getJson<OrderBookInstrument[]>("/api/stock/v1/markets/order-book-instruments");
+}
+
+export function getInstrumentMarketReport(symbol: string) {
+  return getJson<InstrumentMarketReport>(`/api/stock/v1/markets/order-book-instruments/${encodeURIComponent(symbol)}/market-report`);
 }
 
 export function createOrderBookInstrument(

@@ -1,4 +1,6 @@
-export type ListingAutoPosition = "SELL_ONLY" | "BUY_ONLY";
+export type ListingAutoPosition = "SELL_ONLY" | "BUY_ONLY" | "TWO_SIDED";
+
+export type ListingAutoPriceDirection = "UP" | "DOWN" | "RANDOM";
 
 export type AutoMarketPriceDirection = "UP" | "DOWN" | "NEUTRAL";
 
@@ -260,6 +262,14 @@ export type ListingAutoAccount = {
   maxOrderQuantity: number;
   orderTtlSeconds: number;
   priceOffsetTicks: number;
+  targetBuyQuantity: number;
+  targetSellQuantity: number;
+  targetHoldingQuantity: number;
+  inventoryBandQuantity: number;
+  openBuyQuantity: number;
+  openSellQuantity: number;
+  buyPriceOffsetDirection: ListingAutoPriceDirection;
+  sellPriceOffsetDirection: ListingAutoPriceDirection;
   createdAt: string;
   updatedAt: string;
 };

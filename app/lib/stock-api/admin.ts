@@ -6,7 +6,7 @@ import {
   authenticatedPostJson,
   toQuery,
 } from "@/app/lib/stock-api/core";
-import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowScope, AdminFundFlowSummary, AdminSymbolFlowList, AutoMarketStatus, AutoParticipant, AutoParticipantCashAdjustment, AutoParticipantOverview, AutoParticipantProfileOverview, AutoParticipantProfileType, BatchJobRuntimeStatus, ListingAutoPosition, RecurringCashIntervalUnit, StockBatchJobRun } from "@/app/types/stock";
+import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowScope, AdminFundFlowSummary, AdminSymbolFlowList, AutoMarketStatus, AutoParticipant, AutoParticipantCashAdjustment, AutoParticipantOverview, AutoParticipantProfileOverview, AutoParticipantProfileType, BatchJobRuntimeStatus, ListingAutoPosition, ListingAutoPriceDirection, RecurringCashIntervalUnit, StockBatchJobRun } from "@/app/types/stock";
 
 export type { AdminFundFlowScope } from "@/app/types/stock";
 
@@ -21,6 +21,12 @@ export type StockListingAutoAccountConfigPayload = {
   maxOrderQuantity?: number;
   orderTtlSeconds?: number;
   priceOffsetTicks?: number;
+  targetBuyQuantity?: number;
+  targetSellQuantity?: number;
+  targetHoldingQuantity?: number;
+  inventoryBandQuantity?: number;
+  buyPriceOffsetDirection?: ListingAutoPriceDirection;
+  sellPriceOffsetDirection?: ListingAutoPriceDirection;
 };
 
 export type StockAutoMarketConfigPayload = {

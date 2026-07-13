@@ -13,6 +13,7 @@
 - `/login`
 - `/portfolio`
 - `/corporate-actions`
+- `/reports`
 - `/supply-demand`
 - `/supply-demand/admin`
 
@@ -21,6 +22,7 @@
 - `app/page.tsx`
 - `app/login/page.tsx`
 - `app/corporate-actions/page.tsx`
+- `app/reports/page.tsx`
 - `app/supply-demand/page.tsx`
 - `app/supply-demand/admin/page.tsx`
 - `app/globals.css`

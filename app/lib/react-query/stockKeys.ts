@@ -6,6 +6,7 @@ export const stockKeys = {
   simulationClock: () => [...stockKeys.market(), "simulation-clock"] as const,
   instruments: () => [...stockKeys.market(), "instruments"] as const,
   orderBookInstruments: () => [...stockKeys.market(), "order-book-instruments"] as const,
+  instrumentMarketReport: (symbol: string) => [...stockKeys.orderBookInstruments(), symbol, "market-report"] as const,
   prices: () => [...stockKeys.market(), "prices"] as const,
   priceTicks: (symbol: string) => [...stockKeys.prices(), "ticks", symbol] as const,
   orderBook: (symbol: string) => [...stockKeys.market(), "order-book", symbol] as const,

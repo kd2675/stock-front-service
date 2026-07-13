@@ -58,6 +58,12 @@ export function resolveListingAutoAccountConfigDraft(config: ListingAutoAccount)
     maxOrderQuantity: String(config.maxOrderQuantity),
     orderTtlSeconds: String(config.orderTtlSeconds),
     priceOffsetTicks: String(config.priceOffsetTicks),
+    targetBuyQuantity: String(config.targetBuyQuantity),
+    targetSellQuantity: String(config.targetSellQuantity),
+    targetHoldingQuantity: String(config.targetHoldingQuantity),
+    inventoryBandQuantity: String(config.inventoryBandQuantity),
+    buyPriceOffsetDirection: config.buyPriceOffsetDirection,
+    sellPriceOffsetDirection: config.sellPriceOffsetDirection,
   };
 }
 

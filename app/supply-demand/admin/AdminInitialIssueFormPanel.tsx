@@ -33,10 +33,25 @@ export function AdminInitialIssueFormPanel({
       <DarkFormSelect label="주관사 포지션" registration={createInstrumentForm.register("listingAutoPositionSide")}>
         <option value="SELL_ONLY">매도 전용</option>
         <option value="BUY_ONLY">매수 전용</option>
+        <option value="TWO_SIDED">양방향 기관 운용</option>
       </DarkFormSelect>
+      <DarkFormInput label="목표 보유 수량" registration={createInstrumentForm.register("listingAutoTargetHoldingQuantity")} placeholder="0" error={createInstrumentForm.formState.errors.listingAutoTargetHoldingQuantity?.message} />
+      <DarkFormInput label="보유 허용 밴드(±주)" registration={createInstrumentForm.register("listingAutoInventoryBandQuantity")} placeholder="0" error={createInstrumentForm.formState.errors.listingAutoInventoryBandQuantity?.message} />
+      <DarkFormInput label="목표 매수 호가 잔량" registration={createInstrumentForm.register("listingAutoTargetBuyQuantity")} placeholder="0" error={createInstrumentForm.formState.errors.listingAutoTargetBuyQuantity?.message} />
+      <DarkFormInput label="목표 매도 호가 잔량" registration={createInstrumentForm.register("listingAutoTargetSellQuantity")} placeholder="100" error={createInstrumentForm.formState.errors.listingAutoTargetSellQuantity?.message} />
       <DarkFormInput label="주관사 최대 수량" registration={createInstrumentForm.register("listingAutoMaxOrderQuantity")} placeholder="100" error={createInstrumentForm.formState.errors.listingAutoMaxOrderQuantity?.message} />
       <DarkFormInput label="주관사 호가 TTL(초)" registration={createInstrumentForm.register("listingAutoOrderTtlSeconds")} placeholder="90" error={createInstrumentForm.formState.errors.listingAutoOrderTtlSeconds?.message} />
       <DarkFormInput label="가격 분산 틱" registration={createInstrumentForm.register("listingAutoPriceOffsetTicks")} placeholder="3" error={createInstrumentForm.formState.errors.listingAutoPriceOffsetTicks?.message} />
+      <DarkFormSelect label="매수 분산 방향" registration={createInstrumentForm.register("listingAutoBuyPriceOffsetDirection")}>
+        <option value="DOWN">아래</option>
+        <option value="UP">위</option>
+        <option value="RANDOM">위·아래 무작위</option>
+      </DarkFormSelect>
+      <DarkFormSelect label="매도 분산 방향" registration={createInstrumentForm.register("listingAutoSellPriceOffsetDirection")}>
+        <option value="UP">위</option>
+        <option value="DOWN">아래</option>
+        <option value="RANDOM">위·아래 무작위</option>
+      </DarkFormSelect>
       <button type="button" onClick={onSubmit} disabled={creatingInitialIssue} className="min-h-11 min-w-0 self-end rounded-md bg-white px-3 py-3 text-sm font-black text-[#101418] disabled:opacity-50 sm:col-span-2 lg:col-span-1">
         {creatingInitialIssue ? "적용 중" : "이벤트 적용"}
       </button>

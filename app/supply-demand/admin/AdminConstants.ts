@@ -85,6 +85,12 @@ export const DEFAULT_CREATE_INSTRUMENT_FORM_VALUES: CreateInstrumentFormValues =
   listingAutoMaxOrderQuantity: "100",
   listingAutoOrderTtlSeconds: "90",
   listingAutoPriceOffsetTicks: "3",
+  listingAutoTargetBuyQuantity: "0",
+  listingAutoTargetSellQuantity: "100",
+  listingAutoTargetHoldingQuantity: "0",
+  listingAutoInventoryBandQuantity: "0",
+  listingAutoBuyPriceOffsetDirection: "DOWN",
+  listingAutoSellPriceOffsetDirection: "UP",
 };
 
 export const DEFAULT_STOCK_EVENT_ACTION_TYPE: CorporateActionType = "INITIAL_ISSUE";
@@ -98,6 +104,12 @@ export const DEFAULT_LISTING_AUTO_POSITION_SIDE: ListingAutoPosition = "SELL_ONL
 export const DEFAULT_LISTING_AUTO_MAX_ORDER_QUANTITY = "100";
 export const DEFAULT_LISTING_AUTO_ORDER_TTL_SECONDS = "90";
 export const DEFAULT_LISTING_AUTO_PRICE_OFFSET_TICKS = "3";
+export const DEFAULT_LISTING_AUTO_TARGET_BUY_QUANTITY = "0";
+export const DEFAULT_LISTING_AUTO_TARGET_SELL_QUANTITY = "100";
+export const DEFAULT_LISTING_AUTO_TARGET_HOLDING_QUANTITY = "0";
+export const DEFAULT_LISTING_AUTO_INVENTORY_BAND_QUANTITY = "0";
+export const DEFAULT_LISTING_AUTO_BUY_PRICE_OFFSET_DIRECTION = "DOWN" as const;
+export const DEFAULT_LISTING_AUTO_SELL_PRICE_OFFSET_DIRECTION = "UP" as const;
 export const DEFAULT_AUTO_PARTICIPANT_PROFILE_TYPE: AutoParticipantProfileType = "NOISE_TRADER";
 export const DEFAULT_RECURRING_CASH_INTERVAL_UNIT: RecurringCashIntervalUnit = "DAY";
 export const DEFAULT_AUTO_GENERATE_COUNT = "5";
