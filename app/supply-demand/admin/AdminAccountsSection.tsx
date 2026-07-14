@@ -78,7 +78,7 @@ export function AdminAccountsSection({
   profileOverviewError,
   profileOverviewAllError,
 }: AdminAccountsSectionProps) {
-  if (activeSection === "cash-flow-ledger") {
+  if (activeSection === "funds-ledger") {
     return (
       <AdminCashFlowLedgerPanel
         cashFlowPage={cashFlowPage}
@@ -89,7 +89,7 @@ export function AdminAccountsSection({
     );
   }
 
-  if (activeSection === "account-cash") {
+  if (activeSection === "funds-accounts") {
     return (
       <AdminUserCashAdjustmentPanel
         userKey={userCashKey}
@@ -106,7 +106,7 @@ export function AdminAccountsSection({
     );
   }
 
-  if (activeSection === "salary") {
+  if (activeSection === "funds-payroll") {
     return (
       <SalaryEligibilityPanel
         rows={salaryEligibility.visibleRows}
@@ -130,7 +130,7 @@ export function AdminAccountsSection({
     );
   }
 
-  if (activeSection === "profile-overview") {
+  if (activeSection === "participants-overview") {
     return (
       <ParticipantProfileOverviewPanel
         summaries={profileOverviewSummaries}

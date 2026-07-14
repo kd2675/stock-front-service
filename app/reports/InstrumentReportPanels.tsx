@@ -5,16 +5,16 @@ import type { InstrumentMarketReport } from "@/app/types/stock";
 export function InstrumentReportOverview({ report }: { report: InstrumentMarketReport }) {
   const positive = report.changeAmount >= 0;
   return (
-    <section className="rounded-lg border border-[#e5e8eb] bg-white p-5">
+    <section className="rounded-lg border border-stock-border bg-white p-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-black tracking-[0.12em] text-[#3182f6]">CLOSING REPORT · {report.reportDate ?? "NO CLOSE"}</p>
+          <p className="text-xs font-black tracking-[0.12em] text-stock-accent">CLOSING REPORT · {report.reportDate ?? "NO CLOSE"}</p>
           <h1 className="mt-1 text-2xl font-black">{report.name}</h1>
-          <p className="mt-1 text-sm font-bold text-[#8b95a1]">{report.symbol} · {report.market}</p>
+          <p className="mt-1 text-sm font-bold text-stock-subtle">{report.symbol} · {report.market}</p>
         </div>
         <div className="text-right">
           <p className="text-3xl font-black tabular-nums">{report.reportDate ? formatWon(report.closePrice) : "-"}</p>
-          <p className={positive ? "mt-1 text-sm font-black text-[#f04452]" : "mt-1 text-sm font-black text-[#3182f6]"}>
+          <p className={positive ? "mt-1 text-sm font-black text-stock-danger" : "mt-1 text-sm font-black text-stock-accent"}>
             {formatSignedWon(report.changeAmount)} · {formatSignedPercent(report.changeRate)}
           </p>
         </div>
@@ -72,18 +72,18 @@ export function InstrumentEvaluationReport({ report }: { report: InstrumentMarke
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h3 className="text-base font-black">{evaluation.title}</h3>
-              <p className="mt-1 text-xs font-bold text-[#8b95a1]">{formatMonthDayTime(evaluation.createdAt)} · {evaluation.createdBy ?? "관리자"}</p>
+              <p className="mt-1 text-xs font-bold text-stock-subtle">{formatMonthDayTime(evaluation.createdAt)} · {evaluation.createdBy ?? "관리자"}</p>
             </div>
-            <span className="rounded-md bg-[#eff6ff] px-3 py-2 text-sm font-black text-[#3182f6]">{evaluation.score}/10</span>
+            <span className="rounded-md bg-stock-accent-surface px-3 py-2 text-sm font-black text-stock-accent">{evaluation.score}/10</span>
           </div>
-          <p className="mt-4 text-sm font-bold leading-6 text-[#333d4b]">{evaluation.summary}</p>
+          <p className="mt-4 text-sm font-bold leading-6 text-stock-text-secondary">{evaluation.summary}</p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <ReasonBox label="상승 요인" value={evaluation.riseReason} tone="red" />
             <ReasonBox label="하락 요인" value={evaluation.fallReason} tone="blue" />
           </div>
         </div>
       ) : (
-        <p className="rounded-md bg-[#f7f8fa] px-4 py-5 text-sm font-bold text-[#8b95a1]">현재 활성화된 관리자 평가 보고서가 없습니다.</p>
+        <p className="rounded-md bg-stock-surface-muted px-4 py-5 text-sm font-bold text-stock-subtle">현재 활성화된 관리자 평가 보고서가 없습니다.</p>
       )}
     </ReportSection>
   );
@@ -91,8 +91,8 @@ export function InstrumentEvaluationReport({ report }: { report: InstrumentMarke
 
 export function ReportSection({ children, eyebrow, title }: { children: React.ReactNode; eyebrow: string; title: string }) {
   return (
-    <section className="rounded-lg border border-[#e5e8eb] bg-white p-5">
-      <p className="text-xs font-black tracking-[0.12em] text-[#3182f6]">{eyebrow}</p>
+    <section className="rounded-lg border border-stock-border bg-white p-5">
+      <p className="text-xs font-black tracking-[0.12em] text-stock-accent">{eyebrow}</p>
       <h2 className="mt-1 text-lg font-black">{title}</h2>
       <div className="mt-4">{children}</div>
     </section>
@@ -100,20 +100,20 @@ export function ReportSection({ children, eyebrow, title }: { children: React.Re
 }
 
 function ReportMetric({ detail, label, tone = "default", value }: { detail: string; label: string; tone?: "default" | "red" | "blue"; value: string }) {
-  const toneClass = tone === "red" ? "text-[#f04452]" : tone === "blue" ? "text-[#3182f6]" : "text-[#191f28]";
-  return <div className="rounded-md bg-[#f7f8fa] p-4"><p className="text-xs font-bold text-[#8b95a1]">{label}</p><p className={`mt-1 text-xl font-black tabular-nums ${toneClass}`}>{value}</p><p className="mt-1 text-xs font-bold text-[#8b95a1]">{detail}</p></div>;
+  const toneClass = tone === "red" ? "text-stock-danger" : tone === "blue" ? "text-stock-accent" : "text-stock-ink";
+  return <div className="rounded-md bg-stock-surface-muted p-4"><p className="text-xs font-bold text-stock-subtle">{label}</p><p className={`mt-1 text-xl font-black tabular-nums ${toneClass}`}>{value}</p><p className="mt-1 text-xs font-bold text-stock-subtle">{detail}</p></div>;
 }
 
 function CompactMetric({ label, tone = "default", value }: { label: string; tone?: "default" | "red" | "blue"; value: string }) {
-  const toneClass = tone === "red" ? "text-[#f04452]" : tone === "blue" ? "text-[#3182f6]" : "text-[#191f28]";
-  return <div className="rounded-md bg-[#f7f8fa] p-3"><p className="text-xs font-bold text-[#8b95a1]">{label}</p><p className={`mt-1 text-base font-black tabular-nums ${toneClass}`}>{value}</p></div>;
+  const toneClass = tone === "red" ? "text-stock-danger" : tone === "blue" ? "text-stock-accent" : "text-stock-ink";
+  return <div className="rounded-md bg-stock-surface-muted p-3"><p className="text-xs font-bold text-stock-subtle">{label}</p><p className={`mt-1 text-base font-black tabular-nums ${toneClass}`}>{value}</p></div>;
 }
 
 function ReportRow({ label, value, valueTone = "default" }: { label: string; value: string; valueTone?: "default" | "red" | "blue" }) {
-  const toneClass = valueTone === "red" ? "text-[#f04452]" : valueTone === "blue" ? "text-[#3182f6]" : "text-[#333d4b]";
-  return <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 rounded-md bg-[#f7f8fa] px-3 py-2 text-sm font-bold"><span className="text-[#8b95a1]">{label}</span><span className={`text-right tabular-nums ${toneClass}`}>{value}</span></div>;
+  const toneClass = valueTone === "red" ? "text-stock-danger" : valueTone === "blue" ? "text-stock-accent" : "text-stock-text-secondary";
+  return <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 rounded-md bg-stock-surface-muted px-3 py-2 text-sm font-bold"><span className="text-stock-subtle">{label}</span><span className={`text-right tabular-nums ${toneClass}`}>{value}</span></div>;
 }
 
 function ReasonBox({ label, tone, value }: { label: string; tone: "red" | "blue"; value?: string | null }) {
-  return <div className="rounded-md bg-[#f7f8fa] p-3"><p className={tone === "red" ? "text-xs font-black text-[#f04452]" : "text-xs font-black text-[#3182f6]"}>{label}</p><p className="mt-2 text-sm font-bold leading-6 text-[#4e5968]">{value || "등록된 내용이 없습니다."}</p></div>;
+  return <div className="rounded-md bg-stock-surface-muted p-3"><p className={tone === "red" ? "text-xs font-black text-stock-danger" : "text-xs font-black text-stock-accent"}>{label}</p><p className="mt-2 text-sm font-bold leading-6 text-stock-text-tertiary">{value || "등록된 내용이 없습니다."}</p></div>;
 }

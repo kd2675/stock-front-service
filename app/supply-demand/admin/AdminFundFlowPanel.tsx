@@ -1,3 +1,4 @@
+import DataTableViewport from "@/app/components/DataTableViewport";
 import { formatCashFlowReason, formatCount, formatDateTime, formatWon } from "@/app/supply-demand/admin/AdminFormatters";
 import { FundFlowLine, SalaryMetric } from "@/app/supply-demand/admin/AdminMetricCards";
 import type { FundFlow } from "@/app/types/stock";
@@ -8,9 +9,9 @@ export function AdminFundFlowPanel({ userKey, fundFlow }: { userKey: string; fun
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 className="text-sm font-black text-white">자금 흐름</h3>
-          <p className="mt-1 break-all text-xs font-bold text-[#8b95a1]">{userKey}</p>
+          <p className="mt-1 break-all text-xs font-bold text-stock-subtle">{userKey}</p>
         </div>
-        <span className="rounded-md bg-[#19324a] px-2 py-1 text-xs font-black text-[#64a8ff]">
+        <span className="rounded-md bg-admin-accent-surface px-2 py-1 text-xs font-black text-admin-accent">
           {formatCount(fundFlow.executionCount, "체결")}
         </span>
       </div>
@@ -33,9 +34,9 @@ export function AdminFundFlowPanel({ userKey, fundFlow }: { userKey: string; fun
         <FundFlowLine label="평가 손익" value={formatWon(fundFlow.unrealizedProfit)} />
       </div>
 
-      <div className="mt-4 overflow-x-auto rounded-md border border-white/10">
+      <DataTableViewport label="최근 현금 흐름" tone="dark" className="mt-4">
         <table className="min-w-[720px] w-full border-collapse text-sm">
-          <thead className="bg-white/10 text-left text-[#b8c2cc]">
+          <thead className="bg-white/10 text-left text-admin-muted">
             <tr>
               <th className="px-3 py-2">일시</th>
               <th className="px-3 py-2">구분</th>
@@ -47,23 +48,23 @@ export function AdminFundFlowPanel({ userKey, fundFlow }: { userKey: string; fun
           <tbody className="divide-y divide-white/10">
             {fundFlow.recentCashFlows.slice(0, 10).map((cashFlow) => (
               <tr key={cashFlow.id}>
-                <td className="px-3 py-2 text-xs font-bold text-[#8b95a1]">{formatDateTime(cashFlow.createdAt)}</td>
+                <td className="px-3 py-2 text-xs font-bold text-stock-subtle">{formatDateTime(cashFlow.createdAt)}</td>
                 <td className="px-3 py-2 font-black text-white">{cashFlow.flowType === "WITHDRAW" ? "회수" : "입금"}</td>
-                <td className="px-3 py-2 text-[#b8c2cc]">{formatCashFlowReason(cashFlow.reason)}</td>
-                <td className={cashFlow.flowType === "WITHDRAW" ? "px-3 py-2 text-right font-black tabular-nums text-[#ffb4a8]" : "px-3 py-2 text-right font-black tabular-nums text-[#6ee7a8]"}>
+                <td className="px-3 py-2 text-admin-muted">{formatCashFlowReason(cashFlow.reason)}</td>
+                <td className={cashFlow.flowType === "WITHDRAW" ? "px-3 py-2 text-right font-black tabular-nums text-admin-danger" : "px-3 py-2 text-right font-black tabular-nums text-admin-success"}>
                   {cashFlow.flowType === "WITHDRAW" ? "-" : "+"}{formatWon(cashFlow.amount)}
                 </td>
-                <td className="px-3 py-2 text-xs font-bold text-[#8b95a1]">{cashFlow.createdBy ?? "-"}</td>
+                <td className="px-3 py-2 text-xs font-bold text-stock-subtle">{cashFlow.createdBy ?? "-"}</td>
               </tr>
             ))}
             {fundFlow.recentCashFlows.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-3 py-6 text-center text-sm font-bold text-[#8b95a1]">현금 흐름 원장 내역이 없습니다.</td>
+                <td colSpan={5} className="px-3 py-6 text-center text-sm font-bold text-stock-subtle">현금 흐름 원장 내역이 없습니다.</td>
               </tr>
             ) : null}
           </tbody>
         </table>
-      </div>
+      </DataTableViewport>
     </div>
   );
 }

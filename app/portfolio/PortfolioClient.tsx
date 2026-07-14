@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 
 import AssetLineChart from "@/app/components/AssetLineChart";
+import DataTableViewport from "@/app/components/DataTableViewport";
 import TradingStatusBox, { TradingStatusScreen } from "@/app/components/TradingStatusBox";
 import TradingTopBar from "@/app/components/TradingTopBar";
 import { useAccountRequiredRedirect } from "@/app/hooks/useAccountRequiredRedirect";
@@ -101,11 +102,11 @@ export default function PortfolioClient() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f6f7f9] text-[#191f28]">
+    <main className="min-h-screen bg-stock-canvas text-stock-ink">
       <TradingTopBar
         active="portfolio"
         actions={(
-          <span className="hidden h-11 items-center rounded-md bg-[#f2f4f6] px-3 text-sm font-bold text-[#4e5968] sm:inline-flex">
+          <span className="hidden h-11 items-center rounded-md bg-stock-surface-strong px-3 text-sm font-bold text-stock-text-tertiary sm:inline-flex">
             {isFetching ? "갱신 중" : "잔고 자동 갱신"}
           </span>
         )}
@@ -164,30 +165,30 @@ function PortfolioHeader({
   username: string;
 }) {
   return (
-    <header className="overflow-hidden rounded-lg bg-[#191f28] p-5 text-white shadow-[0_18px_50px_rgba(25,31,40,0.16)]">
+    <header className="overflow-hidden rounded-lg bg-stock-ink p-5 text-white shadow-[0_18px_50px_rgba(25,31,40,0.16)]">
       <div className="flex min-w-0 flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-xs font-black tracking-[0.18em] text-[#8b95a1]">MY STOCKS</p>
+          <p className="text-xs font-black tracking-[0.18em] text-stock-subtle">MY STOCKS</p>
           <h1 className="mt-2 text-2xl font-black tracking-normal sm:text-4xl">내 주식 잔고</h1>
-          <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-[#b0b8c1]">
+          <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-stock-disabled">
             {username}님의 보유 종목, 매입 금액, 평가손익과 수익률을 현재가 기준으로 확인합니다.
           </p>
         </div>
         <div className="min-w-0 rounded-md bg-white/8 px-3 py-2 text-right ring-1 ring-white/10">
-          <p className="text-xs font-bold text-[#b0b8c1]">계좌</p>
+          <p className="text-xs font-bold text-stock-disabled">계좌</p>
           <p className="mt-1 max-w-[220px] truncate text-sm font-black">{accountCode}</p>
         </div>
       </div>
 
       <div className="mt-8 grid gap-3 md:grid-cols-[minmax(0,1fr)_180px] md:items-end">
         <div className="min-w-0">
-          <p className="text-sm font-bold text-[#b0b8c1]">추정 총자산</p>
+          <p className="text-sm font-bold text-stock-disabled">추정 총자산</p>
           <p className="mt-1 min-w-0 break-words text-[clamp(2.4rem,8vw,4.8rem)] font-black leading-none tabular-nums">
             {formatWon(totalAsset)}
           </p>
         </div>
-        <div className="min-w-0 rounded-md bg-white p-4 text-[#191f28]">
-          <p className="text-xs font-bold text-[#6b7684]">계좌 수익률</p>
+        <div className="min-w-0 rounded-md bg-white p-4 text-stock-ink">
+          <p className="text-xs font-bold text-stock-muted">계좌 수익률</p>
           <p className={`mt-1 text-3xl font-black tabular-nums ${profitTextClass(returnRate)}`}>{formatPercent(returnRate)}</p>
         </div>
       </div>
@@ -197,8 +198,8 @@ function PortfolioHeader({
 
 function PortfolioMetric({ label, value, tone = "default" }: { label: string; value: string; tone?: "default" | "red" | "blue" }) {
   return (
-    <section className="min-w-0 rounded-lg bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] ring-1 ring-[#eef0f2]">
-      <p className="text-sm font-bold text-[#6b7684]">{label}</p>
+    <section className="min-w-0 rounded-lg bg-white p-4 shadow-[var(--shadow-panel)] ring-1 ring-stock-divider">
+      <p className="text-sm font-bold text-stock-muted">{label}</p>
       <p className={`mt-2 min-w-0 break-words text-xl font-black tabular-nums ${toneClassName(tone)}`}>{value}</p>
     </section>
   );
@@ -220,17 +221,17 @@ function HoldingSection({
   onSortChange: (value: HoldingSort) => void;
 }) {
   return (
-    <section className="min-w-0 rounded-lg bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] ring-1 ring-[#eef0f2]">
+    <section className="min-w-0 rounded-lg bg-white p-5 shadow-[var(--shadow-panel)] ring-1 ring-stock-divider">
       <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-xl font-black">보유 종목</h2>
-          <p className="mt-1 text-sm font-semibold text-[#6b7684]">총 {totalRows}종목 · 평균단가 대비 현재가 기준</p>
+          <p className="mt-1 text-sm font-semibold text-stock-muted">총 {totalRows}종목 · 평균단가 대비 현재가 기준</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <select
             value={sort}
             onChange={(event) => onSortChange(event.target.value as HoldingSort)}
-            className="h-10 rounded-md border border-[#d1d6db] bg-white px-3 text-sm font-bold text-[#333d4b] outline-none"
+            className="h-11 rounded-md border border-stock-border-strong bg-white px-3 text-sm font-bold text-stock-text-secondary outline-none"
             aria-label="보유 종목 정렬"
           >
             {SORTS.map((option) => (
@@ -248,7 +249,7 @@ function HoldingSection({
             onClick={() => onFilterChange(option.value)}
             className={[
               "h-9 rounded-md px-3 text-sm font-black transition-colors",
-              filter === option.value ? "bg-[#191f28] text-white" : "bg-[#f2f4f6] text-[#4e5968] hover:bg-[#e5e8eb]",
+              filter === option.value ? "bg-stock-ink text-white" : "bg-stock-surface-strong text-stock-text-tertiary hover:bg-stock-border",
             ].join(" ")}
           >
             {option.label}
@@ -258,18 +259,18 @@ function HoldingSection({
 
       {rows.length ? (
         <>
-          <div className="mt-5 hidden overflow-x-auto lg:block">
+          <DataTableViewport label="보유 종목" className="mt-5 hidden lg:block">
             <table className="w-full min-w-[920px] border-separate border-spacing-0 text-sm">
               <thead>
-                <tr className="text-left text-xs font-black text-[#8b95a1]">
-                  <th className="border-b border-[#e5e8eb] px-3 py-3">종목</th>
-                  <th className="border-b border-[#e5e8eb] px-3 py-3 text-right">보유/가용</th>
-                  <th className="border-b border-[#e5e8eb] px-3 py-3 text-right">평단/현재가</th>
-                  <th className="border-b border-[#e5e8eb] px-3 py-3 text-right">매입금액</th>
-                  <th className="border-b border-[#e5e8eb] px-3 py-3 text-right">평가금액</th>
-                  <th className="border-b border-[#e5e8eb] px-3 py-3 text-right">평가손익</th>
-                  <th className="border-b border-[#e5e8eb] px-3 py-3 text-right">수익률</th>
-                  <th className="border-b border-[#e5e8eb] px-3 py-3 text-right">비중</th>
+                <tr className="text-left text-xs font-black text-stock-subtle">
+                  <th className="border-b border-stock-border px-3 py-3">종목</th>
+                  <th className="border-b border-stock-border px-3 py-3 text-right">보유/가용</th>
+                  <th className="border-b border-stock-border px-3 py-3 text-right">평단/현재가</th>
+                  <th className="border-b border-stock-border px-3 py-3 text-right">매입금액</th>
+                  <th className="border-b border-stock-border px-3 py-3 text-right">평가금액</th>
+                  <th className="border-b border-stock-border px-3 py-3 text-right">평가손익</th>
+                  <th className="border-b border-stock-border px-3 py-3 text-right">수익률</th>
+                  <th className="border-b border-stock-border px-3 py-3 text-right">비중</th>
                 </tr>
               </thead>
               <tbody>
@@ -278,7 +279,7 @@ function HoldingSection({
                 ))}
               </tbody>
             </table>
-          </div>
+          </DataTableViewport>
           <div className="mt-5 grid gap-3 lg:hidden">
             {rows.map((row) => (
               <HoldingMobileRow key={row.symbol} row={row} />
@@ -297,27 +298,27 @@ function HoldingSection({
 function HoldingTableRow({ row }: { row: HoldingRow }) {
   return (
     <tr className="group">
-      <td className="border-b border-[#f2f4f6] px-3 py-4">
+      <td className="border-b border-stock-surface-strong px-3 py-4">
         <p className="font-black">{row.symbol}</p>
-        {row.reservedQuantity > 0 ? <p className="mt-1 text-xs font-bold text-[#f04452]">매도 예약 {formatKoKrInteger(row.reservedQuantity)}주</p> : null}
+        {row.reservedQuantity > 0 ? <p className="mt-1 text-xs font-bold text-stock-danger">매도 예약 {formatKoKrInteger(row.reservedQuantity)}주</p> : null}
       </td>
-      <td className="border-b border-[#f2f4f6] px-3 py-4 text-right font-bold tabular-nums">
+      <td className="border-b border-stock-surface-strong px-3 py-4 text-right font-bold tabular-nums">
         {formatKoKrInteger(row.quantity)}주
-        <p className="mt-1 text-xs text-[#8b95a1]">가용 {formatKoKrInteger(row.availableQuantity)}주</p>
+        <p className="mt-1 text-xs text-stock-subtle">가용 {formatKoKrInteger(row.availableQuantity)}주</p>
       </td>
-      <td className="border-b border-[#f2f4f6] px-3 py-4 text-right font-bold tabular-nums">
+      <td className="border-b border-stock-surface-strong px-3 py-4 text-right font-bold tabular-nums">
         {formatWon(row.averagePrice)}
-        <p className="mt-1 text-xs text-[#8b95a1]">현재 {formatWon(row.currentPrice)}</p>
+        <p className="mt-1 text-xs text-stock-subtle">현재 {formatWon(row.currentPrice)}</p>
       </td>
-      <td className="border-b border-[#f2f4f6] px-3 py-4 text-right font-black tabular-nums">{formatWon(row.purchaseAmount)}</td>
-      <td className="border-b border-[#f2f4f6] px-3 py-4 text-right font-black tabular-nums">{formatWon(row.marketValue)}</td>
-      <td className={`border-b border-[#f2f4f6] px-3 py-4 text-right font-black tabular-nums ${profitTextClass(row.unrealizedProfit)}`}>
+      <td className="border-b border-stock-surface-strong px-3 py-4 text-right font-black tabular-nums">{formatWon(row.purchaseAmount)}</td>
+      <td className="border-b border-stock-surface-strong px-3 py-4 text-right font-black tabular-nums">{formatWon(row.marketValue)}</td>
+      <td className={`border-b border-stock-surface-strong px-3 py-4 text-right font-black tabular-nums ${profitTextClass(row.unrealizedProfit)}`}>
         {formatSignedWon(row.unrealizedProfit)}
       </td>
-      <td className={`border-b border-[#f2f4f6] px-3 py-4 text-right font-black tabular-nums ${profitTextClass(row.returnRate)}`}>
+      <td className={`border-b border-stock-surface-strong px-3 py-4 text-right font-black tabular-nums ${profitTextClass(row.returnRate)}`}>
         {formatPercent(row.returnRate)}
       </td>
-      <td className="border-b border-[#f2f4f6] px-3 py-4 text-right">
+      <td className="border-b border-stock-surface-strong px-3 py-4 text-right">
         <AllocationCell rate={row.allocationRate} />
       </td>
     </tr>
@@ -326,11 +327,11 @@ function HoldingTableRow({ row }: { row: HoldingRow }) {
 
 function HoldingMobileRow({ row }: { row: HoldingRow }) {
   return (
-    <article className="rounded-lg bg-[#f7f8fa] p-4 ring-1 ring-[#eef0f2]">
+    <article className="rounded-lg bg-stock-surface-muted p-4 ring-1 ring-stock-divider">
       <div className="flex min-w-0 items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="truncate text-lg font-black">{row.symbol}</h3>
-          <p className="mt-1 text-xs font-bold text-[#8b95a1]">보유 {formatKoKrInteger(row.quantity)}주 · 가용 {formatKoKrInteger(row.availableQuantity)}주</p>
+          <p className="mt-1 text-xs font-bold text-stock-subtle">보유 {formatKoKrInteger(row.quantity)}주 · 가용 {formatKoKrInteger(row.availableQuantity)}주</p>
         </div>
         <div className="text-right">
           <p className="text-lg font-black tabular-nums">{formatWon(row.marketValue)}</p>
@@ -362,7 +363,7 @@ function AccountSummaryPanel({
   totals: PortfolioTotals;
 }) {
   return (
-    <section className="rounded-lg bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] ring-1 ring-[#eef0f2]">
+    <section className="rounded-lg bg-white p-5 shadow-[var(--shadow-panel)] ring-1 ring-stock-divider">
       <h2 className="text-lg font-black">계좌 요약</h2>
       <div className="mt-4 space-y-3">
         <SummaryLine label="현금" value={formatWon(portfolio?.account.cashBalance)} />
@@ -379,10 +380,10 @@ function AccountSummaryPanel({
 function PortfolioHistoryPanel({ snapshots }: { snapshots: PortfolioSnapshot[] }) {
   const latest = snapshots[0];
   return (
-    <section className="rounded-lg bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] ring-1 ring-[#eef0f2]">
+    <section className="rounded-lg bg-white p-5 shadow-[var(--shadow-panel)] ring-1 ring-stock-divider">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-lg font-black">자산 이력</h2>
-        <span className="text-xs font-bold text-[#8b95a1]">{latest ? formatMonthDayTime(latest.snapshotDate) : "기록 없음"}</span>
+        <span className="text-xs font-bold text-stock-subtle">{latest ? formatMonthDayTime(latest.snapshotDate) : "기록 없음"}</span>
       </div>
       <AssetLineChart snapshots={snapshots} />
       {snapshots.length ? (
@@ -403,22 +404,22 @@ function PortfolioHistoryPanel({ snapshots }: { snapshots: PortfolioSnapshot[] }
 
 function RecentBuyPanel({ executions }: { executions: Execution[] }) {
   return (
-    <section className="rounded-lg bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] ring-1 ring-[#eef0f2]">
+    <section className="rounded-lg bg-white p-5 shadow-[var(--shadow-panel)] ring-1 ring-stock-divider">
       <h2 className="text-lg font-black">최근 매수 금액</h2>
-      <p className="mt-1 text-sm font-semibold text-[#6b7684]">이전에 체결된 매수 주문 기준입니다.</p>
+      <p className="mt-1 text-sm font-semibold text-stock-muted">이전에 체결된 매수 주문 기준입니다.</p>
       <div className="mt-4 space-y-2">
         {executions.length ? executions.map((execution) => (
-          <article key={execution.id} className="rounded-md bg-[#f7f8fa] px-3 py-2">
+          <article key={execution.id} className="rounded-md bg-stock-surface-muted px-3 py-2">
             <div className="flex min-w-0 items-center justify-between gap-3">
               <p className="min-w-0 truncate text-sm font-black">{execution.symbol}</p>
               <p className="shrink-0 text-sm font-black tabular-nums">{formatWon(execution.grossAmount)}</p>
             </div>
-            <p className="mt-1 text-xs font-bold text-[#8b95a1]">
+            <p className="mt-1 text-xs font-bold text-stock-subtle">
               {formatKoKrInteger(execution.quantity)}주 · {formatWon(execution.price)} · {formatMonthDayTime(execution.executedAt)}
             </p>
           </article>
         )) : (
-          <p className="rounded-md bg-[#f7f8fa] px-3 py-4 text-sm font-bold text-[#8b95a1]">최근 매수 체결이 없습니다.</p>
+          <p className="rounded-md bg-stock-surface-muted px-3 py-4 text-sm font-bold text-stock-subtle">최근 매수 체결이 없습니다.</p>
         )}
       </div>
     </section>
@@ -427,8 +428,8 @@ function RecentBuyPanel({ executions }: { executions: Execution[] }) {
 
 function SummaryLine({ label, value, tone = "default" }: { label: string; value: string; tone?: "default" | "red" | "blue" }) {
   return (
-    <div className="flex min-w-0 items-center justify-between gap-3 border-b border-[#f2f4f6] pb-2 last:border-b-0 last:pb-0">
-      <span className="min-w-0 truncate text-sm font-bold text-[#6b7684]">{label}</span>
+    <div className="flex min-w-0 items-center justify-between gap-3 border-b border-stock-surface-strong pb-2 last:border-b-0 last:pb-0">
+      <span className="min-w-0 truncate text-sm font-bold text-stock-muted">{label}</span>
       <span className={`shrink-0 text-right text-sm font-black tabular-nums ${toneClassName(tone)}`}>{value}</span>
     </div>
   );
@@ -437,7 +438,7 @@ function SummaryLine({ label, value, tone = "default" }: { label: string; value:
 function MiniLine({ label, value, tone = "default" }: { label: string; value: string; tone?: "default" | "red" | "blue" }) {
   return (
     <div className="rounded-md bg-white px-3 py-2">
-      <p className="text-xs font-bold text-[#8b95a1]">{label}</p>
+      <p className="text-xs font-bold text-stock-subtle">{label}</p>
       <p className={`mt-1 min-w-0 break-words text-sm font-black tabular-nums ${toneClassName(tone)}`}>{value}</p>
     </div>
   );
@@ -447,9 +448,9 @@ function AllocationCell({ rate }: { rate: number }) {
   const width = Math.min(100, Math.max(0, rate));
   return (
     <div className="min-w-[120px]">
-      <p className="text-xs font-black tabular-nums text-[#4e5968]">{formatPercent(rate)}</p>
-      <div className="mt-1 h-2 overflow-hidden rounded-sm bg-[#eef0f2]">
-        <div className="h-full rounded-sm bg-[#3182f6]" style={{ width: `${width}%` }} />
+      <p className="text-xs font-black tabular-nums text-stock-text-tertiary">{formatPercent(rate)}</p>
+      <div className="mt-1 h-2 overflow-hidden rounded-sm bg-stock-divider">
+        <div className="h-full rounded-sm bg-stock-accent" style={{ width: `${width}%` }} />
       </div>
     </div>
   );
@@ -541,10 +542,10 @@ function profitTextClass(value: number) {
 
 function toneClassName(tone: "default" | "red" | "blue") {
   if (tone === "red") {
-    return "text-[#f04452]";
+    return "text-stock-danger";
   }
   if (tone === "blue") {
-    return "text-[#3182f6]";
+    return "text-stock-accent";
   }
-  return "text-[#191f28]";
+  return "text-stock-ink";
 }

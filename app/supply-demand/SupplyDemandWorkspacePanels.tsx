@@ -30,16 +30,16 @@ export function SelectedOrderBookInstrumentPanel({
   onSelectInstrument: (symbol: string) => void;
 }) {
   return (
-    <div className="rounded-lg border border-[#e5e8eb] bg-white p-4">
+    <div className="rounded-lg border border-stock-border bg-white p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-bold text-[#6b7684]">종목</p>
+          <p className="text-sm font-bold text-stock-muted">종목</p>
           <h2 className="mt-1 text-xl font-black">{`${selectedInstrument.name} ${selectedInstrument.symbol}`}</h2>
         </div>
         <select
           value={selectedSymbol}
           onChange={(event) => onSelectInstrument(event.target.value)}
-          className="rounded-md border border-[#d1d6db] bg-white px-3 py-2 text-sm font-bold"
+          className="rounded-md border border-stock-border-strong bg-white px-3 py-2 text-sm font-bold"
         >
           <option value="" disabled>등록된 종목 없음</option>
           {instruments.map((instrument) => (
@@ -61,7 +61,7 @@ export function SelectedOrderBookInstrumentPanel({
         <Metric label="체결강도" value={formatExecutionStrength(summary)} tone={resolveExecutionStrengthTone(summary)} />
       </div>
 
-      {message ? <p className="mt-4 rounded-md bg-[#fff3f0] px-3 py-2 text-sm font-bold text-[#d34b36]">{message}</p> : null}
+      {message ? <p className="mt-4 rounded-md bg-stock-danger-surface px-3 py-2 text-sm font-bold text-stock-danger-strong">{message}</p> : null}
     </div>
   );
 }
@@ -86,7 +86,7 @@ export function AutoMarketStatusPanel({
     && selectedOrderBookConfig.marketStatus === "OPEN";
 
   return (
-    <div className="rounded-lg border border-[#e5e8eb] bg-white p-4">
+    <div className="rounded-lg border border-stock-border bg-white p-4">
       <h3 className="text-base font-black">자동장 상태</h3>
       <div className="mt-4 space-y-3">
         <StatusRow label="상태" value={autoMarket?.enabled ? "가동" : "정지"} />
@@ -110,9 +110,9 @@ export function AutoMarketConfigListPanel({
   onSelectInstrument: (symbol: string) => void;
 }) {
   return (
-    <div className="rounded-lg border border-[#e5e8eb] bg-white p-4">
+    <div className="rounded-lg border border-stock-border bg-white p-4">
       <h3 className="text-base font-black">종목별 자동장</h3>
-      <div className="mt-3 divide-y divide-[#eef0f2]">
+      <div className="mt-3 divide-y divide-stock-divider">
         {configs.length ? configs.map((config) => (
           <button
             key={config.symbol}
@@ -121,12 +121,12 @@ export function AutoMarketConfigListPanel({
             className="grid w-full grid-cols-[minmax(0,1fr)_auto] gap-3 py-3 text-left"
           >
             <span className="font-bold">{config.symbol}</span>
-            <span className={config.enabled ? "font-black text-[#3182f6]" : "font-bold text-[#8b95a1]"}>
+            <span className={config.enabled ? "font-black text-stock-accent" : "font-bold text-stock-subtle"}>
               {config.enabled ? "가동" : "정지"}
             </span>
           </button>
         )) : (
-          <p className="rounded-md bg-[#f7f8fa] px-3 py-4 text-sm font-bold text-[#8b95a1]">관리자 설정에서 자동장 대상 종목을 먼저 등록하세요.</p>
+          <p className="rounded-md bg-stock-surface-muted px-3 py-4 text-sm font-bold text-stock-subtle">관리자 설정에서 자동장 대상 종목을 먼저 등록하세요.</p>
         )}
       </div>
     </div>
@@ -138,10 +138,10 @@ function signedPressure(value: number) {
 }
 
 function Metric({ label, value, tone = "default" }: { label: string; value: string; tone?: "default" | "red" | "blue" }) {
-  const toneClass = tone === "red" ? "text-[#f04452]" : tone === "blue" ? "text-[#3182f6]" : "text-[#191f28]";
+  const toneClass = tone === "red" ? "text-stock-danger" : tone === "blue" ? "text-stock-accent" : "text-stock-ink";
   return (
-    <div className="rounded-md bg-[#f7f8fa] p-3">
-      <p className="text-xs font-bold text-[#8b95a1]">{label}</p>
+    <div className="rounded-md bg-stock-surface-muted p-3">
+      <p className="text-xs font-bold text-stock-subtle">{label}</p>
       <p className={`mt-1 text-lg font-black tabular-nums ${toneClass}`}>{value}</p>
     </div>
   );
@@ -150,8 +150,8 @@ function Metric({ label, value, tone = "default" }: { label: string; value: stri
 function StatusRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-3 text-sm">
-      <span className="font-bold text-[#6b7684]">{label}</span>
-      <span className="font-black text-[#191f28]">{value}</span>
+      <span className="font-bold text-stock-muted">{label}</span>
+      <span className="font-black text-stock-ink">{value}</span>
     </div>
   );
 }

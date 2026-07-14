@@ -120,7 +120,7 @@ export default function SupplyDemandPage() {
     authStatus,
     hasTradingAccount,
     isHydrated,
-    nextPath: "/supply-demand",
+    nextPath: "/trade",
   });
 
   const {
@@ -179,9 +179,7 @@ export default function SupplyDemandPage() {
 
   return (
     <SupplyDemandPageChrome
-      isAdmin={isAdmin}
       selectedInstrument={selectedInstrument}
-      onAdminClick={() => router.push("/supply-demand/admin")}
       onClearSelectedInstrument={clearSelectedInstrument}
     >
       {!selectedInstrument ? (
@@ -191,7 +189,7 @@ export default function SupplyDemandPage() {
           isMarketOpen={orderBookMarket?.enabled === true}
           summaries={instrumentSummaries}
           updatedAt={updatedAt}
-          onAdminClick={() => router.push("/supply-demand/admin")}
+          onAdminClick={() => router.push("/admin")}
           onSelect={selectInstrument}
         />
       ) : (

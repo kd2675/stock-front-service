@@ -2,6 +2,7 @@ import { AdminFlowOverviewPanel } from "@/app/supply-demand/admin/AdminFlowPanel
 import { AdminMarketSummaryPanel } from "@/app/supply-demand/admin/AdminMarketSummaryPanel";
 import { AdminOrderBookInstrumentTable } from "@/app/supply-demand/admin/AdminOrderBookInstrumentTable";
 import { AdminSimulationClockControlPanel } from "@/app/supply-demand/admin/AdminSimulationClockControlPanel";
+import type { AdminSection } from "@/app/supply-demand/admin/AdminNavigationConfig";
 import type {
   AdminFlowOverview,
   AdminFundFlowSummary,
@@ -15,6 +16,7 @@ import type {
 } from "@/app/types/stock";
 
 type AdminMarketSectionProps = {
+  activeSection: AdminSection;
   orderBookMarketSummary: OrderBookMarketStatus | null;
   autoMarketSummary: AutoMarketStatus | null;
   simulationClock: SimulationClock | null;
@@ -43,6 +45,7 @@ type AdminMarketSectionProps = {
 };
 
 export function AdminMarketSection({
+  activeSection,
   orderBookMarketSummary,
   autoMarketSummary,
   simulationClock,
@@ -69,21 +72,22 @@ export function AdminMarketSection({
   jumpingSimulationClockAction,
   onJumpSimulationClock,
 }: AdminMarketSectionProps) {
-  return (
-    <>
-      <AdminSimulationClockControlPanel
-        clock={simulationClock}
-        jumpingAction={jumpingSimulationClockAction}
-        onJump={onJumpSimulationClock}
-      />
+  if (activeSection === "dashboard") {
+    return (
+      <>
+        <AdminSimulationClockControlPanel clock={simulationClock} jumpingAction={jumpingSimulationClockAction} onJump={onJumpSimulationClock} />
+        <AdminMarketSummaryPanel
+          orderBookMarketSummary={orderBookMarketSummary}
+          autoMarketSummary={autoMarketSummary}
+          orderBookInstrumentCount={orderBookInstrumentCount}
+          openOrderBookConfigCount={openOrderBookConfigCount}
+        />
+      </>
+    );
+  }
 
-      <AdminMarketSummaryPanel
-        orderBookMarketSummary={orderBookMarketSummary}
-        autoMarketSummary={autoMarketSummary}
-        orderBookInstrumentCount={orderBookInstrumentCount}
-        openOrderBookConfigCount={openOrderBookConfigCount}
-      />
-
+  if (activeSection === "market-flows") {
+    return (
       <AdminFlowOverviewPanel
         overview={adminFlowOverview}
         fundFlow={fundFlow}
@@ -97,6 +101,16 @@ export function AdminMarketSection({
         onLoadAllFundFlow={onLoadAllFundFlow}
         onLoadWeeklySymbolFlows={onLoadWeeklySymbolFlows}
         onRefresh={onRefreshFlow}
+      />
+    );
+  }
+
+  return (
+    <>
+      <AdminSimulationClockControlPanel
+        clock={simulationClock}
+        jumpingAction={jumpingSimulationClockAction}
+        onJump={onJumpSimulationClock}
       />
 
       <AdminOrderBookInstrumentTable

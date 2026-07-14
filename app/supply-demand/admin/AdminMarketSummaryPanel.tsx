@@ -16,10 +16,10 @@ export function AdminMarketSummaryPanel({
   openOrderBookConfigCount,
 }: AdminMarketSummaryPanelProps) {
   return (
-    <section className="mt-4 rounded-lg border border-white/10 bg-white/[0.04] p-4">
+    <section className="admin-panel mt-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-sm font-black text-white">시장/종목 요약</h2>
-        <span className="text-xs font-bold text-[#8b95a1]">수요와 공급 주문장 기준</span>
+        <span className="text-xs font-bold text-stock-subtle">수요와 공급 주문장 기준</span>
       </div>
       <div className="grid gap-4 sm:grid-cols-3">
         <DarkMetric label="주문장 시장" value={formatMarketEnabledStatus(orderBookMarketSummary)} />

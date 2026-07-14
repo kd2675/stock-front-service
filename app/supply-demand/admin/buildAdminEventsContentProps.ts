@@ -3,6 +3,7 @@ import type { AdminPageContentBuilderContext } from "@/app/supply-demand/admin/A
 import { getStockErrorMessage } from "@/app/lib/react-query/stockResult";
 
 export function buildAdminEventsContentProps({
+  activeAdminSection,
   actions,
   drafts,
   queries,
@@ -31,6 +32,7 @@ export function buildAdminEventsContentProps({
   } = actions;
 
   return {
+    activeSection: activeAdminSection,
     applyingAction,
     corporateActions,
     corporateActionsErrorMessage: queries.corporateActionsQuery.isError

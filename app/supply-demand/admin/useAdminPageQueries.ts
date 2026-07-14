@@ -91,10 +91,10 @@ export function useAdminPageQueries({
   const instrumentReportSymbol = isKnownOrderBookSymbol(instruments, reportSymbol) ? reportSymbol : "";
 
   const corporateActionsQuery = useQuery(corporateActionsQueryOptions(corporateActionSymbol, {
-    enabled: isAdminAllowed && queryFlags.isEventsSection,
+    enabled: queryFlags.shouldUseCorporateActions,
   }));
   const instrumentReportsQuery = useQuery(instrumentReportsQueryOptions(instrumentReportSymbol, {
-    enabled: isAdminAllowed && queryFlags.isEventsSection,
+    enabled: queryFlags.shouldUseInstrumentReports,
   }));
   const autoMarketDetailsQuery = useQuery(autoMarketStatusQueryOptions({
     enabled: queryFlags.shouldUseAutoMarketDetails,
@@ -109,7 +109,7 @@ export function useAdminPageQueries({
     refetchIntervalMs: false,
   }));
   const adminFundFlowSummaryQuery = useQuery(adminFundFlowSummaryQueryOptions(accessToken, {
-    enabled: isAdminAllowed && queryFlags.isMarketSection,
+    enabled: queryFlags.shouldUseAdminFlowOverview,
     scope: "RECENT_SIMULATION_DAY",
   }));
   const adminAllFundFlowSummaryQuery = useQuery(adminFundFlowSummaryQueryOptions(accessToken, {
@@ -155,7 +155,7 @@ export function useAdminPageQueries({
   }));
   const simulationClockQuery = useQuery({
     ...simulationClockQueryOptions(),
-    enabled: isAdminAllowed && (queryFlags.isMarketSection || queryFlags.isEventsSection),
+    enabled: queryFlags.shouldUseSimulationClock,
   });
 
   const queryResults = normalizeAdminPageQueryResults({
@@ -167,8 +167,8 @@ export function useAdminPageQueries({
     autoParticipants: queryFlags.shouldUseAutoParticipants ? autoParticipantsQuery.data : null,
     autoParticipantProfileOverviewSummaries: queryFlags.shouldUseAutoParticipantProfileOverviews ? autoParticipantProfileOverviewsQuery.data : null,
     batchJobRuntimeControls: queryFlags.shouldUseBatchRuntimeControls ? batchJobRuntimeControlsQuery.data : null,
-    corporateActions: isAdminAllowed && queryFlags.isEventsSection ? corporateActionsQuery.data : null,
-    instrumentReports: isAdminAllowed && queryFlags.isEventsSection ? instrumentReportsQuery.data : null,
+    corporateActions: queryFlags.shouldUseCorporateActions ? corporateActionsQuery.data : null,
+    instrumentReports: queryFlags.shouldUseInstrumentReports ? instrumentReportsQuery.data : null,
     instruments: queryFlags.shouldUseInstrumentDetails ? orderBookInstrumentsQuery.data : null,
     orderBookMarketConfig: queryFlags.shouldUseMarketSummary ? orderBookMarketConfigQuery.data : null,
     orderBookMarketSummary: queryFlags.shouldUseMarketSummary ? orderBookMarketSummaryQuery.data : null,

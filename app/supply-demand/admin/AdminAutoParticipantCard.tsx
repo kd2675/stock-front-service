@@ -50,7 +50,7 @@ export const AdminAutoParticipantCard = memo(function AdminAutoParticipantCard({
   onAdjustCash,
 }: AdminAutoParticipantCardProps) {
   return (
-    <article className={["min-w-0 overflow-hidden rounded-lg border p-3", editing ? "border-[#3182f6]/60 bg-[#10233a]/35" : "border-white/10 bg-black/20"].join(" ")}>
+    <article className={["min-w-0 overflow-hidden rounded-lg border p-3", editing ? "border-stock-accent/60 bg-[#10233a]/35" : "border-white/10 bg-black/20"].join(" ")}>
       <AutoParticipantCardHeader
         participant={participant}
         toggling={toggling}
@@ -104,18 +104,18 @@ function AutoParticipantCardHeader({
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div className="min-w-0">
         <p className="truncate text-sm font-black text-white">{participant.displayName}</p>
-        <p className="mt-1 break-all text-xs font-bold text-[#8b95a1]">{participant.userKey}</p>
+        <p className="mt-1 break-all text-xs font-bold text-stock-subtle">{participant.userKey}</p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <EnabledToggleButton enabled={participant.enabled} disabled={toggling} onToggle={() => onToggleParticipant(participant)} />
-        <button type="button" onClick={() => onSelectParticipant(participant)} className="min-h-8 rounded-md bg-white/10 px-3 py-1.5 text-xs font-black text-white">
+        <button type="button" onClick={() => onSelectParticipant(participant)} className="min-h-9 rounded-md bg-white/10 px-3 py-1.5 text-xs font-black text-white">
           수정
         </button>
         <button
           type="button"
           onClick={() => onWithdrawParticipant(participant)}
           disabled={withdrawing}
-          className="min-h-8 rounded-md bg-[#3a1f1b] px-3 py-1.5 text-xs font-black text-[#ffb4a8] disabled:cursor-wait disabled:opacity-55"
+          className="min-h-9 rounded-md bg-admin-danger-surface px-3 py-1.5 text-xs font-black text-admin-danger disabled:cursor-wait disabled:opacity-55"
         >
           {withdrawing ? "처리 중" : "탈퇴"}
         </button>

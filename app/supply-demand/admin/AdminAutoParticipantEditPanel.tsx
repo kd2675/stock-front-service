@@ -51,7 +51,7 @@ export function AdminAutoParticipantEditPanel({
           ))}
         </DarkSelect>
         <div className="grid grid-cols-2 gap-2 self-end">
-          <button type="button" onClick={onSubmitParticipant} disabled={saving} className="min-h-11 rounded-md bg-white px-3 py-3 text-sm font-black text-[#101418] disabled:opacity-50">
+          <button type="button" onClick={onSubmitParticipant} disabled={saving} className="min-h-11 rounded-md bg-white px-3 py-3 text-sm font-black text-admin-canvas disabled:opacity-50">
             {saving ? "저장 중" : "저장"}
           </button>
           <button type="button" onClick={onResetDraft} className="min-h-11 rounded-md bg-white/10 px-3 py-3 text-sm font-black text-white">
@@ -61,9 +61,9 @@ export function AdminAutoParticipantEditPanel({
       </div>
       <div className="mt-3 grid min-w-0 grid-cols-1 gap-3 border-t border-white/10 pt-3 sm:grid-cols-[1.2fr_1fr_auto_auto]">
         <div className="min-w-0 self-center">
-          <p className="text-xs font-bold text-[#8b95a1]">선택 참여자 실제 계좌</p>
+          <p className="text-xs font-bold text-stock-subtle">선택 참여자 실제 계좌</p>
           <p className="mt-1 break-all text-sm font-black text-white">{participant.displayName} · {participant.userKey}</p>
-          <p className="mt-1 text-xs font-bold text-[#b8c2cc]">
+          <p className="mt-1 text-xs font-bold text-admin-muted">
             {formatAutoParticipantProfile(participant.profileType)} · 현재 현금 {participant.cashBalance == null ? "계좌 미개설" : formatWon(participant.cashBalance)}
           </p>
         </div>
@@ -72,7 +72,7 @@ export function AdminAutoParticipantEditPanel({
           type="button"
           onClick={() => onAdjustCash("DEPOSIT")}
           disabled={Boolean(adjustingCashType)}
-          className="min-h-11 self-end rounded-md bg-[#3182f6] px-3 py-3 text-sm font-black text-white disabled:cursor-wait disabled:opacity-55"
+          className="min-h-11 self-end rounded-md bg-stock-accent px-3 py-3 text-sm font-black text-white disabled:cursor-wait disabled:opacity-55"
         >
           {adjustingCashType === "DEPOSIT" ? "입금 중" : "입금"}
         </button>
@@ -80,7 +80,7 @@ export function AdminAutoParticipantEditPanel({
           type="button"
           onClick={() => onAdjustCash("WITHDRAW")}
           disabled={Boolean(adjustingCashType)}
-          className="min-h-11 self-end rounded-md bg-[#3a1f1b] px-3 py-3 text-sm font-black text-[#ffb4a8] disabled:cursor-wait disabled:opacity-55"
+          className="min-h-11 self-end rounded-md bg-admin-danger-surface px-3 py-3 text-sm font-black text-admin-danger disabled:cursor-wait disabled:opacity-55"
         >
           {adjustingCashType === "WITHDRAW" ? "회수 중" : "회수"}
         </button>
@@ -88,7 +88,7 @@ export function AdminAutoParticipantEditPanel({
       {overview ? (
         <AutoParticipantOverviewDetail overview={overview} />
       ) : (
-        <div className="mt-3 rounded-md border border-white/10 bg-black/20 px-3 py-3 text-xs font-bold text-[#8b95a1]">
+        <div className="mt-3 rounded-md border border-white/10 bg-black/20 px-3 py-3 text-xs font-bold text-stock-subtle">
           {overviewLoading ? "이 참여자의 계좌/보유 현황을 조회하고 있습니다." : "이 참여자의 계좌/보유 현황을 아직 조회하지 못했습니다."}
         </div>
       )}

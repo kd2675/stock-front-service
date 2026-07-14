@@ -31,23 +31,23 @@ export function AdminPageContent({
 }: AdminPageContentProps) {
   return (
     <AdminPageShell activeAdminSection={activeAdminSection} activeAdminTab={activeAdminTab} message={message}>
-      {activeAdminSection === "market" && marketProps ? (
+      {marketProps ? (
         <AdminMarketSection {...marketProps} />
       ) : null}
 
-      {activeAdminTab === "accounts" && activeAdminSection !== "participants" && accountsProps ? (
+      {accountsProps ? (
         <AdminAccountsSection {...accountsProps} />
       ) : null}
 
-      {activeAdminTab === "automation" && automationProps ? (
+      {automationProps ? (
         <AdminAutomationSection {...automationProps} />
       ) : null}
 
-      {activeAdminSection === "participants" && participantsProps ? (
+      {activeAdminSection === "participants-list" && participantsProps ? (
         <AdminAutoParticipantManagementPanel {...participantsProps} />
       ) : null}
 
-      {activeAdminTab === "events" && eventsProps ? (
+      {activeAdminTab === "corporate" && eventsProps ? (
         <AdminEventsSection {...eventsProps} />
       ) : null}
     </AdminPageShell>

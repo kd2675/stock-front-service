@@ -18,14 +18,14 @@ export function AdminProfileConfigSummaryPanel({ config }: AdminProfileConfigSum
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-base font-black">{selectedProfileOption?.label ?? formatAutoParticipantProfile(config.profileType)}</p>
-          <p className="mt-0.5 text-xs font-bold text-[#8b95a1]">{selectedProfileOption?.description ?? formatAutoParticipantProfileDescription(config.profileType)}</p>
-          <p className="mt-1 max-w-3xl text-xs font-bold leading-5 text-[#b8c2cc]">{selectedProfileOption?.behavior ?? formatAutoParticipantProfileBehavior(config.profileType)}</p>
+          <p className="mt-0.5 text-xs font-bold text-stock-subtle">{selectedProfileOption?.description ?? formatAutoParticipantProfileDescription(config.profileType)}</p>
+          <p className="mt-1 max-w-3xl text-xs font-bold leading-5 text-admin-muted">{selectedProfileOption?.behavior ?? formatAutoParticipantProfileBehavior(config.profileType)}</p>
         </div>
-        <span className={["rounded-md px-2 py-1 text-xs font-black", config.customized ? "bg-[#19324a] text-[#64a8ff]" : "bg-white/10 text-[#b8c2cc]"].join(" ")}>
+        <span className={["rounded-md px-2 py-1 text-xs font-black", config.customized ? "bg-admin-accent-surface text-admin-accent" : "bg-white/10 text-admin-muted"].join(" ")}>
           {config.customized ? "커스텀" : "기본값"}
         </span>
       </div>
-      <div className="mt-4 grid gap-2 text-xs font-bold text-[#b8c2cc] sm:grid-cols-2 lg:grid-cols-5">
+      <div className="mt-4 grid gap-2 text-xs font-bold text-admin-muted sm:grid-cols-2 lg:grid-cols-5">
         {PROFILE_CONFIG_BEHAVIOR_FIELDS.map((field) => (
           <ProfileMetric
             key={field.key}

@@ -46,7 +46,7 @@ export function AdminProfileConfigFormPanel({
           ))}
         </DarkSelect>
         <div className="grid grid-cols-2 gap-2 self-end lg:col-span-2">
-          <button type="button" onClick={onSubmit} disabled={saving} className="min-h-11 rounded-md bg-white px-3 py-3 text-sm font-black text-[#101418] disabled:opacity-50">
+          <button type="button" onClick={onSubmit} disabled={saving} className="min-h-11 rounded-md bg-white px-3 py-3 text-sm font-black text-admin-canvas disabled:opacity-50">
             {saving ? "저장 중" : "저장"}
           </button>
           <button type="button" onClick={onClearSelection} className="min-h-11 rounded-md bg-white/10 px-3 py-3 text-sm font-black text-white">
@@ -54,7 +54,7 @@ export function AdminProfileConfigFormPanel({
           </button>
         </div>
       </div>
-      <p className="mt-2 text-xs font-bold text-[#8b95a1]">
+      <p className="mt-2 text-xs font-bold text-stock-subtle">
         {isDividendReinvestorProfileSelected
           ? "배당재투자형은 월급/정기 입금을 쓰지 않습니다. 배당 지급 이벤트로 현금이 들어온 뒤 재매수 성향만 강화됩니다."
           : "심리 행동 가중치는 0-1 사이이며 실제 매수/매도 판단 방향에 직접 들어갑니다. 주문 빈도, 호가 공격성, TTL, 수량은 행동 결과의 빈도와 크기를 조정하고, 주기 입금은 외부 현금 유입을 시뮬레이션합니다."}

@@ -1,3 +1,4 @@
+import DataTableViewport from "@/app/components/DataTableViewport";
 import {
   formatCorporateActionPrice,
   formatCorporateActionSchedule,
@@ -29,11 +30,11 @@ export function AdminCorporateActionHistoryPanel({
   onSymbolChange,
 }: AdminCorporateActionHistoryPanelProps) {
   return (
-    <section className="mt-5 rounded-lg border border-white/10 bg-white/[0.06] p-4">
+    <section className="admin-panel mt-5">
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_240px] lg:items-end">
         <div>
           <h2 className="text-base font-black">선택 종목 이벤트 이력</h2>
-          <p className="mt-1 text-xs font-bold text-[#8b95a1]">이벤트 상태, 일정과 유상증자 청약·잔여 수량을 서버 원장 기준으로 조회합니다.</p>
+          <p className="mt-1 text-xs font-bold text-stock-subtle">이벤트 상태, 일정과 유상증자 청약·잔여 수량을 서버 원장 기준으로 조회합니다.</p>
         </div>
         <DarkSelect label="이력 조회 종목" value={symbol} onChange={onSymbolChange}>
           <option value="">선택</option>
@@ -44,22 +45,22 @@ export function AdminCorporateActionHistoryPanel({
       </div>
 
       {errorMessage ? (
-        <div role="alert" className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#f04452]/30 bg-[#3a1f1b] px-3 py-3 text-sm font-bold text-[#ffb4a8]">
+        <div role="alert" className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-stock-danger/30 bg-admin-danger-surface px-3 py-3 text-sm font-bold text-admin-danger">
           <span>{errorMessage}</span>
           <button
             type="button"
             onClick={onRetry}
-            className="rounded-md bg-white px-3 py-2 text-xs font-black text-[#3a1f1b] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64a8ff]"
+            className="rounded-md bg-white px-3 py-2 text-xs font-black text-admin-danger-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-accent"
           >
             다시 조회
           </button>
         </div>
       ) : null}
 
-      <div className="mt-4 hidden overflow-x-auto rounded-md border border-white/10 md:block">
+      <DataTableViewport label="선택 종목 기업 이벤트 이력" tone="dark" className="mt-4 hidden md:block">
         <table className="w-full min-w-[980px] border-collapse text-sm">
           <caption className="sr-only">선택 종목 기업 이벤트 이력</caption>
-          <thead className="bg-white/10 text-left text-[#b8c2cc]">
+          <thead className="bg-white/10 text-left text-admin-muted">
             <tr>
               <th className="px-3 py-2">이벤트</th>
               <th className="px-3 py-2">상태</th>
@@ -74,19 +75,19 @@ export function AdminCorporateActionHistoryPanel({
               <tr key={action.id}>
                 <td className="px-3 py-3 align-top">
                   <p className="font-black">{formatCorporateActionType(action.actionType)}</p>
-                  {action.description ? <p className="mt-1 max-w-52 break-words text-xs font-bold leading-5 text-[#8b95a1]">{action.description}</p> : null}
+                  {action.description ? <p className="mt-1 max-w-52 break-words text-xs font-bold leading-5 text-stock-subtle">{action.description}</p> : null}
                 </td>
                 <td className="px-3 py-3 align-top">{formatCorporateActionStatus(action)}</td>
                 <td className="px-3 py-3 align-top tabular-nums">{formatCorporateActionValue(action)}</td>
                 <td className="px-3 py-3 align-top tabular-nums">{formatCorporateActionSubscriptionProgress(action)}</td>
                 <td className="px-3 py-3 align-top tabular-nums">{formatCorporateActionPrice(action)}</td>
-                <td className="px-3 py-3 align-top text-[#b8c2cc]">{formatCorporateActionSchedule(action)}</td>
+                <td className="px-3 py-3 align-top text-admin-muted">{formatCorporateActionSchedule(action)}</td>
               </tr>
             ))}
             <AdminCorporateActionEmptyRow actions={actions} loading={loading} symbol={symbol} />
           </tbody>
         </table>
-      </div>
+      </DataTableViewport>
 
       <div className="mt-4 grid gap-3 md:hidden">
         {actions.map((action) => (
@@ -94,9 +95,9 @@ export function AdminCorporateActionHistoryPanel({
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <h3 className="font-black">{formatCorporateActionType(action.actionType)}</h3>
-                <p className="mt-1 text-xs font-bold text-[#8b95a1]">{formatCorporateActionValue(action)}</p>
+                <p className="mt-1 text-xs font-bold text-stock-subtle">{formatCorporateActionValue(action)}</p>
               </div>
-              <span className="shrink-0 rounded-sm bg-white/10 px-2 py-1 text-xs font-black text-[#d8e2ec]">
+              <span className="shrink-0 rounded-sm bg-white/10 px-2 py-1 text-xs font-black text-admin-text-strong">
                 {formatCorporateActionStatus(action)}
               </span>
             </div>
@@ -105,11 +106,11 @@ export function AdminCorporateActionHistoryPanel({
               <MobileDetail label="가격 조정" value={formatCorporateActionPrice(action)} />
               <MobileDetail label="일정" value={formatCorporateActionSchedule(action)} />
             </dl>
-            {action.description ? <p className="mt-3 break-words text-xs font-bold leading-5 text-[#8b95a1]">{action.description}</p> : null}
+            {action.description ? <p className="mt-3 break-words text-xs font-bold leading-5 text-stock-subtle">{action.description}</p> : null}
           </article>
         ))}
         {actions.length === 0 ? (
-          <p className="rounded-md border border-white/10 bg-black/10 px-3 py-4 text-sm font-bold text-[#8b95a1]">
+          <p className="rounded-md border border-white/10 bg-black/10 px-3 py-4 text-sm font-bold text-stock-subtle">
             {resolveEmptyMessage(symbol, loading)}
           </p>
         ) : null}
@@ -132,7 +133,7 @@ function AdminCorporateActionEmptyRow({
   }
   return (
     <tr>
-      <td colSpan={6} className="px-3 py-4 text-[#8b95a1]">{resolveEmptyMessage(symbol, loading)}</td>
+      <td colSpan={6} className="px-3 py-4 text-stock-subtle">{resolveEmptyMessage(symbol, loading)}</td>
     </tr>
   );
 }
@@ -140,8 +141,8 @@ function AdminCorporateActionEmptyRow({
 function MobileDetail({ label, value }: { label: string; value: string }) {
   return (
     <div className="grid grid-cols-[72px_minmax(0,1fr)] gap-2">
-      <dt className="font-bold text-[#8b95a1]">{label}</dt>
-      <dd className="min-w-0 break-words font-black text-[#d8e2ec]">{value}</dd>
+      <dt className="font-bold text-stock-subtle">{label}</dt>
+      <dd className="min-w-0 break-words font-black text-admin-text-strong">{value}</dd>
     </div>
   );
 }

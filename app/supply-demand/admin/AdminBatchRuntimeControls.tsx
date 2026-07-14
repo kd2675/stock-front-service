@@ -38,11 +38,11 @@ export function AdminBatchRuntimeControlPanel({
   const summary = summarizeBatchRuntimeControls(supplyDemandControls);
 
   return (
-    <section className="mt-5 rounded-lg border border-white/10 bg-white/[0.06] p-4">
+    <section className="admin-panel mt-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-black">배치 자동 실행 제어</h2>
-          <p className="mt-1 text-xs font-bold leading-5 text-[#8b95a1]">
+          <p className="mt-1 text-xs font-bold leading-5 text-stock-subtle">
             배치 서버는 실행 직전에 DB 런타임 값을 읽습니다. 스케줄러 설정은 서버 설정값이고, DB 런타임은 운영 중 중지/재개 값입니다.
           </p>
         </div>
@@ -50,7 +50,7 @@ export function AdminBatchRuntimeControlPanel({
           type="button"
           onClick={onRefresh}
           disabled={loading}
-          className="inline-flex min-h-10 items-center justify-center rounded-md border border-white/10 bg-white/10 px-3 py-2 text-xs font-black text-white disabled:cursor-wait disabled:opacity-55"
+          className="inline-flex min-h-11 items-center justify-center rounded-md border border-white/10 bg-white/10 px-3 py-2 text-xs font-black text-white disabled:cursor-wait disabled:opacity-55"
         >
           {loading ? "조회 중" : "전체 상태 새로고침"}
         </button>
@@ -89,7 +89,7 @@ export function AdminBatchRuntimeControlPanel({
           })}
         </div>
       ) : (
-        <div className="mt-4 rounded-md border border-white/10 bg-black/20 p-4 text-sm font-bold leading-6 text-[#8b95a1]">
+        <div className="mt-4 rounded-md border border-white/10 bg-black/20 p-4 text-sm font-bold leading-6 text-stock-subtle">
           {error
             ? "배치 자동 실행 상태를 조회하지 못했습니다. 배치 서버가 켜져 있으면 전체 상태 새로고침으로 다시 확인하세요."
             : "배치 자동 실행 상태를 아직 조회하지 않았습니다. 배치 서버가 켜져 있으면 전체 상태 새로고침으로 현재 스케줄러 설정과 DB 런타임 값을 확인할 수 있습니다."}

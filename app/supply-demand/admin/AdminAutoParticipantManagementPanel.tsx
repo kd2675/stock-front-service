@@ -129,7 +129,7 @@ export function AdminAutoParticipantManagementPanel({
   onAdjustCash,
 }: AdminAutoParticipantManagementPanelProps) {
   return (
-    <section className="mt-5 rounded-lg border border-white/10 bg-white/[0.06] p-4">
+    <section className="admin-panel mt-5">
       <AdminAutoParticipantFormPanel
         isEditing={isEditing}
         participantUserKey={participantUserKey}

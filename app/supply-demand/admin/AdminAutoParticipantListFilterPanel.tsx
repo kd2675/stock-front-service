@@ -39,7 +39,7 @@ export function AdminAutoParticipantListFilterPanel({
           <option key={profile.value} value={profile.value}>{profile.label}</option>
         ))}
       </DarkSelect>
-      <div className="flex min-w-0 flex-wrap items-center justify-between gap-2 text-xs font-bold text-[#8b95a1] sm:col-span-3">
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-2 text-xs font-bold text-stock-subtle sm:col-span-3">
         <p>
           표시 {formatCount(list.filteredCount, "명")} / 전체 {formatCount(list.totalCount, "명")}
           {list.filteredCount > 0 ? ` · 현재 ${formatInteger(list.pagination.pageStart)}-${formatInteger(list.pagination.pageEnd)}` : ""}
@@ -50,18 +50,18 @@ export function AdminAutoParticipantListFilterPanel({
               type="button"
               onClick={() => controls.onPageChange((page) => Math.max(0, page - 1))}
               disabled={list.pagination.boundedPage === 0}
-              className="min-h-8 rounded-md bg-white/10 px-3 py-1.5 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-40"
+              className="min-h-9 rounded-md bg-white/10 px-3 py-1.5 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-40"
             >
               이전
             </button>
-            <span className="tabular-nums text-[#b8c2cc]">
+            <span className="tabular-nums text-admin-muted">
               {formatInteger(list.pagination.boundedPage + 1)} / {formatInteger(list.pagination.totalPages)}
             </span>
             <button
               type="button"
               onClick={() => controls.onPageChange((page) => Math.min(list.pagination.totalPages - 1, page + 1))}
               disabled={list.pagination.boundedPage >= list.pagination.totalPages - 1}
-              className="min-h-8 rounded-md bg-white/10 px-3 py-1.5 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-40"
+              className="min-h-9 rounded-md bg-white/10 px-3 py-1.5 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-40"
             >
               다음
             </button>

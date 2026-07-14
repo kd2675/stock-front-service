@@ -73,18 +73,18 @@ export function AdminCorporateActionFormPanel({
           </>
         )}
         <DarkInput label={`메모 (${draft.actionDescription.length}/255)`} value={draft.actionDescription} onChange={draftSetters.setActionDescription} placeholder="선택 입력" maxLength={255} />
-        <button type="button" onClick={onSubmit} disabled={applyingAction || !simulationDateAvailable} className="rounded-md bg-white px-3 py-3 text-sm font-black text-[#101418] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64a8ff] disabled:cursor-not-allowed disabled:opacity-50">
+        <button type="button" onClick={onSubmit} disabled={applyingAction || !simulationDateAvailable} className="rounded-md bg-white px-3 py-3 text-sm font-black text-admin-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-accent disabled:cursor-not-allowed disabled:opacity-50">
           {applyingAction ? "적용 중" : simulationDateAvailable ? "이벤트 적용" : "시간 확인 중"}
         </button>
       </div>
       {draft.actionType === "PAID_IN_CAPITAL_INCREASE" ? (
-        <div className="mt-3 grid gap-2 rounded-md border border-[#2b435a] bg-[#111821] p-3 text-xs font-bold leading-5 text-[#b8c2cc] sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+        <div className="mt-3 grid gap-2 rounded-md border border-[#2b435a] bg-[#111821] p-3 text-xs font-bold leading-5 text-admin-muted sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
           <p>
             {draft.offeringType === "SHAREHOLDER_ALLOCATION"
               ? "주주배정은 권리락 처리로 계좌별 권리를 만든 뒤, 배정 수량 안에서 청약합니다."
               : "일반공모는 권리락 없이 전체 남은 모집 수량 안에서 선착순으로 청약합니다."}
           </p>
-          <span className="rounded-sm bg-white/[0.06] px-2 py-1 text-[#64a8ff]">
+          <span className="rounded-sm bg-white/[0.06] px-2 py-1 text-admin-accent">
             {simulationDateAvailable ? `기준일 ${currentSimulationDate}` : "시뮬레이션 기준일 확인 필요"}
           </span>
         </div>

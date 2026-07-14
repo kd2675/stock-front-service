@@ -114,14 +114,14 @@ export function LoginClient() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f6f7f9] px-5 py-8 text-[#191f28]">
+    <main className="login-screen min-h-screen bg-stock-canvas px-5 py-8 text-stock-ink">
       <section className="mx-auto grid min-h-[calc(100vh-4rem)] w-full max-w-6xl items-center gap-8 lg:grid-cols-[1fr_420px]">
         <div>
-          <p className="text-xs font-bold text-[#3182f6]">STOCK MOCK TRADING</p>
-          <h1 className="mt-3 max-w-2xl text-4xl font-black leading-tight md:text-6xl">
+          <p className="text-xs font-bold text-stock-accent">STOCK MOCK TRADING</p>
+          <h1 className="mt-3 max-w-2xl break-keep text-4xl font-black leading-tight md:text-6xl">
             실제 시세 흐름으로 연습하는 모의투자
           </h1>
-          <p className="mt-5 max-w-xl text-base leading-7 text-[#4e5968]">
+          <p className="mt-5 max-w-xl text-base leading-7 text-stock-text-tertiary">
             주문과 체결은 DB 원장에 남기고, 수요와 공급 주문장에서 자동참여자와 사용자의 호가가 만나도록 구성했습니다.
             계좌를 만든 뒤 보유 주식, 손익, 수익률을 함께 확인할 수 있습니다.
           </p>

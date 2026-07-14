@@ -22,13 +22,13 @@ export function InstrumentOwnershipReport({ report }: { report: InstrumentMarket
         <OwnershipMetric label="기준일 유통 비율" value={`${formatNumber(report.tradableShareRate)}%`} detail={formatLargeWon(report.tradableMarketCapitalization)} />
       </div>
 
-      <div className="mt-4 overflow-hidden rounded-md border border-[#e5e8eb]">
-        <div className="grid grid-cols-[100px_minmax(100px,1fr)_minmax(100px,1fr)] bg-[#f7f8fa] px-3 py-2 text-xs font-black text-[#8b95a1]"><span>거래일</span><span className="text-right">발행주식</span><span className="text-right">유통주식</span></div>
+      <div className="mt-4 overflow-hidden rounded-md border border-stock-border">
+        <div className="grid grid-cols-[100px_minmax(100px,1fr)_minmax(100px,1fr)] bg-stock-surface-muted px-3 py-2 text-xs font-black text-stock-subtle"><span>거래일</span><span className="text-right">발행주식</span><span className="text-right">유통주식</span></div>
         {ownership.shareHistory.slice(-10).reverse().map((point) => (
-          <div key={point.tradeDate} className="grid grid-cols-[100px_minmax(100px,1fr)_minmax(100px,1fr)] border-t border-[#e5e8eb] px-3 py-2 text-sm font-bold tabular-nums"><span>{point.tradeDate}</span><span className="text-right">{formatNumber(point.issuedShares)}주 <Change value={point.issuedShareChange} /></span><span className="text-right">{formatNumber(point.tradableShares)}주 <Change value={point.tradableShareChange} /></span></div>
+          <div key={point.tradeDate} className="grid grid-cols-[100px_minmax(100px,1fr)_minmax(100px,1fr)] border-t border-stock-border px-3 py-2 text-sm font-bold tabular-nums"><span>{point.tradeDate}</span><span className="text-right">{formatNumber(point.issuedShares)}주 <Change value={point.issuedShareChange} /></span><span className="text-right">{formatNumber(point.tradableShares)}주 <Change value={point.tradableShareChange} /></span></div>
         ))}
       </div>
-      <p className="mt-3 text-xs font-bold leading-5 text-[#8b95a1]">보유량과 집중도는 보고서 기준일 전체 마감의 계좌별 보유 스냅샷을 사용하며 계좌 식별정보는 노출하지 않습니다. 별도 보호예수 원장이 없어 보호예수 비율은 산출하지 않습니다.</p>
+      <p className="mt-3 text-xs font-bold leading-5 text-stock-subtle">보유량과 집중도는 보고서 기준일 전체 마감의 계좌별 보유 스냅샷을 사용하며 계좌 식별정보는 노출하지 않습니다. 별도 보호예수 원장이 없어 보호예수 비율은 산출하지 않습니다.</p>
     </ReportSection>
   );
 }
@@ -45,9 +45,9 @@ export function InstrumentCorporateActionAnalyticsReport({ report }: { report: I
       </div>
       <div className="mt-4 space-y-3">
         {actions.events.map((event) => <CorporateActionCard key={event.id} event={event} />)}
-        {actions.events.length === 0 ? <p className="rounded-md bg-[#f7f8fa] px-4 py-5 text-sm font-bold text-[#8b95a1]">등록된 기업 이벤트가 없습니다.</p> : null}
+        {actions.events.length === 0 ? <p className="rounded-md bg-stock-surface-muted px-4 py-5 text-sm font-bold text-stock-subtle">등록된 기업 이벤트가 없습니다.</p> : null}
       </div>
-      <p className="mt-3 text-xs font-bold leading-5 text-[#8b95a1]">이벤트 상태는 기준일까지 기록된 적용·납입·상장 시각으로 복원합니다. 할인율은 기준가격 대비 발행가, 희석률은 이벤트 직전 발행량 대비 신규 주식 비중이며 전후 가격은 7일 이내 가장 가까운 마감가격만 사용합니다.</p>
+      <p className="mt-3 text-xs font-bold leading-5 text-stock-subtle">이벤트 상태는 기준일까지 기록된 적용·납입·상장 시각으로 복원합니다. 할인율은 기준가격 대비 발행가, 희석률은 이벤트 직전 발행량 대비 신규 주식 비중이며 전후 가격은 7일 이내 가장 가까운 마감가격만 사용합니다.</p>
     </ReportSection>
   );
 }
@@ -57,13 +57,13 @@ export function InstrumentReportHistory({ reports }: { reports: InstrumentReport
     <ReportSection eyebrow="REPORT HISTORY" title="관리자 평가 이력">
       <div className="space-y-2">
         {reports.map((report) => (
-          <div key={report.id} className="grid gap-2 rounded-md bg-[#f7f8fa] px-3 py-3 sm:grid-cols-[90px_minmax(0,1fr)_auto] sm:items-start">
-            <span className={report.eventType === "DELETE" ? "text-xs font-black text-[#8b95a1]" : "text-xs font-black text-[#3182f6]"}>{report.eventType === "PUBLISH" ? "발행" : report.eventType === "UPDATE" ? "수정" : "삭제"}</span>
-            <div className="min-w-0"><p className="truncate text-sm font-black">{report.title ?? report.deleteReason ?? "삭제된 보고서"}</p><p className="mt-1 line-clamp-2 text-xs font-bold leading-5 text-[#6b7684]">{report.summary ?? report.deleteReason ?? "내용 없음"}</p></div>
-            <div className="text-right"><p className="text-xs font-black">{report.score == null ? "-" : `${report.score}/10`}</p><p className="mt-1 text-xs font-bold text-[#8b95a1]">{formatMonthDayTime(report.createdAt)}</p></div>
+          <div key={report.id} className="grid gap-2 rounded-md bg-stock-surface-muted px-3 py-3 sm:grid-cols-[90px_minmax(0,1fr)_auto] sm:items-start">
+            <span className={report.eventType === "DELETE" ? "text-xs font-black text-stock-subtle" : "text-xs font-black text-stock-accent"}>{report.eventType === "PUBLISH" ? "발행" : report.eventType === "UPDATE" ? "수정" : "삭제"}</span>
+            <div className="min-w-0"><p className="truncate text-sm font-black">{report.title ?? report.deleteReason ?? "삭제된 보고서"}</p><p className="mt-1 line-clamp-2 text-xs font-bold leading-5 text-stock-muted">{report.summary ?? report.deleteReason ?? "내용 없음"}</p></div>
+            <div className="text-right"><p className="text-xs font-black">{report.score == null ? "-" : `${report.score}/10`}</p><p className="mt-1 text-xs font-bold text-stock-subtle">{formatMonthDayTime(report.createdAt)}</p></div>
           </div>
         ))}
-        {reports.length === 0 ? <p className="rounded-md bg-[#f7f8fa] px-4 py-5 text-sm font-bold text-[#8b95a1]">발행된 관리자 평가 이력이 없습니다.</p> : null}
+        {reports.length === 0 ? <p className="rounded-md bg-stock-surface-muted px-4 py-5 text-sm font-bold text-stock-subtle">발행된 관리자 평가 이력이 없습니다.</p> : null}
       </div>
     </ReportSection>
   );
@@ -82,13 +82,13 @@ export function InstrumentDataQualityReport({ report }: { report: InstrumentMark
         <OwnershipMetric label="과거 데이터 범위" value={quality.historyStartDate && quality.historyEndDate ? `${formatMonthDay(quality.historyStartDate)} ~ ${formatMonthDay(quality.historyEndDate)}` : "없음"} detail="차트 최대 61거래일 표시" />
         <OwnershipMetric label="기준일 체결" value={quality.hasReportDateTrades ? "있음" : "없음"} detail={quality.reportDate ?? "완료 마감 없음"} />
       </div>
-      <ul className="mt-4 space-y-2 rounded-md bg-[#f7f8fa] px-4 py-3 text-sm font-bold leading-6 text-[#6b7684]">
+      <ul className="mt-4 space-y-2 rounded-md bg-stock-surface-muted px-4 py-3 text-sm font-bold leading-6 text-stock-muted">
         {quality.notes.map((note) => <li key={note}>· {note}</li>)}
       </ul>
       <div className="mt-4 grid gap-4 xl:grid-cols-2">
-        <div className="rounded-md border border-[#e5e8eb] p-4">
+        <div className="rounded-md border border-stock-border p-4">
           <h3 className="text-sm font-black">주요 계산식</h3>
-          <ul className="mt-3 space-y-2 text-xs font-bold leading-5 text-[#6b7684]">
+          <ul className="mt-3 space-y-2 text-xs font-bold leading-5 text-stock-muted">
             <li>· 기간 수익률 = (보고서 기준 종가 - N거래일 전 종가) ÷ N거래일 전 종가</li>
             <li>· 변동성 = 최근 20거래일 일간 수익률의 표준편차</li>
             <li>· 회전율 = 거래량 ÷ 유통주식수</li>
@@ -97,9 +97,9 @@ export function InstrumentDataQualityReport({ report }: { report: InstrumentMark
             <li>· 예상 희석률 = 신규 주식 ÷ 이벤트 후 예상 발행주식</li>
           </ul>
         </div>
-        <div className="rounded-md border border-[#e5e8eb] p-4">
+        <div className="rounded-md border border-stock-border p-4">
           <h3 className="text-sm font-black">현재 원장 한계</h3>
-          <ul className="mt-3 space-y-2 text-xs font-bold leading-5 text-[#6b7684]">
+          <ul className="mt-3 space-y-2 text-xs font-bold leading-5 text-stock-muted">
             {quality.limitations.map((limitation) => <li key={limitation}>· {limitation}</li>)}
           </ul>
         </div>
@@ -127,26 +127,26 @@ function CorporateActionCard({ event }: { event: InstrumentCorporateActionMetric
     event.splitRatio != null ? `분할 배수 ${formatNumber(event.splitRatio)}배` : null,
   ].filter((value): value is string => value !== null);
   return (
-    <article className="rounded-md bg-[#f7f8fa] p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3"><div><div className="flex flex-wrap items-center gap-2"><h3 className="text-base font-black">{formatCorporateActionType(event.actionType)}</h3><span className="rounded-md bg-white px-2 py-1 text-xs font-black text-[#3182f6]">{formatCorporateActionStatus(event.status)}</span></div><p className="mt-1 text-xs font-bold text-[#8b95a1]">등록 {formatMonthDayTime(event.createdAt)}</p></div><p className="text-sm font-black">{event.shareQuantity > 0 ? `${formatNumber(event.shareQuantity)}주` : event.dividendPerShare != null ? `${formatNumber(event.dividendPerShare)}원/주` : "-"}</p></div>
-      {event.description ? <p className="mt-3 text-sm font-bold leading-6 text-[#4e5968]">{event.description}</p> : null}
-      {metrics.length > 0 ? <div className="mt-3 flex flex-wrap gap-2">{metrics.map((metric) => <span key={metric} className="rounded-md bg-white px-2 py-1 text-xs font-black text-[#4e5968]">{metric}</span>)}</div> : null}
-      {dates.length > 0 ? <p className="mt-3 text-xs font-bold leading-5 text-[#6b7684]">{dates.join(" · ")}</p> : null}
-      {event.beforePrice != null || event.afterPrice != null ? <p className="mt-2 text-xs font-bold text-[#8b95a1]">이벤트 전후 가격 {event.beforePrice == null ? "-" : formatWon(event.beforePrice)} → {event.afterPrice == null ? "-" : formatWon(event.afterPrice)} · 시가총액 {event.beforeMarketCapitalization == null ? "-" : formatLargeWon(event.beforeMarketCapitalization)} → {event.afterMarketCapitalization == null ? "-" : formatLargeWon(event.afterMarketCapitalization)}</p> : null}
-      {event.beforeIssuedShares != null || event.afterIssuedShares != null ? <p className="mt-2 text-xs font-bold text-[#8b95a1]">이벤트 전후 발행주식 {event.beforeIssuedShares == null ? "-" : `${formatNumber(event.beforeIssuedShares)}주`} → {event.afterIssuedShares == null ? "-" : `${formatNumber(event.afterIssuedShares)}주`}</p> : null}
+    <article className="rounded-md bg-stock-surface-muted p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3"><div><div className="flex flex-wrap items-center gap-2"><h3 className="text-base font-black">{formatCorporateActionType(event.actionType)}</h3><span className="rounded-md bg-white px-2 py-1 text-xs font-black text-stock-accent">{formatCorporateActionStatus(event.status)}</span></div><p className="mt-1 text-xs font-bold text-stock-subtle">등록 {formatMonthDayTime(event.createdAt)}</p></div><p className="text-sm font-black">{event.shareQuantity > 0 ? `${formatNumber(event.shareQuantity)}주` : event.dividendPerShare != null ? `${formatNumber(event.dividendPerShare)}원/주` : "-"}</p></div>
+      {event.description ? <p className="mt-3 text-sm font-bold leading-6 text-stock-text-tertiary">{event.description}</p> : null}
+      {metrics.length > 0 ? <div className="mt-3 flex flex-wrap gap-2">{metrics.map((metric) => <span key={metric} className="rounded-md bg-white px-2 py-1 text-xs font-black text-stock-text-tertiary">{metric}</span>)}</div> : null}
+      {dates.length > 0 ? <p className="mt-3 text-xs font-bold leading-5 text-stock-muted">{dates.join(" · ")}</p> : null}
+      {event.beforePrice != null || event.afterPrice != null ? <p className="mt-2 text-xs font-bold text-stock-subtle">이벤트 전후 가격 {event.beforePrice == null ? "-" : formatWon(event.beforePrice)} → {event.afterPrice == null ? "-" : formatWon(event.afterPrice)} · 시가총액 {event.beforeMarketCapitalization == null ? "-" : formatLargeWon(event.beforeMarketCapitalization)} → {event.afterMarketCapitalization == null ? "-" : formatLargeWon(event.afterMarketCapitalization)}</p> : null}
+      {event.beforeIssuedShares != null || event.afterIssuedShares != null ? <p className="mt-2 text-xs font-bold text-stock-subtle">이벤트 전후 발행주식 {event.beforeIssuedShares == null ? "-" : `${formatNumber(event.beforeIssuedShares)}주`} → {event.afterIssuedShares == null ? "-" : `${formatNumber(event.afterIssuedShares)}주`}</p> : null}
     </article>
   );
 }
 
 function OwnershipMetric({ detail, label, value }: { detail: string; label: string; value: string }) {
-  return <div className="rounded-md bg-[#f7f8fa] p-3"><p className="text-xs font-bold text-[#8b95a1]">{label}</p><p className="mt-1 text-base font-black tabular-nums">{value}</p><p className="mt-1 text-xs font-bold leading-5 text-[#8b95a1]">{detail}</p></div>;
+  return <div className="rounded-md bg-stock-surface-muted p-3"><p className="text-xs font-bold text-stock-subtle">{label}</p><p className="mt-1 text-base font-black tabular-nums">{value}</p><p className="mt-1 text-xs font-bold leading-5 text-stock-subtle">{detail}</p></div>;
 }
 
 function Change({ value }: { value: number }) {
   if (value === 0) {
     return null;
   }
-  return <span className={value > 0 ? "ml-1 text-xs text-[#f04452]" : "ml-1 text-xs text-[#3182f6]"}>{formatSignedQuantity(value)}</span>;
+  return <span className={value > 0 ? "ml-1 text-xs text-stock-danger" : "ml-1 text-xs text-stock-accent"}>{formatSignedQuantity(value)}</span>;
 }
 
 function formatSignedQuantity(value: number) {

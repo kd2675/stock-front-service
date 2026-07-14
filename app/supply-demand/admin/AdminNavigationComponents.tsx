@@ -1,77 +1,59 @@
 import Link from "next/link";
 
-import type {
-  AdminSection,
-  AdminSubTabItem,
-  AdminTab,
-  AdminTabItem,
-} from "@/app/supply-demand/admin/AdminNavigationConfig";
+import { ADMIN_NAVIGATION_GROUPS, findAdminNavigationItem, type AdminSection } from "@/app/navigation/adminNavigation";
 
-export function AdminTabNav({
-  tabs,
-  activeTab,
+export function AdminSidebarNavigation({
+  activeSection,
+  markCurrent = true,
 }: {
-  tabs: AdminTabItem[];
-  activeTab: AdminTab;
+  activeSection: AdminSection;
+  markCurrent?: boolean;
 }) {
   return (
-    <nav className="mt-4 overflow-x-auto rounded-lg border border-white/10 bg-black/20 p-2" aria-label="관리자 설정 영역">
-      <div className="grid min-w-[760px] grid-cols-4 gap-2">
-        {tabs.map((tab) => {
-          const active = tab.value === activeTab;
-          return (
-            <Link
-              key={tab.value}
-              href={tab.href}
-              aria-current={active ? "page" : undefined}
-              className={[
-                "min-h-[76px] rounded-md px-3 py-3 text-left transition-colors",
-                active
-                  ? "border border-[#64a8ff]/60 bg-[#10233a] text-white shadow-[0_0_0_1px_rgba(100,168,255,0.16)]"
-                  : "border border-transparent bg-white/[0.04] text-[#b8c2cc] hover:bg-white/[0.07]",
-              ].join(" ")}
-            >
-              <span className="flex min-w-0 items-center justify-between gap-3">
-                <span className="truncate text-sm font-black">{tab.label}</span>
-              </span>
-              <span className="mt-2 block truncate text-xs font-bold text-[#8b95a1]">{tab.description}</span>
-            </Link>
-          );
-        })}
-      </div>
+    <nav aria-label="관리자 메뉴" className="space-y-5">
+      {ADMIN_NAVIGATION_GROUPS.map((group) => (
+        <section key={group.tab} aria-labelledby={`admin-nav-${group.tab}`}>
+          <h2 id={`admin-nav-${group.tab}`} className="px-2 text-[11px] font-black tracking-[0.12em] text-admin-subtle">
+            {group.label}
+          </h2>
+          <div className="mt-1.5 grid gap-1">
+            {group.items.map((item) => {
+              const active = item.section === activeSection;
+              return (
+                <Link
+                  key={item.section}
+                  href={item.href}
+                  aria-current={active && markCurrent ? "page" : undefined}
+                  className={[
+                    "flex min-h-11 items-center rounded-md border-l-2 px-3 text-sm font-black transition-colors",
+                    active
+                      ? "border-admin-accent bg-[#132b45] text-white"
+                      : "border-transparent text-[#aab4bf] hover:bg-white/[0.06] hover:text-white",
+                  ].join(" ")}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      ))}
     </nav>
   );
 }
 
-export function AdminSubTabNav({
-  tabs,
-  activeSection,
-}: {
-  tabs: AdminSubTabItem[];
-  activeSection: AdminSection;
-}) {
+export function AdminMobileNavigation({ activeSection }: { activeSection: AdminSection }) {
+  const activeItem = findAdminNavigationItem(activeSection);
+
   return (
-    <nav className="mt-3 overflow-x-auto rounded-lg border border-white/10 bg-white/[0.04] p-2" aria-label="관리자 세부 설정 영역">
-      <div className="flex min-w-max gap-2">
-        {tabs.map((tab) => {
-          const active = tab.value === activeSection;
-          return (
-            <Link
-              key={tab.value}
-              href={tab.href}
-              aria-current={active ? "page" : undefined}
-              className={[
-                "inline-flex min-h-11 min-w-[150px] items-center rounded-md px-3 text-sm font-black transition-colors",
-                active
-                  ? "bg-white text-[#101418]"
-                  : "bg-black/20 text-[#b8c2cc] hover:bg-white/[0.08] hover:text-white",
-              ].join(" ")}
-            >
-              <span className="min-w-0 truncate">{tab.label}</span>
-            </Link>
-          );
-        })}
+    <details className="admin-mobile-navigation group rounded-lg border border-white/10 bg-admin-surface-raised lg:hidden">
+      <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 text-sm font-black text-white marker:hidden">
+        <span className="min-w-0 truncate">메뉴 · {activeItem.label}</span>
+        <span aria-hidden="true" className="shrink-0 text-admin-accent transition-transform group-open:rotate-180">⌄</span>
+      </summary>
+      <div className="border-t border-white/10 px-3 pb-4 pt-4">
+        <AdminSidebarNavigation activeSection={activeSection} markCurrent={false} />
       </div>
-    </nav>
+    </details>
   );
 }

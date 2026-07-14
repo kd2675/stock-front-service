@@ -31,11 +31,11 @@ export function AdminProfileConfigPanel({
   const isDividendReinvestorProfileSelected = selectedProfileConfig?.profileType === "DIVIDEND_REINVESTOR";
 
   return (
-    <section className="mt-5 rounded-lg border border-white/10 bg-white/[0.06] p-4">
+    <section className="admin-panel mt-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-black">프로필 행동 설정</h2>
-          <p className="mt-1 text-xs font-bold text-[#8b95a1]">자동 참여자 심리 프로필별 주문 빈도, 호가 공격성, 주문 유지 시간, 수량, 보유 성향, 주기적 현금 유입을 조정합니다.</p>
+          <p className="mt-1 text-xs font-bold text-stock-subtle">자동 참여자 심리 프로필별 주문 빈도, 호가 공격성, 주문 유지 시간, 수량, 보유 성향, 주기적 현금 유입을 조정합니다.</p>
         </div>
       </div>
       <div className="mt-4 grid min-w-0 gap-4 lg:grid-cols-[minmax(240px,320px)_minmax(0,1fr)]">
@@ -48,14 +48,14 @@ export function AdminProfileConfigPanel({
               </option>
             ))}
           </DarkSelect>
-          <div className="mt-3 grid gap-2 text-xs font-bold text-[#8b95a1]">
+          <div className="mt-3 grid gap-2 text-xs font-bold text-stock-subtle">
             <div className="flex items-center justify-between gap-3 rounded-md bg-white/[0.04] px-3 py-2">
               <span>전체 프로필</span>
               <span className="font-black text-white">{profileConfigs.length}개</span>
             </div>
             <div className="flex items-center justify-between gap-3 rounded-md bg-white/[0.04] px-3 py-2">
               <span>선택 상태</span>
-              <span className="font-black text-[#64a8ff]">{selectedProfileConfig ? (selectedProfileConfig.customized ? "커스텀" : "기본값") : "미선택"}</span>
+              <span className="font-black text-admin-accent">{selectedProfileConfig ? (selectedProfileConfig.customized ? "커스텀" : "기본값") : "미선택"}</span>
             </div>
           </div>
         </div>
@@ -73,7 +73,7 @@ export function AdminProfileConfigPanel({
           </div>
         ) : (
           <div className="grid min-h-[220px] place-items-center rounded-md border border-dashed border-white/15 bg-black/15 px-4 py-8 text-center">
-            <p className="text-sm font-bold text-[#8b95a1]">수정할 프로필을 하나 선택하세요.</p>
+            <p className="text-sm font-bold text-stock-subtle">수정할 프로필을 하나 선택하세요.</p>
           </div>
         )}
       </div>

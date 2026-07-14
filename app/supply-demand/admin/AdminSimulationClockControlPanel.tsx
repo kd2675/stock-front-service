@@ -44,19 +44,19 @@ export function AdminSimulationClockControlPanel({
   const postCloseReady = Boolean(clock?.postCloseProcessingCompleted);
 
   return (
-    <section className="mt-4 rounded-lg border border-white/10 bg-white/[0.04] p-4">
+    <section className="admin-panel mt-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-sm font-black text-white">시뮬레이션 시간 제어</h2>
-          <p className="mt-1 text-xs font-bold leading-5 text-[#8b95a1]">
+          <p className="mt-1 text-xs font-bold leading-5 text-stock-subtle">
             직접 입력 없이 세션 경계로만 이동합니다. 위험한 시간 이동은 서버에서 다시 차단됩니다.
           </p>
         </div>
         <div className="rounded-md border border-white/10 bg-black/20 px-3 py-2 text-right">
-          <p className="text-[11px] font-black text-[#8b95a1]">현재 세션</p>
+          <p className="text-[11px] font-black text-stock-subtle">현재 세션</p>
           <p className="mt-1 text-sm font-black text-white">{sessionLabel}</p>
           {session === "AFTER_CLOSE" || (session === "PRE_OPEN" && !postCloseReady) ? (
-            <p className={["mt-1 text-[11px] font-black", postCloseReady ? "text-[#6ee7a8]" : "text-[#ffd166]"].join(" ")}>
+            <p className={["mt-1 text-[11px] font-black", postCloseReady ? "text-admin-success" : "text-[#ffd166]"].join(" ")}>
               {postCloseReady ? "후처리 완료" : session === "PRE_OPEN" ? "전일 후처리 대기" : "후처리 대기"}
             </p>
           ) : null}
@@ -84,8 +84,8 @@ export function AdminSimulationClockControlPanel({
                 className={[
                   "min-h-24 rounded-md border px-3 py-3 text-left transition",
                   enabled
-                    ? "border-[#3182f6]/40 bg-[#15345f] text-white hover:border-[#64a8ff]"
-                    : "border-white/10 bg-white/[0.04] text-[#66717d]",
+                    ? "border-stock-accent/40 bg-[#15345f] text-white hover:border-admin-accent"
+                    : "border-white/10 bg-white/[0.04] text-admin-disabled",
                   jumpingAction ? "cursor-wait" : enabled ? "cursor-pointer" : "cursor-not-allowed",
                 ].join(" ")}
               >
@@ -119,7 +119,7 @@ function canRunSafeClockAction(
 function ClockMetric({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0 rounded-md bg-white/[0.04] px-3 py-2">
-      <p className="text-[11px] font-black text-[#8b95a1]">{label}</p>
+      <p className="text-[11px] font-black text-stock-subtle">{label}</p>
       <p className="mt-1 truncate text-sm font-black text-white" title={value}>{value}</p>
     </div>
   );

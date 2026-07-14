@@ -30,19 +30,19 @@ export function LoginFormPanel({
   onUsernameChange,
 }: LoginFormPanelProps) {
   return (
-    <div className="rounded-lg border border-[#e5e8eb] bg-white p-5 shadow-[0_16px_40px_rgba(25,31,40,0.08)]">
-      <div className="grid grid-cols-2 rounded-md bg-[#f2f4f6] p-1">
+    <div className="rounded-lg border border-stock-border bg-white p-5 shadow-[0_16px_40px_rgba(25,31,40,0.08)]">
+      <div className="grid grid-cols-2 rounded-md bg-stock-surface-strong p-1">
         <button
           type="button"
           onClick={() => onModeChange("login")}
-          className={mode === "login" ? "rounded-md bg-white px-3 py-2 text-sm font-black text-[#191f28] shadow-[0_1px_2px_rgba(0,0,0,0.06)]" : "px-3 py-2 text-sm font-bold text-[#6b7684]"}
+          className={mode === "login" ? "rounded-md bg-white px-3 py-2 text-sm font-black text-stock-ink shadow-[0_1px_2px_rgba(0,0,0,0.06)]" : "px-3 py-2 text-sm font-bold text-stock-muted"}
         >
           로그인
         </button>
         <button
           type="button"
           onClick={() => onModeChange("signup")}
-          className={mode === "signup" ? "rounded-md bg-white px-3 py-2 text-sm font-black text-[#191f28] shadow-[0_1px_2px_rgba(0,0,0,0.06)]" : "px-3 py-2 text-sm font-bold text-[#6b7684]"}
+          className={mode === "signup" ? "rounded-md bg-white px-3 py-2 text-sm font-black text-stock-ink shadow-[0_1px_2px_rgba(0,0,0,0.06)]" : "px-3 py-2 text-sm font-bold text-stock-muted"}
         >
           회원가입
         </button>
@@ -72,7 +72,7 @@ export function LoginFormPanel({
         type="button"
         onClick={onSubmit}
         disabled={submitting}
-        className="mt-5 w-full rounded-md bg-[#3182f6] px-4 py-3 text-sm font-black text-white disabled:cursor-wait disabled:opacity-60"
+        className="mt-5 w-full rounded-md bg-stock-accent px-4 py-3 text-sm font-black text-white disabled:cursor-wait disabled:opacity-60"
       >
         {submitting ? "처리 중" : mode === "login" ? "로그인" : "가입 후 시작"}
       </button>
@@ -116,13 +116,13 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="text-xs font-bold text-[#6b7684]">{label}</span>
+      <span className="text-xs font-bold text-stock-muted">{label}</span>
       <input
         type={type}
         value={value}
         autoComplete={autoComplete}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-1 w-full rounded-md border border-[#d1d6db] bg-white px-3 py-3 text-sm font-bold text-[#191f28] outline-none focus:border-[#3182f6]"
+        className="mt-1 w-full rounded-md border border-stock-border-strong bg-white px-3 py-3 text-sm font-bold text-stock-ink outline-none focus:border-stock-accent"
       />
     </label>
   );

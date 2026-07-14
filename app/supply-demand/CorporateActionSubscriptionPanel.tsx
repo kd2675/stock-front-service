@@ -59,37 +59,37 @@ export function CorporateActionSubscriptionPanel({
     : subscriptionActions.slice(0, maxVisibleActions);
 
   return (
-    <div className="rounded-lg border border-[#e5e8eb] bg-white p-4">
+    <div className="rounded-lg border border-stock-border bg-white p-4">
       <div className="flex min-w-0 items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs font-bold text-[#8b95a1]">CORPORATE ACTION</p>
+          <p className="text-xs font-bold text-stock-subtle">CORPORATE ACTION</p>
           <h3 className="mt-1 text-lg font-black">{title}</h3>
         </div>
         {showAllLink ? (
           <Link
             href="/corporate-actions"
-            className="shrink-0 rounded-md bg-[#eff6ff] px-2.5 py-1.5 text-xs font-black text-[#3182f6] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3182f6]"
+            className="inline-flex min-h-9 shrink-0 items-center rounded-md bg-stock-accent-surface px-2.5 text-xs font-black text-stock-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stock-accent"
           >
             전체 이벤트
           </Link>
         ) : (
-          <span className="shrink-0 rounded-sm bg-[#eff6ff] px-2 py-1 text-xs font-black text-[#3182f6]">청약</span>
+          <span className="shrink-0 rounded-sm bg-stock-accent-surface px-2 py-1 text-xs font-black text-stock-accent">청약</span>
         )}
       </div>
 
       <div className="mt-4 space-y-3">
         {errorMessage ? (
-          <p role="alert" className="rounded-md bg-[#fff3f0] px-3 py-3 text-sm font-bold leading-5 text-[#d34b36]">
+          <p role="alert" className="rounded-md bg-stock-danger-surface px-3 py-3 text-sm font-bold leading-5 text-stock-danger-strong">
             {errorMessage}
           </p>
         ) : null}
         {cashErrorMessage ? (
-          <p role="alert" className="rounded-md bg-[#fff8e6] px-3 py-3 text-sm font-bold leading-5 text-[#8a5a00]">
+          <p role="alert" className="rounded-md bg-stock-warning-surface px-3 py-3 text-sm font-bold leading-5 text-stock-warning">
             {cashErrorMessage}
           </p>
         ) : null}
         {isLoading && visibleActions.length === 0 ? (
-          <p className="rounded-md bg-[#f7f8fa] px-3 py-4 text-sm font-bold text-[#8b95a1]">이벤트 조회 중</p>
+          <p className="rounded-md bg-stock-surface-muted px-3 py-4 text-sm font-bold text-stock-subtle">이벤트 조회 중</p>
         ) : visibleActions.length ? (
           visibleActions.map((action) => {
             const entitlement = entitlements.find((item) => item.actionId === action.id);
@@ -129,13 +129,13 @@ export function CorporateActionSubscriptionPanel({
             const helperId = `${inputId}-helper`;
 
             return (
-              <article key={action.id} className="rounded-md border border-[#e5e8eb] p-3">
+              <article key={action.id} className="rounded-md border border-stock-border p-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-sm font-black text-[#191f28]">
+                    <p className="text-sm font-black text-stock-ink">
                       {`${action.symbol} · 유상증자 ${getCapitalIncreaseOfferingLabel(action.offeringType)}`}
                     </p>
-                    <p className="mt-1 text-xs font-bold text-[#8b95a1]">
+                    <p className="mt-1 text-xs font-bold text-stock-subtle">
                       {`청약 ${formatMonthDay(action.subscriptionStartDate)} - ${formatMonthDay(action.subscriptionEndDate)}`}
                     </p>
                   </div>
@@ -155,25 +155,25 @@ export function CorporateActionSubscriptionPanel({
                 </div>
 
                 {action.description ? (
-                  <p className="mt-3 whitespace-pre-wrap break-words text-xs font-semibold leading-5 text-[#6b7684]">{action.description}</p>
+                  <p className="mt-3 whitespace-pre-wrap break-words text-xs font-semibold leading-5 text-stock-muted">{action.description}</p>
                 ) : null}
 
                 {entitlement?.status === "SUBSCRIBED" || entitlement?.status === "PAID" ? (
-                  <div className="mt-3 rounded-md bg-[#f7f8fa] p-3 text-sm">
+                  <div className="mt-3 rounded-md bg-stock-surface-muted p-3 text-sm">
                     <div className="flex items-center justify-between gap-3">
-                      <span className="font-bold text-[#6b7684]">청약 수량</span>
-                      <span className="font-black tabular-nums text-[#191f28]">{formatNumber(entitlement.subscribedShareQuantity ?? 0)}주</span>
+                      <span className="font-bold text-stock-muted">청약 수량</span>
+                      <span className="font-black tabular-nums text-stock-ink">{formatNumber(entitlement.subscribedShareQuantity ?? 0)}주</span>
                     </div>
                     <div className="mt-2 flex items-center justify-between gap-3">
-                      <span className="font-bold text-[#6b7684]">청약 금액</span>
-                      <span className="font-black tabular-nums text-[#191f28]">{formatWon(entitlement.subscribedCashAmount)}</span>
+                      <span className="font-bold text-stock-muted">청약 금액</span>
+                      <span className="font-black tabular-nums text-stock-ink">{formatWon(entitlement.subscribedCashAmount)}</span>
                     </div>
                   </div>
                 ) : (
                   <>
-                    <label htmlFor={inputId} className="mt-3 block text-xs font-bold text-[#6b7684]">청약 수량</label>
+                    <label htmlFor={inputId} className="mt-3 block text-xs font-bold text-stock-muted">청약 수량</label>
                     <div className="mt-1 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-                      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] rounded-md border border-[#d1d6db] bg-white focus-within:border-[#3182f6] focus-within:ring-2 focus-within:ring-[#3182f6]/15">
+                      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] rounded-md border border-stock-border-strong bg-white focus-within:border-stock-accent focus-within:ring-2 focus-within:ring-stock-accent/15">
                         <input
                           id={inputId}
                           inputMode="numeric"
@@ -185,23 +185,23 @@ export function CorporateActionSubscriptionPanel({
                             ...previous,
                             [action.id]: event.target.value.replace(/[^\d]/g, ""),
                           }))}
-                          className="h-10 min-w-0 rounded-l-md px-3 text-right text-sm font-black tabular-nums outline-none disabled:cursor-not-allowed disabled:bg-[#f2f4f6] disabled:text-[#8b95a1]"
+                          className="h-11 min-w-0 rounded-l-md px-3 text-right text-sm font-black tabular-nums outline-none disabled:cursor-not-allowed disabled:bg-stock-surface-strong disabled:text-stock-subtle"
                           placeholder="0"
                         />
-                        <span className="flex items-center border-l border-[#e5e8eb] px-3 text-xs font-black text-[#6b7684]">주</span>
+                        <span className="flex items-center border-l border-stock-border px-3 text-xs font-black text-stock-muted">주</span>
                       </div>
                       <button
                         type="button"
                         onClick={() => onSubscribe(action, shareQuantity ?? 0)}
                         disabled={!canSubscribe}
-                        className="h-10 shrink-0 rounded-md bg-[#191f28] px-4 text-sm font-black text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3182f6] disabled:cursor-not-allowed disabled:bg-[#b0b8c1] disabled:opacity-70"
+                        className="h-11 shrink-0 rounded-md bg-stock-ink px-4 text-sm font-black text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stock-accent disabled:cursor-not-allowed disabled:bg-stock-disabled disabled:opacity-70"
                       >
                         {subscribingActionId === action.id ? "접수 중" : "청약"}
                       </button>
                     </div>
-                    <div id={helperId} aria-live="polite" className="mt-2 flex flex-wrap items-start justify-between gap-2 text-xs font-bold text-[#8b95a1]">
+                    <div id={helperId} aria-live="polite" className="mt-2 flex flex-wrap items-start justify-between gap-2 text-xs font-bold text-stock-subtle">
                       <span>{helperMessage}</span>
-                      <span className={hasInsufficientCash ? "tabular-nums text-[#f04452]" : "tabular-nums text-[#6b7684]"}>
+                      <span className={hasInsufficientCash ? "tabular-nums text-stock-danger" : "tabular-nums text-stock-muted"}>
                         {estimatedAmount === null ? "예상 -" : formatWon(estimatedAmount)}
                       </span>
                     </div>
@@ -211,7 +211,7 @@ export function CorporateActionSubscriptionPanel({
             );
           })
         ) : (
-          <p className="rounded-md bg-[#f7f8fa] px-3 py-4 text-sm font-bold text-[#8b95a1]">유상증자 이벤트가 없습니다.</p>
+          <p className="rounded-md bg-stock-surface-muted px-3 py-4 text-sm font-bold text-stock-subtle">유상증자 이벤트가 없습니다.</p>
         )}
       </div>
     </div>
@@ -231,29 +231,29 @@ function parsePositiveInteger(value: string) {
 
 function SmallMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md bg-[#f7f8fa] p-3">
-      <p className="text-xs font-bold text-[#8b95a1]">{label}</p>
-      <p className="mt-1 truncate text-sm font-black tabular-nums text-[#191f28]">{value}</p>
+    <div className="rounded-md bg-stock-surface-muted p-3">
+      <p className="text-xs font-bold text-stock-subtle">{label}</p>
+      <p className="mt-1 truncate text-sm font-black tabular-nums text-stock-ink">{value}</p>
     </div>
   );
 }
 
 function ScheduleItem({ label, value }: { label: string; value?: string | null }) {
   return (
-    <div className="min-w-0 rounded-md bg-[#f7f8fa] px-2.5 py-2">
-      <p className="font-bold text-[#8b95a1]">{label}</p>
-      <p className="mt-0.5 truncate font-black tabular-nums text-[#333d4b]">{formatMonthDay(value)}</p>
+    <div className="min-w-0 rounded-md bg-stock-surface-muted px-2.5 py-2">
+      <p className="font-bold text-stock-subtle">{label}</p>
+      <p className="mt-0.5 truncate font-black tabular-nums text-stock-text-secondary">{formatMonthDay(value)}</p>
     </div>
   );
 }
 
 function SubscriptionStatusBadge({ state }: { state: CorporateActionSubscriptionState }) {
   const className = state.kind === "ready"
-    ? "bg-[#eff6ff] text-[#3182f6]"
+    ? "bg-stock-accent-surface text-stock-accent"
     : state.kind === "done"
-      ? "bg-[#e8f7ef] text-[#179c52]"
+      ? "bg-stock-success-surface text-stock-success"
       : state.kind === "waiting"
-        ? "bg-[#fff8e6] text-[#8a5a00]"
-        : "bg-[#fff3f0] text-[#d34b36]";
+        ? "bg-stock-warning-surface text-stock-warning"
+        : "bg-stock-danger-surface text-stock-danger-strong";
   return <span className={`shrink-0 rounded-sm px-2 py-1 text-xs font-black ${className}`}>{state.label}</span>;
 }

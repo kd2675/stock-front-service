@@ -13,5 +13,5 @@ export default function AccountRequiredPage() {
 }
 
 function AccountRequiredFallback() {
-  return <TradingStatusScreen backgroundClassName="bg-[#f6f7f9]">계좌 확인 중</TradingStatusScreen>;
+  return <TradingStatusScreen backgroundClassName="bg-stock-canvas">계좌 확인 중</TradingStatusScreen>;
 }

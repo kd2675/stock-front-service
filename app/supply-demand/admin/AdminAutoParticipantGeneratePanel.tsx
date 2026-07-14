@@ -66,9 +66,9 @@ export function AdminAutoParticipantGeneratePanel({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-sm font-black text-white">자동 생성</p>
-          <p className="mt-1 text-xs font-bold text-[#8b95a1]">다음 번호부터 참여자를 여러 명 만들고, 계좌·초기 현금·월급 설정을 같은 규칙으로 적용합니다.</p>
+          <p className="mt-1 text-xs font-bold text-stock-subtle">다음 번호부터 참여자를 여러 명 만들고, 계좌·초기 현금·월급 설정을 같은 규칙으로 적용합니다.</p>
         </div>
-        <span className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-[#64a8ff]">계좌/현금/월급 일괄 설정</span>
+        <span className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-admin-accent">계좌/현금/월급 일괄 설정</span>
       </div>
       <div className="mt-3 grid min-w-0 gap-3">
         <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
@@ -91,12 +91,12 @@ export function AdminAutoParticipantGeneratePanel({
           </DarkSelect>
         </div>
         <div className="grid min-w-0 grid-cols-1 gap-3 rounded-md border border-white/10 bg-white/[0.04] p-3 sm:grid-cols-2 lg:grid-cols-4">
-          <label className="flex min-h-11 min-w-0 items-center gap-2 rounded-md border border-white/10 bg-[#161b21] px-3 py-2 text-xs font-black text-[#d7e2ec]">
+          <label className="flex min-h-11 min-w-0 items-center gap-2 rounded-md border border-white/10 bg-admin-surface px-3 py-2 text-xs font-black text-[#d7e2ec]">
             <input
               type="checkbox"
               checked={autoGenerateCreateAccount}
               onChange={(event) => onAutoGenerateCreateAccountChange(event.target.checked)}
-              className="h-4 w-4 rounded border-white/20 bg-[#101418] accent-[#3182f6]"
+              className="h-4 w-4 rounded border-white/20 bg-admin-canvas accent-stock-accent"
             />
             <span className="min-w-0">계좌 즉시 생성</span>
           </label>
@@ -112,7 +112,7 @@ export function AdminAutoParticipantGeneratePanel({
               <option key={unit.value} value={unit.value}>{unit.label}</option>
             ))}
           </DarkSelect>
-          <p className="self-end text-xs font-bold leading-5 text-[#8b95a1] sm:col-span-2 lg:col-span-3">
+          <p className="self-end text-xs font-bold leading-5 text-stock-subtle sm:col-span-2 lg:col-span-3">
             초기 현금을 입력하면 계좌 생성이 자동 적용됩니다. 배당재투자형은 월급 대신 배당 이벤트만 사용합니다.
           </p>
         </div>
@@ -121,7 +121,7 @@ export function AdminAutoParticipantGeneratePanel({
             type="button"
             onClick={onGenerateParticipants}
             disabled={generatingAutoParticipants || saving}
-            className="min-h-11 w-full rounded-md bg-[#3182f6] px-4 py-3 text-sm font-black text-white disabled:cursor-wait disabled:opacity-55 sm:w-auto"
+            className="min-h-11 w-full rounded-md bg-stock-accent px-4 py-3 text-sm font-black text-white disabled:cursor-wait disabled:opacity-55 sm:w-auto"
           >
             {generatingAutoParticipants ? "생성 중" : "자동 등록"}
           </button>

@@ -1,5 +1,5 @@
 <!-- Parent: ../AGENTS.md -->
-<!-- Updated: 2026-07-10 -->
+<!-- Updated: 2026-07-14 -->
 
 # stock-front-service
 
@@ -11,20 +11,26 @@
 
 - `/`
 - `/login`
+- `/trade`
+- `/orders`
 - `/portfolio`
+- `/research`
 - `/corporate-actions`
-- `/reports`
-- `/supply-demand`
-- `/supply-demand/admin`
+- `/admin/**`
+
+이전 `/supply-demand`, `/reports`, `/supply-demand/admin/**` 주소는 `next.config.ts`에서 위 canonical route로 redirect합니다.
 
 ## Key Files
 
 - `app/page.tsx`
 - `app/login/page.tsx`
 - `app/corporate-actions/page.tsx`
-- `app/reports/page.tsx`
-- `app/supply-demand/page.tsx`
-- `app/supply-demand/admin/page.tsx`
+- `app/trade/page.tsx`
+- `app/orders/page.tsx`
+- `app/research/page.tsx`
+- `app/admin/[[...slug]]/page.tsx`
+- `app/navigation/publicNavigation.ts`
+- `app/navigation/adminNavigation.ts`
 - `app/globals.css`
 - `app/lib/api.ts`
 - `app/lib/auth.ts`
@@ -57,6 +63,7 @@ npm run lint
 ## For AI Agents
 
 - 마케팅 랜딩보다 실제 투자 워크스페이스 화면을 우선합니다.
+- 사용자 투자 화면과 관리자 운영 화면의 navigation context를 섞지 않습니다. 사용자 상단 탭은 `publicNavigation.ts`, 관리자 사이드바는 `adminNavigation.ts`를 단일 기준으로 사용합니다.
 - 시세 표시, 주문 입력, 미체결 주문, 보유 자산 화면을 분리 가능한 컴포넌트 경계로 유지합니다.
 - `any`를 쓰지 않고 `app/types`에 응답 타입을 둡니다.
 - 주문 체결이 즉시 된다고 가정하지 말고, batch 서버가 PENDING 주문을 체결한다는 UX를 유지합니다.

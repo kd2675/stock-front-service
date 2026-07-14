@@ -13,18 +13,21 @@ export function sanitizeAccountNextPath(value: string | null) {
 }
 
 export function isOrderBookPath(value: string) {
-  return value === "/supply-demand" || value.startsWith("/supply-demand/");
+  return value === "/trade" || value === "/orders";
 }
 
 export function formatAccountNextLabel(nextPath: string) {
   if (isOrderBookPath(nextPath)) {
-    return "수요와 공급 주문 체결";
+    return nextPath.startsWith("/orders") ? "내 주문" : "주문장";
   }
   if (nextPath.startsWith("/portfolio")) {
-    return "내 주식";
+    return "내 자산";
   }
   if (nextPath.startsWith("/corporate-actions")) {
     return "기업 이벤트";
   }
-  return "수요와 공급 주문 체결";
+  if (nextPath.startsWith("/research")) {
+    return "종목 분석";
+  }
+  return "투자 화면";
 }

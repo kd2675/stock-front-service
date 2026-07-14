@@ -2,6 +2,7 @@ import type { AdminPageContentProps } from "@/app/supply-demand/admin/AdminPageC
 import type { AdminPageContentBuilderContext } from "@/app/supply-demand/admin/AdminPageContentBuilderContext";
 
 export function buildAdminMarketContentProps({
+  activeAdminSection,
   actions,
   derived,
   queries,
@@ -32,6 +33,7 @@ export function buildAdminMarketContentProps({
   } = actions;
 
   return {
+    activeSection: activeAdminSection,
     adminFlowOverview,
     allFundFlow: adminAllFundFlowSummaryQuery.data ?? null,
     allFundFlowError: adminAllFundFlowSummaryQuery.isError,

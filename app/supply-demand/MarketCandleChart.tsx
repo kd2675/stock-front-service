@@ -156,25 +156,25 @@ export function MarketCandleChart({ candles, expanded, interval, isLoading }: Ma
 
   if (isLoading && candles.length === 0) {
     return (
-      <div className={`grid ${emptyHeightClass} place-items-center rounded-md bg-[#f7f8fa] text-sm font-bold text-[#8b95a1]`}>
+      <div className={`grid ${emptyHeightClass} place-items-center rounded-md bg-stock-surface-muted text-sm font-bold text-stock-subtle`}>
         차트 데이터를 불러오는 중입니다.
       </div>
     );
   }
   if (!hasEnoughChartData || !priceSummary) {
     return (
-      <div className={`grid ${emptyHeightClass} place-items-center rounded-md bg-[#f7f8fa] px-4 text-center text-sm font-bold leading-6 text-[#8b95a1]`}>
+      <div className={`grid ${emptyHeightClass} place-items-center rounded-md bg-stock-surface-muted px-4 text-center text-sm font-bold leading-6 text-stock-subtle`}>
         가격 이력과 체결이 더 쌓이면 시뮬일/시뮬주 차트와 거래량이 표시됩니다.
       </div>
     );
   }
 
   return (
-    <div className="rounded-md border border-[#eef0f2] bg-[#fbfcfd] p-3">
+    <div className="rounded-md border border-stock-divider bg-stock-surface-muted p-3">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-xs font-bold text-[#8b95a1]">최근 {candles.length}개 구간 · 시뮬레이션 시간 기준</p>
-          <p className="mt-0.5 text-sm font-black tabular-nums text-[#191f28]">
+          <p className="text-xs font-bold text-stock-subtle">최근 {candles.length}개 구간 · 시뮬레이션 시간 기준</p>
+          <p className="mt-0.5 text-sm font-black tabular-nums text-stock-ink">
             {formatWon(priceSummary.lastClosePrice)}
           </p>
         </div>
@@ -183,12 +183,12 @@ export function MarketCandleChart({ candles, expanded, interval, isLoading }: Ma
             <button
               type="button"
               onClick={resumeLiveFollowing}
-              className="h-8 rounded-md border border-[#d1d6db] bg-white px-3 text-xs font-black text-[#333d4b] shadow-sm hover:bg-[#f7f8fa]"
+              className="h-9 rounded-md border border-stock-border-strong bg-white px-3 text-xs font-black text-stock-text-secondary shadow-sm hover:bg-stock-surface-muted"
             >
               실시간 아님 · 따라가기
             </button>
           ) : null}
-          <span className={priceSummary.changeRate >= 0 ? "text-sm font-black tabular-nums text-[#f04452]" : "text-sm font-black tabular-nums text-[#3182f6]"}>
+          <span className={priceSummary.changeRate >= 0 ? "text-sm font-black tabular-nums text-stock-danger" : "text-sm font-black tabular-nums text-stock-accent"}>
             {formatSignedPercent(priceSummary.changeRate)}
           </span>
         </div>
@@ -199,10 +199,10 @@ export function MarketCandleChart({ candles, expanded, interval, isLoading }: Ma
         onPointerDown={pauseLiveFollowing}
         onTouchStart={pauseLiveFollowing}
         onWheel={pauseLiveFollowing}
-        className="w-full min-w-0 overflow-hidden rounded-md bg-[#fbfcfd]"
+        className="w-full min-w-0 overflow-hidden rounded-md bg-stock-surface-muted"
         style={{ height: chartHeight }}
       />
-      <div className="mt-2 flex items-center justify-between gap-3 text-xs font-bold text-[#8b95a1]">
+      <div className="mt-2 flex items-center justify-between gap-3 text-xs font-bold text-stock-subtle">
         <span>{formatShortDateTime(priceSummary.firstBucketStart)}</span>
         <span>고가 {formatWon(priceSummary.maxPrice)} · 저가 {formatWon(priceSummary.minPrice)}</span>
         <span>{formatShortDateTime(priceSummary.lastBucketStart)}</span>

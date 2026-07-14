@@ -48,13 +48,17 @@ export function useSupplyDemandOrderTicketActions({
   }, [instruments, selectedSymbol, setOrderBookTicket]);
 
   const selectInstrument = useCallback((symbol: string) => {
+    const shouldRestorePageStart = !selectedSymbol;
     const nextInstrument = instruments.find((instrument) => instrument.symbol === symbol);
     setOrderBookTicket({
       selectedSymbol: symbol,
       limitPrice: nextInstrument ? formatOrderInputPrice(resolveDefaultLimitPrice(nextInstrument)) : limitPrice,
     });
     setMessage(null);
-  }, [instruments, limitPrice, setMessage, setOrderBookTicket]);
+    if (shouldRestorePageStart) {
+      window.requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
+    }
+  }, [instruments, limitPrice, selectedSymbol, setMessage, setOrderBookTicket]);
 
   const clearSelectedInstrument = useCallback(() => {
     setOrderBookTicket({ selectedSymbol: "" });

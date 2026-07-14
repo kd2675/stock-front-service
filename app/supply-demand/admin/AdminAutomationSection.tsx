@@ -98,7 +98,7 @@ export function AdminAutomationSection({
   onSubmitProfileConfig,
   onClearProfileSelection,
 }: AdminAutomationSectionProps) {
-  if (activeSection === "profiles") {
+  if (activeSection === "participants-profiles") {
     return (
       <AdminProfilesSection
         profileConfigs={profileConfigs}
@@ -114,7 +114,7 @@ export function AdminAutomationSection({
     );
   }
 
-  if (activeSection === "auto-symbols") {
+  if (activeSection === "participants-symbols") {
     return (
       <AdminAutoMarketConfigPanel
         configs={autoMarketConfigs}
@@ -134,7 +134,7 @@ export function AdminAutomationSection({
     );
   }
 
-  if (activeSection === "listing-auto") {
+  if (activeSection === "market-liquidity") {
     return (
       <AdminListingAutoAccountPanel
         accounts={listingAutoAccounts}
@@ -149,7 +149,7 @@ export function AdminAutomationSection({
     );
   }
 
-  if (activeSection === "batch") {
+  if (activeSection === "system-jobs") {
     return (
       <AdminBatchRuntimeControlPanel
         controls={batchJobRuntimeControls}

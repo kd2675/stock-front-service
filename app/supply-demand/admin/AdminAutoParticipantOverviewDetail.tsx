@@ -1,3 +1,4 @@
+import DataTableViewport from "@/app/components/DataTableViewport";
 import { formatCount, formatDateTime, formatInteger, formatNumber, formatSignedPercent, formatWon } from "@/app/supply-demand/admin/AdminFormatters";
 import { ProfileMiniMetric } from "@/app/supply-demand/admin/AdminMetricCards";
 import type { AutoParticipantOverview } from "@/app/types/stock";
@@ -8,11 +9,11 @@ export function AutoParticipantOverviewDetail({ overview }: { overview: AutoPart
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-sm font-black text-white">자동참가자 투자 현황</p>
-          <p className="mt-1 text-xs font-bold text-[#8b95a1]">실제 계좌 기준의 현금, 보유 주식, 주문, 2시간 시뮬레이션일 체결 흐름입니다.</p>
+          <p className="mt-1 text-xs font-bold text-stock-subtle">실제 계좌 기준의 현금, 보유 주식, 주문, 2시간 시뮬레이션일 체결 흐름입니다.</p>
         </div>
         <div className="flex flex-wrap gap-2 text-xs font-black">
-          <span className="rounded-md bg-white/10 px-2 py-1 text-[#d8ecff]">계좌 {overview.accountStatus ?? "미확인"} · ID {overview.accountId ?? "-"}</span>
-          <span className="rounded-md bg-white/10 px-2 py-1 text-[#64a8ff]">전략 {overview.enabledStrategyCount}/{overview.strategyCount}</span>
+          <span className="rounded-md bg-white/10 px-2 py-1 text-admin-accent-soft">계좌 {overview.accountStatus ?? "미확인"} · ID {overview.accountId ?? "-"}</span>
+          <span className="rounded-md bg-white/10 px-2 py-1 text-admin-accent">전략 {overview.enabledStrategyCount}/{overview.strategyCount}</span>
         </div>
       </div>
       <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
@@ -33,9 +34,9 @@ export function AutoParticipantOverviewDetail({ overview }: { overview: AutoPart
         <ProfileMiniMetric label="2시간 거래대금" value={formatWon(overview.todayGrossAmount)} tone="muted" />
         <ProfileMiniMetric label="전략" value={`${formatInteger(overview.enabledStrategyCount)} / ${formatInteger(overview.strategyCount)}`} tone="blue" />
       </div>
-      <div className="mt-3 overflow-x-auto rounded-md border border-white/10">
+      <DataTableViewport label="자동참가자 보유 종목" tone="dark" className="mt-3">
         <table className="min-w-[760px] w-full border-collapse text-sm">
-          <thead className="bg-white/10 text-left text-[#b8c2cc]">
+          <thead className="bg-white/10 text-left text-admin-muted">
             <tr>
               <th className="px-3 py-2">종목</th>
               <th className="px-3 py-2 text-right">보유</th>
@@ -51,24 +52,24 @@ export function AutoParticipantOverviewDetail({ overview }: { overview: AutoPart
               <tr key={holding.symbol}>
                 <td className="px-3 py-2 font-black">{holding.symbol}</td>
                 <td className="px-3 py-2 text-right tabular-nums">{formatNumber(holding.quantity)}주</td>
-                <td className="px-3 py-2 text-right text-[#b8c2cc] tabular-nums">{formatNumber(holding.availableQuantity)} / {formatNumber(holding.reservedQuantity)}주</td>
+                <td className="px-3 py-2 text-right text-admin-muted tabular-nums">{formatNumber(holding.availableQuantity)} / {formatNumber(holding.reservedQuantity)}주</td>
                 <td className="px-3 py-2 text-right tabular-nums">{formatWon(holding.averagePrice)}</td>
                 <td className="px-3 py-2 text-right tabular-nums">{formatWon(holding.currentPrice)}</td>
                 <td className="px-3 py-2 text-right tabular-nums">{formatWon(holding.marketValue)}</td>
-                <td className={["px-3 py-2 text-right font-black tabular-nums", holding.unrealizedProfit > 0 ? "text-[#6ee7a8]" : holding.unrealizedProfit < 0 ? "text-[#ffb4a8]" : "text-white"].join(" ")}>
+                <td className={["px-3 py-2 text-right font-black tabular-nums", holding.unrealizedProfit > 0 ? "text-admin-success" : holding.unrealizedProfit < 0 ? "text-admin-danger" : "text-white"].join(" ")}>
                   {formatWon(holding.unrealizedProfit)}
                 </td>
               </tr>
             ))}
             {overview.holdings.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-3 py-4 text-[#8b95a1]">보유 중인 종목이 없습니다.</td>
+                <td colSpan={7} className="px-3 py-4 text-stock-subtle">보유 중인 종목이 없습니다.</td>
               </tr>
             ) : null}
           </tbody>
         </table>
-      </div>
-      <p className="mt-2 text-xs font-bold text-[#6f7a86]">
+      </DataTableViewport>
+      <p className="mt-2 text-xs font-bold text-admin-quiet">
         최근 주문 {formatDateTime(overview.lastOrderAt)} · 최근 체결 {formatDateTime(overview.lastExecutionAt)}
       </p>
     </section>

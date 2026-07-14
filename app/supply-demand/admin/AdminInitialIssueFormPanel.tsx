@@ -52,7 +52,7 @@ export function AdminInitialIssueFormPanel({
         <option value="DOWN">아래</option>
         <option value="RANDOM">위·아래 무작위</option>
       </DarkFormSelect>
-      <button type="button" onClick={onSubmit} disabled={creatingInitialIssue} className="min-h-11 min-w-0 self-end rounded-md bg-white px-3 py-3 text-sm font-black text-[#101418] disabled:opacity-50 sm:col-span-2 lg:col-span-1">
+      <button type="button" onClick={onSubmit} disabled={creatingInitialIssue} className="min-h-11 min-w-0 self-end rounded-md bg-white px-3 py-3 text-sm font-black text-admin-canvas disabled:opacity-50 sm:col-span-2 lg:col-span-1">
         {creatingInitialIssue ? "적용 중" : "이벤트 적용"}
       </button>
     </div>

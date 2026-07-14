@@ -44,7 +44,7 @@ export function AdminAutoParticipantCards({
 }: AdminAutoParticipantCardsProps) {
   if (participants.length === 0) {
     return (
-      <div className="rounded-md border border-white/10 bg-black/20 px-3 py-4 text-sm font-bold text-[#8b95a1]">
+      <div className="rounded-md border border-white/10 bg-black/20 px-3 py-4 text-sm font-bold text-stock-subtle">
         조건에 맞는 자동 참여자가 없습니다.
       </div>
     );

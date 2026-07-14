@@ -9,6 +9,7 @@
     "start": "next start -p 3005",
     "lint": "eslint",
     "verify:corporate-actions": "node --no-warnings --experimental-strip-types scripts/verify-corporate-action-subscriptions.mjs",
+    "verify:navigation": "node --no-warnings --experimental-strip-types scripts/verify-navigation.mjs",
     "verify:contract": "node ../scripts/verify-stock-auto-profiles.mjs && node ../scripts/verify-stock-front-contract.mjs"
   },
   "dependencies": {

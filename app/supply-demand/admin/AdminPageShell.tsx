@@ -1,38 +1,34 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-import TradingTopBar from "@/app/components/TradingTopBar";
+import { findAdminNavigationItem } from "@/app/navigation/adminNavigation";
 import {
-  ACCOUNT_SUB_TABS,
-  ADMIN_TABS,
-  AUTOMATION_SUB_TABS,
-} from "@/app/supply-demand/admin/AdminNavigationConfig";
-import {
-  AdminSubTabNav,
-  AdminTabNav,
+  AdminMobileNavigation,
+  AdminSidebarNavigation,
 } from "@/app/supply-demand/admin/AdminNavigationComponents";
 import type {
   AdminSection,
   AdminTab,
 } from "@/app/supply-demand/admin/AdminNavigationConfig";
+import { AdminTopBar } from "@/app/supply-demand/admin/AdminTopBar";
 
 type AdminAccessStatus = "checking" | "allowed" | "denied";
 
 export function AdminAccessStatusPanel({ status }: { status: AdminAccessStatus }) {
   if (status === "checking") {
     return (
-      <main className="grid min-h-screen place-items-center bg-[#101418] px-4 text-white">
-        <p className="text-sm font-bold text-[#b8c2cc]">관리자 권한을 확인하고 있습니다.</p>
+      <main className="grid min-h-screen place-items-center bg-admin-canvas px-4 text-white">
+        <p className="text-sm font-bold text-admin-muted">관리자 권한을 확인하고 있습니다.</p>
       </main>
     );
   }
 
   if (status === "denied") {
     return (
-      <main className="grid min-h-screen place-items-center bg-[#101418] px-4 text-white">
+      <main className="grid min-h-screen place-items-center bg-admin-canvas px-4 text-white">
         <div className="max-w-sm text-center">
-          <p className="text-sm font-bold text-[#ffb4a8]">관리자 권한이 필요합니다.</p>
-          <Link href="/login" className="mt-4 inline-flex rounded-md bg-white px-3 py-2 text-sm font-black text-[#101418]">
+          <p className="text-sm font-bold text-admin-danger">관리자 권한이 필요합니다.</p>
+          <Link href="/login" className="mt-4 inline-flex rounded-md bg-white px-3 py-2 text-sm font-black text-admin-canvas">
             로그인
           </Link>
         </div>
@@ -54,39 +50,33 @@ export function AdminPageShell({
   children: ReactNode;
   message: string | null;
 }) {
+  const activeItem = findAdminNavigationItem(activeAdminSection);
+
   return (
-    <main className="min-h-screen bg-[#101418] text-white">
-      <TradingTopBar
-        active="order-book"
-        actions={(
-          <div className="flex flex-wrap items-center gap-2">
-            <Link href="/supply-demand/admin/accounts/participants" className="inline-flex h-11 items-center rounded-md bg-[#f2f4f6] px-3 text-sm font-bold text-[#333d4b]">
-              참여자 현황
-            </Link>
-            <Link href="/supply-demand" className="inline-flex h-11 items-center rounded-md bg-[#f2f4f6] px-3 text-sm font-bold text-[#333d4b]">
-              자동장
-            </Link>
+    <main className="admin-surface min-h-screen bg-admin-canvas text-white">
+      <AdminTopBar />
+      <div className="mx-auto grid max-w-[1600px] gap-6 px-4 py-5 sm:px-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:px-8 lg:py-7">
+        <aside className="hidden min-w-0 border-r border-white/10 pr-5 lg:block">
+          <div className="pb-6 pr-2">
+            <AdminSidebarNavigation activeSection={activeAdminSection} />
           </div>
-        )}
-      />
-      <section className="border-b border-white/10">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-5 sm:px-6 lg:px-8">
-          <div>
-            <p className="text-xs font-bold text-[#64a8ff]">AUTO MARKET CONFIG</p>
-            <h1 className="mt-1 text-2xl font-black">자동장 설정 현황</h1>
+        </aside>
+
+        <section className="min-w-0">
+          <AdminMobileNavigation activeSection={activeAdminSection} />
+          <header className="border-b border-white/10 pb-5 pt-5 lg:pt-0">
+            <p className="text-xs font-black tracking-[0.16em] text-admin-accent">ADMIN · {activeAdminTab.toUpperCase()}</p>
+            <h1 className="mt-2 text-2xl font-black sm:text-3xl">{activeItem.label}</h1>
+            <p className="mt-2 max-w-3xl text-sm font-bold leading-6 text-stock-subtle">{activeItem.description}</p>
+          </header>
+
+          {message ? <p role="alert" aria-live="polite" className="mt-5 rounded-md border border-admin-danger/25 bg-admin-danger-surface px-3 py-3 text-sm font-bold text-admin-danger">{message}</p> : null}
+
+          <div className="min-w-0 pt-1">
+            {children}
           </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-6xl px-4 py-5 sm:px-6 lg:px-8">
-        {message ? <p aria-live="polite" className="rounded-md bg-[#3a1f1b] px-3 py-2 text-sm font-bold text-[#ffb4a8]">{message}</p> : null}
-
-        <AdminTabNav tabs={ADMIN_TABS} activeTab={activeAdminTab} />
-        {activeAdminTab === "accounts" ? <AdminSubTabNav tabs={ACCOUNT_SUB_TABS} activeSection={activeAdminSection} /> : null}
-        {activeAdminTab === "automation" ? <AdminSubTabNav tabs={AUTOMATION_SUB_TABS} activeSection={activeAdminSection} /> : null}
-
-        {children}
-      </section>
+        </section>
+      </div>
     </main>
   );
 }

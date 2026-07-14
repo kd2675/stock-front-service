@@ -28,7 +28,7 @@ export function AdminAutoParticipantFormPanel({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-black">자동 참여자</h2>
-          <p className="mt-1 text-xs font-bold text-[#8b95a1]">
+          <p className="mt-1 text-xs font-bold text-stock-subtle">
             {isEditing
               ? "선택한 참여자의 프로필과 가동 상태를 수정 중입니다. 새 참여자는 신규 등록으로 전환해 입력합니다."
               : "참여자 등록은 프로필과 가동 상태만 저장하고, 운용 현금은 선택 후 입금/회수로 조정합니다."}
@@ -62,12 +62,12 @@ export function AdminAutoParticipantFormPanel({
             <option key={option.value} value={option.value}>{option.label}</option>
           ))}
         </DarkSelect>
-        <button type="button" onClick={onSubmitParticipant} disabled={saving} className="min-h-11 min-w-0 self-end rounded-md bg-white px-3 py-3 text-sm font-black text-[#101418] disabled:opacity-50 sm:col-span-2 lg:col-span-1">
+        <button type="button" onClick={onSubmitParticipant} disabled={saving} className="min-h-11 min-w-0 self-end rounded-md bg-white px-3 py-3 text-sm font-black text-admin-canvas disabled:opacity-50 sm:col-span-2 lg:col-span-1">
           {saving ? "저장 중" : isEditing ? "상태 저장" : "등록"}
         </button>
       </div>
 
-      <div className="mt-3 rounded-md bg-black/20 px-3 py-3 text-xs font-bold leading-5 text-[#b8c2cc]">
+      <div className="mt-3 rounded-md bg-black/20 px-3 py-3 text-xs font-bold leading-5 text-admin-muted">
         <span className="text-white">{formatAutoParticipantProfile(draft.profileType)}</span>
         <span className="mx-2 text-[#5a6572]">/</span>
         <span>{formatAutoParticipantProfileDescription(draft.profileType)}</span>

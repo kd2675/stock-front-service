@@ -7,9 +7,11 @@ import type {
 import { AdminCorporateActionHistoryPanel } from "@/app/supply-demand/admin/AdminCorporateActionHistoryPanel";
 import { AdminInstrumentReportPanel, type InstrumentReportDraft, type InstrumentReportDraftSetters } from "@/app/supply-demand/admin/AdminInstrumentReportPanel";
 import { AdminStockEventPanel, type StockEventDraft, type StockEventDraftSetters } from "@/app/supply-demand/admin/AdminStockEventPanel";
+import type { AdminSection } from "@/app/supply-demand/admin/AdminNavigationConfig";
 import type { CorporateAction, InstrumentReport, OrderBookInstrument } from "@/app/types/stock";
 
 type AdminEventsSectionProps = {
+  activeSection: AdminSection;
   instruments: OrderBookInstrument[];
   createInstrumentForm: UseFormReturn<CreateInstrumentFormValues, unknown, CreateInstrumentPayload>;
   stockEventDraft: StockEventDraft;
@@ -36,6 +38,7 @@ type AdminEventsSectionProps = {
 };
 
 export function AdminEventsSection({
+  activeSection,
   instruments,
   createInstrumentForm,
   stockEventDraft,
@@ -60,9 +63,10 @@ export function AdminEventsSection({
   corporateActionsLoading,
   onRetryCorporateActions,
 }: AdminEventsSectionProps) {
-  return (
-    <>
+  if (activeSection === "corporate-instruments" || activeSection === "corporate-actions") {
+    return (
       <AdminStockEventPanel
+        mode={activeSection === "corporate-instruments" ? "instruments" : "actions"}
         instruments={instruments}
         createInstrumentForm={createInstrumentForm}
         draft={stockEventDraft}
@@ -72,7 +76,11 @@ export function AdminEventsSection({
         currentSimulationDate={currentSimulationDate}
         onSubmit={onSubmitStockEvent}
       />
+    );
+  }
 
+  if (activeSection === "corporate-history") {
+    return (
       <AdminCorporateActionHistoryPanel
         instruments={instruments}
         symbol={historySymbol}
@@ -82,7 +90,11 @@ export function AdminEventsSection({
         loading={corporateActionsLoading}
         onRetry={onRetryCorporateActions}
       />
+    );
+  }
 
+  return (
+    <>
       <AdminInstrumentReportPanel
         instruments={instruments}
         reports={instrumentReports}

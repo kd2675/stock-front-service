@@ -70,7 +70,7 @@ export default function AssetLineChart({ snapshots }: { snapshots: PortfolioSnap
 
   if (data.length < 2) {
     return (
-      <div className="mt-4 flex h-[180px] items-center justify-center rounded-md bg-[#f9fafb] text-sm font-semibold text-[#6b7684]">
+      <div className="mt-4 flex h-[180px] items-center justify-center rounded-md bg-stock-surface-muted text-sm font-semibold text-stock-muted">
         자산 기록이 더 쌓이면 차트가 표시됩니다.
       </div>
     );

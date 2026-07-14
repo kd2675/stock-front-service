@@ -7,11 +7,16 @@ import { buildAdminMarketContentProps } from "@/app/supply-demand/admin/buildAdm
 import { buildAdminParticipantsContentProps } from "@/app/supply-demand/admin/buildAdminParticipantsContentProps";
 
 export function buildAdminPageContentProps(context: AdminPageContentBuilderContext): AdminPageContentProps {
-  const isAccountsContent = context.activeAdminTab === "accounts" && context.activeAdminSection !== "participants";
-  const isAutomationContent = context.activeAdminTab === "automation";
-  const isEventsContent = context.activeAdminTab === "events";
-  const isMarketContent = context.activeAdminSection === "market";
-  const isParticipantsContent = context.activeAdminSection === "participants";
+  const isAccountsContent = context.activeAdminTab === "funds" || context.activeAdminSection === "participants-overview";
+  const isAutomationContent = context.activeAdminSection === "market-liquidity"
+    || context.activeAdminSection === "participants-profiles"
+    || context.activeAdminSection === "participants-symbols"
+    || context.activeAdminSection === "system-jobs";
+  const isEventsContent = context.activeAdminTab === "corporate";
+  const isMarketContent = context.activeAdminSection === "dashboard"
+    || context.activeAdminSection === "market-instruments"
+    || context.activeAdminSection === "market-flows";
+  const isParticipantsContent = context.activeAdminSection === "participants-list";
 
   return {
     activeAdminSection: context.activeAdminSection,

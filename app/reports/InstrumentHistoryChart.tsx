@@ -100,7 +100,7 @@ export default function InstrumentHistoryChart({ history }: { history: Instrumen
 
   if (chartData.prices.length < 2) {
     return (
-      <div className="flex h-[280px] items-center justify-center rounded-md bg-[#f7f8fa] px-4 text-center text-sm font-bold text-[#8b95a1]">
+      <div className="flex h-[280px] items-center justify-center rounded-md bg-stock-surface-muted px-4 text-center text-sm font-bold text-stock-subtle">
         마감 데이터가 2일 이상 쌓이면 가격·거래량 차트가 표시됩니다.
       </div>
     );

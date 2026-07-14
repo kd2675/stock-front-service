@@ -1,15 +1,15 @@
 export default function AutoSignalGuide() {
   return (
-    <section className="mt-5 rounded-lg border border-[#3182f6]/20 bg-[#10233a] p-4">
+    <section className="mt-5 rounded-lg border border-stock-accent/20 bg-[#10233a] p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-black text-[#64a8ff]">AUTO SIGNAL FLOW</p>
+          <p className="text-xs font-black text-admin-accent">AUTO SIGNAL FLOW</p>
           <h2 className="mt-1 text-base font-black">자동 주문 활동 강도 계산 기준</h2>
-          <p className="mt-1 max-w-3xl text-xs font-bold leading-5 text-[#b8c2cc]">
+          <p className="mt-1 max-w-3xl text-xs font-bold leading-5 text-admin-muted">
             주문 활동 강도는 다섯 압력과 함께 최종 주문 행동을 만드는 여섯 번째 요인입니다. 다만 압력처럼 랜덤 생성되는 -100~100 값이 아니라 참여자·종목별 1~10 기준값입니다.
           </p>
         </div>
-        <span className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-[#d8ecff]">1-10 척도</span>
+        <span className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-admin-accent-soft">1-10 척도</span>
       </div>
 
       <div className="mt-4 grid gap-3 lg:grid-cols-3">
@@ -31,14 +31,14 @@ export default function AutoSignalGuide() {
       </div>
 
       <div className="mt-4 grid gap-3 lg:grid-cols-2">
-        <div className="rounded-md bg-black/20 px-3 py-3 text-xs font-bold leading-5 text-[#b8c2cc]">
+        <div className="rounded-md bg-black/20 px-3 py-3 text-xs font-bold leading-5 text-admin-muted">
           <p className="font-black text-white">실제 적용 순서</p>
           <p className="mt-1">
             참여자·종목 설정값을 기본으로 사용하고, 최신 보고서가 있으면 프로필의 뉴스 민감도만큼 보고서 점수와 섞어 유효 활동 강도를 만듭니다. 이 값이 주문 후보 우선순위, 주문 건수, 가격 압력의 호가 반영 강도에 쓰입니다.
           </p>
         </div>
-        <div className="rounded-md border border-[#f59e0b]/20 bg-[#f59e0b]/[0.06] px-3 py-3 text-xs font-bold leading-5 text-[#d8c49c]">
-          <p className="font-black text-[#fcd34d]">강도가 정하지 않는 것</p>
+        <div className="rounded-md border border-admin-warning/20 bg-admin-warning/[0.06] px-3 py-3 text-xs font-bold leading-5 text-[#d8c49c]">
+          <p className="font-black text-admin-warning-soft">강도가 정하지 않는 것</p>
           <p className="mt-1">
             활동 강도 자체는 상승·하락 방향, 1회 주문 수량, 보유 목표, TTL을 정하지 않습니다. 방향은 다섯 압력·프로필·보고서·수익률·계좌 상태가 정하며, 활동 강도는 그 결과가 주문 건수와 호가에 반영되는 크기를 조절합니다.
           </p>
@@ -77,17 +77,17 @@ export function AutoMarketConfigGuide() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-sm font-black text-white">항목 설명</p>
-          <p className="mt-1 text-xs font-bold leading-5 text-[#8b95a1]">
+          <p className="mt-1 text-xs font-bold leading-5 text-stock-subtle">
             실제 주문은 06·09·12·15시 주 압력 60%, 30분 보조 압력 40%, 참여자별 전략, 심리 프로필, 보고서 점수, 계좌 상태를 함께 계산해 생성됩니다.
           </p>
         </div>
-        <span className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-[#64a8ff]">stock_auto_market_config</span>
+        <span className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-admin-accent">stock_auto_market_config</span>
       </div>
       <div className="mt-3 grid gap-2 lg:grid-cols-4">
         {items.map((item) => (
           <div key={item.name} className="rounded-md bg-white/[0.04] px-3 py-3">
             <p className="text-xs font-black text-white">{item.name}</p>
-            <p className="mt-1 text-xs font-bold leading-5 text-[#8b95a1]">{item.description}</p>
+            <p className="mt-1 text-xs font-bold leading-5 text-stock-subtle">{item.description}</p>
           </div>
         ))}
       </div>
@@ -96,11 +96,11 @@ export function AutoMarketConfigGuide() {
         <div className="flex flex-wrap items-end justify-between gap-2">
           <div>
             <p className="text-sm font-black text-white">여섯 주문 행동 요인의 실제 영향</p>
-            <p className="mt-1 text-xs font-bold leading-5 text-[#8b95a1]">
+            <p className="mt-1 text-xs font-bold leading-5 text-stock-subtle">
               다섯 압력은 종목별 랜덤 시장환경이고 주문 활동 강도는 참여자·종목별 기준 활동도입니다. 서로 척도와 생성 방식은 다르지만 최종 주문 건수·방향·호가를 함께 만듭니다.
             </p>
           </div>
-          <span className="text-[11px] font-black text-[#8b95a1]">압력 -100~100 · 활동 강도 1~10</span>
+          <span className="text-[11px] font-black text-stock-subtle">압력 -100~100 · 활동 강도 1~10</span>
         </div>
         <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
           {ORDER_BEHAVIOR_GUIDE_ITEMS.map((item) => (
@@ -185,9 +185,9 @@ function SignalGuideCard({
 }) {
   return (
     <div className="rounded-md border border-white/10 bg-white/[0.06] p-3">
-      <p className="text-[11px] font-black text-[#64a8ff]">{label}</p>
+      <p className="text-[11px] font-black text-admin-accent">{label}</p>
       <h3 className="mt-1 text-sm font-black text-white">{title}</h3>
-      <p className="mt-2 text-xs font-bold leading-5 text-[#b8c2cc]">{body}</p>
+      <p className="mt-2 text-xs font-bold leading-5 text-admin-muted">{body}</p>
     </div>
   );
 }

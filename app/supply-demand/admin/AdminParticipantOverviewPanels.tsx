@@ -1,5 +1,6 @@
 import { memo, useMemo, useState } from "react";
 
+import useModalDialog from "@/app/hooks/useModalDialog";
 import { formatCount, formatDateTime, formatInteger, formatNumber, formatSignedPercent, formatWon } from "@/app/supply-demand/admin/AdminFormatters";
 import { ProfileMiniMetric, ProfileOverviewInfoItem } from "@/app/supply-demand/admin/AdminMetricCards";
 import type { ParticipantProfileOverviewSummary } from "@/app/supply-demand/admin/AdminParticipantPolicyHelpers";
@@ -32,6 +33,7 @@ export function ParticipantProfileOverviewPanel({
   const allTotal = useMemo(() => resolveParticipantProfileOverviewTotal(allSummaries), [allSummaries]);
   const allTotalReturnRate = useMemo(() => resolveParticipantProfileOverviewReturnRate(allTotal), [allTotal]);
   const [showAllModal, setShowAllModal] = useState(false);
+  const allHistoryDialogRef = useModalDialog<HTMLDivElement>(showAllModal, () => setShowAllModal(false));
 
   const openAllModal = () => {
     setShowAllModal(true);
@@ -41,29 +43,29 @@ export function ParticipantProfileOverviewPanel({
   };
 
   return (
-    <section className="mt-5 rounded-lg border border-white/10 bg-white/[0.06] p-4">
+    <section className="admin-panel mt-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-black">프로필별 자동참가자 현황</h2>
-          <p className="mt-1 text-xs font-bold text-[#8b95a1]">
+          <p className="mt-1 text-xs font-bold text-stock-subtle">
             기본 조회는 요청 시점의 시뮬레이션 시간부터 최근 1일만 반영합니다. 전체 이력은 별도 조회로 확인합니다.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs font-black">
-          {loading ? <span className="rounded-md bg-white/10 px-2 py-1 text-[#d8ecff]">갱신 중</span> : null}
-          {error ? <span className="rounded-md bg-[#3a1f1b] px-2 py-1 text-[#ffb4a8]">현황 조회 실패</span> : null}
+          {loading ? <span className="rounded-md bg-white/10 px-2 py-1 text-admin-accent-soft">갱신 중</span> : null}
+          {error ? <span className="rounded-md bg-admin-danger-surface px-2 py-1 text-admin-danger">현황 조회 실패</span> : null}
           <button
             type="button"
             onClick={onRefresh}
             disabled={loading}
-            className="min-h-8 rounded-md bg-[#f2f4f6] px-3 py-1.5 text-xs font-black text-[#191f28] disabled:cursor-not-allowed disabled:opacity-50"
+            className="min-h-9 rounded-md bg-stock-surface-strong px-3 py-1.5 text-xs font-black text-stock-ink disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? "조회 중" : "새로고침"}
           </button>
           <button
             type="button"
             onClick={openAllModal}
-            className="min-h-8 rounded-md border border-white/10 px-3 py-1.5 text-xs font-black text-[#d8ecff] transition hover:border-[#64a8ff]/60"
+            className="min-h-9 rounded-md border border-white/10 px-3 py-1.5 text-xs font-black text-admin-accent-soft transition hover:border-admin-accent/60"
           >
             전체 이력
           </button>
@@ -89,30 +91,30 @@ export function ParticipantProfileOverviewPanel({
         ))}
       </div>
       {showAllModal ? (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 px-4 py-8">
-          <div className="w-full max-w-6xl rounded-lg border border-white/10 bg-[#11161d] p-4 shadow-2xl">
+        <div className="modal-scroll fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 px-4 py-8">
+          <div ref={allHistoryDialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="participant-history-title" className="w-full max-w-6xl rounded-lg border border-white/10 bg-admin-modal p-4 shadow-[var(--shadow-dialog)] outline-none">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h3 className="text-base font-black text-white">프로필별 전체 이력</h3>
-                <p className="mt-1 text-xs font-bold leading-5 text-[#8b95a1]">
+                <h3 id="participant-history-title" className="text-base font-black text-white">프로필별 전체 이력</h3>
+                <p className="mt-1 text-xs font-bold leading-5 text-stock-subtle">
                   요청 시점의 시뮬레이션 시간 이전 전체 주문/체결 이력을 기준으로 최근 활동을 다시 계산합니다. 장중에는 조회가 오래 걸릴 수 있습니다.
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2 text-xs font-black">
-                {loadingAll ? <span className="rounded-md bg-white/10 px-2 py-1 text-[#d8ecff]">전체 조회 중</span> : null}
-                {allError ? <span className="rounded-md bg-[#3a1f1b] px-2 py-1 text-[#ffb4a8]">전체 조회 실패</span> : null}
+                {loadingAll ? <span className="rounded-md bg-white/10 px-2 py-1 text-admin-accent-soft">전체 조회 중</span> : null}
+                {allError ? <span className="rounded-md bg-admin-danger-surface px-2 py-1 text-admin-danger">전체 조회 실패</span> : null}
                 <button
                   type="button"
                   onClick={onLoadAll}
                   disabled={loadingAll}
-                  className="min-h-8 rounded-md bg-[#f2f4f6] px-3 py-1.5 text-xs font-black text-[#191f28] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="min-h-9 rounded-md bg-stock-surface-strong px-3 py-1.5 text-xs font-black text-stock-ink disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   다시 조회
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowAllModal(false)}
-                  className="min-h-8 rounded-md border border-white/10 px-3 py-1.5 text-xs font-black text-[#d8ecff] transition hover:border-white/30"
+                  className="min-h-9 rounded-md border border-white/10 px-3 py-1.5 text-xs font-black text-admin-accent-soft transition hover:border-white/30"
                 >
                   닫기
                 </button>
@@ -131,7 +133,7 @@ export function ParticipantProfileOverviewPanel({
                 <ParticipantProfileOverviewCard key={summary.profileType} summary={summary} />
               ))}
               {allSummaries.length === 0 && !loadingAll ? (
-                <div className="rounded-md border border-white/10 bg-black/20 px-3 py-4 text-sm font-bold text-[#8b95a1]">
+                <div className="rounded-md border border-white/10 bg-black/20 px-3 py-4 text-sm font-bold text-stock-subtle">
                   전체 이력 조회 결과가 없습니다.
                 </div>
               ) : null}
@@ -155,67 +157,67 @@ const ParticipantProfileOverviewCard = memo(function ParticipantProfileOverviewC
       <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="break-words text-sm font-black text-white">{summary.label}</p>
-          <p className="mt-1 max-w-3xl break-words text-xs font-bold leading-5 text-[#8b95a1]">{summary.description}</p>
+          <p className="mt-1 max-w-3xl break-words text-xs font-bold leading-5 text-stock-subtle">{summary.description}</p>
         </div>
         <div className="flex flex-wrap gap-2 text-xs font-black">
-          <span className="rounded-md bg-white/10 px-2 py-1 text-[#64a8ff]">{formatCount(summary.totalCount, "명")}</span>
-          <span className="rounded-md bg-white/10 px-2 py-1 text-[#6ee7a8]">가동 {formatInteger(summary.enabledCount)}</span>
-          <span className="rounded-md bg-white/10 px-2 py-1 text-[#8b95a1]">정지 {formatInteger(summary.disabledCount)}</span>
+          <span className="rounded-md bg-white/10 px-2 py-1 text-admin-accent">{formatCount(summary.totalCount, "명")}</span>
+          <span className="rounded-md bg-white/10 px-2 py-1 text-admin-success">가동 {formatInteger(summary.enabledCount)}</span>
+          <span className="rounded-md bg-white/10 px-2 py-1 text-stock-subtle">정지 {formatInteger(summary.disabledCount)}</span>
         </div>
       </div>
 
       <div className="mt-3 grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
         <ProfileOverviewInfoItem label="현금">
           <p className="font-black tabular-nums text-white">{formatWon(summary.availableCash)}</p>
-          <p className="mt-1 text-xs font-bold tabular-nums text-[#8b95a1]">예약 매수금 {formatWon(summary.reservedBuyCash)}</p>
+          <p className="mt-1 text-xs font-bold tabular-nums text-stock-subtle">예약 매수금 {formatWon(summary.reservedBuyCash)}</p>
         </ProfileOverviewInfoItem>
         <ProfileOverviewInfoItem label="자산">
           <p className="font-black tabular-nums text-white">{formatWon(summary.estimatedTotalAsset)}</p>
-          <p className="mt-1 text-xs font-bold tabular-nums text-[#8b95a1]">보유 평가액 {formatWon(summary.holdingMarketValue)}</p>
+          <p className="mt-1 text-xs font-bold tabular-nums text-stock-subtle">보유 평가액 {formatWon(summary.holdingMarketValue)}</p>
         </ProfileOverviewInfoItem>
         <ProfileOverviewInfoItem label="순입금">
           <p className="font-black tabular-nums text-white">{formatWon(summary.netCashFlow)}</p>
-          <p className="mt-1 text-xs font-bold text-[#8b95a1]">외부 현금 흐름 기준</p>
+          <p className="mt-1 text-xs font-bold text-stock-subtle">외부 현금 흐름 기준</p>
         </ProfileOverviewInfoItem>
         <ProfileOverviewInfoItem label="손익/수익률">
-          <p className={["font-black tabular-nums", summary.totalProfit > 0 ? "text-[#6ee7a8]" : summary.totalProfit < 0 ? "text-[#ffb4a8]" : "text-white"].join(" ")}>{formatWon(summary.totalProfit)}</p>
-          <p className={["mt-1 text-xs font-black tabular-nums", summary.returnRate > 0 ? "text-[#6ee7a8]" : summary.returnRate < 0 ? "text-[#ffb4a8]" : "text-[#8b95a1]"].join(" ")}>{formatSignedPercent(summary.returnRate)}</p>
+          <p className={["font-black tabular-nums", summary.totalProfit > 0 ? "text-admin-success" : summary.totalProfit < 0 ? "text-admin-danger" : "text-white"].join(" ")}>{formatWon(summary.totalProfit)}</p>
+          <p className={["mt-1 text-xs font-black tabular-nums", summary.returnRate > 0 ? "text-admin-success" : summary.returnRate < 0 ? "text-admin-danger" : "text-stock-subtle"].join(" ")}>{formatSignedPercent(summary.returnRate)}</p>
         </ProfileOverviewInfoItem>
         <ProfileOverviewInfoItem label="보유">
           <p className="font-black tabular-nums text-white">{formatCount(summary.holdingCount, "종목")}</p>
-          <p className="mt-1 text-xs font-bold tabular-nums text-[#8b95a1]">{formatNumber(summary.totalHoldingQuantity)}주</p>
-          <p className="mt-1 text-xs font-bold tabular-nums text-[#8b95a1]">예약 {formatNumber(summary.reservedSellQuantity)}주</p>
+          <p className="mt-1 text-xs font-bold tabular-nums text-stock-subtle">{formatNumber(summary.totalHoldingQuantity)}주</p>
+          <p className="mt-1 text-xs font-bold tabular-nums text-stock-subtle">예약 {formatNumber(summary.reservedSellQuantity)}주</p>
         </ProfileOverviewInfoItem>
         <ProfileOverviewInfoItem label="주문/체결">
           <p className="font-black tabular-nums text-white">대기 {formatCount(summary.openOrderCount, "건")}</p>
-          <p className="mt-1 text-xs font-bold tabular-nums text-[#8b95a1]">매수/매도 {formatInteger(summary.openBuyOrderCount)} / {formatCount(summary.openSellOrderCount, "건")}</p>
-          <p className="mt-1 text-xs font-bold tabular-nums text-[#8b95a1]">대기 수량 {formatNumber(summary.openBuyQuantity)} / {formatNumber(summary.openSellQuantity)}주</p>
-          <p className="mt-1 text-xs font-bold tabular-nums text-[#8b95a1]">2시간 {formatInteger(summary.todayExecutionCount)}체결</p>
-          <p className="mt-1 text-xs font-bold tabular-nums text-[#8b95a1]">2시간 매수/매도 {formatNumber(summary.todayBuyQuantity)} / {formatNumber(summary.todaySellQuantity)}주</p>
-          <p className="mt-1 text-xs font-bold tabular-nums text-[#8b95a1]">2시간 거래대금 {formatWon(summary.todayGrossAmount)}</p>
+          <p className="mt-1 text-xs font-bold tabular-nums text-stock-subtle">매수/매도 {formatInteger(summary.openBuyOrderCount)} / {formatCount(summary.openSellOrderCount, "건")}</p>
+          <p className="mt-1 text-xs font-bold tabular-nums text-stock-subtle">대기 수량 {formatNumber(summary.openBuyQuantity)} / {formatNumber(summary.openSellQuantity)}주</p>
+          <p className="mt-1 text-xs font-bold tabular-nums text-stock-subtle">2시간 {formatInteger(summary.todayExecutionCount)}체결</p>
+          <p className="mt-1 text-xs font-bold tabular-nums text-stock-subtle">2시간 매수/매도 {formatNumber(summary.todayBuyQuantity)} / {formatNumber(summary.todaySellQuantity)}주</p>
+          <p className="mt-1 text-xs font-bold tabular-nums text-stock-subtle">2시간 거래대금 {formatWon(summary.todayGrossAmount)}</p>
         </ProfileOverviewInfoItem>
         <ProfileOverviewInfoItem label="전략">
           <p className="font-black tabular-nums text-white">{formatInteger(summary.enabledStrategyCount)} / {formatInteger(summary.strategyCount)}</p>
-          <p className="mt-1 text-xs font-bold text-[#8b95a1]">가동 / 전체</p>
+          <p className="mt-1 text-xs font-bold text-stock-subtle">가동 / 전체</p>
         </ProfileOverviewInfoItem>
         <ProfileOverviewInfoItem label="최근 활동">
-          <p className="text-xs font-bold leading-5 text-[#8b95a1]">주문 {formatDateTime(summary.lastOrderAt)}</p>
-          <p className="text-xs font-bold leading-5 text-[#8b95a1]">체결 {formatDateTime(summary.lastExecutionAt)}</p>
+          <p className="text-xs font-bold leading-5 text-stock-subtle">주문 {formatDateTime(summary.lastOrderAt)}</p>
+          <p className="text-xs font-bold leading-5 text-stock-subtle">체결 {formatDateTime(summary.lastExecutionAt)}</p>
         </ProfileOverviewInfoItem>
       </div>
 
       <div className="mt-2 rounded-md border border-white/10 bg-white/[0.04] px-3 py-3">
-        <p className="text-[11px] font-black text-[#8b95a1]">주요 보유종목</p>
+        <p className="text-[11px] font-black text-stock-subtle">주요 보유종목</p>
         <div className="mt-2 grid min-w-0 gap-2 sm:grid-cols-2 xl:grid-cols-3">
           {visibleSymbolHoldings.map((holding) => (
             <div key={holding.symbol} className="min-w-0 rounded-md bg-black/20 px-3 py-2">
               <p className="break-all text-xs font-black text-white">{holding.symbol}</p>
-              <p className="mt-1 text-xs font-bold tabular-nums text-[#8b95a1]">{formatNumber(holding.quantity)}주</p>
-              <p className="mt-1 text-xs font-bold tabular-nums text-[#b8c2cc]">{formatWon(holding.marketValue)}</p>
+              <p className="mt-1 text-xs font-bold tabular-nums text-stock-subtle">{formatNumber(holding.quantity)}주</p>
+              <p className="mt-1 text-xs font-bold tabular-nums text-admin-muted">{formatWon(holding.marketValue)}</p>
             </div>
           ))}
           {summary.symbolHoldings.length === 0 ? (
-            <p className="text-xs font-bold text-[#8b95a1]">보유 없음</p>
+            <p className="text-xs font-bold text-stock-subtle">보유 없음</p>
           ) : null}
         </div>
       </div>

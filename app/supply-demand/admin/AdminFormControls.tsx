@@ -100,13 +100,13 @@ export function DarkSelect({
   disabled?: boolean;
 }) {
   return (
-    <label className={`grid min-w-0 gap-1 text-xs font-bold ${disabled ? "text-[#66717d]" : "text-[#b8c2cc]"}`}>
+    <label className={`grid min-w-0 gap-1 text-xs font-bold ${disabled ? "text-admin-disabled" : "text-admin-muted"}`}>
       {label}
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
         disabled={disabled}
-        className="w-full min-w-0 rounded-md border border-white/10 bg-[#161b21] px-3 py-3 text-sm font-bold text-white outline-none focus:border-[#64a8ff] disabled:cursor-not-allowed disabled:border-white/5 disabled:bg-[#101418] disabled:text-[#66717d]"
+        className="admin-control h-11 w-full min-w-0 px-3 text-sm font-bold outline-none disabled:border-white/5 disabled:bg-admin-canvas disabled:text-admin-disabled"
       >
         {children}
       </select>
@@ -200,31 +200,31 @@ export function DarkDateInput({
       ref={pickerRef}
       className={[
         "relative grid min-w-0 gap-1 text-xs font-bold",
-        disabled ? "text-[#66717d]" : "text-[#b8c2cc]",
+        disabled ? "text-admin-disabled" : "text-admin-muted",
         className,
       ].filter(Boolean).join(" ")}
     >
       <span>{label}</span>
       <span
         className={[
-          "relative flex h-12 min-w-0 items-center gap-3 rounded-md border px-3 transition",
+          "relative flex h-11 min-w-0 items-center gap-3 rounded-md border px-3 transition",
           "border-white/10 bg-[#111821] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]",
           disabled
             ? "cursor-not-allowed opacity-60"
-            : "cursor-pointer hover:border-white/20 focus-within:border-[#64a8ff] focus-within:ring-2 focus-within:ring-[#64a8ff]/20",
+            : "cursor-pointer hover:border-white/20 focus-within:border-admin-accent focus-within:ring-2 focus-within:ring-admin-accent/20",
         ].join(" ")}
       >
         <span className="flex h-8 w-8 shrink-0 flex-col items-center justify-center rounded-md border border-[#2b435a] bg-[#172433] text-center">
-          <span className="h-1 w-full rounded-t-md bg-[#64a8ff]" />
+          <span className="h-1 w-full rounded-t-md bg-admin-accent" />
           <span className="mt-0.5 text-[11px] font-black leading-none text-white tabular-nums">{display.day}</span>
         </span>
         <span className="min-w-0 flex-1">
           <span className={value ? "block truncate text-sm font-black text-white tabular-nums" : "block truncate text-sm font-bold text-[#65717d]"}>
             {display.primary}
           </span>
-          <span className="mt-0.5 block truncate text-[11px] font-bold text-[#8b95a1]">{display.secondary}</span>
+          <span className="mt-0.5 block truncate text-[11px] font-bold text-stock-subtle">{display.secondary}</span>
         </span>
-        <span className="shrink-0 rounded border border-white/10 bg-white/[0.04] px-2 py-1 text-[10px] font-black text-[#8b95a1]">
+        <span className="shrink-0 rounded border border-white/10 bg-white/[0.04] px-2 py-1 text-[10px] font-black text-stock-subtle">
           SIM
         </span>
         <button
@@ -242,12 +242,12 @@ export function DarkDateInput({
         />
       </span>
       {open ? (
-        <span className="absolute left-0 top-[calc(100%+8px)] z-30 block w-[296px] rounded-md border border-white/10 bg-[#0e151d] p-3 text-[#d8e2ec] shadow-[0_18px_48px_rgba(0,0,0,0.42)]">
+        <span className="absolute left-0 top-[calc(100%+8px)] z-30 block w-[296px] rounded-md border border-white/10 bg-[#0e151d] p-3 text-admin-text-strong shadow-[0_18px_48px_rgba(0,0,0,0.42)]">
           <span className="mb-3 flex items-center justify-between gap-2">
             <button
               type="button"
               onClick={() => setVisibleMonth((current) => addCalendarMonths(current.year, current.monthIndex, -1))}
-              className="flex h-8 w-8 items-center justify-center rounded-md border border-white/10 bg-white/[0.04] text-sm font-black text-[#b8c2cc] hover:border-[#64a8ff]/60 hover:text-white"
+              className="flex h-9 w-9 items-center justify-center rounded-md border border-white/10 bg-white/[0.04] text-sm font-black text-admin-muted hover:border-admin-accent/60 hover:text-white"
               aria-label="이전 달"
             >
               ‹
@@ -258,7 +258,7 @@ export function DarkDateInput({
             <button
               type="button"
               onClick={() => setVisibleMonth((current) => addCalendarMonths(current.year, current.monthIndex, 1))}
-              className="flex h-8 w-8 items-center justify-center rounded-md border border-white/10 bg-white/[0.04] text-sm font-black text-[#b8c2cc] hover:border-[#64a8ff]/60 hover:text-white"
+              className="flex h-9 w-9 items-center justify-center rounded-md border border-white/10 bg-white/[0.04] text-sm font-black text-admin-muted hover:border-admin-accent/60 hover:text-white"
               aria-label="다음 달"
             >
               ›
@@ -289,14 +289,14 @@ export function DarkDateInput({
                     setOpen(false);
                   }}
                   className={[
-                    "flex h-8 items-center justify-center rounded-md text-xs font-black tabular-nums transition",
+                    "flex h-9 items-center justify-center rounded-md text-xs font-black tabular-nums transition",
                     dateDisabled
                       ? "cursor-not-allowed bg-transparent text-[#313b45]"
                       : selected
-                      ? "bg-[#64a8ff] text-[#07111b]"
+                      ? "bg-admin-accent text-[#07111b]"
                       : date.currentMonth
-                        ? "bg-white/[0.04] text-[#d8e2ec] hover:bg-[#172433] hover:text-white"
-                        : "bg-transparent text-[#46515d] hover:bg-white/[0.04] hover:text-[#8b95a1]",
+                        ? "bg-white/[0.04] text-admin-text-strong hover:bg-[#172433] hover:text-white"
+                        : "bg-transparent text-[#46515d] hover:bg-white/[0.04] hover:text-stock-subtle",
                   ].join(" ")}
                 >
                   {date.day}
@@ -311,7 +311,7 @@ export function DarkDateInput({
                 const month = getCalendarMonth("", placeholder);
                 setVisibleMonth(month);
               }}
-              className="rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-black text-[#b8c2cc] hover:border-white/20 hover:text-white"
+              className="rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-black text-admin-muted hover:border-white/20 hover:text-white"
             >
               기준월 보기
             </button>
@@ -321,7 +321,7 @@ export function DarkDateInput({
                 onChange("");
                 setOpen(false);
               }}
-              className="rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-black text-[#8b95a1] hover:border-white/20 hover:text-white"
+              className="rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-black text-stock-subtle hover:border-white/20 hover:text-white"
             >
               비우기
             </button>
@@ -354,7 +354,7 @@ export function DarkInput({
   maxLength?: number;
 }) {
   return (
-    <label className={["grid min-w-0 gap-1 text-xs font-bold text-[#b8c2cc]", className].filter(Boolean).join(" ")}>
+    <label className={["grid min-w-0 gap-1 text-xs font-bold text-admin-muted", className].filter(Boolean).join(" ")}>
       {label}
       <input
         type={type}
@@ -364,7 +364,7 @@ export function DarkInput({
         disabled={disabled}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="w-full min-w-0 rounded-md border border-white/10 bg-[#161b21] px-3 py-3 text-sm font-bold text-white outline-none placeholder:text-[#5f6b76] disabled:cursor-not-allowed disabled:bg-[#11161b] disabled:text-[#6b7682] focus:border-[#64a8ff]"
+        className="admin-control h-11 w-full min-w-0 px-3 text-sm font-bold outline-none placeholder:text-admin-placeholder disabled:bg-[#11161b] disabled:text-[#6b7682]"
       />
     </label>
   );
@@ -385,11 +385,11 @@ export function DarkFormInput({
 }) {
   return (
     <label className={`block min-w-0 ${className}`}>
-      <span className="text-xs font-bold text-[#8b95a1]">{label}</span>
+      <span className="text-xs font-bold text-stock-subtle">{label}</span>
       <input
         {...registration}
         placeholder={placeholder}
-        className="mt-1 w-full min-w-0 rounded-md border border-[#2b333f] bg-[#101418] px-3 py-3 text-sm font-bold text-white outline-none focus:border-[#3182f6]"
+        className="admin-control mt-1 h-11 w-full min-w-0 px-3 text-sm font-bold outline-none"
       />
       {error ? <span className="mt-1 block text-xs font-bold text-[#ff8a80]">{error}</span> : null}
     </label>
@@ -409,10 +409,10 @@ export function DarkFormSelect({
 }) {
   return (
     <label className={`block min-w-0 ${className}`}>
-      <span className="text-xs font-bold text-[#8b95a1]">{label}</span>
+      <span className="text-xs font-bold text-stock-subtle">{label}</span>
       <select
         {...registration}
-        className="mt-1 w-full min-w-0 rounded-md border border-[#2b333f] bg-[#101418] px-3 py-3 text-sm font-bold text-white outline-none focus:border-[#3182f6]"
+        className="admin-control mt-1 h-11 w-full min-w-0 px-3 text-sm font-bold outline-none"
       >
         {children}
       </select>
@@ -436,16 +436,16 @@ export function EnabledToggleButton({
       disabled={disabled}
       onClick={onToggle}
       className={[
-        "inline-flex h-8 min-w-20 items-center justify-between gap-2 rounded-md border px-2 text-xs font-black transition disabled:cursor-wait disabled:opacity-55",
+        "inline-flex h-9 min-w-20 items-center justify-between gap-2 rounded-md border px-2.5 text-xs font-black transition disabled:cursor-wait disabled:opacity-55",
         enabled
-          ? "border-[#3182f6]/50 bg-[#12345a] text-[#d8ecff]"
-          : "border-white/10 bg-white/[0.06] text-[#b8c2cc]",
+          ? "border-stock-accent/50 bg-[#12345a] text-admin-accent-soft"
+          : "border-white/10 bg-white/[0.06] text-admin-muted",
       ].join(" ")}
     >
       <span
         className={[
           "h-2 w-2 rounded-full",
-          enabled ? "bg-[#64a8ff]" : "bg-[#5f6b76]",
+          enabled ? "bg-admin-accent" : "bg-admin-placeholder",
         ].join(" ")}
       />
       <span>{disabled ? "처리 중" : enabled ? "가동" : "정지"}</span>

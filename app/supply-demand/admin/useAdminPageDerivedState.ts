@@ -102,11 +102,11 @@ export function useAdminPageDerivedState(options: AdminPageDerivedStateOptions) 
   }, [editingAutoParticipantUserKey, seedAutoParticipantStrategy, selectedAutoParticipantSymbolConfigs]);
 
   const salaryEligibility = useAdminSalaryEligibilityRows({
-    enabled: activeAdminSection === "salary",
+    enabled: activeAdminSection === "funds-payroll",
     participants: autoParticipants,
     profileConfigByType,
   });
-  const participantProfileOverviewSummaries = activeAdminSection === "profile-overview"
+  const participantProfileOverviewSummaries = activeAdminSection === "participants-overview"
     ? autoParticipantProfileOverviewSummaries
     : EMPTY_PARTICIPANT_PROFILE_OVERVIEW_SUMMARIES;
   const {
@@ -118,7 +118,7 @@ export function useAdminPageDerivedState(options: AdminPageDerivedStateOptions) 
   } = useAdminParticipantRows({
     accessToken,
     adminStatus,
-    enabled: activeAdminSection === "participants",
+    enabled: activeAdminSection === "participants-list",
     page: participantListControls.page,
     pageSize: ADMIN_PARTICIPANT_PAGE_SIZE,
     participants: autoParticipants,

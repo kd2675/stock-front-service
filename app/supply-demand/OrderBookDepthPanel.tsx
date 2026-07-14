@@ -31,27 +31,27 @@ export function OrderBookDepthPanel({
   const depth = useMemo(() => buildOrderBookDepthModel(orderBook), [orderBook]);
 
   return (
-    <section className="rounded-lg border border-[#d1d6db] bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+    <section className="rounded-lg border border-stock-border-strong bg-white p-4 shadow-[var(--shadow-panel)]">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-bold text-[#8b95a1]">ORDER BOOK DEPTH</p>
+          <p className="text-xs font-bold text-stock-subtle">ORDER BOOK DEPTH</p>
           <h3 className="mt-1 text-base font-black">호가 그래프</h3>
-          <p className="mt-1 text-xs font-bold text-[#8b95a1]">
+          <p className="mt-1 text-xs font-bold text-stock-subtle">
             매수 {formatNumber(depth.totalBidQuantity)}주 · 매도 {formatNumber(depth.totalAskQuantity)}주 · {formatOrderBookBias(depth.imbalance)}
           </p>
         </div>
-        <div className="grid grid-cols-2 rounded-md bg-[#f2f4f6] p-1">
+        <div className="grid grid-cols-2 rounded-md bg-stock-surface-strong p-1">
           <button
             type="button"
             onClick={() => onLayoutChange("split")}
-            className={layout === "split" ? "h-9 rounded-md bg-[#191f28] px-3 text-xs font-black text-white" : "h-9 rounded-md px-3 text-xs font-black text-[#6b7684] hover:bg-white"}
+            className={layout === "split" ? "h-9 rounded-md bg-stock-ink px-3 text-xs font-black text-white" : "h-9 rounded-md px-3 text-xs font-black text-stock-muted hover:bg-white"}
           >
             좌우
           </button>
           <button
             type="button"
             onClick={() => onLayoutChange("stacked")}
-            className={layout === "stacked" ? "h-9 rounded-md bg-[#191f28] px-3 text-xs font-black text-white" : "h-9 rounded-md px-3 text-xs font-black text-[#6b7684] hover:bg-white"}
+            className={layout === "stacked" ? "h-9 rounded-md bg-stock-ink px-3 text-xs font-black text-white" : "h-9 rounded-md px-3 text-xs font-black text-stock-muted hover:bg-white"}
           >
             상하
           </button>

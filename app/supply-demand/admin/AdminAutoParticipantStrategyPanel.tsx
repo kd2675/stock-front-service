@@ -1,3 +1,4 @@
+import DataTableViewport from "@/app/components/DataTableViewport";
 import { parsePositiveIntegerInput } from "@/app/lib/numberParsing";
 import { formatAutoStrategyActivityLevel, formatCount } from "@/app/supply-demand/admin/AdminFormatters";
 import { DarkInput, DarkSelect, EnabledToggleButton } from "@/app/supply-demand/admin/AdminFormControls";
@@ -53,11 +54,11 @@ export function AdminAutoParticipantStrategyPanel({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-sm font-black text-white">종목별 주문 활동 강도</p>
-          <p className="mt-1 text-xs font-bold text-[#8b95a1]">
+          <p className="mt-1 text-xs font-bold text-stock-subtle">
             {selectedParticipant.displayName}에게만 적용되는 주문 생성 활동도입니다. 값이 클수록 주문 횟수와 가격 반응이 적극적이며, 주문 방향은 별도의 압력·보고서·프로필 신호가 정합니다.
           </p>
         </div>
-        <span className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-[#64a8ff]">
+        <span className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-admin-accent">
           {formatCount(selectedSymbolConfigs.length, "개 설정")}
         </span>
       </div>
@@ -83,17 +84,17 @@ export function AdminAutoParticipantStrategyPanel({
           <option value="false">정지</option>
         </DarkSelect>
         <DarkInput label="주문 활동 강도(1-10)" value={strategyIntensity} onChange={onStrategyIntensityChange} placeholder="5" />
-        <div className="grid gap-1 text-xs font-bold text-[#b8c2cc]">
+        <div className="grid gap-1 text-xs font-bold text-admin-muted">
           활동 수준
-          <div className="rounded-md border border-white/10 bg-[#161b21] px-3 py-3 text-sm font-black text-white">
+          <div className="rounded-md border border-white/10 bg-admin-surface px-3 py-3 text-sm font-black text-white">
             {formatAutoStrategyActivityLevel(parsePositiveIntegerInput(strategyIntensity) ?? 0)}
           </div>
         </div>
-        <button type="button" onClick={onSubmitStrategy} disabled={savingStrategy} className="min-h-11 self-end rounded-md bg-white px-3 py-3 text-sm font-black text-[#101418] disabled:opacity-50 sm:col-span-2 lg:col-span-1">
+        <button type="button" onClick={onSubmitStrategy} disabled={savingStrategy} className="min-h-11 self-end rounded-md bg-white px-3 py-3 text-sm font-black text-admin-canvas disabled:opacity-50 sm:col-span-2 lg:col-span-1">
           {savingStrategy ? "저장 중" : editingStrategyKey === selectedStrategyKey ? "활동 강도 저장" : "활동 강도 추가"}
         </button>
       </div>
-      <div className="mt-3 grid gap-2 text-xs font-bold leading-5 text-[#8b95a1] lg:grid-cols-3">
+      <div className="mt-3 grid gap-2 text-xs font-bold leading-5 text-stock-subtle lg:grid-cols-3">
         <div className="rounded-md bg-white/[0.04] px-3 py-2.5">
           <span className="font-black text-white">주문 건수</span>
           <p className="mt-0.5">1-3은 보통 1건, 4-7은 2건, 8-10은 3건에서 시작하며 프로필과 유동성 압력에 따라 0-8건으로 최종 조정됩니다.</p>
@@ -107,9 +108,9 @@ export function AdminAutoParticipantStrategyPanel({
           <p className="mt-0.5">설정이 없으면 5입니다. 보고서 점수로 유효 강도를 보정한 뒤 프로필별 주문·공격성 배율과 매 주문 노이즈를 별도로 적용합니다.</p>
         </div>
       </div>
-      <div className="mt-3 overflow-x-auto rounded-md border border-white/10">
+      <DataTableViewport label="참여자 종목별 전략" tone="dark" className="mt-3">
         <table className="min-w-[640px] w-full border-collapse text-sm">
-          <thead className="bg-white/10 text-left text-[#b8c2cc]">
+          <thead className="bg-white/10 text-left text-admin-muted">
             <tr>
               <th className="px-3 py-2">종목</th>
               <th className="px-3 py-2">상태</th>
@@ -143,12 +144,12 @@ export function AdminAutoParticipantStrategyPanel({
             })}
             {selectedSymbolConfigs.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-3 py-4 text-[#8b95a1]">이 참여자에게 지정된 종목별 주문 활동 강도가 없습니다. 종목을 선택해 추가하세요.</td>
+                <td colSpan={5} className="px-3 py-4 text-stock-subtle">이 참여자에게 지정된 종목별 주문 활동 강도가 없습니다. 종목을 선택해 추가하세요.</td>
               </tr>
             ) : null}
           </tbody>
         </table>
-      </div>
+      </DataTableViewport>
     </div>
   );
 }

@@ -39,8 +39,17 @@ export function useSupplyDemandAdminPageModel() {
   const stockEventActionType = drafts.stockEvent.actionType;
   const stockEventOfferingType = drafts.stockEvent.draft.offeringType;
   const applyStockEventSimulationDateDefaults = drafts.stockEvent.applySimulationDateDefaults;
+  const setStockEventActionType = drafts.stockEvent.draftSetters.setActionType;
   useEffect(() => {
-    if (activeAdminSection !== "events") {
+    if (activeAdminSection === "corporate-instruments" && stockEventActionType !== "INITIAL_ISSUE") {
+      setStockEventActionType("INITIAL_ISSUE");
+    }
+    if (activeAdminSection === "corporate-actions" && stockEventActionType === "INITIAL_ISSUE") {
+      setStockEventActionType("PAID_IN_CAPITAL_INCREASE");
+    }
+  }, [activeAdminSection, setStockEventActionType, stockEventActionType]);
+  useEffect(() => {
+    if (activeAdminSection !== "corporate-actions") {
       return;
     }
     applyStockEventSimulationDateDefaults(queries.simulationClockQuery.data?.simulationDate);
