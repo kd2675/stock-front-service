@@ -304,6 +304,7 @@ export function instrumentMarketReportQueryOptions(symbol: string, options: Mark
     request: getInstrumentMarketReport,
     fallbackMessage: "종목 시장 보고서를 조회하지 못했습니다.",
     refetchInterval: options.refetchIntervalMs ?? FAST_MARKET_REFETCH_MS,
+    retry: false,
     symbol,
   });
 }

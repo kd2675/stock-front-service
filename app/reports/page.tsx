@@ -71,6 +71,8 @@ export default function ReportsPage() {
             <>
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#e5e8eb] bg-white px-4 py-3 text-xs font-bold text-[#6b7684]">
                 <span>보고서 기준 {report.reportDate ?? "완료 마감 없음"}</span>
+                <span>마감 실행 {report.closeRunId == null ? "없음" : `#${report.closeRunId}`}</span>
+                <span>마감 완료 {report.closeRunCompletedAt?.replace("T", " ") ?? "없음"}</span>
                 <span>생성 {report.simulationDateTime.replace("T", " ")}</span>
                 <span>데이터 상태 {report.analytics.dataQuality.level}</span>
                 <span>종가 원장 {report.closePriceProvider ?? "없음"}</span>

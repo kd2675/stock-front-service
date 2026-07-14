@@ -403,6 +403,8 @@ export type InstrumentMarketReport = {
   upperLimitPrice: number;
   closePriceTime?: string | null;
   closePriceProvider?: string | null;
+  closeRunId?: number | null;
+  closeRunCompletedAt?: string | null;
   reportDate?: string | null;
   simulationDateTime: string;
   daily: InstrumentDailyMarketSnapshot;
