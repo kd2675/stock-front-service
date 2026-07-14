@@ -27,19 +27,45 @@ export function FundFlowLine({ label, value }: { label: string; value: string })
   );
 }
 
-export function SalaryMetric({ label, value, tone }: { label: string; value: string; tone: "good" | "neutral" | "warn" | "muted" }) {
+export function SalaryMetric({
+  label,
+  value,
+  tone,
+  actionHint,
+  onClick,
+}: {
+  label: string;
+  value: string;
+  tone: "good" | "neutral" | "warn" | "muted";
+  actionHint?: string;
+  onClick?: () => void;
+}) {
   const toneClass = {
     good: "text-[#7bd88f]",
     neutral: "text-white",
     warn: "text-[#ffd166]",
     muted: "text-stock-subtle",
   }[tone];
-  return (
-    <div className="rounded-md border border-white/10 bg-black/20 px-3 py-3">
+  const content = (
+    <>
       <p className="text-[11px] font-black text-stock-subtle">{label}</p>
       <p className={["mt-1 text-lg font-black tabular-nums", toneClass].join(" ")}>{value}</p>
-    </div>
+      {actionHint ? <p className="mt-2 text-[11px] font-black text-admin-accent-label">{actionHint}</p> : null}
+    </>
   );
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={`${label} ${actionHint ?? "상세 보기"}`}
+        className="group rounded-md border border-admin-accent/35 bg-black/20 px-3 py-3 text-left transition hover:border-admin-accent hover:bg-admin-accent-surface/45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-accent"
+      >
+        {content}
+      </button>
+    );
+  }
+  return <div className="rounded-md border border-white/10 bg-black/20 px-3 py-3">{content}</div>;
 }
 
 export function ParticipantInfoItem({

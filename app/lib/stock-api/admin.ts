@@ -6,7 +6,7 @@ import {
   authenticatedPostJson,
   toQuery,
 } from "@/app/lib/stock-api/core";
-import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowScope, AdminFundFlowSummary, AdminSymbolFlowList, AutoMarketDistributionBias, AutoMarketStatus, AutoParticipant, AutoParticipantCashAdjustment, AutoParticipantOverview, AutoParticipantProfileOverview, AutoParticipantProfileType, BatchJobRuntimeStatus, ListingAutoPosition, ListingAutoPriceDirection, RecurringCashIntervalUnit, StockBatchJobRun } from "@/app/types/stock";
+import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowScope, AdminFundFlowSummary, AdminSymbolFlowList, AdminTotalAssetHistoryPage, AutoMarketDistributionBias, AutoMarketStatus, AutoParticipant, AutoParticipantCashAdjustment, AutoParticipantOverview, AutoParticipantProfileOverview, AutoParticipantProfileType, BatchJobRuntimeStatus, ListingAutoPosition, ListingAutoPriceDirection, RecurringCashIntervalUnit, StockBatchJobRun } from "@/app/types/stock";
 
 export type { AdminFundFlowScope } from "@/app/types/stock";
 
@@ -99,6 +99,13 @@ export function getAdminFundFlowSummary(token: string, options?: { scope?: Admin
     scope: options?.scope,
   });
   return authenticatedGetJson<AdminFundFlowSummary>(token, `/api/stock/v1/markets/admin/fund-flow-summary${query}`);
+}
+
+export function getAdminTotalAssetHistory(token: string, page: number) {
+  return authenticatedGetJson<AdminTotalAssetHistoryPage>(
+    token,
+    `/api/stock/v1/markets/admin/total-asset-history${toQuery({ page })}`,
+  );
 }
 
 export function getAdminSymbolFlows(token: string, options?: { limit?: number; scope?: AdminFundFlowScope; includeDailyCumulative?: boolean; dailyCumulativeDays?: number; dailyCumulativeDayOffset?: number }) {

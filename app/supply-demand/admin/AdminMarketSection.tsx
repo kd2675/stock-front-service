@@ -7,6 +7,7 @@ import type {
   AdminFlowOverview,
   AdminFundFlowSummary,
   AdminSymbolFlowList,
+  AdminTotalAssetHistoryPage,
   AutoMarketStatus,
   MarketSessionStatus,
   OrderBookInstrument,
@@ -32,6 +33,7 @@ type AdminMarketSectionProps = {
   symbolFlowList: AdminSymbolFlowList;
   loadingSymbolFlows: boolean;
   onLoadAllFundFlow: () => void;
+  onLoadTotalAssetHistory: (page: number) => Promise<AdminTotalAssetHistoryPage | null>;
   onLoadWeeklySymbolFlows: (dayOffset: number) => Promise<AdminSymbolFlowList | null>;
   onRefreshFlow: () => void;
   instruments: OrderBookInstrument[];
@@ -61,6 +63,7 @@ export function AdminMarketSection({
   symbolFlowList,
   loadingSymbolFlows,
   onLoadAllFundFlow,
+  onLoadTotalAssetHistory,
   onLoadWeeklySymbolFlows,
   onRefreshFlow,
   instruments,
@@ -99,6 +102,7 @@ export function AdminMarketSection({
         symbolFlowList={symbolFlowList}
         loadingSymbolFlows={loadingSymbolFlows}
         onLoadAllFundFlow={onLoadAllFundFlow}
+        onLoadTotalAssetHistory={onLoadTotalAssetHistory}
         onLoadWeeklySymbolFlows={onLoadWeeklySymbolFlows}
         onRefresh={onRefreshFlow}
       />

@@ -3,7 +3,8 @@ import { useState } from "react";
 import useModalDialog from "@/app/hooks/useModalDialog";
 import { formatCount, formatWon } from "@/app/supply-demand/admin/AdminFormatters";
 import { FundFlowLine, SalaryMetric } from "@/app/supply-demand/admin/AdminMetricCards";
-import type { AdminFundFlowSummary } from "@/app/types/stock";
+import { AdminTotalAssetHistoryModal } from "@/app/supply-demand/admin/AdminTotalAssetHistoryModal";
+import type { AdminFundFlowSummary, AdminTotalAssetHistoryPage } from "@/app/types/stock";
 
 export function AdminFlowFundSummaryPanel({
   fundFlow,
@@ -13,6 +14,7 @@ export function AdminFlowFundSummaryPanel({
   error,
   allError,
   onLoadAll,
+  onLoadTotalAssetHistory,
 }: {
   fundFlow: AdminFundFlowSummary | null;
   allFundFlow: AdminFundFlowSummary | null;
@@ -21,13 +23,38 @@ export function AdminFlowFundSummaryPanel({
   error: boolean;
   allError: boolean;
   onLoadAll: () => void;
+  onLoadTotalAssetHistory: (page: number) => Promise<AdminTotalAssetHistoryPage | null>;
 }) {
   const [showAllFundFlow, setShowAllFundFlow] = useState(false);
+  const [showTotalAssetHistory, setShowTotalAssetHistory] = useState(false);
+  const [totalAssetHistory, setTotalAssetHistory] = useState<AdminTotalAssetHistoryPage | null>(null);
+  const [loadingTotalAssetHistory, setLoadingTotalAssetHistory] = useState(false);
+  const [totalAssetHistoryError, setTotalAssetHistoryError] = useState(false);
 
   const openAllFundFlow = () => {
     setShowAllFundFlow(true);
     if (!allFundFlow && !loadingAll) {
       onLoadAll();
+    }
+  };
+
+  const loadTotalAssetHistory = async (page: number) => {
+    setLoadingTotalAssetHistory(true);
+    setTotalAssetHistoryError(false);
+    const nextHistory = await onLoadTotalAssetHistory(page);
+    setLoadingTotalAssetHistory(false);
+    if (!nextHistory) {
+      setTotalAssetHistoryError(true);
+      return;
+    }
+    setTotalAssetHistory(nextHistory);
+  };
+
+  const openTotalAssetHistory = () => {
+    setShowAllFundFlow(false);
+    setShowTotalAssetHistory(true);
+    if (!totalAssetHistory && !loadingTotalAssetHistory) {
+      void loadTotalAssetHistory(0);
     }
   };
 
@@ -53,7 +80,9 @@ export function AdminFlowFundSummaryPanel({
           open={showAllFundFlow}
           onClose={() => setShowAllFundFlow(false)}
           onRefresh={onLoadAll}
+          onOpenTotalAssetHistory={openTotalAssetHistory}
         />
+        <AdminTotalAssetHistoryModal history={totalAssetHistory} loading={loadingTotalAssetHistory} error={totalAssetHistoryError} open={showTotalAssetHistory} onClose={() => setShowTotalAssetHistory(false)} onLoadPage={(page) => void loadTotalAssetHistory(page)} />
       </>
     );
   }
@@ -74,7 +103,7 @@ export function AdminFlowFundSummaryPanel({
         </button>
       </div>
 
-      <AdminFundFlowMetricGrids fundFlow={fundFlow} executionLabel="하루 체결" />
+      <AdminFundFlowMetricGrids fundFlow={fundFlow} executionLabel="하루 체결" onOpenTotalAssetHistory={openTotalAssetHistory} />
 
       <AdminAllFundFlowModal
         fundFlow={allFundFlow}
@@ -83,7 +112,9 @@ export function AdminFlowFundSummaryPanel({
         open={showAllFundFlow}
         onClose={() => setShowAllFundFlow(false)}
         onRefresh={onLoadAll}
+        onOpenTotalAssetHistory={openTotalAssetHistory}
       />
+      <AdminTotalAssetHistoryModal history={totalAssetHistory} loading={loadingTotalAssetHistory} error={totalAssetHistoryError} open={showTotalAssetHistory} onClose={() => setShowTotalAssetHistory(false)} onLoadPage={(page) => void loadTotalAssetHistory(page)} />
     </>
   );
 }
@@ -91,9 +122,11 @@ export function AdminFlowFundSummaryPanel({
 function AdminFundFlowMetricGrids({
   fundFlow,
   executionLabel,
+  onOpenTotalAssetHistory,
 }: {
   fundFlow: AdminFundFlowSummary;
   executionLabel: string;
+  onOpenTotalAssetHistory: () => void;
 }) {
   return (
     <>
@@ -101,7 +134,7 @@ function AdminFundFlowMetricGrids({
         <SalaryMetric label="활성 계좌" value={formatCount(fundFlow.activeAccountCount, "개")} tone="neutral" />
         <SalaryMetric label="전체 현금" value={formatWon(fundFlow.totalCashBalance)} tone="neutral" />
         <SalaryMetric label="예약 매수 현금" value={formatWon(fundFlow.totalReservedBuyCash)} tone="warn" />
-        <SalaryMetric label="전체 총자산" value={formatWon(fundFlow.totalAsset)} tone="good" />
+        <SalaryMetric label="전체 총자산" value={formatWon(fundFlow.totalAsset)} tone="good" actionHint="7일 변화 보기" onClick={onOpenTotalAssetHistory} />
       </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -125,6 +158,7 @@ function AdminAllFundFlowModal({
   open,
   onClose,
   onRefresh,
+  onOpenTotalAssetHistory,
 }: {
   fundFlow: AdminFundFlowSummary | null;
   loading: boolean;
@@ -132,6 +166,7 @@ function AdminAllFundFlowModal({
   open: boolean;
   onClose: () => void;
   onRefresh: () => void;
+  onOpenTotalAssetHistory: () => void;
 }) {
   const dialogRef = useModalDialog<HTMLDivElement>(open, onClose);
 
@@ -172,7 +207,7 @@ function AdminAllFundFlowModal({
         </div>
 
         {fundFlow ? (
-          <AdminFundFlowMetricGrids fundFlow={fundFlow} executionLabel="전체 체결" />
+          <AdminFundFlowMetricGrids fundFlow={fundFlow} executionLabel="전체 체결" onOpenTotalAssetHistory={onOpenTotalAssetHistory} />
         ) : (
           <div className="mt-4 rounded-md border border-white/10 bg-black/20 p-4 text-sm font-bold leading-6 text-stock-subtle">
             {loading ? "전체 누적 자금 흐름을 조회하고 있습니다." : "전체 누적 자금 흐름을 아직 조회하지 못했습니다."}

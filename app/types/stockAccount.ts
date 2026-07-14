@@ -128,6 +128,40 @@ export type AdminFundFlowSummary = {
 
 export type AdminFundFlowScope = "RECENT_SIMULATION_DAY" | "ALL";
 
+export type AdminTotalAssetHistoryPoint = {
+  snapshotDate: string;
+  accountCount: number;
+  totalAsset: number;
+  cashBalance: number;
+  marketValue: number;
+  reservedCash: number;
+  changeAmount: number | null;
+  changeRate: number | null;
+};
+
+export type AdminTotalAssetPeriodSummary = {
+  rangeStart: string;
+  rangeEnd: string;
+  startTotalAsset: number;
+  endTotalAsset: number;
+  changeAmount: number;
+  changeRate: number | null;
+  averageTotalAsset: number;
+  highestTotalAsset: number;
+  lowestTotalAsset: number;
+};
+
+export type AdminTotalAssetHistoryPage = {
+  content: AdminTotalAssetHistoryPoint[];
+  summary: AdminTotalAssetPeriodSummary | null;
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  hasPrevious: boolean;
+  hasNext: boolean;
+};
+
 export type AdminOrderFlowSummary = {
   openOrderCount: number;
   openBuyOrderCount: number;

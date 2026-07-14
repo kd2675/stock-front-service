@@ -4,7 +4,7 @@ import { AdminFlowFundSummaryPanel } from "@/app/supply-demand/admin/AdminFlowFu
 import { AdminOrderCorporateFlowPanel } from "@/app/supply-demand/admin/AdminOrderCorporateFlowPanel";
 import { AdminRecentCashFlowPreviewPanel } from "@/app/supply-demand/admin/AdminRecentCashFlowPreviewPanel";
 import { AdminSymbolFlowTablePanel } from "@/app/supply-demand/admin/AdminSymbolFlowTablePanel";
-import type { AdminFlowOverview, AdminFundFlowSummary, AdminSymbolFlowList } from "@/app/types/stock";
+import type { AdminFlowOverview, AdminFundFlowSummary, AdminSymbolFlowList, AdminTotalAssetHistoryPage } from "@/app/types/stock";
 
 export function AdminFlowOverviewPanel({
   overview,
@@ -17,6 +17,7 @@ export function AdminFlowOverviewPanel({
   symbolFlowList,
   loadingSymbolFlows,
   onLoadAllFundFlow,
+  onLoadTotalAssetHistory,
   onLoadWeeklySymbolFlows,
   onRefresh,
 }: {
@@ -30,6 +31,7 @@ export function AdminFlowOverviewPanel({
   symbolFlowList: AdminSymbolFlowList;
   loadingSymbolFlows: boolean;
   onLoadAllFundFlow: () => void;
+  onLoadTotalAssetHistory: (page: number) => Promise<AdminTotalAssetHistoryPage | null>;
   onLoadWeeklySymbolFlows: (dayOffset: number) => Promise<AdminSymbolFlowList | null>;
   onRefresh: () => void;
 }) {
@@ -75,6 +77,7 @@ export function AdminFlowOverviewPanel({
         error={fundFlowError}
         allError={allFundFlowError}
         onLoadAll={onLoadAllFundFlow}
+        onLoadTotalAssetHistory={onLoadTotalAssetHistory}
       />
       <AdminOrderCorporateFlowPanel orderFlow={orderFlow} corporateActionFlow={corporateActionFlow} />
 

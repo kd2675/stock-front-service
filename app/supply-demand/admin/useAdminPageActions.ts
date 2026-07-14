@@ -18,6 +18,7 @@ import { useAdminProfileConfigActions } from "@/app/supply-demand/admin/useAdmin
 import type { useAdminQueryInvalidations } from "@/app/supply-demand/admin/useAdminQueryInvalidations";
 import { useAdminSimulationClockActions } from "@/app/supply-demand/admin/useAdminSimulationClockActions";
 import { useAdminSymbolFlowActions } from "@/app/supply-demand/admin/useAdminSymbolFlowActions";
+import { useAdminTotalAssetHistoryActions } from "@/app/supply-demand/admin/useAdminTotalAssetHistoryActions";
 import { useAdminTokenRequirement } from "@/app/supply-demand/admin/useAdminTokenRequirement";
 import { useAdminUserCashActions } from "@/app/supply-demand/admin/useAdminUserCashActions";
 
@@ -238,6 +239,10 @@ export function useAdminPageActions({
     requireAdminToken,
     setMessage,
   });
+  const totalAssetHistoryActions = useAdminTotalAssetHistoryActions({
+    requireAdminToken,
+    setMessage,
+  });
   const initialIssueActions = useAdminInitialIssueActions({
     queryClient,
     reportSymbolRef,
@@ -269,6 +274,7 @@ export function useAdminPageActions({
     ...userCashActions,
     ...corporateActionActions,
     ...symbolFlowActions,
+    ...totalAssetHistoryActions,
     ...initialIssueActions,
     submitStockEvent,
   };
