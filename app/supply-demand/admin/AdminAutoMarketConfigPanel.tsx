@@ -1,5 +1,3 @@
-import { Fragment } from "react";
-
 import { DarkInput, DarkSelect, EnabledToggleButton } from "@/app/supply-demand/admin/AdminFormControls";
 import { AutoMarketConfigGuide } from "@/app/supply-demand/admin/AdminSignalGuide";
 import type { AutoMarketConfig, AutoMarketDailyRegime, AutoMarketDistributionBias } from "@/app/types/stock";
@@ -156,7 +154,7 @@ function DistributionBiasEditor({
 function PressureBar({ label, value }: { label: string; value: number }) {
   const normalized = clampPressure(value);
   return (
-    <div className="grid grid-cols-[78px_1fr_38px] items-center gap-2 text-[11px] font-bold">
+    <div className="grid grid-cols-[78px_minmax(0,1fr)_38px] items-center gap-2 text-[11px] font-bold">
       <span className="truncate text-[#9aa7b4]">{label}</span>
       <span className="relative h-1.5 rounded-full bg-white/10">
         <span className="absolute left-1/2 top-1/2 h-3 w-px -translate-y-1/2 bg-white/25" />
@@ -222,13 +220,13 @@ function AutoMarketDailyRegimeCell({ regime }: { regime?: AutoMarketDailyRegime 
   ])) as AutoMarketDistributionBias;
 
   return (
-    <div className="min-w-[610px] space-y-3">
+    <div className="min-w-0 space-y-3">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-bold text-[#8b95a1]">
         <span>{regime.simulationTradeDate}</span>
         <span className="text-[#9ecbff]">{PHASE_LABELS[regime.regimePhase]}</span>
         {secondary ? <span>보조 {regime.currentModifier?.modifierWindowStartAt.slice(11, 16)}</span> : <span>보조 미생성</span>}
       </div>
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <RegimePressureGroup title="주 60%" values={primary} />
         <RegimePressureGroup title="보조 40%" values={secondaryValues} />
         <RegimePressureGroup title="최종 적용" values={finalValues} />
@@ -332,53 +330,56 @@ export function AdminAutoMarketConfigPanel({
         편향 0은 중앙값 근처가 완만하게 많고, +100은 양의 극단 근처가, -100은 음의 극단 근처가 더 자주 나오도록 분포를 기울입니다.
       </p>
       <AutoMarketConfigGuide />
-      <div className="mt-4 overflow-x-auto rounded-md border border-white/10">
-        <table className="w-full min-w-[1180px] border-collapse text-sm">
-          <thead className="bg-white/10 text-left text-[#b8c2cc]">
-            <tr>
-              <th className="px-3 py-2">종목</th>
-              <th className="px-3 py-2">가동</th>
-              <th className="px-3 py-2">현재 구간 압력</th>
-              <th className="px-3 py-2">최대 수량</th>
-              <th className="px-3 py-2">TTL</th>
-              <th className="px-3 py-2">작업</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-white/10">
-            {configs.map((config) => (
-              <Fragment key={config.symbol}>
-                <tr className="align-top">
-                  <td className="px-3 py-3 font-black">{config.symbol}</td>
-                  <td className="px-3 py-3">
+      <div className="mt-4 space-y-3">
+        {configs.map((config) => (
+          <article key={config.symbol} className="overflow-hidden rounded-md border border-white/10 bg-black/10">
+            <div className="grid gap-4 p-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+              <dl className="grid min-w-0 grid-cols-2 gap-3 sm:grid-cols-4">
+                <div className="min-w-0">
+                  <dt className="text-[11px] font-bold text-[#7f8a96]">종목</dt>
+                  <dd className="mt-1 truncate text-sm font-black text-white">{config.symbol}</dd>
+                </div>
+                <div>
+                  <dt className="text-[11px] font-bold text-[#7f8a96]">자동 주문 생성</dt>
+                  <dd className="mt-1">
                     <EnabledToggleButton enabled={config.enabled} disabled={togglingSymbol === config.symbol} onToggle={() => onToggleEnabled(config)} />
-                  </td>
-                  <td className="px-3 py-3"><AutoMarketDailyRegimeCell regime={config.dailyRegime} /></td>
-                  <td className="px-3 py-3 tabular-nums">{config.maxOrderQuantity}주</td>
-                  <td className="px-3 py-3 tabular-nums">{config.orderTtlSeconds}초</td>
-                  <td className="px-3 py-3">
-                    <div className="grid min-w-[92px] gap-1.5">
-                      <button type="button" onClick={() => onSelectDraft(config)} className="rounded-md bg-white/10 px-2 py-1.5 text-xs font-black text-white">설정</button>
-                      <button type="button" onClick={() => onRegenerateRegime(config)} disabled={regeneratingRegimeSymbol === config.symbol} className="rounded-md bg-[#f59e0b]/20 px-2 py-1.5 text-xs font-black text-[#fcd34d] disabled:opacity-50">
-                        {regeneratingRegimeSymbol === config.symbol ? "생성 중" : "주 재생성"}
-                      </button>
-                      <button type="button" onClick={() => onRegenerateRegimeModifier(config)} disabled={!config.dailyRegime || regeneratingRegimeModifierSymbol === config.symbol} className="rounded-md bg-[#64a8ff]/15 px-2 py-1.5 text-xs font-black text-[#9ecbff] disabled:opacity-50">
-                        {regeneratingRegimeModifierSymbol === config.symbol ? "생성 중" : "보조 재생성"}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-                {editingSymbol === config.symbol ? (
-                  <tr>
-                    <td colSpan={6} className="bg-black/20 px-4 py-4">
-                      <ConfigEditor draft={draft} draftSetters={draftSetters} onClose={() => draftSetters.setEditingSymbol(null)} onSubmit={onSubmit} updating={updating} />
-                    </td>
-                  </tr>
-                ) : null}
-              </Fragment>
-            ))}
-            {configs.length === 0 ? <tr><td colSpan={6} className="px-3 py-4 text-[#8b95a1]">자동장 설정 대상 종목이 없습니다.</td></tr> : null}
-          </tbody>
-        </table>
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-[11px] font-bold text-[#7f8a96]">1회 최대 수량</dt>
+                  <dd className="mt-1 text-sm font-black tabular-nums text-white">{config.maxOrderQuantity}주</dd>
+                </div>
+                <div>
+                  <dt className="text-[11px] font-bold text-[#7f8a96]">미체결 TTL</dt>
+                  <dd className="mt-1 text-sm font-black tabular-nums text-white">{config.orderTtlSeconds}초</dd>
+                </div>
+              </dl>
+              <div className="grid grid-cols-3 gap-1.5 lg:w-[300px]">
+                <button type="button" onClick={() => onSelectDraft(config)} className="min-h-9 rounded-md bg-white/10 px-2 py-2 text-xs font-black text-white">설정</button>
+                <button type="button" onClick={() => onRegenerateRegime(config)} disabled={regeneratingRegimeSymbol === config.symbol} className="min-h-9 rounded-md bg-[#f59e0b]/20 px-2 py-2 text-xs font-black text-[#fcd34d] disabled:opacity-50">
+                  {regeneratingRegimeSymbol === config.symbol ? "생성 중" : "주 재생성"}
+                </button>
+                <button type="button" onClick={() => onRegenerateRegimeModifier(config)} disabled={!config.dailyRegime || regeneratingRegimeModifierSymbol === config.symbol} className="min-h-9 rounded-md bg-[#64a8ff]/15 px-2 py-2 text-xs font-black text-[#9ecbff] disabled:opacity-50">
+                  {regeneratingRegimeModifierSymbol === config.symbol ? "생성 중" : "보조 재생성"}
+                </button>
+              </div>
+            </div>
+            <div className="border-t border-white/[0.07] bg-white/[0.025] px-3 py-3">
+              <p className="mb-2 text-[11px] font-black text-[#7f8a96]">현재 구간 압력</p>
+              <AutoMarketDailyRegimeCell regime={config.dailyRegime} />
+            </div>
+            {editingSymbol === config.symbol ? (
+              <div className="border-t border-white/10 bg-black/20 px-4 py-4">
+                <ConfigEditor draft={draft} draftSetters={draftSetters} onClose={() => draftSetters.setEditingSymbol(null)} onSubmit={onSubmit} updating={updating} />
+              </div>
+            ) : null}
+          </article>
+        ))}
+        {configs.length === 0 ? (
+          <div className="rounded-md border border-white/10 bg-black/10 px-3 py-4 text-sm font-bold text-[#8b95a1]">
+            자동장 설정 대상 종목이 없습니다.
+          </div>
+        ) : null}
       </div>
     </section>
   );
