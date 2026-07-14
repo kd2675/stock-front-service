@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 
 import {
-  DEFAULT_AUTO_MARKET_INTENSITY,
   DEFAULT_AUTO_MARKET_MAX_ORDER_QUANTITY,
   DEFAULT_AUTO_MARKET_ORDER_TTL_SECONDS,
 } from "@/app/supply-demand/admin/AdminConstants";
@@ -16,9 +15,10 @@ import type { AutoMarketConfig } from "@/app/types/stock";
 const DEFAULT_AUTO_MARKET_CONFIG_DRAFT: AutoMarketConfigDraft = {
   symbol: "",
   enabled: true,
-  intensity: DEFAULT_AUTO_MARKET_INTENSITY,
   maxOrderQuantity: DEFAULT_AUTO_MARKET_MAX_ORDER_QUANTITY,
   orderTtlSeconds: DEFAULT_AUTO_MARKET_ORDER_TTL_SECONDS,
+  primaryDistributionBias: createNeutralDistributionBiasDraft(),
+  secondaryDistributionBias: createNeutralDistributionBiasDraft(),
 };
 
 export function useAdminAutoMarketConfigDraftState() {
@@ -39,7 +39,14 @@ export function useAdminAutoMarketConfigDraftState() {
   const draftSetters: AutoMarketConfigDraftSetters = useMemo(() => ({
     setSymbol: (value) => setDraftField("symbol", value),
     setEnabled: (value) => setDraftField("enabled", value),
-    setIntensity: (value) => setDraftField("intensity", value),
+    setPrimaryDistributionBias: (field, value) => setDraft((current) => ({
+      ...current,
+      primaryDistributionBias: { ...current.primaryDistributionBias, [field]: value },
+    })),
+    setSecondaryDistributionBias: (field, value) => setDraft((current) => ({
+      ...current,
+      secondaryDistributionBias: { ...current.secondaryDistributionBias, [field]: value },
+    })),
     setMaxOrderQuantity: (value) => setDraftField("maxOrderQuantity", value),
     setOrderTtlSeconds: (value) => setDraftField("orderTtlSeconds", value),
     setEditingSymbol,
@@ -55,5 +62,15 @@ export function useAdminAutoMarketConfigDraftState() {
     setEnabled: draftSetters.setEnabled,
     setSymbol: draftSetters.setSymbol,
     symbol: draft.symbol,
+  };
+}
+
+function createNeutralDistributionBiasDraft() {
+  return {
+    pricePressure: "0",
+    assetPreferencePressure: "0",
+    volatilityPressure: "0",
+    liquidityPressure: "0",
+    executionAggressionPressure: "0",
   };
 }

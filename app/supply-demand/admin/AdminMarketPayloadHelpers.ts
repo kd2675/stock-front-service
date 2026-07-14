@@ -16,9 +16,18 @@ export type AutoMarketConfigPayload = StockAutoMarketConfigPayload;
 export type AutoMarketConfigDraftInput = {
   symbol: string;
   enabled: boolean;
-  intensity: string;
   maxOrderQuantity: string;
   orderTtlSeconds: string;
+  primaryDistributionBias: AutoMarketDistributionBiasDraftInput;
+  secondaryDistributionBias: AutoMarketDistributionBiasDraftInput;
+};
+
+export type AutoMarketDistributionBiasDraftInput = {
+  pricePressure: string;
+  assetPreferencePressure: string;
+  volatilityPressure: string;
+  liquidityPressure: string;
+  executionAggressionPressure: string;
 };
 
 export type ListingAutoAccountConfigPayload = StockListingAutoAccountConfigPayload;
@@ -39,15 +48,24 @@ export type ListingAutoAccountConfigDraftInput = {
   sellPriceOffsetDirection: ListingAutoPriceDirection;
 };
 
-const AUTO_MARKET_CONFIG_MESSAGE = "자동장 대상 종목, 기본 추종 강도 1-10, 1회 주문 최대 수량, 미체결 호가 TTL을 올바르게 입력해 주세요.";
+const AUTO_MARKET_CONFIG_MESSAGE = "자동장 대상 종목, 주·보조 분포 편향 -100~100, 1회 주문 최대 수량, 미체결 호가 TTL을 올바르게 입력해 주세요.";
 const LISTING_AUTO_ACCOUNT_CONFIG_MESSAGE = "상장주관사 종목, 목표 보유 수량·허용 밴드·양쪽 호가 잔량, 최대 수량, TTL, 가격 분산 방향을 올바르게 입력해 주세요.";
+
+const distributionBiasSchema = z.object({
+  pricePressure: integerRange(-100, 100),
+  assetPreferencePressure: integerRange(-100, 100),
+  volatilityPressure: integerRange(-100, 100),
+  liquidityPressure: integerRange(-100, 100),
+  executionAggressionPressure: integerRange(-100, 100),
+});
 
 const autoMarketConfigSchema = z.object({
   symbol: requiredUppercaseString(),
   enabled: z.boolean(),
-  intensity: integerRange(1, 10),
   maxOrderQuantity: positiveInteger(),
   orderTtlSeconds: positiveInteger(),
+  primaryDistributionBias: distributionBiasSchema,
+  secondaryDistributionBias: distributionBiasSchema,
 });
 
 const listingAutoAccountConfigSchema = z.object({
@@ -102,9 +120,10 @@ export function buildAutoMarketConfigPayload(draft: AutoMarketConfigDraftInput):
     symbol: parsed.data.symbol,
     payload: {
       enabled: parsed.data.enabled,
-      intensity: parsed.data.intensity,
       maxOrderQuantity: parsed.data.maxOrderQuantity,
       orderTtlSeconds: parsed.data.orderTtlSeconds,
+      primaryDistributionBias: parsed.data.primaryDistributionBias,
+      secondaryDistributionBias: parsed.data.secondaryDistributionBias,
     },
   };
 }

@@ -1,5 +1,5 @@
 import { parsePositiveIntegerInput } from "@/app/lib/numberParsing";
-import { formatAutoIntensityFollowLevel, formatCount } from "@/app/supply-demand/admin/AdminFormatters";
+import { formatAutoStrategyActivityLevel, formatCount } from "@/app/supply-demand/admin/AdminFormatters";
 import { DarkInput, DarkSelect, EnabledToggleButton } from "@/app/supply-demand/admin/AdminFormControls";
 import type { AutoParticipant, AutoParticipantSymbolConfig } from "@/app/types/stock";
 
@@ -52,9 +52,9 @@ export function AdminAutoParticipantStrategyPanel({
     <div className="mt-4 rounded-lg border border-white/10 bg-black/20 p-3">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-sm font-black text-white">종목별 추종 강도</p>
+          <p className="text-sm font-black text-white">종목별 주문 활동 강도</p>
           <p className="mt-1 text-xs font-bold text-[#8b95a1]">
-            {selectedParticipant.displayName}에게만 적용되는 종목별 강도입니다. 10은 그날 정해진 방향을 적극적으로 따르고, 1은 소극적으로 움직입니다.
+            {selectedParticipant.displayName}에게만 적용되는 주문 생성 활동도입니다. 값이 클수록 주문 횟수와 가격 반응이 적극적이며, 주문 방향은 별도의 압력·보고서·프로필 신호가 정합니다.
           </p>
         </div>
         <span className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-[#64a8ff]">
@@ -82,16 +82,30 @@ export function AdminAutoParticipantStrategyPanel({
           <option value="true">가동</option>
           <option value="false">정지</option>
         </DarkSelect>
-        <DarkInput label="추종 강도(1-10)" value={strategyIntensity} onChange={onStrategyIntensityChange} placeholder="10" />
+        <DarkInput label="주문 활동 강도(1-10)" value={strategyIntensity} onChange={onStrategyIntensityChange} placeholder="5" />
         <div className="grid gap-1 text-xs font-bold text-[#b8c2cc]">
-          추종 성향
+          활동 수준
           <div className="rounded-md border border-white/10 bg-[#161b21] px-3 py-3 text-sm font-black text-white">
-            {formatAutoIntensityFollowLevel(parsePositiveIntegerInput(strategyIntensity) ?? 0)}
+            {formatAutoStrategyActivityLevel(parsePositiveIntegerInput(strategyIntensity) ?? 0)}
           </div>
         </div>
         <button type="button" onClick={onSubmitStrategy} disabled={savingStrategy} className="min-h-11 self-end rounded-md bg-white px-3 py-3 text-sm font-black text-[#101418] disabled:opacity-50 sm:col-span-2 lg:col-span-1">
-          {savingStrategy ? "저장 중" : editingStrategyKey === selectedStrategyKey ? "추종 강도 저장" : "추종 강도 추가"}
+          {savingStrategy ? "저장 중" : editingStrategyKey === selectedStrategyKey ? "활동 강도 저장" : "활동 강도 추가"}
         </button>
+      </div>
+      <div className="mt-3 grid gap-2 text-xs font-bold leading-5 text-[#8b95a1] lg:grid-cols-3">
+        <div className="rounded-md bg-white/[0.04] px-3 py-2.5">
+          <span className="font-black text-white">주문 건수</span>
+          <p className="mt-0.5">1-3은 보통 1건, 4-7은 2건, 8-10은 3건에서 시작하며 프로필과 유동성 압력에 따라 0-8건으로 최종 조정됩니다.</p>
+        </div>
+        <div className="rounded-md bg-white/[0.04] px-3 py-2.5">
+          <span className="font-black text-white">가격 반응</span>
+          <p className="mt-0.5">활동 강도 1은 가격 압력의 약 10%, 10은 약 100%를 호가 계산에 반영합니다. 강도가 높아도 압력이 0이면 방향을 만들지 않습니다.</p>
+        </div>
+        <div className="rounded-md bg-white/[0.04] px-3 py-2.5">
+          <span className="font-black text-white">기본값·프로필 보정</span>
+          <p className="mt-0.5">설정이 없으면 5입니다. 보고서 점수로 유효 강도를 보정한 뒤 프로필별 주문·공격성 배율과 매 주문 노이즈를 별도로 적용합니다.</p>
+        </div>
       </div>
       <div className="mt-3 overflow-x-auto rounded-md border border-white/10">
         <table className="min-w-[640px] w-full border-collapse text-sm">
@@ -99,8 +113,8 @@ export function AdminAutoParticipantStrategyPanel({
             <tr>
               <th className="px-3 py-2">종목</th>
               <th className="px-3 py-2">상태</th>
-              <th className="px-3 py-2">추종 성향</th>
-              <th className="px-3 py-2">추종 강도</th>
+              <th className="px-3 py-2">활동 수준</th>
+              <th className="px-3 py-2">활동 강도</th>
               <th className="px-3 py-2">수정</th>
             </tr>
           </thead>
@@ -117,7 +131,7 @@ export function AdminAutoParticipantStrategyPanel({
                       onToggle={() => onToggleStrategyEnabled(config)}
                     />
                   </td>
-                  <td className="px-3 py-2">{formatAutoIntensityFollowLevel(config.intensity)}</td>
+                  <td className="px-3 py-2">{formatAutoStrategyActivityLevel(config.intensity)}</td>
                   <td className="px-3 py-2 tabular-nums">{config.intensity}/10</td>
                   <td className="px-3 py-2">
                     <button type="button" onClick={() => onSelectStrategyDraft(config)} className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-white">
@@ -129,7 +143,7 @@ export function AdminAutoParticipantStrategyPanel({
             })}
             {selectedSymbolConfigs.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-3 py-4 text-[#8b95a1]">이 참여자에게 지정된 종목별 추종 강도가 없습니다. 종목을 선택해 추가하세요.</td>
+                <td colSpan={5} className="px-3 py-4 text-[#8b95a1]">이 참여자에게 지정된 종목별 주문 활동 강도가 없습니다. 종목을 선택해 추가하세요.</td>
               </tr>
             ) : null}
           </tbody>

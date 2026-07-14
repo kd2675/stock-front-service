@@ -69,9 +69,10 @@ export function useAdminAutoMarketConfigActions({
       symbol: config.symbol,
       payload: {
         enabled: nextEnabled,
-        intensity: config.intensity,
         maxOrderQuantity: config.maxOrderQuantity,
         orderTtlSeconds: config.orderTtlSeconds,
+        primaryDistributionBias: config.primaryDistributionBias,
+        secondaryDistributionBias: config.secondaryDistributionBias,
       },
     });
     if (reportAdminActionFailure(result, "자동장 가동 상태 변경에 실패했습니다.", setMessage)) {

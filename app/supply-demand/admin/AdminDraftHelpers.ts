@@ -43,9 +43,10 @@ export function resolveAutoMarketConfigDraft(config: AutoMarketConfig): AutoMark
   return {
     symbol: config.symbol,
     enabled: config.enabled,
-    intensity: String(config.intensity),
     maxOrderQuantity: String(config.maxOrderQuantity),
     orderTtlSeconds: String(config.orderTtlSeconds),
+    primaryDistributionBias: mapDistributionBiasToDraft(config.primaryDistributionBias),
+    secondaryDistributionBias: mapDistributionBiasToDraft(config.secondaryDistributionBias),
   };
 }
 
@@ -112,7 +113,7 @@ export function resolveAutoParticipantSelectionDraft(options: {
         userKey: options.participant.userKey,
         symbol: firstAutoConfig?.symbol ?? "",
         enabled: true,
-        intensity: String(firstAutoConfig?.intensity ?? options.defaultStrategyIntensity),
+        intensity: options.defaultStrategyIntensity,
       };
 
   return {
@@ -146,7 +147,17 @@ export function resolveParticipantStrategySymbolDraft(options: {
     userKey: options.userKey,
     symbol: options.symbol,
     enabled: true,
-    intensity: String(options.autoMarketConfigs.find((config) => config.symbol === options.symbol)?.intensity ?? options.defaultStrategyIntensity),
+    intensity: options.defaultStrategyIntensity,
+  };
+}
+
+function mapDistributionBiasToDraft(bias: AutoMarketConfig["primaryDistributionBias"]) {
+  return {
+    pricePressure: String(bias.pricePressure),
+    assetPreferencePressure: String(bias.assetPreferencePressure),
+    volatilityPressure: String(bias.volatilityPressure),
+    liquidityPressure: String(bias.liquidityPressure),
+    executionAggressionPressure: String(bias.executionAggressionPressure),
   };
 }
 

@@ -2,20 +2,23 @@ export type ListingAutoPosition = "SELL_ONLY" | "BUY_ONLY" | "TWO_SIDED";
 
 export type ListingAutoPriceDirection = "UP" | "DOWN" | "RANDOM";
 
-export type AutoMarketPriceDirection = "UP" | "DOWN" | "NEUTRAL";
+export type AutoMarketRegimePhase = "SLOT_0600" | "SLOT_0900" | "SLOT_1200" | "SLOT_1500";
 
-export type AutoMarketAssetPreference = "STOCK" | "CASH" | "BALANCED";
-
-export type AutoMarketRegimePhase = "OPENING" | "MIDDAY";
+export type AutoMarketDistributionBias = {
+  pricePressure: number;
+  assetPreferencePressure: number;
+  volatilityPressure: number;
+  liquidityPressure: number;
+  executionAggressionPressure: number;
+};
 
 export type AutoMarketRegimeModifier = {
   modifierWindowStartAt: string;
-  priceDirectionModifier: number;
-  assetPreferenceModifier: number;
-  directionIntensityModifier: number;
-  volatilityModifier: number;
-  liquidityModifier: number;
-  executionAggressionModifier: number;
+  pricePressure: number;
+  assetPreferencePressure: number;
+  volatilityPressure: number;
+  liquidityPressure: number;
+  executionAggressionPressure: number;
   seed: string;
   createdAt: string;
   updatedAt: string;
@@ -25,12 +28,11 @@ export type AutoMarketDailyRegime = {
   symbol: string;
   simulationTradeDate: string;
   regimePhase: AutoMarketRegimePhase;
-  priceDirection: AutoMarketPriceDirection;
-  assetPreference: AutoMarketAssetPreference;
-  directionIntensity: number;
-  volatilityLevel: number;
-  liquidityLevel: number;
-  executionAggressionLevel: number;
+  pricePressure: number;
+  assetPreferencePressure: number;
+  volatilityPressure: number;
+  liquidityPressure: number;
+  executionAggressionPressure: number;
   seed: string;
   currentModifier?: AutoMarketRegimeModifier | null;
   createdAt: string;
@@ -40,9 +42,10 @@ export type AutoMarketDailyRegime = {
 export type AutoMarketConfig = {
   symbol: string;
   enabled: boolean;
-  intensity: number;
   maxOrderQuantity: number;
   orderTtlSeconds: number;
+  primaryDistributionBias: AutoMarketDistributionBias;
+  secondaryDistributionBias: AutoMarketDistributionBias;
   dailyRegime?: AutoMarketDailyRegime | null;
 };
 
