@@ -11,6 +11,7 @@
     "lint": "eslint",
     "verify:corporate-actions": "node --no-warnings --experimental-strip-types scripts/verify-corporate-action-subscriptions.mjs",
     "verify:navigation": "node --no-warnings --experimental-strip-types scripts/verify-navigation.mjs",
+    "verify:auth": "node --no-warnings --experimental-strip-types scripts/verify-auth-flow.mjs",
     "verify:contract": "node ../scripts/verify-stock-auto-profiles.mjs && node ../scripts/verify-stock-front-contract.mjs"
   },
   "dependencies": {

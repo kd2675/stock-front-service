@@ -6,19 +6,15 @@ import { useRouter } from "next/navigation";
 import StockBrandLink from "@/app/components/StockBrandLink";
 import { SimulationTimeInline } from "@/app/components/SimulationTimeBadge";
 import useAuthSession from "@/app/hooks/useAuthSession";
-import { clearAccessToken, logout } from "@/app/lib/auth";
+import { logout } from "@/app/lib/auth";
 
 export function AdminTopBar() {
   const router = useRouter();
   const { user } = useAuthSession();
 
   const signOut = async () => {
-    try {
-      await logout();
-    } finally {
-      clearAccessToken();
-      router.replace("/login");
-    }
+    await logout();
+    router.replace("/login");
   };
 
   return (

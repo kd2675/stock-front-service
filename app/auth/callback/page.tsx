@@ -3,7 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-import { clearAccessToken, getUserFromToken, isStockAccountRole, setAccessToken } from "@/app/lib/auth";
+import { ensureAccessToken, getUserFromToken, isStockAccountRole, logout } from "@/app/lib/auth";
+import { consumeOAuthNextPath } from "@/app/lib/authRouting";
 import { UNSUPPORTED_ROLE_MESSAGE } from "@/app/login/loginHelpers";
 
 const OAUTH_ERROR_KEYS = ["error", "errorCode", "provider"] as const;
@@ -12,22 +13,8 @@ export default function AuthCallbackPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const fragment = new URLSearchParams(window.location.hash.slice(1));
-    const token = fragment.get("token");
     const cleanCallbackUrl = `${window.location.pathname}${window.location.search}`;
     window.history.replaceState(null, "", cleanCallbackUrl);
-
-    if (token) {
-      const user = getUserFromToken(token);
-      if (!isStockAccountRole(user?.role)) {
-        clearAccessToken();
-        router.replace(`/login?error=${encodeURIComponent(UNSUPPORTED_ROLE_MESSAGE)}`);
-        return;
-      }
-      setAccessToken(token);
-      router.replace("/");
-      return;
-    }
 
     const callbackQuery = new URLSearchParams(window.location.search);
     const loginQuery = new URLSearchParams();
@@ -37,10 +24,36 @@ export default function AuthCallbackPage() {
         loginQuery.set(key, value);
       }
     });
-    if (!loginQuery.has("error") && !loginQuery.has("errorCode")) {
-      loginQuery.set("error", "소셜 로그인 결과를 확인할 수 없습니다. 다시 시도해 주세요.");
+    if (loginQuery.has("error") || loginQuery.has("errorCode")) {
+      consumeOAuthNextPath();
+      router.replace(`/login?${loginQuery.toString()}`);
+      return;
     }
-    router.replace(`/login?${loginQuery.toString()}`);
+
+    let cancelled = false;
+    void (async () => {
+      const token = await ensureAccessToken();
+      if (cancelled) {
+        return;
+      }
+      if (!token) {
+        consumeOAuthNextPath();
+        router.replace(`/login?error=${encodeURIComponent("소셜 로그인 세션을 확인할 수 없습니다. 다시 시도해 주세요.")}`);
+        return;
+      }
+      const user = getUserFromToken(token);
+      if (!isStockAccountRole(user?.role)) {
+        await logout();
+        consumeOAuthNextPath();
+        router.replace(`/login?error=${encodeURIComponent(UNSUPPORTED_ROLE_MESSAGE)}`);
+        return;
+      }
+      router.replace(consumeOAuthNextPath());
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
   return (

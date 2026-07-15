@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import { AUTH_EXPIRED_REDIRECT_KEY } from "@/app/lib/authEvents";
+import { buildLoginPath, currentBrowserPath } from "@/app/lib/authRouting";
 import type { AuthStatus } from "@/app/types/auth";
 
 type UseLoginRequiredRedirectOptions = {
@@ -25,15 +26,10 @@ export function useLoginRequiredRedirect({
       return;
     }
 
-    if (!preserveExpiredRedirect) {
-      router.replace("/login");
-      return;
-    }
-
-    const expiredRedirect = window.sessionStorage.getItem(AUTH_EXPIRED_REDIRECT_KEY) === "1";
+    const expiredRedirect = preserveExpiredRedirect && window.sessionStorage.getItem(AUTH_EXPIRED_REDIRECT_KEY) === "1";
     if (expiredRedirect) {
       window.sessionStorage.removeItem(AUTH_EXPIRED_REDIRECT_KEY);
     }
-    router.replace(expiredRedirect ? "/login?expired=1" : "/login");
+    router.replace(buildLoginPath(currentBrowserPath(), expiredRedirect));
   }, [authStatus, isHydrated, preserveExpiredRedirect, router]);
 }

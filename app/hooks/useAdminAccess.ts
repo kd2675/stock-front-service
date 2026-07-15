@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { bootstrapAccessToken, getUserFromToken, isAdminRole } from "@/app/lib/auth";
+import { buildLoginPath, currentBrowserPath } from "@/app/lib/authRouting";
 
 type AdminAccessStatus = "checking" | "allowed" | "denied";
 
@@ -20,7 +21,7 @@ export default function useAdminAccess() {
         return;
       }
       if (!token) {
-        router.replace("/login");
+        router.replace(buildLoginPath(currentBrowserPath()));
         return;
       }
       const user = getUserFromToken(token);

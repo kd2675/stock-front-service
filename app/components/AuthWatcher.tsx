@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { AUTH_EXPIRED_REDIRECT_KEY, onAuthExpired } from "@/app/lib/authEvents";
+import { buildLoginPath, currentBrowserPath } from "@/app/lib/authRouting";
 
 export default function AuthWatcher() {
   const pathname = usePathname();
@@ -14,7 +15,7 @@ export default function AuthWatcher() {
         return;
       }
       window.sessionStorage.setItem(AUTH_EXPIRED_REDIRECT_KEY, "1");
-      router.push("/login?expired=1");
+      router.push(buildLoginPath(currentBrowserPath(), true));
     });
 
     return () => {

@@ -11,6 +11,7 @@ import { TradingStatusScreen } from "@/app/components/TradingStatusBox";
 import useAuthSession from "@/app/hooks/useAuthSession";
 import { sanitizeAccountNextPath } from "@/app/lib/accountRouting";
 import { getAccessTokenForAuthStatus } from "@/app/lib/auth";
+import { buildLoginPath, currentBrowserPath } from "@/app/lib/authRouting";
 import { invalidateAccountStatusQueries } from "@/app/lib/react-query/stockInvalidations";
 import { openAccountMutationOptions, reconnectAccountMutationOptions } from "@/app/lib/react-query/stockMutations";
 import { accountStatusQueryOptions } from "@/app/lib/react-query/stockAccountQueries";
@@ -86,7 +87,7 @@ export default function AccountRequiredClient() {
       return;
     }
     if (authStatus === "out") {
-      router.replace("/login");
+      router.replace(buildLoginPath(currentBrowserPath()));
       return;
     }
     if (accountStatusQuery.data?.hasAccount && !issuedAccount) {

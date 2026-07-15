@@ -8,6 +8,7 @@ let refreshInFlight: Promise<string | null> | null = null;
 let bootstrapRefreshDone = false;
 let bootstrapRefreshInFlight: Promise<string | null> | null = null;
 let authGeneration = 0;
+let explicitlySignedOut = false;
 
 export type AuthActionResult = {
   ok: boolean;
@@ -26,6 +27,7 @@ export function getAccessTokenForAuthStatus(authStatus: AuthStatus): string | nu
 
 export function setAccessToken(token: string): void {
   accessTokenMemory = token;
+  explicitlySignedOut = false;
   bootstrapRefreshDone = false;
   authGeneration += 1;
   emitAuthChanged();
@@ -157,12 +159,16 @@ export async function signup(username: string, password: string, email: string):
 }
 
 export async function logout(): Promise<void> {
-  const token = getAccessToken();
-  const headers = {
-    "X-Client-Id": STOCK_CLIENT_ID,
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-  await postAuthJson<void>("/auth/logout", {}, headers);
+  explicitlySignedOut = true;
+  try {
+    await postAuthJson<void>("/auth/logout", {}, { "X-Client-Id": STOCK_CLIENT_ID });
+  } finally {
+    accessTokenMemory = null;
+    bootstrapRefreshDone = true;
+    bootstrapRefreshInFlight = null;
+    authGeneration += 1;
+    emitAuthChanged();
+  }
 }
 
 async function requestRefreshAccessToken(): Promise<string | null> {
@@ -191,6 +197,9 @@ export async function refreshAccessToken(): Promise<string | null> {
 export async function bootstrapAccessToken(): Promise<string | null> {
   if (accessTokenMemory) {
     return accessTokenMemory;
+  }
+  if (explicitlySignedOut) {
+    return null;
   }
   if (bootstrapRefreshDone) {
     return null;

@@ -2,11 +2,14 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 
-import { clearAccessToken, getUserFromToken, isStockAccountRole, login, setAccessToken, signup } from "@/app/lib/auth";
+import useAuthSession from "@/app/hooks/useAuthSession";
+import { isStockAccountRole, login, logout, signup } from "@/app/lib/auth";
 import { AUTH_EXPIRED_REDIRECT_KEY } from "@/app/lib/authEvents";
+import { AUTH_API_BASE } from "@/app/lib/api";
+import { rememberOAuthNextPath, sanitizeAuthNextPath } from "@/app/lib/authRouting";
 import { resolveFirstFieldErrorMessage } from "@/app/lib/validation/formErrors";
 
 import { LoginFormPanel } from "./LoginFormPanel";
@@ -23,6 +26,7 @@ import {
 export function LoginClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { authStatus, isHydrated } = useAuthSession();
   const [mode, setMode] = useState<LoginMode>("login");
   const [message, setMessage] = useState<string | null>(null);
   const loginForm = useForm<LoginFormValues, unknown, LoginFormPayload>({
@@ -37,33 +41,30 @@ export function LoginClient() {
   const username = useWatch({ control: loginForm.control, name: "username" });
   const password = useWatch({ control: loginForm.control, name: "password" });
   const email = useWatch({ control: loginForm.control, name: "email" });
+  const nextPath = useMemo(() => sanitizeAuthNextPath(searchParams.get("next")), [searchParams]);
 
   useEffect(() => {
-    const token = searchParams.get("token");
-    if (!token) {
-      const error = searchParams.get("error");
-      const errorCode = searchParams.get("errorCode");
-      if (error || errorCode) {
-        const provider = searchParams.get("provider");
-        window.setTimeout(() => setMessage(resolveOAuthErrorMessage(error, errorCode, provider)), 0);
-        return;
-      }
-      const sessionMessage = resolveSessionMessage(searchParams.get("expired"));
-      if (sessionMessage) {
-        window.sessionStorage.removeItem(AUTH_EXPIRED_REDIRECT_KEY);
-        window.setTimeout(() => setMessage(sessionMessage), 0);
-      }
+    if (!isHydrated || authStatus === "unknown") {
       return;
     }
-    setAccessToken(token);
-    const user = getUserFromToken(token);
-    if (!isStockAccountRole(user?.role)) {
-      clearAccessToken();
-      window.setTimeout(() => setMessage(UNSUPPORTED_ROLE_MESSAGE), 0);
+    if (authStatus === "in") {
+      router.replace(nextPath);
       return;
     }
-    router.replace("/");
-  }, [router, searchParams]);
+
+    const error = searchParams.get("error");
+    const errorCode = searchParams.get("errorCode");
+    if (error || errorCode) {
+      const provider = searchParams.get("provider");
+      window.setTimeout(() => setMessage(resolveOAuthErrorMessage(error, errorCode, provider)), 0);
+      return;
+    }
+    const sessionMessage = resolveSessionMessage(searchParams.get("expired"));
+    if (sessionMessage) {
+      window.sessionStorage.removeItem(AUTH_EXPIRED_REDIRECT_KEY);
+      window.setTimeout(() => setMessage(sessionMessage), 0);
+    }
+  }, [authStatus, isHydrated, nextPath, router, searchParams]);
 
   const submit = loginForm.handleSubmit(async (values) => {
     setMessage(null);
@@ -82,11 +83,11 @@ export function LoginClient() {
         return;
       }
       if (!isStockAccountRole(loginResult.user?.role)) {
-        clearAccessToken();
+        await logout();
         setMessage(UNSUPPORTED_ROLE_MESSAGE);
         return;
       }
-      router.replace("/");
+      router.replace(nextPath);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "로그인 처리 중 오류가 발생했습니다.");
     }
@@ -113,6 +114,22 @@ export function LoginClient() {
     setMessage(null);
   };
 
+  const startOAuthLogin = (provider: "naver-stock" | "kakao-stock") => {
+    rememberOAuthNextPath(nextPath);
+    window.location.replace(`${AUTH_API_BASE}/oauth2/authorize/${provider}`);
+  };
+
+  if (!isHydrated || authStatus === "unknown" || authStatus === "in") {
+    return (
+      <main className="grid min-h-screen place-items-center bg-stock-canvas px-5 text-stock-ink" aria-live="polite">
+        <section className="text-center">
+          <span className="mx-auto block size-8 animate-spin rounded-full border-2 border-stock-line border-t-stock-accent" aria-hidden="true" />
+          <p className="mt-4 text-sm font-bold text-stock-text-tertiary">로그인 상태를 확인하고 있습니다.</p>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <main className="login-screen min-h-screen bg-stock-canvas px-5 py-8 text-stock-ink">
       <section className="mx-auto grid min-h-[calc(100vh-4rem)] w-full max-w-6xl items-center gap-8 lg:grid-cols-[1fr_420px]">
@@ -136,6 +153,7 @@ export function LoginClient() {
           username={username}
           onEmailChange={(value) => updateField("email", value)}
           onModeChange={updateMode}
+          onOAuthLogin={startOAuthLogin}
           onPasswordChange={(value) => updateField("password", value)}
           onSubmit={() => void submit()}
           onUsernameChange={(value) => updateField("username", value)}

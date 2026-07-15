@@ -9,7 +9,7 @@ import MarketModeTabs, { type MarketMode } from "@/app/components/MarketModeTabs
 import { SimulationTimeInline } from "@/app/components/SimulationTimeBadge";
 import StockBrandLink from "@/app/components/StockBrandLink";
 import useAuthSession from "@/app/hooks/useAuthSession";
-import { clearAccessToken, getAccessTokenForAuthStatus, isAdminRole, logout } from "@/app/lib/auth";
+import { getAccessTokenForAuthStatus, isAdminRole, logout } from "@/app/lib/auth";
 import { accountStatusQueryOptions, holdingsQueryOptions, portfolioQueryOptions, profileQueryOptions } from "@/app/lib/react-query/stockAccountQueries";
 import { formatNumber, formatWon } from "@/app/lib/stockFormatters";
 import type { Holding, Portfolio, StockUserProfile } from "@/app/types/stock";
@@ -54,12 +54,8 @@ export default function TradingTopBar({ active, actions }: { active: MarketMode;
   }, [accountPanelOpen]);
 
   const signOut = async () => {
-    try {
-      await logout();
-    } finally {
-      clearAccessToken();
-      router.replace("/login");
-    }
+    await logout();
+    router.replace("/login");
   };
 
   return (

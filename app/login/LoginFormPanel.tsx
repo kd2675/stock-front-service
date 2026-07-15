@@ -1,5 +1,3 @@
-import { AUTH_API_BASE } from "@/app/lib/api";
-
 import type { LoginMode } from "./loginHelpers";
 
 type LoginFormPanelProps = {
@@ -11,6 +9,7 @@ type LoginFormPanelProps = {
   username: string;
   onEmailChange: (value: string) => void;
   onModeChange: (mode: LoginMode) => void;
+  onOAuthLogin: (provider: "naver-stock" | "kakao-stock") => void;
   onPasswordChange: (value: string) => void;
   onSubmit: () => void;
   onUsernameChange: (value: string) => void;
@@ -25,12 +24,19 @@ export function LoginFormPanel({
   username,
   onEmailChange,
   onModeChange,
+  onOAuthLogin,
   onPasswordChange,
   onSubmit,
   onUsernameChange,
 }: LoginFormPanelProps) {
   return (
-    <div className="rounded-lg border border-stock-border bg-white p-5 shadow-[0_16px_40px_rgba(25,31,40,0.08)]">
+    <form
+      className="rounded-lg border border-stock-border bg-white p-5 shadow-[0_16px_40px_rgba(25,31,40,0.08)]"
+      onSubmit={(event) => {
+        event.preventDefault();
+        onSubmit();
+      }}
+    >
       <div className="grid grid-cols-2 rounded-md bg-stock-surface-strong p-1">
         <button
           type="button"
@@ -49,12 +55,13 @@ export function LoginFormPanel({
       </div>
 
       <div className="mt-5 space-y-3">
-        <Field label="아이디" value={username} onChange={onUsernameChange} autoComplete="username" />
+        <Field label="아이디" name="username" value={username} onChange={onUsernameChange} autoComplete="username" />
         {mode === "signup" ? (
-          <Field label="이메일" value={email} onChange={onEmailChange} type="email" autoComplete="email" />
+          <Field label="이메일" name="email" value={email} onChange={onEmailChange} type="email" autoComplete="email" />
         ) : null}
         <Field
           label="비밀번호"
+          name="password"
           value={password}
           onChange={onPasswordChange}
           type="password"
@@ -69,8 +76,7 @@ export function LoginFormPanel({
       ) : null}
 
       <button
-        type="button"
-        onClick={onSubmit}
+        type="submit"
         disabled={submitting}
         className="mt-5 w-full rounded-md bg-stock-accent px-4 py-3 text-sm font-black text-white disabled:cursor-wait disabled:opacity-60"
       >
@@ -81,7 +87,7 @@ export function LoginFormPanel({
         <button
           type="button"
           onClick={() => {
-            window.location.href = `${AUTH_API_BASE}/oauth2/authorize/naver-stock`;
+            onOAuthLogin("naver-stock");
           }}
           className="rounded-md bg-[#03C75A] px-4 py-3 text-sm font-black text-white"
         >
@@ -90,25 +96,27 @@ export function LoginFormPanel({
         <button
           type="button"
           onClick={() => {
-            window.location.href = `${AUTH_API_BASE}/oauth2/authorize/kakao-stock`;
+            onOAuthLogin("kakao-stock");
           }}
           className="rounded-md bg-[#FEE500] px-4 py-3 text-sm font-black text-[#191919]"
         >
           카카오로 계속
         </button>
       </div>
-    </div>
+    </form>
   );
 }
 
 function Field({
   label,
+  name,
   value,
   onChange,
   type = "text",
   autoComplete,
 }: {
   label: string;
+  name: string;
   value: string;
   onChange: (value: string) => void;
   type?: string;
@@ -119,6 +127,7 @@ function Field({
       <span className="text-xs font-bold text-stock-muted">{label}</span>
       <input
         type={type}
+        name={name}
         value={value}
         autoComplete={autoComplete}
         onChange={(event) => onChange(event.target.value)}

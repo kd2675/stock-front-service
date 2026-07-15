@@ -6,7 +6,7 @@
 
 - `/`
 - `/login`
-- `/auth/callback` - OAuth 성공 토큰을 fragment에서 처리하는 전용 콜백
+- `/auth/callback` - OAuth 성공 후 HttpOnly refresh 세션으로 access token을 교환하는 전용 콜백
 - `/trade` - 주문장
 - `/orders` - 내 주문
 - `/portfolio`
@@ -106,4 +106,4 @@ NEXT_PUBLIC_AUTH_API_URL=http://localhost:9000
 - 기능별 현재 구현, 코드 위치, 다음 개발 순서는 `../stock-back-service/docs/market-simulation/00-overview.md`부터 확인합니다.
 - 프론트 코드 파일별 책임은 `../stock-back-service/docs/market-simulation/13-code-ownership-map.md`, 기능별 변경 순서는 `../stock-back-service/docs/market-simulation/14-feature-change-playbooks.md`를 기준으로 봅니다.
 - access token은 메모리에 보관하고 refresh token은 기존 auth 서버의 HttpOnly 쿠키 흐름을 사용합니다.
-- OAuth 성공 응답은 `/auth/callback#token=...`으로 들어오며, callback이 fragment를 즉시 지운 뒤 홈으로 이동합니다. access token을 쿼리 문자열이나 서버 trace에 남기지 않습니다.
+- OAuth 성공 응답은 토큰 없는 `/auth/callback`으로 들어옵니다. callback은 `Path=/auth`의 HttpOnly refresh 쿠키로 `/auth/refresh`를 호출해 access token을 메모리에만 보관하고, 로그인 시작 전 화면으로 복귀합니다. access token은 URL, 브라우저 저장소, 서버 access log에 남기지 않습니다.
