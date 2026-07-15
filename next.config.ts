@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    turbopackFileSystemCacheForDev: false,
+  },
   allowedDevOrigins: [
     "61.80.148.197",
     "61.80.148.197:3005",

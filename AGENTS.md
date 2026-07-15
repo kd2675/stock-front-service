@@ -11,6 +11,7 @@
 
 - `/`
 - `/login`
+- `/auth/callback`
 - `/trade`
 - `/orders`
 - `/portfolio`

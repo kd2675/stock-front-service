@@ -6,6 +6,7 @@
 
 - `/`
 - `/login`
+- `/auth/callback` - OAuth 성공 토큰을 fragment에서 처리하는 전용 콜백
 - `/trade` - 주문장
 - `/orders` - 내 주문
 - `/portfolio`
@@ -34,6 +35,7 @@
 
 ```bash
 npm install
+npm run clean:dev-cache
 npm run dev
 npm run build
 npm run start
@@ -46,6 +48,8 @@ npm run verify:contract
 
 - dev: `3005`
 - start: `3005`
+
+Next.js 개발 서버는 이 프로젝트에서 Turbopack 파일 시스템 캐시를 사용하지 않습니다. 이전 실행의 캐시·chunk·trace가 `.next/dev`에 과도하게 쌓였거나 개발 trace에 민감한 URL이 남았다면 서버를 종료한 뒤 `npm run clean:dev-cache`로 개발 산출물 전체를 제거합니다. 생산 빌드는 Next.js 기본 증분 캐시를 유지하며 배포 산출물은 `npm run build`로 별도 생성합니다.
 
 ## 환경 변수
 
@@ -102,3 +106,4 @@ NEXT_PUBLIC_AUTH_API_URL=http://localhost:9000
 - 기능별 현재 구현, 코드 위치, 다음 개발 순서는 `../stock-back-service/docs/market-simulation/00-overview.md`부터 확인합니다.
 - 프론트 코드 파일별 책임은 `../stock-back-service/docs/market-simulation/13-code-ownership-map.md`, 기능별 변경 순서는 `../stock-back-service/docs/market-simulation/14-feature-change-playbooks.md`를 기준으로 봅니다.
 - access token은 메모리에 보관하고 refresh token은 기존 auth 서버의 HttpOnly 쿠키 흐름을 사용합니다.
+- OAuth 성공 응답은 `/auth/callback#token=...`으로 들어오며, callback이 fragment를 즉시 지운 뒤 홈으로 이동합니다. access token을 쿼리 문자열이나 서버 trace에 남기지 않습니다.
