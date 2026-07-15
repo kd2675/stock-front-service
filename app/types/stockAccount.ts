@@ -112,6 +112,10 @@ export type AdminFundFlowSummary = {
   totalCashBalance: number;
   totalReservedBuyCash: number;
   totalHoldingMarketValue: number;
+  totalHoldingQuantity: number;
+  totalReservedSellQuantity: number;
+  totalAvailableHoldingQuantity: number;
+  holdingPositionCount: number;
   totalAsset: number;
   externalDepositAmount: number;
   externalWithdrawAmount: number;
@@ -135,6 +139,10 @@ export type AdminTotalAssetHistoryPoint = {
   cashBalance: number;
   marketValue: number;
   reservedCash: number;
+  holdingQuantity: number | null;
+  reservedSellQuantity: number | null;
+  availableHoldingQuantity: number | null;
+  holdingPositionCount: number | null;
   changeAmount: number | null;
   changeRate: number | null;
 };

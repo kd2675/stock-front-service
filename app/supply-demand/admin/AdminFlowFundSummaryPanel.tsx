@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import useModalDialog from "@/app/hooks/useModalDialog";
 import { formatCount, formatWon } from "@/app/supply-demand/admin/AdminFormatters";
 import { FundFlowLine, SalaryMetric } from "@/app/supply-demand/admin/AdminMetricCards";
 import { AdminTotalAssetHistoryModal } from "@/app/supply-demand/admin/AdminTotalAssetHistoryModal";
+import type { AdminAssetHistoryMetric } from "@/app/supply-demand/admin/adminTotalAssetHistoryMetrics";
 import type { AdminFundFlowSummary, AdminTotalAssetHistoryPage } from "@/app/types/stock";
 
 export function AdminFlowFundSummaryPanel({
@@ -27,9 +28,11 @@ export function AdminFlowFundSummaryPanel({
 }) {
   const [showAllFundFlow, setShowAllFundFlow] = useState(false);
   const [showTotalAssetHistory, setShowTotalAssetHistory] = useState(false);
+  const [totalAssetHistoryMetric, setTotalAssetHistoryMetric] = useState<AdminAssetHistoryMetric>("TOTAL_ASSET");
   const [totalAssetHistory, setTotalAssetHistory] = useState<AdminTotalAssetHistoryPage | null>(null);
   const [loadingTotalAssetHistory, setLoadingTotalAssetHistory] = useState(false);
   const [totalAssetHistoryError, setTotalAssetHistoryError] = useState(false);
+  const totalAssetHistoryRequestIdRef = useRef(0);
 
   const openAllFundFlow = () => {
     setShowAllFundFlow(true);
@@ -39,23 +42,36 @@ export function AdminFlowFundSummaryPanel({
   };
 
   const loadTotalAssetHistory = async (page: number) => {
+    const requestId = ++totalAssetHistoryRequestIdRef.current;
     setLoadingTotalAssetHistory(true);
     setTotalAssetHistoryError(false);
-    const nextHistory = await onLoadTotalAssetHistory(page);
-    setLoadingTotalAssetHistory(false);
-    if (!nextHistory) {
-      setTotalAssetHistoryError(true);
-      return;
+    try {
+      const nextHistory = await onLoadTotalAssetHistory(page);
+      if (requestId !== totalAssetHistoryRequestIdRef.current) {
+        return;
+      }
+      if (!nextHistory) {
+        setTotalAssetHistoryError(true);
+        return;
+      }
+      setTotalAssetHistory(nextHistory);
+    } catch {
+      if (requestId === totalAssetHistoryRequestIdRef.current) {
+        setTotalAssetHistoryError(true);
+      }
+    } finally {
+      if (requestId === totalAssetHistoryRequestIdRef.current) {
+        setLoadingTotalAssetHistory(false);
+      }
     }
-    setTotalAssetHistory(nextHistory);
   };
 
-  const openTotalAssetHistory = () => {
+  const openTotalAssetHistory = (metric: AdminAssetHistoryMetric) => {
     setShowAllFundFlow(false);
+    setTotalAssetHistoryMetric(metric);
+    setTotalAssetHistory(null);
     setShowTotalAssetHistory(true);
-    if (!totalAssetHistory && !loadingTotalAssetHistory) {
-      void loadTotalAssetHistory(0);
-    }
+    void loadTotalAssetHistory(0);
   };
 
   if (!fundFlow) {
@@ -82,7 +98,7 @@ export function AdminFlowFundSummaryPanel({
           onRefresh={onLoadAll}
           onOpenTotalAssetHistory={openTotalAssetHistory}
         />
-        <AdminTotalAssetHistoryModal history={totalAssetHistory} loading={loadingTotalAssetHistory} error={totalAssetHistoryError} open={showTotalAssetHistory} onClose={() => setShowTotalAssetHistory(false)} onLoadPage={(page) => void loadTotalAssetHistory(page)} />
+        <AdminTotalAssetHistoryModal history={totalAssetHistory} loading={loadingTotalAssetHistory} error={totalAssetHistoryError} open={showTotalAssetHistory} selectedMetric={totalAssetHistoryMetric} onMetricChange={setTotalAssetHistoryMetric} onClose={() => setShowTotalAssetHistory(false)} onLoadPage={(page) => void loadTotalAssetHistory(page)} />
       </>
     );
   }
@@ -91,8 +107,8 @@ export function AdminFlowFundSummaryPanel({
     <>
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 className="text-sm font-black text-white">시뮬레이션 하루 자금 흐름</h3>
-          <p className="mt-1 text-xs font-bold text-stock-subtle">현재 조회 시점의 시뮬레이션 장 시작부터 지금까지의 입출금, 체결, 손익입니다.</p>
+          <h3 className="text-sm font-black text-white">시뮬레이션 자산·자금 현황</h3>
+          <p className="mt-1 text-xs font-bold text-stock-subtle">현재 자산 구성과 보유량, 시뮬레이션 장 시작부터 지금까지의 입출금·체결·손익입니다.</p>
         </div>
         <button
           type="button"
@@ -114,7 +130,7 @@ export function AdminFlowFundSummaryPanel({
         onRefresh={onLoadAll}
         onOpenTotalAssetHistory={openTotalAssetHistory}
       />
-      <AdminTotalAssetHistoryModal history={totalAssetHistory} loading={loadingTotalAssetHistory} error={totalAssetHistoryError} open={showTotalAssetHistory} onClose={() => setShowTotalAssetHistory(false)} onLoadPage={(page) => void loadTotalAssetHistory(page)} />
+      <AdminTotalAssetHistoryModal history={totalAssetHistory} loading={loadingTotalAssetHistory} error={totalAssetHistoryError} open={showTotalAssetHistory} selectedMetric={totalAssetHistoryMetric} onMetricChange={setTotalAssetHistoryMetric} onClose={() => setShowTotalAssetHistory(false)} onLoadPage={(page) => void loadTotalAssetHistory(page)} />
     </>
   );
 }
@@ -126,18 +142,29 @@ function AdminFundFlowMetricGrids({
 }: {
   fundFlow: AdminFundFlowSummary;
   executionLabel: string;
-  onOpenTotalAssetHistory: () => void;
+  onOpenTotalAssetHistory: (metric: AdminAssetHistoryMetric) => void;
 }) {
   return (
     <>
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <SalaryMetric label="활성 계좌" value={formatCount(fundFlow.activeAccountCount, "개")} tone="neutral" />
-        <SalaryMetric label="전체 현금" value={formatWon(fundFlow.totalCashBalance)} tone="neutral" />
-        <SalaryMetric label="예약 매수 현금" value={formatWon(fundFlow.totalReservedBuyCash)} tone="warn" />
-        <SalaryMetric label="전체 총자산" value={formatWon(fundFlow.totalAsset)} tone="good" actionHint="7일 변화 보기" onClick={onOpenTotalAssetHistory} />
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+        <h4 className="text-xs font-black text-white">현재 자산 구성</h4>
+        <span className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-admin-muted">
+          활성 참여 계좌 {formatCount(fundFlow.activeAccountCount, "개")}
+        </span>
+      </div>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <SalaryMetric label="전체 총자산" value={formatWon(fundFlow.totalAsset)} tone="good" actionHint="7일 변화" onClick={() => onOpenTotalAssetHistory("TOTAL_ASSET")} />
+        <SalaryMetric label="가용 현금" value={formatWon(fundFlow.totalCashBalance)} tone="neutral" actionHint="7일 변화" onClick={() => onOpenTotalAssetHistory("CASH_BALANCE")} />
+        <SalaryMetric label="매수·청약 예약금" value={formatWon(fundFlow.totalReservedBuyCash)} tone="warn" actionHint="7일 변화" onClick={() => onOpenTotalAssetHistory("RESERVED_CASH")} />
+        <SalaryMetric label="보유 주식 평가액" value={formatWon(fundFlow.totalHoldingMarketValue)} tone="neutral" actionHint="7일 변화" onClick={() => onOpenTotalAssetHistory("MARKET_VALUE")} />
+        <SalaryMetric label="총 보유량" value={formatCount(fundFlow.totalHoldingQuantity, "주")} tone="neutral" detail={`계좌별 보유 포지션 ${formatCount(fundFlow.holdingPositionCount, "건")}`} actionHint="7일 변화" onClick={() => onOpenTotalAssetHistory("HOLDING_QUANTITY")} />
+        <SalaryMetric label="가용 보유량" value={formatCount(fundFlow.totalAvailableHoldingQuantity, "주")} tone="good" detail={`매도 예약 ${formatCount(fundFlow.totalReservedSellQuantity, "주")}`} actionHint="7일 변화" onClick={() => onOpenTotalAssetHistory("AVAILABLE_HOLDING_QUANTITY")} />
       </div>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <AssetCompositionBar fundFlow={fundFlow} />
+
+      <h4 className="mt-6 text-xs font-black text-white">자금·손익 흐름</h4>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <FundFlowLine label="순입금" value={formatWon(fundFlow.netExternalCashFlow)} />
         <FundFlowLine label="배당 수입" value={formatWon(fundFlow.dividendIncomeAmount)} />
         <FundFlowLine label="거래 순현금" value={formatWon(fundFlow.tradeNetCashFlow)} />
@@ -148,6 +175,52 @@ function AdminFundFlowMetricGrids({
         <FundFlowLine label={executionLabel} value={formatCount(fundFlow.executionCount, "건")} />
       </div>
     </>
+  );
+}
+
+function AssetCompositionBar({ fundFlow }: { fundFlow: AdminFundFlowSummary }) {
+  const components = [
+    { label: "가용 현금", value: Math.max(0, fundFlow.totalCashBalance), className: "bg-admin-accent" },
+    { label: "매수·청약 예약금", value: Math.max(0, fundFlow.totalReservedBuyCash), className: "bg-admin-warning" },
+    { label: "보유 주식 평가액", value: Math.max(0, fundFlow.totalHoldingMarketValue), className: "bg-admin-success" },
+  ];
+  const compositionTotal = components.reduce((sum, component) => sum + component.value, 0);
+  const compositionLabel = components
+    .map((component) => {
+      const percentage = compositionTotal > 0
+        ? ((component.value * 100) / compositionTotal).toFixed(1)
+        : "0.0";
+      return `${component.label} ${percentage}%`;
+    })
+    .join(", ");
+
+  return (
+    <div className="mt-3 rounded-md border border-white/10 bg-black/20 px-3 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-[11px] font-black text-stock-subtle">총자산 구성 비중</p>
+        <p className="text-[11px] font-bold text-admin-muted">현금 + 예약금 + 보유 주식 평가액</p>
+      </div>
+      {compositionTotal > 0 ? (
+        <>
+          <div className="mt-3 flex h-2 overflow-hidden rounded-full bg-white/10" role="img" aria-label={`총자산 구성 비중: ${compositionLabel}`}>
+            {components.map((component) => (
+              <span key={component.label} className={component.className} style={{ width: `${(component.value * 100) / compositionTotal}%` }} />
+            ))}
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2">
+            {components.map((component) => (
+              <div key={component.label} className="inline-flex items-center gap-1.5 text-[11px]">
+                <span aria-hidden="true" className={`h-2 w-2 shrink-0 rounded-full ${component.className}`} />
+                <span className="font-bold text-stock-subtle">{component.label}</span>
+                <span className="font-black tabular-nums text-white">{((component.value * 100) / compositionTotal).toFixed(1)}%</span>
+              </div>
+            ))}
+          </div>
+        </>
+      ) : (
+        <p className="mt-3 text-xs font-bold text-admin-muted">구성 비중을 계산할 자산이 없습니다.</p>
+      )}
+    </div>
   );
 }
 
@@ -166,7 +239,7 @@ function AdminAllFundFlowModal({
   open: boolean;
   onClose: () => void;
   onRefresh: () => void;
-  onOpenTotalAssetHistory: () => void;
+  onOpenTotalAssetHistory: (metric: AdminAssetHistoryMetric) => void;
 }) {
   const dialogRef = useModalDialog<HTMLDivElement>(open, onClose);
 

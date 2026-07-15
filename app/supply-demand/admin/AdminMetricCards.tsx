@@ -31,25 +31,28 @@ export function SalaryMetric({
   label,
   value,
   tone,
+  detail,
   actionHint,
   onClick,
 }: {
   label: string;
   value: string;
   tone: "good" | "neutral" | "warn" | "muted";
+  detail?: string;
   actionHint?: string;
   onClick?: () => void;
 }) {
   const toneClass = {
-    good: "text-[#7bd88f]",
+    good: "text-admin-success",
     neutral: "text-white",
-    warn: "text-[#ffd166]",
+    warn: "text-admin-warning-soft",
     muted: "text-stock-subtle",
   }[tone];
   const content = (
     <>
       <p className="text-[11px] font-black text-stock-subtle">{label}</p>
       <p className={["mt-1 text-lg font-black tabular-nums", toneClass].join(" ")}>{value}</p>
+      {detail ? <p className="mt-1 text-[11px] font-bold leading-4 text-admin-muted">{detail}</p> : null}
       {actionHint ? <p className="mt-2 text-[11px] font-black text-admin-accent-label">{actionHint}</p> : null}
     </>
   );

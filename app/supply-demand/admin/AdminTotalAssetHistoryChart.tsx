@@ -3,16 +3,31 @@
 import { AreaSeries, createChart, type AreaData, type IChartApi, type ISeriesApi, type Time } from "lightweight-charts";
 import { useEffect, useMemo, useRef } from "react";
 
+import {
+  ADMIN_ASSET_HISTORY_METRICS,
+  type AdminAssetHistoryMetric,
+} from "@/app/supply-demand/admin/adminTotalAssetHistoryMetrics";
 import type { AdminTotalAssetHistoryPoint } from "@/app/types/stock";
 
-export function AdminTotalAssetHistoryChart({ points }: { points: AdminTotalAssetHistoryPoint[] }) {
+export function AdminTotalAssetHistoryChart({
+  points,
+  metric,
+}: {
+  points: AdminTotalAssetHistoryPoint[];
+  metric: AdminAssetHistoryMetric;
+}) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<"Area"> | null>(null);
+  const metricDefinition = ADMIN_ASSET_HISTORY_METRICS[metric];
   const data = useMemo<AreaData<Time>[]>(
-    () => [...points].reverse().map((point) => ({ time: point.snapshotDate, value: point.totalAsset })),
-    [points],
+    () => [...points]
+      .reverse()
+      .map((point) => ({ time: point.snapshotDate, value: metricDefinition.value(point) }))
+      .filter((point): point is { time: string; value: number } => point.value != null),
+    [metricDefinition, points],
   );
+  const hasChartData = data.length >= 2;
 
   useEffect(() => {
     const container = containerRef.current;
@@ -47,7 +62,7 @@ export function AdminTotalAssetHistoryChart({ points }: { points: AdminTotalAsse
       priceFormat: {
         type: "custom",
         minMove: 1,
-        formatter: (price: number) => `${Math.round(price).toLocaleString("ko-KR")}원`,
+        formatter: (price: number) => `${Math.round(price).toLocaleString("ko-KR")}${metricDefinition.unit === "WON" ? "원" : "주"}`,
       },
     });
     chartRef.current = chart;
@@ -57,20 +72,20 @@ export function AdminTotalAssetHistoryChart({ points }: { points: AdminTotalAsse
       chartRef.current = null;
       seriesRef.current = null;
     };
-  }, []);
+  }, [hasChartData, metricDefinition.unit]);
 
   useEffect(() => {
     seriesRef.current?.setData(data);
     chartRef.current?.timeScale().fitContent();
   }, [data]);
 
-  if (data.length < 2) {
+  if (!hasChartData) {
     return (
       <div className="flex h-[220px] items-center justify-center rounded-md border border-white/10 bg-admin-canvas/60 text-sm font-bold text-stock-subtle">
-        자산 정산 기록이 2일 이상 쌓이면 추이 차트가 표시됩니다.
+        {metricDefinition.label} 정산 기록이 2일 이상 쌓이면 추이 차트가 표시됩니다.
       </div>
     );
   }
 
-  return <div ref={containerRef} className="h-[220px] w-full min-w-0 overflow-hidden rounded-md border border-white/10 bg-admin-canvas" />;
+  return <div ref={containerRef} role="img" aria-label={`${metricDefinition.label} 7일 변화 차트`} className="h-[220px] w-full min-w-0 overflow-hidden rounded-md border border-white/10 bg-admin-canvas" />;
 }
