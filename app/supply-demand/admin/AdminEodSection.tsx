@@ -43,7 +43,7 @@ const READINESS_LABELS: Readonly<Record<string, string>> = {
   CORPORATE_TRANSFORMS: "기업행사 증권 변환",
   AUTO_MARKET_REGIME: "자동장 regime",
   AUTO_MARKET_PROFILE_QUEUE: "프로필 Redis 큐",
-  RUNTIME_IDENTITY: "build·schema 정체성",
+  RUNTIME_IDENTITY: "배포·스키마 호환성",
 };
 
 function timelinePhase(phase: string) {
