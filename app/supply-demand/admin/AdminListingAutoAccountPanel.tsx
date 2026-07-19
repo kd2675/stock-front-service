@@ -104,7 +104,7 @@ export function AdminListingAutoAccountPanel({
         <div>
           <h2 className="text-base font-black">상장주관사 자동계정</h2>
           <p className="mt-1 text-xs font-bold text-stock-subtle">기관처럼 방향별 목표 미체결 잔량을 유지하고, 위·아래 분산 방향과 주문 단위·TTL을 제어합니다.</p>
-          <p className="mt-1 text-xs font-bold text-admin-placeholder">매수는 최우선 매수호가, 매도는 최우선 매도호가를 기준으로 분산하며 시장과 자기 계정의 반대 최우선 호가를 넘지 않습니다.</p>
+          <p className="mt-1 text-xs font-bold text-admin-placeholder">매수는 최우선 매수호가, 매도는 최우선 매도호가를 기준으로 분산합니다. 위쪽 매수와 아래쪽 매도는 상대 최우선 호가를 넘어 즉시 체결될 수 있으며, 동일 계좌끼리의 실제 자기체결만 체결 엔진이 차단합니다.</p>
           <p className="mt-1 text-xs font-bold text-admin-placeholder">양방향 운용은 목표±보유 밴드 안에서 매수·매도 호가를 함께 유지하고, 밴드 밖에서는 재고를 목표 쪽으로 줄이는 방향만 유지합니다.</p>
           <p className="mt-1 text-xs font-bold text-admin-placeholder">각 호가 잔량은 한쪽 주문이 전부 체결돼도 보유 상·하한을 넘지 않도록 독립적으로 제한됩니다.</p>
           <p className="mt-1 text-xs font-bold text-admin-placeholder">최대 수량은 주문 1건의 상한이며, 부족한 목표 잔량은 방향별 최대 {MAX_LISTING_AUTO_NEW_ORDERS_PER_SIDE_PER_RUN}개 주문으로 한 번에 보충합니다.</p>
@@ -153,12 +153,12 @@ export function AdminListingAutoAccountPanel({
         <DarkSelect label="매수 분산 방향" value={draft.buyPriceOffsetDirection} onChange={(value) => draftSetters.setBuyPriceOffsetDirection(value as ListingAutoPriceDirection)}>
           <option value="DOWN">아래</option>
           <option value="UP">위</option>
-          <option value="RANDOM">위·아래 무작위(비교차)</option>
+          <option value="RANDOM">위·아래 무작위</option>
         </DarkSelect>
         <DarkSelect label="매도 분산 방향" value={draft.sellPriceOffsetDirection} onChange={(value) => draftSetters.setSellPriceOffsetDirection(value as ListingAutoPriceDirection)}>
           <option value="UP">위</option>
           <option value="DOWN">아래</option>
-          <option value="RANDOM">위·아래 무작위(비교차)</option>
+          <option value="RANDOM">위·아래 무작위</option>
         </DarkSelect>
         <button type="button" onClick={onSubmit} disabled={updating} className="min-h-11 min-w-0 self-end rounded-md bg-white px-3 py-3 text-sm font-black text-admin-canvas disabled:opacity-50 sm:col-span-2 lg:col-span-1 lg:col-start-4">
           {updating ? "저장 중" : "저장"}
@@ -298,12 +298,12 @@ export function AdminListingAutoAccountPanel({
                         <DarkSelect label="매수 분산 방향" value={draft.buyPriceOffsetDirection} onChange={(value) => draftSetters.setBuyPriceOffsetDirection(value as ListingAutoPriceDirection)}>
                           <option value="DOWN">아래</option>
                           <option value="UP">위</option>
-                          <option value="RANDOM">위·아래 무작위(비교차)</option>
+                          <option value="RANDOM">위·아래 무작위</option>
                         </DarkSelect>
                         <DarkSelect label="매도 분산 방향" value={draft.sellPriceOffsetDirection} onChange={(value) => draftSetters.setSellPriceOffsetDirection(value as ListingAutoPriceDirection)}>
                           <option value="UP">위</option>
                           <option value="DOWN">아래</option>
-                          <option value="RANDOM">위·아래 무작위(비교차)</option>
+                          <option value="RANDOM">위·아래 무작위</option>
                         </DarkSelect>
                         <div className="grid grid-cols-2 gap-2 self-end lg:col-start-4">
                           <button type="button" onClick={onSubmit} disabled={updating} className="min-h-11 rounded-md bg-white px-3 py-3 text-sm font-black text-admin-canvas disabled:opacity-50">
