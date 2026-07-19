@@ -1,9 +1,11 @@
 import { Fragment } from "react";
 
 import DataTableViewport from "@/app/components/DataTableViewport";
+import { MAX_LISTING_AUTO_NEW_ORDERS_PER_SIDE_PER_RUN } from "@/app/supply-demand/admin/AdminConstants";
 import { formatListingAutoPosition, formatListingAutoPriceDirection, formatNumber, formatWon } from "@/app/supply-demand/admin/AdminFormatters";
 import { DarkInput, DarkSelect } from "@/app/supply-demand/admin/AdminFormControls";
 import { DarkMetric } from "@/app/supply-demand/admin/AdminMetricCards";
+import { AdminTargetHoldingPercentageControl } from "@/app/supply-demand/admin/AdminTargetHoldingPercentageControl";
 import type { ListingAutoAccount, ListingAutoPosition, ListingAutoPriceDirection } from "@/app/types/stock";
 
 export type ListingAutoAccountDraft = {
@@ -78,9 +80,16 @@ export function AdminListingAutoAccountPanel({
     const requestedQuoteQuantity = Math.max(...positiveDraftQuantities, 1);
     const nextBandQuantity = Math.min(requestedQuoteQuantity, maximumSymmetricBand);
     const parsedMaxOrderQuantity = Number(draft.maxOrderQuantity);
-    const nextMaxOrderQuantity = Number.isSafeInteger(parsedMaxOrderQuantity) && parsedMaxOrderQuantity > 0
-      ? Math.min(parsedMaxOrderQuantity, nextBandQuantity)
-      : nextBandQuantity;
+    const minimumMaxOrderQuantity = Math.ceil(
+      nextBandQuantity / MAX_LISTING_AUTO_NEW_ORDERS_PER_SIDE_PER_RUN,
+    );
+    const preferredMaxOrderQuantity = Number.isSafeInteger(parsedMaxOrderQuantity) && parsedMaxOrderQuantity > 0
+      ? parsedMaxOrderQuantity
+      : minimumMaxOrderQuantity;
+    const nextMaxOrderQuantity = Math.min(
+      nextBandQuantity,
+      Math.max(preferredMaxOrderQuantity, minimumMaxOrderQuantity),
+    );
     draftSetters.setEnabled(true);
     draftSetters.setPositionSide("TWO_SIDED");
     draftSetters.setInventoryBandQuantity(String(nextBandQuantity));
@@ -95,9 +104,11 @@ export function AdminListingAutoAccountPanel({
         <div>
           <h2 className="text-base font-black">상장주관사 자동계정</h2>
           <p className="mt-1 text-xs font-bold text-stock-subtle">기관처럼 방향별 목표 미체결 잔량을 유지하고, 위·아래 분산 방향과 주문 단위·TTL을 제어합니다.</p>
-          <p className="mt-1 text-xs font-bold text-admin-placeholder">매수는 최우선 매수호가, 매도는 최우선 매도호가를 기준으로 분산하며 자기 계정의 반대 호가와는 교차하지 않습니다.</p>
+          <p className="mt-1 text-xs font-bold text-admin-placeholder">매수는 최우선 매수호가, 매도는 최우선 매도호가를 기준으로 분산하며 시장과 자기 계정의 반대 최우선 호가를 넘지 않습니다.</p>
           <p className="mt-1 text-xs font-bold text-admin-placeholder">양방향 운용은 목표±보유 밴드 안에서 매수·매도 호가를 함께 유지하고, 밴드 밖에서는 재고를 목표 쪽으로 줄이는 방향만 유지합니다.</p>
           <p className="mt-1 text-xs font-bold text-admin-placeholder">각 호가 잔량은 한쪽 주문이 전부 체결돼도 보유 상·하한을 넘지 않도록 독립적으로 제한됩니다.</p>
+          <p className="mt-1 text-xs font-bold text-admin-placeholder">최대 수량은 주문 1건의 상한이며, 부족한 목표 잔량은 방향별 최대 {MAX_LISTING_AUTO_NEW_ORDERS_PER_SIDE_PER_RUN}개 주문으로 한 번에 보충합니다.</p>
+          <p className="mt-1 text-xs font-bold text-admin-placeholder">TTL은 현실 시간이 아니라 시뮬레이션 초 기준이며, 만료된 호가는 다음 공급 실행에서 목표 잔량만큼 다시 채웁니다.</p>
         </div>
         <span className="text-xs font-bold text-admin-accent">{accounts.length}개 계정</span>
       </div>
@@ -125,29 +136,31 @@ export function AdminListingAutoAccountPanel({
           <option value="BUY_ONLY">매수 전용</option>
           <option value="TWO_SIDED">양방향 기관 운용</option>
         </DarkSelect>
-        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2">
-          <DarkInput label="목표 보유 수량" value={draft.targetHoldingQuantity} onChange={draftSetters.setTargetHoldingQuantity} placeholder="2000000" />
-          <button type="button" onClick={applyTargetHoldingConfig} disabled={!canApplyTargetHolding} className="min-h-11 self-end rounded-md bg-[#2f6feb] px-3 py-2 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-40">
-            목표 보유 수량 맞춤
-          </button>
-        </div>
+        <AdminTargetHoldingPercentageControl
+          issuedShares={draftAccount?.issuedShares ?? 0}
+          targetHoldingQuantity={draft.targetHoldingQuantity}
+          onTargetHoldingQuantityChange={draftSetters.setTargetHoldingQuantity}
+          actionLabel="목표 보유 수량 맞춤"
+          onAction={applyTargetHoldingConfig}
+          actionDisabled={!canApplyTargetHolding}
+        />
         <DarkInput label="보유 허용 밴드(±주)" value={draft.inventoryBandQuantity} onChange={draftSetters.setInventoryBandQuantity} placeholder="30000" />
         <DarkInput label="목표 매수 호가 잔량" value={draft.targetBuyQuantity} onChange={draftSetters.setTargetBuyQuantity} placeholder="100" />
         <DarkInput label="목표 매도 호가 잔량" value={draft.targetSellQuantity} onChange={draftSetters.setTargetSellQuantity} placeholder="100" />
         <DarkInput label="최대 수량" value={draft.maxOrderQuantity} onChange={draftSetters.setMaxOrderQuantity} placeholder="100" />
-        <DarkInput label="TTL(초)" value={draft.orderTtlSeconds} onChange={draftSetters.setOrderTtlSeconds} placeholder="30" />
+        <DarkInput label="TTL(시뮬 초)" value={draft.orderTtlSeconds} onChange={draftSetters.setOrderTtlSeconds} placeholder="30" />
         <DarkInput label="분산 틱" value={draft.priceOffsetTicks} onChange={draftSetters.setPriceOffsetTicks} placeholder="3" />
         <DarkSelect label="매수 분산 방향" value={draft.buyPriceOffsetDirection} onChange={(value) => draftSetters.setBuyPriceOffsetDirection(value as ListingAutoPriceDirection)}>
           <option value="DOWN">아래</option>
           <option value="UP">위</option>
-          <option value="RANDOM">위·아래 무작위</option>
+          <option value="RANDOM">위·아래 무작위(비교차)</option>
         </DarkSelect>
         <DarkSelect label="매도 분산 방향" value={draft.sellPriceOffsetDirection} onChange={(value) => draftSetters.setSellPriceOffsetDirection(value as ListingAutoPriceDirection)}>
           <option value="UP">위</option>
           <option value="DOWN">아래</option>
-          <option value="RANDOM">위·아래 무작위</option>
+          <option value="RANDOM">위·아래 무작위(비교차)</option>
         </DarkSelect>
-        <button type="button" onClick={onSubmit} disabled={updating} className="min-h-11 min-w-0 self-end rounded-md bg-white px-3 py-3 text-sm font-black text-admin-canvas disabled:opacity-50 sm:col-span-2 lg:col-span-1">
+        <button type="button" onClick={onSubmit} disabled={updating} className="min-h-11 min-w-0 self-end rounded-md bg-white px-3 py-3 text-sm font-black text-admin-canvas disabled:opacity-50 sm:col-span-2 lg:col-span-1 lg:col-start-4">
           {updating ? "저장 중" : "저장"}
         </button>
       </div>
@@ -189,10 +202,23 @@ export function AdminListingAutoAccountPanel({
               const upperHoldingLimit = account.targetHoldingQuantity + account.inventoryBandQuantity;
               const effectiveBuyTarget = account.positionSide === "TWO_SIDED"
                 ? Math.min(account.targetBuyQuantity, Math.max(0, upperHoldingLimit - account.holdingQuantity))
-                : account.targetBuyQuantity;
+                : account.positionSide === "BUY_ONLY"
+                  ? Math.min(account.targetBuyQuantity, Math.max(0, account.targetHoldingQuantity - account.holdingQuantity))
+                  : 0;
               const effectiveSellTarget = account.positionSide === "TWO_SIDED"
                 ? Math.min(account.targetSellQuantity, Math.max(0, account.holdingQuantity - lowerHoldingLimit))
-                : account.targetSellQuantity;
+                : account.positionSide === "SELL_ONLY"
+                  ? Math.min(account.targetSellQuantity, Math.max(0, account.holdingQuantity - account.targetHoldingQuantity))
+                  : 0;
+              const targetHoldingPercent = account.issuedShares > 0
+                ? (account.targetHoldingQuantity / account.issuedShares) * 100
+                : 0;
+              const buyOrderFragments = account.maxOrderQuantity > 0
+                ? Math.ceil(effectiveBuyTarget / account.maxOrderQuantity)
+                : 0;
+              const sellOrderFragments = account.maxOrderQuantity > 0
+                ? Math.ceil(effectiveSellTarget / account.maxOrderQuantity)
+                : 0;
               return (
                 <Fragment key={account.symbol}>
                 <tr>
@@ -217,7 +243,7 @@ export function AdminListingAutoAccountPanel({
                   <td className="px-3 py-2">
                     <p className="font-black">{formatListingAutoPosition(account.positionSide)}</p>
                     <p className="mt-0.5 text-xs font-bold text-stock-subtle">
-                      최대 {formatNumber(account.maxOrderQuantity)}주 · {account.orderTtlSeconds}초 · {account.priceOffsetTicks}틱
+                      최대 {formatNumber(account.maxOrderQuantity)}주 · TTL {account.orderTtlSeconds}시뮬 초 · {account.priceOffsetTicks}틱
                     </p>
                     <p className="mt-0.5 text-xs font-bold text-stock-subtle">
                       매수 {formatNumber(account.openBuyQuantity)}/{formatNumber(account.targetBuyQuantity)}주 · {formatListingAutoPriceDirection(account.buyPriceOffsetDirection)}
@@ -226,10 +252,13 @@ export function AdminListingAutoAccountPanel({
                       매도 {formatNumber(account.openSellQuantity)}/{formatNumber(account.targetSellQuantity)}주 · {formatListingAutoPriceDirection(account.sellPriceOffsetDirection)}
                     </p>
                     <p className="mt-0.5 text-xs font-bold text-stock-subtle">
-                      목표 보유 {formatNumber(account.targetHoldingQuantity)}주 ± {formatNumber(account.inventoryBandQuantity)}주
+                      목표 보유 {targetHoldingPercent.toFixed(2)}% · {formatNumber(account.targetHoldingQuantity)}주 ± {formatNumber(account.inventoryBandQuantity)}주
                     </p>
                     <p className="mt-0.5 text-xs font-bold text-stock-subtle">
                       허용 {formatNumber(lowerHoldingLimit)}~{formatNumber(upperHoldingLimit)}주 · 유효 호가 매수 {formatNumber(effectiveBuyTarget)} / 매도 {formatNumber(effectiveSellTarget)}주
+                    </p>
+                    <p className="mt-0.5 text-xs font-bold text-stock-subtle">
+                      필요 주문 조각 매수 {buyOrderFragments} / 매도 {sellOrderFragments}개 · 방향별 최대 {MAX_LISTING_AUTO_NEW_ORDERS_PER_SIDE_PER_RUN}개
                     </p>
                   </td>
                   <td className="px-3 py-2">
@@ -252,29 +281,31 @@ export function AdminListingAutoAccountPanel({
                           <option value="BUY_ONLY">매수 전용</option>
                           <option value="TWO_SIDED">양방향 기관 운용</option>
                         </DarkSelect>
-                        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2">
-                          <DarkInput label="목표 보유 수량" value={draft.targetHoldingQuantity} onChange={draftSetters.setTargetHoldingQuantity} placeholder="2000000" />
-                          <button type="button" onClick={applyTargetHoldingConfig} disabled={!canApplyTargetHolding} className="min-h-11 self-end rounded-md bg-[#2f6feb] px-3 py-2 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-40">
-                            목표 보유 수량 맞춤
-                          </button>
-                        </div>
+                        <AdminTargetHoldingPercentageControl
+                          issuedShares={account.issuedShares}
+                          targetHoldingQuantity={draft.targetHoldingQuantity}
+                          onTargetHoldingQuantityChange={draftSetters.setTargetHoldingQuantity}
+                          actionLabel="목표 보유 수량 맞춤"
+                          onAction={applyTargetHoldingConfig}
+                          actionDisabled={!canApplyTargetHolding}
+                        />
                         <DarkInput label="보유 허용 밴드(±주)" value={draft.inventoryBandQuantity} onChange={draftSetters.setInventoryBandQuantity} placeholder="30000" />
                         <DarkInput label="목표 매수 호가 잔량" value={draft.targetBuyQuantity} onChange={draftSetters.setTargetBuyQuantity} placeholder="100" />
                         <DarkInput label="목표 매도 호가 잔량" value={draft.targetSellQuantity} onChange={draftSetters.setTargetSellQuantity} placeholder="100" />
                         <DarkInput label="최대 수량" value={draft.maxOrderQuantity} onChange={draftSetters.setMaxOrderQuantity} placeholder="100" />
-                        <DarkInput label="TTL(초)" value={draft.orderTtlSeconds} onChange={draftSetters.setOrderTtlSeconds} placeholder="30" />
+                        <DarkInput label="TTL(시뮬 초)" value={draft.orderTtlSeconds} onChange={draftSetters.setOrderTtlSeconds} placeholder="30" />
                         <DarkInput label="분산 틱" value={draft.priceOffsetTicks} onChange={draftSetters.setPriceOffsetTicks} placeholder="3" />
                         <DarkSelect label="매수 분산 방향" value={draft.buyPriceOffsetDirection} onChange={(value) => draftSetters.setBuyPriceOffsetDirection(value as ListingAutoPriceDirection)}>
                           <option value="DOWN">아래</option>
                           <option value="UP">위</option>
-                          <option value="RANDOM">위·아래 무작위</option>
+                          <option value="RANDOM">위·아래 무작위(비교차)</option>
                         </DarkSelect>
                         <DarkSelect label="매도 분산 방향" value={draft.sellPriceOffsetDirection} onChange={(value) => draftSetters.setSellPriceOffsetDirection(value as ListingAutoPriceDirection)}>
                           <option value="UP">위</option>
                           <option value="DOWN">아래</option>
-                          <option value="RANDOM">위·아래 무작위</option>
+                          <option value="RANDOM">위·아래 무작위(비교차)</option>
                         </DarkSelect>
-                        <div className="grid grid-cols-2 gap-2 self-end">
+                        <div className="grid grid-cols-2 gap-2 self-end lg:col-start-4">
                           <button type="button" onClick={onSubmit} disabled={updating} className="min-h-11 rounded-md bg-white px-3 py-3 text-sm font-black text-admin-canvas disabled:opacity-50">
                             {updating ? "저장 중" : "저장"}
                           </button>

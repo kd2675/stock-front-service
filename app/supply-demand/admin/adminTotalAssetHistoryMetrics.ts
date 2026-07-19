@@ -3,7 +3,7 @@ import type { AdminTotalAssetHistoryPoint } from "@/app/types/stock";
 export type AdminAssetHistoryMetric =
   | "TOTAL_ASSET"
   | "CASH_BALANCE"
-  | "RESERVED_CASH"
+  | "PENDING_SUBSCRIPTION_ASSET"
   | "MARKET_VALUE"
   | "HOLDING_QUANTITY"
   | "AVAILABLE_HOLDING_QUANTITY"
@@ -26,10 +26,10 @@ export const ADMIN_ASSET_HISTORY_METRICS: Record<AdminAssetHistoryMetric, AdminA
     unit: "WON",
     value: (point) => point.cashBalance,
   },
-  RESERVED_CASH: {
-    label: "매수·청약 예약금",
+  PENDING_SUBSCRIPTION_ASSET: {
+    label: "청약 대기자산",
     unit: "WON",
-    value: (point) => point.reservedCash,
+    value: (point) => point.pendingSubscriptionAsset,
   },
   MARKET_VALUE: {
     label: "보유 주식 평가액",

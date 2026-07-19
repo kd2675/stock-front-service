@@ -36,6 +36,8 @@ export type AutoMarketDailyRegime = {
   simulationTradeDate: string;
   regimePhase: AutoMarketRegimePhase;
   sourceRegimePhase: AutoMarketRegimePhase;
+  dailyApplicationCount: number;
+  preparedRegimeSlotCount: number;
   pricePressure: number;
   assetPreferencePressure: number;
   volatilityPressure: number;

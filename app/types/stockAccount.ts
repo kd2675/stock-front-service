@@ -52,6 +52,7 @@ export type PortfolioSnapshot = {
   snapshotDate: string;
   totalAsset: number;
   cashBalance: number;
+  pendingSubscriptionAsset: number;
   marketValue: number;
   returnRate: number;
 };
@@ -138,7 +139,7 @@ export type AdminTotalAssetHistoryPoint = {
   totalAsset: number;
   cashBalance: number;
   marketValue: number;
-  reservedCash: number;
+  pendingSubscriptionAsset: number;
   holdingQuantity: number | null;
   reservedSellQuantity: number | null;
   availableHoldingQuantity: number | null;

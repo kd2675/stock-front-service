@@ -155,7 +155,7 @@ function AdminFundFlowMetricGrids({
       <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <SalaryMetric label="전체 총자산" value={formatWon(fundFlow.totalAsset)} tone="good" actionHint="7일 변화" onClick={() => onOpenTotalAssetHistory("TOTAL_ASSET")} />
         <SalaryMetric label="가용 현금" value={formatWon(fundFlow.totalCashBalance)} tone="neutral" actionHint="7일 변화" onClick={() => onOpenTotalAssetHistory("CASH_BALANCE")} />
-        <SalaryMetric label="매수·청약 예약금" value={formatWon(fundFlow.totalReservedBuyCash)} tone="warn" actionHint="7일 변화" onClick={() => onOpenTotalAssetHistory("RESERVED_CASH")} />
+        <SalaryMetric label="주문·청약 대기금" value={formatWon(fundFlow.totalReservedBuyCash)} tone="warn" detail="장중 미체결 매수 주문과 청약 대기금 합계" />
         <SalaryMetric label="보유 주식 평가액" value={formatWon(fundFlow.totalHoldingMarketValue)} tone="neutral" actionHint="7일 변화" onClick={() => onOpenTotalAssetHistory("MARKET_VALUE")} />
         <SalaryMetric label="총 보유량" value={formatCount(fundFlow.totalHoldingQuantity, "주")} tone="neutral" detail={`계좌별 보유 포지션 ${formatCount(fundFlow.holdingPositionCount, "건")}`} actionHint="7일 변화" onClick={() => onOpenTotalAssetHistory("HOLDING_QUANTITY")} />
         <SalaryMetric label="가용 보유량" value={formatCount(fundFlow.totalAvailableHoldingQuantity, "주")} tone="good" detail={`매도 예약 ${formatCount(fundFlow.totalReservedSellQuantity, "주")}`} actionHint="7일 변화" onClick={() => onOpenTotalAssetHistory("AVAILABLE_HOLDING_QUANTITY")} />
@@ -181,7 +181,7 @@ function AdminFundFlowMetricGrids({
 function AssetCompositionBar({ fundFlow }: { fundFlow: AdminFundFlowSummary }) {
   const components = [
     { label: "가용 현금", value: Math.max(0, fundFlow.totalCashBalance), className: "bg-admin-accent" },
-    { label: "매수·청약 예약금", value: Math.max(0, fundFlow.totalReservedBuyCash), className: "bg-admin-warning" },
+    { label: "주문·청약 대기금", value: Math.max(0, fundFlow.totalReservedBuyCash), className: "bg-admin-warning" },
     { label: "보유 주식 평가액", value: Math.max(0, fundFlow.totalHoldingMarketValue), className: "bg-admin-success" },
   ];
   const compositionTotal = components.reduce((sum, component) => sum + component.value, 0);

@@ -273,7 +273,7 @@ function pressureValues(regime: AutoMarketDailyRegime | null | undefined, source
 }
 
 function calculateFinal(primary: number, secondary: number) {
-  return clampPressure(primary * 0.6 + secondary * 0.4);
+  return clampPressure(primary * 0.7 + secondary * 0.3);
 }
 
 function RegimePressureGroup({
@@ -324,11 +324,32 @@ function AutoMarketDailyRegimeCell({ regime }: { regime?: AutoMarketDailyRegime 
         {secondary ? <span>보조 {regime.currentModifier?.modifierWindowStartAt.slice(11, 16)}</span> : <span>보조 미생성</span>}
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <RegimePressureGroup title="주 60%" values={primary} />
-        <RegimePressureGroup title="보조 40%" values={secondaryValues} />
+        <RegimePressureGroup title="주 70%" values={primary} />
+        <RegimePressureGroup title="보조 30%" values={secondaryValues} />
         <RegimePressureGroup title="최종 적용" values={finalValues} />
       </div>
     </div>
+  );
+}
+
+function DailyRegimeApplicationBadge({ regime }: { regime?: AutoMarketDailyRegime | null }) {
+  if (!regime) {
+    return <span className="text-[11px] font-bold text-admin-subtle">당일 주 랜덤 미확정</span>;
+  }
+  if (regime.preparedRegimeSlotCount !== 4) {
+    return (
+      <span className="rounded-full border border-admin-warning/30 bg-admin-warning/10 px-2.5 py-1 text-[11px] font-black tabular-nums text-admin-warning-soft">
+        일일 슬롯 준비 {regime.preparedRegimeSlotCount}/4
+      </span>
+    );
+  }
+  return (
+    <span
+      className="rounded-full border border-admin-accent/30 bg-admin-accent/10 px-2.5 py-1 text-[11px] font-black tabular-nums text-admin-accent-label"
+      title="해당 거래일에 새로운 주 랜덤값이 생성되도록 추첨된 횟수입니다."
+    >
+      당일 주 랜덤 총 {regime.dailyApplicationCount}회
+    </span>
   );
 }
 
@@ -371,13 +392,13 @@ function ConfigEditor({
       </div>
       <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <DistributionBiasEditor
-          description="선택된 일일 슬롯에서 생성되는 주 랜덤의 최빈 구간입니다. 실제 주문 반영 비중은 60%입니다."
+          description="선택된 일일 슬롯에서 생성되는 주 랜덤의 최빈 구간입니다. 실제 주문 반영 비중은 70%입니다."
           label="주 랜덤 분포 편향"
           onChange={draftSetters.setPrimaryDistributionBias}
           values={draft.primaryDistributionBias}
         />
         <DistributionBiasEditor
-          description="시뮬레이션 30분마다 생성되는 보조 랜덤의 최빈 구간입니다. 실제 주문 반영 비중은 40%입니다."
+          description="시뮬레이션 30분마다 생성되는 보조 랜덤의 최빈 구간입니다. 실제 주문 반영 비중은 30%입니다."
           label="보조 랜덤 분포 편향"
           onChange={draftSetters.setSecondaryDistributionBias}
           values={draft.secondaryDistributionBias}
@@ -408,7 +429,7 @@ export function AdminAutoMarketConfigPanel({
         <div>
           <h2 className="text-base font-black">종목별 자동장 압력 분포</h2>
           <p className="mt-1 max-w-3xl text-xs font-bold leading-5 text-stock-subtle">
-            각 설정값은 결과를 고정하지 않고 난수 분포가 가장 자주 모일 위치를 정합니다. 모든 생성값은 -100~100이며 주 60%, 보조 40%로 합성됩니다.
+            각 설정값은 결과를 고정하지 않고 난수 분포가 가장 자주 모일 위치를 정합니다. 모든 생성값은 -100~100이며 주 70%, 보조 30%로 합성됩니다.
           </p>
         </div>
         <span className="text-xs font-bold text-admin-accent">주 일일 1~4회 · 보조 30분</span>
@@ -468,7 +489,10 @@ export function AdminAutoMarketConfigPanel({
               </div>
             </div>
             <div className="border-t border-white/[0.07] bg-white/[0.025] px-3 py-3">
-              <p className="mb-2 text-[11px] font-black text-admin-subtle">현재 구간 압력</p>
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <p className="text-[11px] font-black text-admin-subtle">현재 구간 압력</p>
+                <DailyRegimeApplicationBadge regime={config.dailyRegime} />
+              </div>
               <AutoMarketDailyRegimeCell regime={config.dailyRegime} />
             </div>
             {editingSymbol === config.symbol ? (

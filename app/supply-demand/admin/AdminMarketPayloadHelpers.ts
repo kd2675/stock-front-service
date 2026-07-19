@@ -9,6 +9,7 @@ import {
   requiredUppercaseString,
 } from "@/app/lib/validation/zodFormSchemas";
 import type { AdminPayloadResult } from "@/app/supply-demand/admin/AdminPayloadResultTypes";
+import { MAX_LISTING_AUTO_NEW_ORDERS_PER_SIDE_PER_RUN } from "@/app/supply-demand/admin/AdminConstants";
 import type { ListingAutoPosition, ListingAutoPriceDirection } from "@/app/types/stock";
 
 export type AutoMarketConfigPayload = StockAutoMarketConfigPayload;
@@ -107,6 +108,16 @@ const listingAutoAccountConfigSchema = z.object({
   }
   if ((value.positionSide === "SELL_ONLY" || value.positionSide === "TWO_SIDED") && value.targetSellQuantity <= 0) {
     context.addIssue({ code: "custom", path: ["targetSellQuantity"], message: "활성 매도 목표는 1주 이상이어야 합니다." });
+  }
+  if (value.positionSide === "BUY_ONLY" && value.targetHoldingQuantity <= 0) {
+    context.addIssue({ code: "custom", path: ["targetHoldingQuantity"], message: "매수 전용 목표 보유 수량은 1주 이상이어야 합니다." });
+  }
+  const oneRunCapacity = value.maxOrderQuantity * MAX_LISTING_AUTO_NEW_ORDERS_PER_SIDE_PER_RUN;
+  if ((value.positionSide === "BUY_ONLY" || value.positionSide === "TWO_SIDED") && value.targetBuyQuantity > oneRunCapacity) {
+    context.addIssue({ code: "custom", path: ["targetBuyQuantity"], message: "목표 매수 잔량은 최대 수량의 10배를 넘을 수 없습니다." });
+  }
+  if ((value.positionSide === "SELL_ONLY" || value.positionSide === "TWO_SIDED") && value.targetSellQuantity > oneRunCapacity) {
+    context.addIssue({ code: "custom", path: ["targetSellQuantity"], message: "목표 매도 잔량은 최대 수량의 10배를 넘을 수 없습니다." });
   }
   if (value.positionSide === "TWO_SIDED") {
     if (value.inventoryBandQuantity <= 0 || value.inventoryBandQuantity > value.targetHoldingQuantity) {

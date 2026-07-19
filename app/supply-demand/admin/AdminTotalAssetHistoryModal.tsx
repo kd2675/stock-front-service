@@ -53,6 +53,7 @@ export function AdminTotalAssetHistoryModal({
             <h3 id="total-asset-history-title" className="text-base font-black text-white">전체 자산·보유량 · 7일 변화</h3>
             <p className="mt-1 max-w-3xl text-xs font-bold leading-5 text-stock-subtle">
               장 마감 정산이 완료된 활성 참여자 계좌를 일자별로 합산합니다. 운영 재고용 상장 계좌는 모든 지표에서 제외됩니다.
+              가용 현금은 미체결 매수 예약 반환 후 금액이며, 청약 대기자산은 청약으로 현금에서 차감된 뒤 신주 상장 전까지 별도로 보유되는 금액만 표시합니다.
             </p>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-2">
@@ -190,7 +191,7 @@ function TotalAssetHistoryTable({
               <th className="px-3 py-2 text-right">전일 대비</th>
               <th className="px-3 py-2 text-right">변화율</th>
               <th className="px-3 py-2 text-right">가용 현금</th>
-              <th className="px-3 py-2 text-right">매수·청약 예약금</th>
+              <th className="px-3 py-2 text-right">청약 대기자산</th>
               <th className="px-3 py-2 text-right">보유 주식 평가액</th>
               <th className="px-3 py-2 text-right">총 보유량</th>
               <th className="px-3 py-2 text-right">매도 예약</th>
@@ -207,7 +208,7 @@ function TotalAssetHistoryTable({
                 <td className={["px-3 py-2 text-right font-black tabular-nums", changeClassName(point.changeAmount)].join(" ")}>{formatOptionalSignedWon(point.changeAmount)}</td>
                 <td className={["px-3 py-2 text-right font-black tabular-nums", changeClassName(point.changeAmount)].join(" ")}>{formatOptionalSignedPercent(point.changeRate)}</td>
                 <td className="px-3 py-2 text-right font-bold tabular-nums text-admin-muted">{formatWon(point.cashBalance)}</td>
-                <td className="px-3 py-2 text-right font-bold tabular-nums text-admin-muted">{formatWon(point.reservedCash)}</td>
+                <td className="px-3 py-2 text-right font-bold tabular-nums text-admin-muted">{formatWon(point.pendingSubscriptionAsset)}</td>
                 <td className="px-3 py-2 text-right font-bold tabular-nums text-admin-muted">{formatWon(point.marketValue)}</td>
                 <td className="px-3 py-2 text-right font-bold tabular-nums text-admin-muted">{formatOptionalCount(point.holdingQuantity, "주")}</td>
                 <td className="px-3 py-2 text-right font-bold tabular-nums text-admin-muted">{formatOptionalCount(point.reservedSellQuantity, "주")}</td>
