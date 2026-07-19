@@ -6,9 +6,9 @@ import type { AdminActionMessageSetter, RequireAdminToken } from "@/app/supply-d
 import type { SimulationClockJumpAction } from "@/app/types/stock";
 
 const SIMULATION_CLOCK_ACTION_MESSAGES: Record<SimulationClockJumpAction, string> = {
-  NEXT_MARKET_OPEN: "시뮬레이션 시간을 다음 장 시작 시점으로 이동했습니다.",
-  NEXT_SIMULATION_DAY_START: "시뮬레이션 시간을 다음 시뮬레이션 일자 시작 시점으로 이동했습니다.",
-  TODAY_MARKET_CLOSE: "시뮬레이션 시간을 오늘 장마감 시점으로 이동했습니다.",
+  NEXT_MARKET_OPEN: "시계를 다음 장 06:00으로 이동했습니다. 개장 동기화 상태를 다시 확인합니다.",
+  NEXT_SIMULATION_DAY_START: "시계를 다음 일자 00:00으로 이동했습니다. 야간 후처리는 coordinator 단계에 따라 진행됩니다.",
+  TODAY_MARKET_CLOSE: "시계를 오늘 18:00 경계로 이동했습니다. EOD coordinator가 시장 차단과 원장 동결을 이어서 처리합니다.",
 };
 
 export function useAdminSimulationClockActions({

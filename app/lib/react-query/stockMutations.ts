@@ -17,6 +17,7 @@ import {
   reconnectStockAccount,
   regenerateAutoMarketDailyRegime,
   regenerateAutoMarketRegimeModifier,
+  retryFailedEodPhase,
   runAutoParticipantCashFlow,
   subscribeCorporateAction,
   updateAutoMarketConfig,
@@ -280,6 +281,12 @@ export function adminUpdateBatchJobRuntimeControlMutationOptions() {
 
 export function adminRunAutoParticipantCashFlowMutationOptions() {
   return adminNoVariablesMutationOptions(runAutoParticipantCashFlow);
+}
+
+export function adminRetryFailedEodPhaseMutationOptions() {
+  return adminMutationOptions(
+    (token, variables: { cycleId: number }) => retryFailedEodPhase(token, variables.cycleId),
+  );
 }
 
 export function adminSaveInstrumentReportMutationOptions() {

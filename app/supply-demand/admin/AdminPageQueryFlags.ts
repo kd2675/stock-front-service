@@ -18,6 +18,7 @@ export type AdminPageQueryFlags = {
   shouldUseInstrumentReports: boolean;
   shouldUseSimulationClock: boolean;
   shouldUseBatchRuntimeControls: boolean;
+  shouldUseEodOverview: boolean;
   shouldLoadAdminFlowOverview: boolean;
   shouldLoadAutoMarketDetails: boolean;
   shouldLoadAutoMarketSummary: boolean;
@@ -87,6 +88,7 @@ export function resolveAdminPageQueryFlags({
       || activeAdminSection === "corporate-actions"
     ),
     shouldUseBatchRuntimeControls: isAdminAllowed && shouldLoadBatchRuntimeControls,
+    shouldUseEodOverview: isAdminAllowed && activeAdminSection === "system-eod",
     shouldLoadAdminFlowOverview: activeAdminSection === "market-flows",
     shouldLoadAutoMarketDetails,
     shouldLoadAutoMarketSummary: activeAdminSection === "dashboard",

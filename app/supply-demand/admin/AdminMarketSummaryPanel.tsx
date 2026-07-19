@@ -26,7 +26,7 @@ export function AdminMarketSummaryPanel({
         <DarkMetric label="주문장 종목" value={formatCount(orderBookInstrumentCount, "종목")} />
         <DarkMetric label="정규장 종목" value={formatCount(openOrderBookConfigCount, "종목")} />
         <DarkMetric label="주문장 대기 주문" value={orderBookMarketSummary ? formatCount(orderBookMarketSummary.openOrderCount ?? 0, "건") : "-"} />
-        <DarkMetric label="2시간 주문장 체결" value={orderBookMarketSummary ? formatCount(orderBookMarketSummary.todayExecutionCount ?? 0, "건") : "-"} />
+        <DarkMetric label="2시간 주문장 체결 (비동기·보통 30초)" value={orderBookMarketSummary ? formatCount(orderBookMarketSummary.todayExecutionCount ?? 0, "건") : "-"} />
         <DarkMetric label="가동 자동 참여자" value={autoMarketSummary ? formatCount(autoMarketSummary.enabledParticipantCount ?? 0, "명") : "-"} />
       </div>
     </section>

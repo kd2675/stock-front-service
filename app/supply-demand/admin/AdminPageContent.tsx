@@ -4,6 +4,7 @@ import { AdminAccountsSection } from "@/app/supply-demand/admin/AdminAccountsSec
 import { AdminAutomationSection } from "@/app/supply-demand/admin/AdminAutomationSection";
 import { AdminAutoParticipantManagementPanel } from "@/app/supply-demand/admin/AdminAutoParticipantManagementPanel";
 import { AdminEventsSection } from "@/app/supply-demand/admin/AdminEventsSection";
+import { AdminEodSection } from "@/app/supply-demand/admin/AdminEodSection";
 import { AdminMarketSection } from "@/app/supply-demand/admin/AdminMarketSection";
 import type { AdminSection, AdminTab } from "@/app/supply-demand/admin/AdminNavigationConfig";
 import { AdminPageShell } from "@/app/supply-demand/admin/AdminPageShell";
@@ -14,6 +15,7 @@ export type AdminPageContentProps = {
   activeAdminTab: AdminTab;
   automationProps: ComponentProps<typeof AdminAutomationSection> | null;
   eventsProps: ComponentProps<typeof AdminEventsSection> | null;
+  eodProps: ComponentProps<typeof AdminEodSection> | null;
   marketProps: ComponentProps<typeof AdminMarketSection> | null;
   message: string | null;
   participantsProps: ComponentProps<typeof AdminAutoParticipantManagementPanel> | null;
@@ -25,6 +27,7 @@ export function AdminPageContent({
   activeAdminTab,
   automationProps,
   eventsProps,
+  eodProps,
   marketProps,
   message,
   participantsProps,
@@ -42,6 +45,8 @@ export function AdminPageContent({
       {automationProps ? (
         <AdminAutomationSection {...automationProps} />
       ) : null}
+
+      {eodProps ? <AdminEodSection {...eodProps} /> : null}
 
       {activeAdminSection === "participants-list" && participantsProps ? (
         <AdminAutoParticipantManagementPanel {...participantsProps} />

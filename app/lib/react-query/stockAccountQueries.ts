@@ -11,6 +11,9 @@ import {
 } from "@/app/lib/stock";
 import { stockKeys } from "@/app/lib/react-query/stockKeys";
 import {
+  ACCOUNT_HISTORY_REFETCH_MS,
+  ACCOUNT_POSITION_REFETCH_MS,
+  ACCOUNT_SUMMARY_REFETCH_MS,
   USER_ACTIVITY_REFETCH_MS,
   authenticatedStockQueryOptions,
   type AuthenticatedStockQueryOptionsConfig,
@@ -48,9 +51,10 @@ export function accountStatusQueryOptions(
 function authenticatedUserActivityQueryOptions<TData>(
   token: string | null,
   config: AuthenticatedStockQueryOptionsConfig<TData>,
+  refetchInterval = USER_ACTIVITY_REFETCH_MS,
 ) {
   return authenticatedStockQueryOptions(token, {
-    refetchInterval: USER_ACTIVITY_REFETCH_MS,
+    refetchInterval,
     ...config,
   });
 }
@@ -61,7 +65,7 @@ export function portfolioQueryOptions(token: string | null, enabled = true) {
     request: getPortfolio,
     fallbackMessage: "포트폴리오를 조회하지 못했습니다.",
     enabled,
-  });
+  }, ACCOUNT_POSITION_REFETCH_MS);
 }
 
 export function portfolioSnapshotsQueryOptions(token: string | null, enabled = true) {
@@ -70,7 +74,7 @@ export function portfolioSnapshotsQueryOptions(token: string | null, enabled = t
     request: getPortfolioSnapshots,
     fallbackMessage: "자산 이력을 조회하지 못했습니다.",
     enabled,
-  });
+  }, ACCOUNT_HISTORY_REFETCH_MS);
 }
 
 export function profitSummaryQueryOptions(token: string | null, enabled = true) {
@@ -79,7 +83,7 @@ export function profitSummaryQueryOptions(token: string | null, enabled = true) 
     request: getProfitSummary,
     fallbackMessage: "손익 요약을 조회하지 못했습니다.",
     enabled,
-  });
+  }, ACCOUNT_SUMMARY_REFETCH_MS);
 }
 
 export function holdingsQueryOptions(token: string | null, enabled = true) {
@@ -88,7 +92,7 @@ export function holdingsQueryOptions(token: string | null, enabled = true) {
     request: getHoldings,
     fallbackMessage: "보유 종목을 조회하지 못했습니다.",
     enabled,
-  });
+  }, ACCOUNT_POSITION_REFETCH_MS);
 }
 
 export function corporateActionEntitlementsQueryOptions(token: string | null, enabled = true) {
@@ -97,7 +101,7 @@ export function corporateActionEntitlementsQueryOptions(token: string | null, en
     request: getCorporateActionEntitlements,
     fallbackMessage: "권리 내역을 조회하지 못했습니다.",
     enabled,
-  });
+  }, ACCOUNT_SUMMARY_REFETCH_MS);
 }
 
 export function ordersQueryOptions(token: string | null, options?: {

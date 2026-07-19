@@ -94,7 +94,7 @@ export function AutoMarketStatusPanel({
         <StatusRow label="선택 종목 장" value={formatEffectiveMarketSessionStatus(selectedOrderBookConfig?.marketStatus, isSelectedOrderBookOpen)} />
         <StatusRow label="주 가격 편향" value={selectedConfig ? signedPressure(selectedConfig.primaryDistributionBias.pricePressure) : "-"} />
         <StatusRow label="자동 참여자" value={autoMarket ? `${autoMarket.enabledParticipantCount}명` : "-"} />
-        <StatusRow label="2시간 자동 체결" value={autoMarket ? `${autoMarket.todayAutoExecutionCount}건` : "-"} />
+        <StatusRow label="2시간 자동 체결 (비동기·보통 30초)" value={autoMarket ? `${autoMarket.todayAutoExecutionCount}건` : "-"} />
         <StatusRow label="전체 대기 주문" value={orderBookMarket ? `${orderBookMarket.openOrderCount}건` : "-"} />
         <StatusRow label="마지막 갱신" value={updatedAt ? formatKoKrTimeSecond(updatedAt) : loading ? "조회 중" : "-"} />
       </div>

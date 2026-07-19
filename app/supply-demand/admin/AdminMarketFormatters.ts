@@ -1,4 +1,4 @@
-import { RECURRING_CASH_INTERVAL_UNIT_OPTIONS } from "@/app/supply-demand/admin/AdminConstants";
+import { RECURRING_CASH_INTERVAL_UNIT_LABELS } from "@/app/supply-demand/admin/AdminConstants";
 import type {
   ListingAutoPosition,
   ListingAutoPriceDirection,
@@ -16,7 +16,7 @@ export function formatMarketEnabledStatus(status: { enabled: boolean; configCoun
 }
 
 export function formatRecurringCashIntervalUnit(value: RecurringCashIntervalUnit | null | undefined) {
-  return RECURRING_CASH_INTERVAL_UNIT_OPTIONS.find((option) => option.value === value)?.label ?? "-";
+  return value ? RECURRING_CASH_INTERVAL_UNIT_LABELS[value] : "-";
 }
 
 export function formatAccountStatus(status: string | null) {

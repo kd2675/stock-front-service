@@ -59,6 +59,11 @@ export function AdminAutoParticipantEditPanel({
           </button>
         </div>
       </div>
+      {!draft.recurringCashDisabled ? (
+        <p className="mt-2 text-[11px] font-bold leading-5 text-admin-muted">
+          기본 EOD 모드에서는 입력 주기를 최소 대기 간격으로 사용해 00시 이후 거래일당 최대 한 번 지급하며, 지나간 회차는 소급 지급하지 않습니다.
+        </p>
+      ) : null}
       <div className="mt-3 grid min-w-0 grid-cols-1 gap-3 border-t border-white/10 pt-3 sm:grid-cols-[1.2fr_1fr_auto_auto]">
         <div className="min-w-0 self-center">
           <p className="text-xs font-bold text-stock-subtle">선택 참여자 실제 계좌</p>

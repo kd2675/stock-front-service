@@ -6,7 +6,7 @@ import {
   authenticatedPostJson,
   toQuery,
 } from "@/app/lib/stock-api/core";
-import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowScope, AdminFundFlowSummary, AdminSymbolFlowList, AdminTotalAssetHistoryPage, AutoMarketDistributionBias, AutoMarketStatus, AutoParticipant, AutoParticipantCashAdjustment, AutoParticipantOverview, AutoParticipantProfileOverview, AutoParticipantProfileType, BatchJobRuntimeStatus, ListingAutoPosition, ListingAutoPriceDirection, RecurringCashIntervalUnit, StockBatchJobRun } from "@/app/types/stock";
+import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowScope, AdminFundFlowSummary, AdminSymbolFlowList, AdminTotalAssetHistoryPage, AutoMarketDistributionBias, AutoMarketStatus, AutoParticipant, AutoParticipantCashAdjustment, AutoParticipantOverview, AutoParticipantProfileOverview, AutoParticipantProfileType, BatchJobRuntimeStatus, EodOperationsOverview, EodPhaseRetryResult, ListingAutoPosition, ListingAutoPriceDirection, RecurringCashIntervalUnit, StockBatchJobRun } from "@/app/types/stock";
 
 export type { AdminFundFlowScope } from "@/app/types/stock";
 
@@ -162,6 +162,18 @@ export function getLatestAutoParticipantCashFlowRun(token: string) {
 
 export function getBatchJobRuntimeControls(token: string) {
   return authenticatedGetJson<BatchJobRuntimeStatus[]>(token, "/api/stock/v1/markets/batch-jobs/runtime-controls");
+}
+
+export function getEodOperationsOverview(token: string) {
+  return authenticatedGetJson<EodOperationsOverview>(token, "/api/stock/v1/markets/batch-jobs/eod/overview");
+}
+
+export function retryFailedEodPhase(token: string, cycleId: number) {
+  return authenticatedPostJson<EodPhaseRetryResult>(
+    token,
+    `/api/stock/v1/markets/batch-jobs/eod/cycles/${encodeURIComponent(String(cycleId))}/retry`,
+    {},
+  );
 }
 
 export function updateBatchJobRuntimeControl(token: string, jobName: string, payload: StockBatchJobRuntimeControlPayload) {

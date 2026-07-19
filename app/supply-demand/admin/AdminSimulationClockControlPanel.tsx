@@ -5,25 +5,25 @@ type SimulationSession = SimulationClock["marketSession"];
 
 type SimulationClockAction = {
   action: SimulationClockJumpAction;
-  enabledWhen: SimulationSession[];
+  step: number;
   label: string;
 };
 
 const SAFE_CLOCK_ACTIONS: SimulationClockAction[] = [
   {
     action: "TODAY_MARKET_CLOSE",
-    enabledWhen: ["REGULAR"],
-    label: "오늘 장마감",
+    step: 1,
+    label: "오늘 18:00 진입",
   },
   {
     action: "NEXT_SIMULATION_DAY_START",
-    enabledWhen: ["AFTER_CLOSE"],
-    label: "다음 일자 시작",
+    step: 2,
+    label: "다음 일자 00:00 진입",
   },
   {
     action: "NEXT_MARKET_OPEN",
-    enabledWhen: ["PRE_OPEN", "AFTER_CLOSE"],
-    label: "다음 장 시작",
+    step: 3,
+    label: "다음 장 06:00 진입",
   },
 ];
 
@@ -41,79 +41,159 @@ export function AdminSimulationClockControlPanel({
   const sessionLabel = session ? formatSimulationSession(session) : "조회 중";
   const openTimeLabel = formatClockBoundaryTime(clock?.marketOpenTime);
   const closeTimeLabel = formatClockBoundaryTime(clock?.marketCloseTime);
-  const postCloseReady = Boolean(clock?.postCloseProcessingCompleted);
+  const settlementReady = Boolean(clock?.postCloseProcessingCompleted);
+  const marketOpenReady = Boolean(clock?.marketOpenReady);
+  const availableJumpActions = new Set(clock?.availableJumpActions ?? []);
+  const readiness = resolveReadinessLabel(
+    clock,
+    session,
+    settlementReady,
+    marketOpenReady,
+  );
 
   return (
     <section className="admin-panel mt-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-sm font-black text-white">시뮬레이션 시간 제어</h2>
+          <h2 className="text-sm font-black text-white">시뮬레이션 경계 이동</h2>
           <p className="mt-1 text-xs font-bold leading-5 text-stock-subtle">
-            직접 입력 없이 세션 경계로만 이동합니다. 위험한 시간 이동은 서버에서 다시 차단됩니다.
+            배치 Job을 강제 실행하지 않고, 서버가 허용한 다음 시간대 경계로 시계만 이동합니다.
+            원장 동결·정산·야간 후처리·개장 준비는 EOD coordinator가 단계 순서대로 수행합니다.
           </p>
         </div>
         <div className="rounded-md border border-white/10 bg-black/20 px-3 py-2 text-right">
           <p className="text-[11px] font-black text-stock-subtle">현재 세션</p>
           <p className="mt-1 text-sm font-black text-white">{sessionLabel}</p>
-          {session === "AFTER_CLOSE" || (session === "PRE_OPEN" && !postCloseReady) ? (
-            <p className={["mt-1 text-[11px] font-black", postCloseReady ? "text-admin-success" : "text-[#ffd166]"].join(" ")}>
-              {postCloseReady ? "후처리 완료" : session === "PRE_OPEN" ? "전일 후처리 대기" : "후처리 대기"}
+          {readiness ? (
+            <p className={["mt-1 text-[11px] font-black", readiness.ready ? "text-admin-success" : "text-admin-warning-soft"].join(" ")}>
+              {readiness.label}
             </p>
           ) : null}
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.4fr)]">
-        <div className="grid min-w-0 grid-cols-2 gap-2 rounded-md border border-white/10 bg-black/20 p-3">
-          <ClockMetric label="시뮬일" value={snapshot?.simulationDayLabel ?? "-"} />
-          <ClockMetric label="시뮬시간" value={snapshot?.simulationTime ?? "--:--:--"} />
+      <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+        <div className="grid min-w-0 grid-cols-2 gap-2 rounded-md border border-white/10 bg-black/20 p-3 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3">
+          <ClockMetric label="원시 일자" value={snapshot?.simulationDayLabel ?? "-"} />
+          <ClockMetric label="원시 시간" value={snapshot?.simulationTime ?? "--:--:--"} />
+          <ClockMetric label="활성 거래일" value={clock?.activeBusinessDate ?? "-"} />
+          <ClockMetric label="다음 준비 거래일" value={clock?.preparingBusinessDate ?? "-"} />
           <ClockMetric label="진행" value={snapshot?.statusLabel ?? "확인 중"} />
           <ClockMetric label="규칙" value={snapshot?.ruleLabel ?? "-"} />
         </div>
 
-        <div className="grid gap-2 sm:grid-cols-3">
+        <ol className="grid gap-2 sm:grid-cols-3">
           {SAFE_CLOCK_ACTIONS.map((item) => {
-            const enabled = Boolean(session && item.enabledWhen.includes(session) && canRunSafeClockAction(item.action, session, postCloseReady));
+            const enabled = availableJumpActions.has(item.action);
+            const availabilityLabel = resolveActionAvailabilityLabel(
+              item.action,
+              enabled,
+              clock,
+              session,
+              settlementReady,
+              marketOpenReady,
+            );
             const pending = jumpingAction === item.action;
             return (
-              <button
-                key={item.action}
-                type="button"
-                onClick={() => onJump(item.action)}
-                disabled={!enabled || Boolean(jumpingAction)}
-                className={[
-                  "min-h-24 rounded-md border px-3 py-3 text-left transition",
-                  enabled
-                    ? "border-stock-accent/40 bg-[#15345f] text-white hover:border-admin-accent"
-                    : "border-white/10 bg-white/[0.04] text-admin-disabled",
-                  jumpingAction ? "cursor-wait" : enabled ? "cursor-pointer" : "cursor-not-allowed",
-                ].join(" ")}
-              >
-                <span className="block text-sm font-black">{pending ? "처리 중" : item.label}</span>
-                <span className="mt-2 block text-xs font-bold leading-5 opacity-80">
-                  {resolveActionDescription(item.action, openTimeLabel, closeTimeLabel)}
-                </span>
-              </button>
+              <li key={item.action} className="min-w-0">
+                <button
+                  type="button"
+                  onClick={() => onJump(item.action)}
+                  disabled={!enabled || Boolean(jumpingAction)}
+                  className={[
+                    "flex min-h-36 w-full flex-col border px-3 py-3 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-accent",
+                    enabled
+                      ? "border-admin-accent/40 bg-admin-accent-surface text-white hover:border-admin-accent hover:bg-admin-accent/20"
+                      : "border-white/10 bg-white/[0.04] text-admin-disabled",
+                    jumpingAction ? "cursor-wait" : enabled ? "cursor-pointer" : "cursor-not-allowed",
+                  ].join(" ")}
+                >
+                  <span className="text-[10px] font-black tracking-[0.12em] opacity-70">단계 {item.step}</span>
+                  <span className="mt-1 block text-sm font-black">{pending ? "이동 중" : item.label}</span>
+                  <span className="mt-2 block text-xs font-bold leading-5 opacity-80">
+                    {resolveActionDescription(item.action, openTimeLabel, closeTimeLabel)}
+                  </span>
+                  <span className={[
+                    "mt-auto pt-3 text-[11px] font-black",
+                    enabled ? "text-admin-accent-soft" : "text-admin-muted",
+                  ].join(" ")}
+                  >
+                    {availabilityLabel}
+                  </span>
+                </button>
+              </li>
             );
           })}
-        </div>
+        </ol>
       </div>
     </section>
   );
 }
 
-function canRunSafeClockAction(
+function resolveActionAvailabilityLabel(
   action: SimulationClockJumpAction,
-  session: SimulationSession,
-  postCloseReady: boolean,
+  enabled: boolean,
+  clock: SimulationClock | null,
+  session: SimulationSession | null,
+  settlementReady: boolean,
+  marketOpenReady: boolean,
 ) {
-  if (session === "PRE_OPEN" && action === "NEXT_MARKET_OPEN") {
-    return postCloseReady;
+  if (enabled) {
+    return "실행 가능";
   }
-  if (session !== "AFTER_CLOSE") {
-    return true;
+  if (!clock || !session) {
+    return "상태 조회 중";
   }
-  return action === "TODAY_MARKET_CLOSE" || postCloseReady;
+  if (action === "TODAY_MARKET_CLOSE") {
+    if (session !== "REGULAR") {
+      return "정규장에서 사용";
+    }
+    return "활성 거래일 동기화 대기";
+  }
+  if (action === "NEXT_SIMULATION_DAY_START") {
+    if (session !== "AFTER_CLOSE") {
+      return "18:00 이후 사용";
+    }
+    if (clock.activeBusinessDate !== clock.simulationDate) {
+      return "활성 거래일 동기화 대기";
+    }
+    return settlementReady ? "서버 단계 확인 대기" : "원장 동결·정산 대기";
+  }
+  if (session === "REGULAR") {
+    return "장전 또는 장마감 후 사용";
+  }
+  if (!marketOpenReady) {
+    return "야간 후처리·개장 준비 대기";
+  }
+  return "준비 거래일 동기화 대기";
+}
+
+function resolveReadinessLabel(
+  clock: SimulationClock | null,
+  session: SimulationSession | null,
+  settlementReady: boolean,
+  marketOpenReady: boolean,
+) {
+  if (session !== "AFTER_CLOSE" && session !== "PRE_OPEN") {
+    return null;
+  }
+  if (clock && session === "AFTER_CLOSE" && clock.activeBusinessDate !== clock.simulationDate) {
+    return { label: "활성 거래일 복구 대기", ready: false };
+  }
+  if (clock && session === "PRE_OPEN" && marketOpenReady
+    && clock.preparingBusinessDate !== clock.simulationDate) {
+    return { label: "다음 거래일 준비 동기화 대기", ready: false };
+  }
+  if (marketOpenReady) {
+    return { label: "개장 준비 완료", ready: true };
+  }
+  if (settlementReady) {
+    return { label: "정산 완료 · 야간 후처리 대기", ready: false };
+  }
+  return {
+    label: session === "PRE_OPEN" ? "전일 원장 동결·정산 대기" : "원장 동결·정산 대기",
+    ready: false,
+  };
 }
 
 function ClockMetric({ label, value }: { label: string; value: string }) {
@@ -143,11 +223,11 @@ function resolveActionDescription(
 ) {
   switch (action) {
     case "NEXT_MARKET_OPEN":
-      return `장전이면 전일 후처리 완료 후 오늘 ${openTimeLabel}, 장마감 후처리 완료 후면 다음날 ${openTimeLabel}으로 이동합니다.`;
+      return `야간 현금·기업행사·보고서·가격·자동장·readiness 완료 후에만 ${openTimeLabel}으로 이동합니다.`;
     case "NEXT_SIMULATION_DAY_START":
-      return "장마감 후처리 완료 후 다음 시뮬레이션 일자 00:00으로 이동합니다.";
+      return "원장 동결·포트폴리오 정산 완료 후 다음 일자 00:00으로 이동해 야간 처리 시간을 엽니다.";
     case "TODAY_MARKET_CLOSE":
-      return `정규장 진행 중 후처리 경계인 ${closeTimeLabel}으로만 이동합니다.`;
+      return `시계만 ${closeTimeLabel}으로 이동합니다. 시장 차단·원장 동결·정산은 coordinator가 이어서 처리합니다.`;
   }
 }
 

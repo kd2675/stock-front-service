@@ -44,6 +44,7 @@ export const stockKeys = {
   ] as const,
   adminUserFundFlow: (userKey: string) => [...stockKeys.market(), "admin", "user-fund-flow", userKey] as const,
   batchJobRuntimeControls: () => [...stockKeys.market(), "batch-jobs", "runtime-controls"] as const,
+  eodOperationsOverview: () => [...stockKeys.market(), "batch-jobs", "eod", "overview"] as const,
   latestManualCashFlowRun: () => [...stockKeys.market(), "auto-market", "cash-flow", "run", "latest"] as const,
   autoMarketStatus: () => [...stockKeys.market(), "auto-market"] as const,
   autoMarketStatusDetailsRoot: () => [...stockKeys.autoMarketStatus(), "details"] as const,

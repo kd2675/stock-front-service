@@ -108,7 +108,7 @@ export function AdminFlowFundSummaryPanel({
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 className="text-sm font-black text-white">시뮬레이션 자산·자금 현황</h3>
-          <p className="mt-1 text-xs font-bold text-stock-subtle">현재 자산 구성과 보유량, 시뮬레이션 장 시작부터 지금까지의 입출금·체결·손익입니다.</p>
+          <p className="mt-1 text-xs font-bold text-stock-subtle">현재 자산 구성과 보유량, 시뮬레이션 장 시작부터 지금까지의 입출금·체결·손익입니다. 체결 금액과 손익은 정상 집계 시 약 30초 늦을 수 있고, 장애·재기동 시에는 야간 원본 대사 후 확정됩니다.</p>
         </div>
         <button
           type="button"
@@ -119,7 +119,7 @@ export function AdminFlowFundSummaryPanel({
         </button>
       </div>
 
-      <AdminFundFlowMetricGrids fundFlow={fundFlow} executionLabel="하루 체결" onOpenTotalAssetHistory={openTotalAssetHistory} />
+      <AdminFundFlowMetricGrids fundFlow={fundFlow} executionLabel="하루 체결 (비동기·보통 30초)" onOpenTotalAssetHistory={openTotalAssetHistory} />
 
       <AdminAllFundFlowModal
         fundFlow={allFundFlow}
@@ -280,7 +280,7 @@ function AdminAllFundFlowModal({
         </div>
 
         {fundFlow ? (
-          <AdminFundFlowMetricGrids fundFlow={fundFlow} executionLabel="전체 체결" onOpenTotalAssetHistory={onOpenTotalAssetHistory} />
+          <AdminFundFlowMetricGrids fundFlow={fundFlow} executionLabel="전체 체결 (비동기·보통 30초)" onOpenTotalAssetHistory={onOpenTotalAssetHistory} />
         ) : (
           <div className="mt-4 rounded-md border border-white/10 bg-black/20 p-4 text-sm font-bold leading-6 text-stock-subtle">
             {loading ? "전체 누적 자금 흐름을 조회하고 있습니다." : "전체 누적 자금 흐름을 아직 조회하지 못했습니다."}

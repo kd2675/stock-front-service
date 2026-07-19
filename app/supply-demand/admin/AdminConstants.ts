@@ -15,13 +15,19 @@ import type {
 import type { CreateInstrumentFormValues } from "@/app/lib/validation/adminSchemas";
 
 export const RECURRING_CASH_INTERVAL_UNIT_OPTIONS: { value: RecurringCashIntervalUnit; label: string }[] = [
-  { value: "SECOND", label: "초" },
-  { value: "MINUTE", label: "분" },
-  { value: "HOUR", label: "시간" },
   { value: "DAY", label: "일" },
   { value: "MONTH", label: "월" },
   { value: "YEAR", label: "년" },
 ];
+
+export const RECURRING_CASH_INTERVAL_UNIT_LABELS: Record<RecurringCashIntervalUnit, string> = {
+  SECOND: "초",
+  MINUTE: "분",
+  HOUR: "시간",
+  DAY: "일",
+  MONTH: "월",
+  YEAR: "년",
+};
 
 export const BATCH_JOB_RUNTIME_LABELS: Record<string, { label: string; description: string }> = {
   "order-book-execution": {
@@ -46,7 +52,7 @@ export const BATCH_JOB_RUNTIME_LABELS: Record<string, { label: string; descripti
   },
   "auto-participant-cash-flow": {
     label: "월급 지급",
-    description: "가동 자동참여자와 ACTIVE 계좌에 반복 현금을 지급합니다.",
+    description: "가동 자동참여자와 ACTIVE 계좌의 지급 주기를 야간에 확인해 현금을 지급합니다.",
   },
   "portfolio-settlement": {
     label: "포트폴리오 정산",
@@ -68,7 +74,8 @@ export const ADMIN_CASH_FLOW_PAGE_SIZE = 20;
 export const ADMIN_SYMBOL_FLOW_PREVIEW_SIZE = 8;
 export const ADMIN_PARTICIPANT_PAGE_SIZE = 12;
 export const ADMIN_SALARY_PAGE_SIZE = 20;
-export const ADMIN_LIVE_SUMMARY_REFETCH_MS = 2_000;
+export const ADMIN_LIVE_SUMMARY_REFETCH_MS = 10_000;
+export const ADMIN_EOD_REFETCH_MS = 15_000;
 export const ADMIN_PARTICIPANT_DETAIL_REFETCH_MS = 30_000;
 export const ADMIN_AUTO_GENERATE_CONCURRENCY = 5;
 

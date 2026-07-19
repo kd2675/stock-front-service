@@ -8,6 +8,7 @@ import {
   autoParticipantsQueryOptions,
   autoParticipantProfileOverviewsQueryOptions,
   batchJobRuntimeControlsQueryOptions,
+  eodOperationsOverviewQueryOptions,
   latestManualCashFlowRunQueryOptions,
 } from "@/app/lib/react-query/stockAdminQueries";
 import {
@@ -21,6 +22,7 @@ import {
 } from "@/app/lib/react-query/stockMarketQueries";
 import {
   ADMIN_CASH_FLOW_PAGE_SIZE,
+  ADMIN_EOD_REFETCH_MS,
   ADMIN_LIVE_SUMMARY_REFETCH_MS,
   ADMIN_SYMBOL_FLOW_PREVIEW_SIZE,
   EMPTY_ORDER_BOOK_INSTRUMENTS,
@@ -135,6 +137,10 @@ export function useAdminPageQueries({
   const latestManualCashFlowRunQuery = useQuery(latestManualCashFlowRunQueryOptions(accessToken, {
     enabled: queryFlags.shouldUseBatchRuntimeControls,
   }));
+  const eodOperationsOverviewQuery = useQuery(eodOperationsOverviewQueryOptions(accessToken, {
+    enabled: queryFlags.shouldUseEodOverview,
+    refetchIntervalMs: ADMIN_EOD_REFETCH_MS,
+  }));
   const autoMarketSummaryQuery = useQuery(autoMarketSummaryStatusQueryOptions({
     enabled: queryFlags.shouldUseAutoMarketSummary,
     includeRuntimeMetrics: false,
@@ -187,6 +193,7 @@ export function useAdminPageQueries({
     autoParticipantProfileOverviewsAllQuery,
     batchJobRuntimeControlsQuery,
     latestManualCashFlowRunQuery,
+    eodOperationsOverviewQuery,
     corporateActionsQuery,
     shouldLoadInstrumentDetails: queryFlags.shouldLoadInstrumentDetails,
     simulationClockQuery,

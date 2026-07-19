@@ -18,7 +18,7 @@ export type AutoParticipantDraftInput = {
 };
 
 const AUTO_PARTICIPANT_REQUIRED_MESSAGE = "자동 참여자 키와 표시명을 입력해 주세요.";
-const AUTO_PARTICIPANT_RECURRING_CASH_MESSAGE = "참여자별 월급/정기 현금은 금액 0 이상, 주기 0 초과 1000 이하로 입력해 주세요. 비워두면 프로필 기본값을 사용합니다.";
+const AUTO_PARTICIPANT_RECURRING_CASH_MESSAGE = "참여자별 월급/정기 현금은 금액 0 이상, 일·월·년 주기 0 초과 1000 이하로 입력해 주세요. 비워두면 프로필 기본값을 사용합니다.";
 
 const emptyAutoParticipantRecurringCashPayload = {
   recurringCashAmount: null,
@@ -26,7 +26,7 @@ const emptyAutoParticipantRecurringCashPayload = {
   recurringCashIntervalUnit: null,
 };
 
-const recurringCashIntervalUnitSchema = z.enum(["SECOND", "MINUTE", "HOUR", "DAY", "MONTH", "YEAR"]);
+const recurringCashIntervalUnitSchema = z.enum(["DAY", "MONTH", "YEAR"]);
 
 const autoParticipantRecurringCashSchema = z.object({
   amount: numberFromBlankZero({ min: 0, max: 1000000000000 }),

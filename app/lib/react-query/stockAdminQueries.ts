@@ -13,6 +13,7 @@ import {
   getAutoParticipantOverviews,
   getAutoParticipantProfileOverviews,
   getBatchJobRuntimeControls,
+  getEodOperationsOverview,
   getLatestAutoParticipantCashFlowRun,
 } from "@/app/lib/stock";
 import { stockKeys } from "@/app/lib/react-query/stockKeys";
@@ -165,6 +166,26 @@ export function batchJobRuntimeControlsQueryOptions(
     fallbackMessage: "배치 자동 실행 상태를 조회하지 못했습니다.",
     enabled: options.enabled,
     retry: false,
+  });
+}
+
+export function eodOperationsOverviewQueryOptions(
+  token: string | null,
+  options: {
+    enabled?: boolean;
+    refetchIntervalMs?: number | false;
+  } = {},
+) {
+  return adminAuthenticatedQueryOptions(token, {
+    queryKey: stockKeys.eodOperationsOverview(),
+    request: getEodOperationsOverview,
+    fallbackMessage: "장마감 운영 상태를 조회하지 못했습니다.",
+    enabled: options.enabled,
+    refetchInterval: options.refetchIntervalMs ?? false,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
+    retry: false,
+    staleTime: 10_000,
   });
 }
 

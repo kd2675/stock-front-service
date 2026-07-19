@@ -6,9 +6,11 @@ import {
 } from "@/app/lib/react-query/stockCacheUpdates";
 import {
   invalidateBatchRuntimeControlQueries,
+  invalidateEodOperationsOverviewQuery,
   invalidateLatestManualCashFlowRunQuery,
 } from "@/app/lib/react-query/stockInvalidations";
 import {
+  adminRetryFailedEodPhaseMutationOptions,
   adminRunAutoParticipantCashFlowMutationOptions,
   adminUpdateBatchJobRuntimeControlMutationOptions,
 } from "@/app/lib/react-query/stockMutations";
@@ -34,6 +36,7 @@ export function useAdminBatchActions({
   setMessage: AdminActionMessageSetter;
 }) {
   const batchJobRuntimeMutation = useMutation(adminUpdateBatchJobRuntimeControlMutationOptions());
+  const retryEodPhaseMutation = useMutation(adminRetryFailedEodPhaseMutationOptions());
   const runCashFlowMutation = useMutation(adminRunAutoParticipantCashFlowMutationOptions());
 
   const setBatchJobRuntime = async (jobName: string, runtimeEnabled: boolean) => {
@@ -88,8 +91,32 @@ export function useAdminBatchActions({
     reloadAutoParticipantState();
   };
 
+  const retryFailedEodPhase = async (cycleId: number) => {
+    if (retryEodPhaseMutation.isPending) {
+      return;
+    }
+    const token = await requireAdminToken("관리자 로그인 후 실패한 장마감 단계를 재시도할 수 있습니다.");
+    if (!token) {
+      return;
+    }
+    const result = await retryEodPhaseMutation.mutateAsync({ token, cycleId });
+    const retryResult = getAdminActionData(result, "장마감 단계 재시도 요청에 실패했습니다.");
+    if (!retryResult.ok) {
+      setMessage(retryResult.message);
+      return;
+    }
+    setMessage(
+      `cycle #${retryResult.data.cycleId} ${retryResult.data.phase} 재시도를 요청했습니다. 다음 coordinator 판정에서 실행됩니다.`,
+    );
+    void invalidateEodOperationsOverviewQuery(queryClient);
+  };
+
   return {
     lastCashFlowRun,
+    retryFailedEodPhase,
+    retryingEodCycleId: retryEodPhaseMutation.isPending
+      ? retryEodPhaseMutation.variables?.cycleId ?? null
+      : null,
     runAutoParticipantCashFlowNow,
     runningCashFlow: runCashFlowMutation.isPending,
     setBatchJobRuntime,

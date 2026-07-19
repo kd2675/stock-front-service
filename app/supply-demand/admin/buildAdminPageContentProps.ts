@@ -3,6 +3,7 @@ import type { AdminPageContentBuilderContext } from "@/app/supply-demand/admin/A
 import { buildAdminAccountsContentProps } from "@/app/supply-demand/admin/buildAdminAccountsContentProps";
 import { buildAdminAutomationContentProps } from "@/app/supply-demand/admin/buildAdminAutomationContentProps";
 import { buildAdminEventsContentProps } from "@/app/supply-demand/admin/buildAdminEventsContentProps";
+import { buildAdminEodContentProps } from "@/app/supply-demand/admin/buildAdminEodContentProps";
 import { buildAdminMarketContentProps } from "@/app/supply-demand/admin/buildAdminMarketContentProps";
 import { buildAdminParticipantsContentProps } from "@/app/supply-demand/admin/buildAdminParticipantsContentProps";
 
@@ -24,6 +25,7 @@ export function buildAdminPageContentProps(context: AdminPageContentBuilderConte
     accountsProps: isAccountsContent ? buildAdminAccountsContentProps(context) : null,
     automationProps: isAutomationContent ? buildAdminAutomationContentProps(context) : null,
     eventsProps: isEventsContent ? buildAdminEventsContentProps(context) : null,
+    eodProps: context.activeAdminSection === "system-eod" ? buildAdminEodContentProps(context) : null,
     marketProps: isMarketContent ? buildAdminMarketContentProps(context) : null,
     message: context.message,
     participantsProps: isParticipantsContent ? buildAdminParticipantsContentProps(context) : null,

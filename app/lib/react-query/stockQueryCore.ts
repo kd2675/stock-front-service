@@ -6,6 +6,10 @@ import type { AuthStatus } from "@/app/types/auth";
 
 export const FAST_MARKET_REFETCH_MS = 2_000;
 export const USER_ACTIVITY_REFETCH_MS = 5_000;
+export const ACCOUNT_POSITION_REFETCH_MS = 10_000;
+export const ACCOUNT_SUMMARY_REFETCH_MS = 30_000;
+export const ACCOUNT_HISTORY_REFETCH_MS = 60_000;
+export const MARKET_AGGREGATE_REFETCH_MS = 10_000;
 export const ADMIN_SNAPSHOT_STALE_MS = 30_000;
 export const ADMIN_LEDGER_STALE_MS = 60_000;
 
@@ -33,6 +37,7 @@ export type StockQueryOptionsConfig<TData> = {
   fallbackMessage: string;
   enabled?: boolean;
   refetchInterval?: QueryObserverOptions<TData>["refetchInterval"];
+  refetchIntervalInBackground?: QueryObserverOptions<TData>["refetchIntervalInBackground"];
   retry?: boolean | number;
   staleTime?: number;
   placeholderData?: QueryObserverOptions<TData>["placeholderData"];
@@ -49,6 +54,7 @@ export function stockQueryOptions<TData>(config: StockQueryOptionsConfig<TData>)
     queryFn: () => unwrapStockRequest(config.request(), config.fallbackMessage),
     enabled: config.enabled,
     refetchInterval: config.refetchInterval,
+    refetchIntervalInBackground: config.refetchIntervalInBackground ?? false,
     retry: config.retry,
     staleTime: config.staleTime,
     placeholderData: config.placeholderData,

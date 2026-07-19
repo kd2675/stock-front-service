@@ -21,7 +21,7 @@ export const AUTO_PARTICIPANT_PROFILE_OPTIONS: AutoParticipantProfileOption[] = 
   { value: "DAY_TRADER", label: "데이 트레이더형", description: "시뮬레이션 하루 안의 흐름에 빠르게 사고팔음", behavior: "단타형보다 주문 빈도가 더 높습니다. 강한 장중 신호에는 먼저 반응하되 후속 주문은 확률적으로 분산됩니다." },
   { value: "SWING_TRADER", label: "스윙형", description: "며칠 단위 추세와 반전 신호를 함께 봄", behavior: "추세와 역추세를 섞어 보고 큰 미실현 수익이 생기면 첫 반응은 익절 쪽으로 움직이며, 후속 주문은 상태 기반 편향을 따릅니다." },
   { value: "LONG_TERM_HOLDER", label: "장기투자형", description: "매도 빈도가 낮고 하락에도 보유 성향이 큼", behavior: "중립 신호에서는 쉬고, 큰 손실은 성급히 팔지 않으며 큰 수익 구간에서는 추가 매수보다 보유나 일부 익절 쪽으로 물러납니다." },
-  { value: "PAYDAY_ACCUMULATOR", label: "월급매수형", description: "설정한 입금 주기마다 현금 유입 후 꾸준히 매수", behavior: "설정 주기마다 자동 입금 원장을 만들고 첫 반응은 매수 편향을 유지합니다. 손실 구간은 무리한 반복 매수보다 1회 매수/보유로 제한하고, 수익이 커진 보유분은 후속 주문에서 일부 익절할 수 있습니다." },
+  { value: "PAYDAY_ACCUMULATOR", label: "월급매수형", description: "입금 주기가 도래한 야간에 현금 유입 후 꾸준히 매수", behavior: "기본 EOD 모드에서는 00시 이후 거래일당 한 번 주기 도래 여부를 확인해 자동 입금 원장을 만들고 첫 반응은 매수 편향을 유지합니다. 손실 구간은 무리한 반복 매수보다 1회 매수/보유로 제한하고, 수익이 커진 보유분은 후속 주문에서 일부 익절할 수 있습니다." },
   { value: "DIVIDEND_REINVESTOR", label: "배당재투자형", description: "배당 지급 후 받은 현금을 재매수에 사용", behavior: "월급 지급 대상이 아니며, 배당 이벤트로 현금이 들어온 뒤 장기 보유 성향을 유지하면서 재매수 쪽으로 움직입니다." },
   { value: "LIMIT_DOWN_TRAPPED", label: "하한가 물림형", description: "큰 손실 구간에서 매도를 강하게 회피", behavior: "하한가나 깊은 손실에서는 강제 손절을 피하고 현금이 있으면 물타기 매수 쪽으로 갑니다." },
   { value: "AVERAGE_DOWN_BUYER", label: "물타기형", description: "손실 구간에서 평균단가를 낮추려 추가 매수", behavior: "평균단가 대비 손실과 급락 구간을 추가 매수 기회로 보고 수량을 키워 물타기 쪽으로 움직입니다." },

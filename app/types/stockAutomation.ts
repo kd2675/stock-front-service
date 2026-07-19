@@ -212,6 +212,127 @@ export type StockBatchJobRun = {
   completedAt: string | null;
 };
 
+export type EodBusinessState = {
+  activeBusinessDate: string;
+  preparingBusinessDate?: string | null;
+  rawSimulationDate: string;
+  rawSimulationDateTime?: string | null;
+  version: number;
+  updatedAt: string;
+};
+
+export type EodMarketState = {
+  enabledSymbolCount: number;
+  openSymbolCount: number;
+  orderEntryOpen: boolean;
+};
+
+export type EodCycle = {
+  id: number;
+  businessDate: string;
+  cycleKind: "TRADING" | "SKIPPED";
+  skipReason?: string | null;
+  phase: string;
+  status: string;
+  phaseRevision: number;
+  attemptCount: number;
+  closeRunId?: number | null;
+  settlementEligibleAt?: string | null;
+  ownerId?: string | null;
+  leaseUntil?: string | null;
+  nextRetryAt?: string | null;
+  startedAt?: string | null;
+  completedAt?: string | null;
+  lastErrorCode?: string | null;
+  lastErrorMessage?: string | null;
+  buildVersion?: string | null;
+  schemaVersion?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  closeRunStatus?: string | null;
+  closedAt?: string | null;
+  closeRunCompletedAt?: string | null;
+};
+
+export type EodCycleMetrics = {
+  capturedOpenOrderCount: number;
+  cancelledOrderCount: number;
+  releasedBuyCash: number;
+  releasedSellQuantity: number;
+  settlementTargetAccountCount: number;
+  accountSnapshotCount: number;
+  holdingSnapshotCount: number;
+  priceSnapshotCount: number;
+  openOrderSummaryCount: number;
+  reconciliationMismatchCount: number;
+  settledAccountCount: number;
+  settlementMissingAccountCount: number;
+  updatedAt: string;
+};
+
+export type EodPhaseAttempt = {
+  id: number;
+  phase: string;
+  attemptNo: number;
+  batchJobExecutionId?: number | null;
+  ownerId: string;
+  status: string;
+  startedAt: string;
+  completedAt?: string | null;
+  errorCode?: string | null;
+  errorMessage?: string | null;
+  buildVersion?: string | null;
+  schemaVersion?: string | null;
+};
+
+export type EodReadinessCheck = {
+  checkCode: string;
+  displayOrder: number;
+  status: "PASSED" | "FAILED" | string;
+  failureCount: number;
+  message?: string | null;
+  checkedAt: string;
+};
+
+export type EodSignal = {
+  id: number;
+  signalType: string;
+  jobName: string;
+  executionMode: string;
+  status: string;
+  requestedAt: string;
+  eligibleAt?: string | null;
+  nextAttemptAt: string;
+  attemptCount: number;
+  maxAttempts: number;
+  processedCount?: number | null;
+  message?: string | null;
+  errorMessage?: string | null;
+  completedAt?: string | null;
+};
+
+export type EodOperationsOverview = {
+  generatedAt: string;
+  businessState?: EodBusinessState | null;
+  marketState: EodMarketState;
+  cycle?: EodCycle | null;
+  metrics?: EodCycleMetrics | null;
+  readinessChecks: EodReadinessCheck[];
+  latestAttempt?: EodPhaseAttempt | null;
+  latestSignal?: EodSignal | null;
+};
+
+export type EodPhaseRetryResult = {
+  cycleId: number;
+  businessDate: string;
+  phase: string;
+  previousStatus: string;
+  status: string;
+  attemptCount: number;
+  requestedBy: string;
+  requestedAt: string;
+};
+
 export type AutoParticipantSymbolConfig = {
   userKey: string;
   symbol: string;

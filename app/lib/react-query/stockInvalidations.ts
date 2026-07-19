@@ -223,6 +223,10 @@ export async function invalidateBatchRuntimeControlQueries(queryClient: QueryCli
   await invalidateQuery(queryClient, stockKeys.batchJobRuntimeControls());
 }
 
+export async function invalidateEodOperationsOverviewQuery(queryClient: QueryClient) {
+  await invalidateQuery(queryClient, stockKeys.eodOperationsOverview(), { exact: true });
+}
+
 export async function invalidateLatestManualCashFlowRunQuery(queryClient: QueryClient) {
   await invalidateQuery(queryClient, stockKeys.latestManualCashFlowRun());
 }

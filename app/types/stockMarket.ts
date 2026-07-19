@@ -52,7 +52,11 @@ export type SimulationClock = {
   marketSession: "PRE_OPEN" | "REGULAR" | "AFTER_CLOSE";
   marketOpenTime: string;
   marketCloseTime: string;
+  activeBusinessDate: string;
+  preparingBusinessDate?: string | null;
   postCloseProcessingCompleted: boolean;
+  marketOpenReady: boolean;
+  availableJumpActions: SimulationClockJumpAction[];
   realSecondsPerSimulationDay: number;
   running: boolean;
   stale: boolean;

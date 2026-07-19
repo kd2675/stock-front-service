@@ -365,6 +365,9 @@ function AccountSummaryPanel({
   return (
     <section className="rounded-lg bg-white p-5 shadow-[var(--shadow-panel)] ring-1 ring-stock-divider">
       <h2 className="text-lg font-black">계좌 요약</h2>
+      <p className="mt-1 text-xs font-semibold leading-5 text-stock-subtle">
+        실현손익·체결금액·수수료·세금은 체결 원장 보호를 위해 비동기 집계됩니다. 정상 집계 시 약 30초 늦을 수 있고, 장애·재기동 시에는 야간 원본 대사 후 확정됩니다.
+      </p>
       <div className="mt-4 space-y-3">
         <SummaryLine label="현금" value={formatWon(portfolio?.account.cashBalance)} />
         <SummaryLine label="예약 현금" value={formatWon(portfolio?.reservedBuyCash)} />

@@ -16,6 +16,7 @@ export type AdminSection =
   | "corporate-actions"
   | "corporate-history"
   | "corporate-reports"
+  | "system-eod"
   | "system-jobs";
 
 export type AdminNavigationItem = {
@@ -81,6 +82,7 @@ export const ADMIN_NAVIGATION_GROUPS: readonly AdminNavigationGroup[] = [
     tab: "system",
     label: "시스템",
     items: [
+      { section: "system-eod", href: "/admin/system/eod", label: "장마감 운영", description: "거래일 장마감·정산·야간 후처리 단계를 확인합니다." },
       { section: "system-jobs", href: "/admin/system/jobs", label: "배치·작업", description: "배치 가동 여부와 수동 작업을 제어합니다." },
     ],
   },

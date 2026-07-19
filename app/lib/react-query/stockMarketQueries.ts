@@ -20,6 +20,7 @@ import type { StockCorporateActionFeedOptions } from "@/app/lib/stock";
 import { stockKeys } from "@/app/lib/react-query/stockKeys";
 import {
   FAST_MARKET_REFETCH_MS,
+  MARKET_AGGREGATE_REFETCH_MS,
   USER_ACTIVITY_REFETCH_MS,
   stockQueryOptions,
   type StockQueryOptionsConfig,
@@ -43,13 +44,13 @@ type MarketQueryToggleOptions = {
 
 function candleRefetchInterval(interval: OrderBookCandleInterval) {
   if (interval === "1M") {
-    return FAST_MARKET_REFETCH_MS;
+    return MARKET_AGGREGATE_REFETCH_MS;
   }
   if (interval === "5M") {
-    return USER_ACTIVITY_REFETCH_MS;
+    return 15_000;
   }
   if (interval === "15M" || interval === "1H") {
-    return 15_000;
+    return 30_000;
   }
   return 60_000;
 }
@@ -160,7 +161,7 @@ export function orderBookTradeSummaryQueryOptions(symbol: string, options: Marke
     queryKey: stockKeys.orderBookTradeSummary(symbol),
     request: getOrderBookTradeSummary,
     fallbackMessage: "거래 요약을 조회하지 못했습니다.",
-    refetchInterval: FAST_MARKET_REFETCH_MS,
+    refetchInterval: MARKET_AGGREGATE_REFETCH_MS,
     symbol,
   });
 }
@@ -209,7 +210,7 @@ export function orderBookMarketStatusQueryOptions(options: {
     request: () => getOrderBookMarketStatus({ includeConfigs, includeTodayExecution }),
     fallbackMessage: "주문장 상태를 조회하지 못했습니다.",
     enabled: options.enabled,
-    refetchInterval: options.refetchIntervalMs ?? FAST_MARKET_REFETCH_MS,
+    refetchInterval: options.refetchIntervalMs ?? MARKET_AGGREGATE_REFETCH_MS,
   });
 }
 
@@ -231,7 +232,7 @@ export function autoMarketStatusQueryOptions(options: {
     }),
     fallbackMessage: "자동장 상태를 조회하지 못했습니다.",
     enabled: options.enabled ?? true,
-    refetchInterval: options.refetchIntervalMs ?? FAST_MARKET_REFETCH_MS,
+    refetchInterval: options.refetchIntervalMs ?? MARKET_AGGREGATE_REFETCH_MS,
   });
 }
 
@@ -258,7 +259,7 @@ export function autoMarketSummaryStatusQueryOptions(options: {
     request: () => getAutoMarketStatus(includeOptions),
     fallbackMessage: "자동장 요약을 조회하지 못했습니다.",
     enabled: options.enabled ?? true,
-    refetchInterval: options.refetchIntervalMs ?? FAST_MARKET_REFETCH_MS,
+    refetchInterval: options.refetchIntervalMs ?? MARKET_AGGREGATE_REFETCH_MS,
   });
 }
 
@@ -268,7 +269,7 @@ export function corporateActionsQueryOptions(symbol: string, options: MarketQuer
     queryKey: stockKeys.corporateActions(symbol),
     request: getCorporateActions,
     fallbackMessage: "주식 이벤트를 조회하지 못했습니다.",
-    refetchInterval: options.refetchIntervalMs ?? USER_ACTIVITY_REFETCH_MS,
+    refetchInterval: options.refetchIntervalMs ?? 30_000,
     symbol,
   });
 }
@@ -283,7 +284,7 @@ export function corporateActionFeedQueryOptions(options: MarketQueryToggleOption
     request: () => getCorporateActionFeed(feedOptions),
     fallbackMessage: "기업 이벤트 목록을 조회하지 못했습니다.",
     enabled: options.enabled,
-    refetchInterval: options.refetchIntervalMs ?? USER_ACTIVITY_REFETCH_MS,
+    refetchInterval: options.refetchIntervalMs ?? 30_000,
   });
 }
 
@@ -303,7 +304,7 @@ export function instrumentMarketReportQueryOptions(symbol: string, options: Mark
     queryKey: stockKeys.instrumentMarketReport(symbol),
     request: getInstrumentMarketReport,
     fallbackMessage: "종목 시장 보고서를 조회하지 못했습니다.",
-    refetchInterval: options.refetchIntervalMs ?? FAST_MARKET_REFETCH_MS,
+    refetchInterval: options.refetchIntervalMs ?? false,
     retry: false,
     symbol,
   });
