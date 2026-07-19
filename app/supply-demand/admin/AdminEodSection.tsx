@@ -50,17 +50,76 @@ function timelinePhase(phase: string) {
   return INTERNAL_CLOSE_PHASES.has(phase) ? "CLOSE_REQUESTED" : phase;
 }
 
-function phaseState(phase: string, currentPhase: string, cycleStatus: string) {
-  const phaseIndex = EOD_PHASES.findIndex((item) => item.key === phase);
+function completedTimelineIndex(currentPhase: string, cycleStatus: string) {
+  if (cycleStatus === "COMPLETED") {
+    return EOD_PHASES.length - 1;
+  }
   const normalizedCurrentPhase = timelinePhase(currentPhase);
   const currentIndex = EOD_PHASES.findIndex((item) => item.key === normalizedCurrentPhase);
-  if (cycleStatus === "COMPLETED" || (currentIndex >= 0 && phaseIndex < currentIndex)) {
-    return "complete";
+  if (normalizedCurrentPhase === "CLOSE_REQUESTED" || currentIndex < 0) {
+    return -1;
   }
-  if (phase === normalizedCurrentPhase) {
-    return "current";
+  return currentIndex;
+}
+
+function cycleHeading(currentPhase: string, cycleStatus: string) {
+  if (cycleStatus === "COMPLETED") {
+    return "EOD 처리 완료";
   }
-  return "pending";
+  const completedIndex = completedTimelineIndex(currentPhase, cycleStatus);
+  const completedPhase = completedIndex >= 0 ? EOD_PHASES[completedIndex] : null;
+  const activePhase = EOD_PHASES[completedIndex + 1] ?? null;
+  if (cycleStatus === "RUNNING") {
+    return activePhase ? `${activePhase.label} 실행 중` : "EOD 처리 중";
+  }
+  if (cycleStatus === "FAILED") {
+    return activePhase ? `${activePhase.label} 실패` : "EOD 처리 실패";
+  }
+  if (cycleStatus === "DEFERRED") {
+    return activePhase ? `${activePhase.label} 연기` : "EOD 처리 연기";
+  }
+  if (completedPhase) {
+    return `${completedPhase.label} 완료`;
+  }
+  return activePhase ? `${activePhase.label} 대기` : PHASE_LABELS.get(currentPhase) ?? currentPhase;
+}
+
+function cycleDescription(currentPhase: string, cycleStatus: string) {
+  if (cycleStatus === "COMPLETED") {
+    return "모든 장마감 후처리와 다음 장 개장 검증이 완료됐습니다.";
+  }
+  const completedIndex = completedTimelineIndex(currentPhase, cycleStatus);
+  const completedPhase = completedIndex >= 0 ? EOD_PHASES[completedIndex] : null;
+  const activePhase = EOD_PHASES[completedIndex + 1] ?? null;
+  const completedCopy = completedPhase ? `${completedPhase.label} 완료 · ` : "";
+  if (!activePhase) {
+    return `${completedCopy}다음 단계 판정을 기다리고 있습니다.`;
+  }
+  if (cycleStatus === "RUNNING") {
+    return `${completedCopy}${activePhase.label}을 처리하고 있습니다.`;
+  }
+  if (cycleStatus === "FAILED") {
+    return `${completedCopy}${activePhase.label} 재시도가 필요합니다.`;
+  }
+  if (cycleStatus === "DEFERRED") {
+    return `${completedCopy}${activePhase.label}은 ${activePhase.window} 실행 조건을 기다립니다.`;
+  }
+  return `${completedCopy}다음 단계 ${activePhase.label} · ${activePhase.window} 대기`;
+}
+
+function statusLabel(status: string) {
+  if (status === "COMPLETED") return "전체 완료";
+  if (status === "RUNNING") return "실행 중";
+  if (status === "FAILED") return "실패";
+  if (status === "DEFERRED") return "실행 연기";
+  if (status === "PENDING") return "다음 단계 대기";
+  return status;
+}
+
+function attemptedOperationLabel(phase: string) {
+  const normalizedPhase = timelinePhase(phase);
+  const phaseIndex = EOD_PHASES.findIndex((item) => item.key === normalizedPhase);
+  return EOD_PHASES[phaseIndex + 1]?.label ?? PHASE_LABELS.get(normalizedPhase) ?? phase;
 }
 
 function statusTone(status: string | undefined) {
@@ -142,6 +201,8 @@ export function AdminEodSection({
   const readinessChecks = overview?.readinessChecks ?? [];
   const retryingCurrentCycle = cycle?.id === retryingCycleId;
   const canRetryFailedPhase = cycle?.status === "FAILED" && !overview?.marketState.orderEntryOpen;
+  const completedPhaseIndex = cycle ? completedTimelineIndex(cycle.phase, cycle.status) : -1;
+  const activePhaseIndex = cycle?.status === "COMPLETED" ? -1 : completedPhaseIndex + 1;
 
   return (
     <div className="mt-5 min-w-0 space-y-7">
@@ -150,16 +211,18 @@ export function AdminEodSection({
           <div>
             <p className="text-xs font-black tracking-[0.14em] text-admin-accent">END OF DAY CONTROL</p>
             <h2 id="eod-current-state" className="mt-2 text-xl font-black text-white">
-              {cycle ? PHASE_LABELS.get(cycle.phase) ?? cycle.phase : "대기 중인 장마감 없음"}
+              {cycle ? cycleHeading(cycle.phase, cycle.status) : "대기 중인 장마감 없음"}
             </h2>
             <p className="mt-2 max-w-3xl text-sm font-bold leading-6 text-stock-subtle">
-              운영 조회는 주문·체결 원장을 다시 집계하지 않고, 각 단계가 한 번 기록한 cycle 요약값만 읽습니다.
+              {cycle
+                ? cycleDescription(cycle.phase, cycle.status)
+                : "운영 조회는 주문·체결 원장을 다시 집계하지 않고, 각 단계가 한 번 기록한 cycle 요약값만 읽습니다."}
             </p>
           </div>
           <div className="flex items-center gap-2">
             {cycle ? (
               <span className={`rounded-full border px-2.5 py-1 text-xs font-black ${statusTone(cycle.status)}`}>
-                {cycle.status}
+                {statusLabel(cycle.status)}
               </span>
             ) : null}
             {cycle?.status === "FAILED" ? (
@@ -216,7 +279,11 @@ export function AdminEodSection({
           </div>
           <ol className="mt-4 grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {EOD_PHASES.map((phase, index) => {
-              const state = phaseState(phase.key, cycle.phase, cycle.status);
+              const state = index <= completedPhaseIndex
+                ? "complete"
+                : index === activePhaseIndex
+                  ? "current"
+                  : "pending";
               return (
                 <li
                   key={phase.key}
@@ -290,7 +357,7 @@ export function AdminEodSection({
               />
               <DefinitionItem
                 label="최근 attempt"
-                value={attempt ? `#${attempt.attemptNo} · ${attempt.phase} · ${attempt.status}` : "-"}
+                value={attempt ? `#${attempt.attemptNo} · ${attemptedOperationLabel(attempt.phase)} · ${statusLabel(attempt.status)}` : "-"}
                 note={attempt ? `${formatDateTime(attempt.startedAt)} → ${attempt.completedAt ? formatDateTime(attempt.completedAt) : "진행 중"} · ${formatElapsed(attempt.startedAt, attempt.completedAt ?? overview?.generatedAt)}` : undefined}
               />
               <DefinitionItem label="실행 버전" value={`${cycle.buildVersion ?? "unknown"} / ${cycle.schemaVersion ?? "unknown"}`} />

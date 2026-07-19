@@ -18,8 +18,16 @@ export type AutoMarketConfigDraftInput = {
   enabled: boolean;
   maxOrderQuantity: string;
   orderTtlSeconds: string;
+  primaryRegimeCountWeights: AutoMarketRegimeCountWeightsDraftInput;
   primaryDistributionBias: AutoMarketDistributionBiasDraftInput;
   secondaryDistributionBias: AutoMarketDistributionBiasDraftInput;
+};
+
+export type AutoMarketRegimeCountWeightsDraftInput = {
+  oneTime: string;
+  twoTimes: string;
+  threeTimes: string;
+  fourTimes: string;
 };
 
 export type AutoMarketDistributionBiasDraftInput = {
@@ -48,7 +56,7 @@ export type ListingAutoAccountConfigDraftInput = {
   sellPriceOffsetDirection: ListingAutoPriceDirection;
 };
 
-const AUTO_MARKET_CONFIG_MESSAGE = "자동장 대상 종목, 주·보조 분포 편향 -100~100, 1회 주문 최대 수량, 미체결 호가 TTL을 올바르게 입력해 주세요.";
+const AUTO_MARKET_CONFIG_MESSAGE = "자동장 대상 종목, 1~4회 주 랜덤 가중치, 주·보조 분포 편향, 최대 수량과 TTL을 올바르게 입력해 주세요.";
 const LISTING_AUTO_ACCOUNT_CONFIG_MESSAGE = "상장주관사 종목, 목표 보유 수량·허용 밴드·양쪽 호가 잔량, 최대 수량, TTL, 가격 분산 방향을 올바르게 입력해 주세요.";
 
 const distributionBiasSchema = z.object({
@@ -59,11 +67,22 @@ const distributionBiasSchema = z.object({
   executionAggressionPressure: integerRange(-100, 100),
 });
 
+const regimeCountWeightsSchema = z.object({
+  oneTime: integerRange(0, 100),
+  twoTimes: integerRange(0, 100),
+  threeTimes: integerRange(0, 100),
+  fourTimes: integerRange(0, 100),
+}).refine(
+  (value) => value.oneTime + value.twoTimes + value.threeTimes + value.fourTimes > 0,
+  { message: "주 랜덤 적용 횟수 가중치는 하나 이상 0보다 커야 합니다." },
+);
+
 const autoMarketConfigSchema = z.object({
   symbol: requiredUppercaseString(),
   enabled: z.boolean(),
   maxOrderQuantity: positiveInteger(),
   orderTtlSeconds: positiveInteger(),
+  primaryRegimeCountWeights: regimeCountWeightsSchema,
   primaryDistributionBias: distributionBiasSchema,
   secondaryDistributionBias: distributionBiasSchema,
 });
@@ -122,6 +141,7 @@ export function buildAutoMarketConfigPayload(draft: AutoMarketConfigDraftInput):
       enabled: parsed.data.enabled,
       maxOrderQuantity: parsed.data.maxOrderQuantity,
       orderTtlSeconds: parsed.data.orderTtlSeconds,
+      primaryRegimeCountWeights: parsed.data.primaryRegimeCountWeights,
       primaryDistributionBias: parsed.data.primaryDistributionBias,
       secondaryDistributionBias: parsed.data.secondaryDistributionBias,
     },

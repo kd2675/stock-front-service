@@ -12,6 +12,13 @@ export type AutoMarketDistributionBias = {
   executionAggressionPressure: number;
 };
 
+export type AutoMarketRegimeCountWeights = {
+  oneTime: number;
+  twoTimes: number;
+  threeTimes: number;
+  fourTimes: number;
+};
+
 export type AutoMarketRegimeModifier = {
   modifierWindowStartAt: string;
   pricePressure: number;
@@ -28,6 +35,7 @@ export type AutoMarketDailyRegime = {
   symbol: string;
   simulationTradeDate: string;
   regimePhase: AutoMarketRegimePhase;
+  sourceRegimePhase: AutoMarketRegimePhase;
   pricePressure: number;
   assetPreferencePressure: number;
   volatilityPressure: number;
@@ -44,6 +52,7 @@ export type AutoMarketConfig = {
   enabled: boolean;
   maxOrderQuantity: number;
   orderTtlSeconds: number;
+  primaryRegimeCountWeights: AutoMarketRegimeCountWeights;
   primaryDistributionBias: AutoMarketDistributionBias;
   secondaryDistributionBias: AutoMarketDistributionBias;
   dailyRegime?: AutoMarketDailyRegime | null;

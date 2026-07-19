@@ -71,6 +71,7 @@ export function useAdminAutoMarketConfigActions({
         enabled: nextEnabled,
         maxOrderQuantity: config.maxOrderQuantity,
         orderTtlSeconds: config.orderTtlSeconds,
+        primaryRegimeCountWeights: config.primaryRegimeCountWeights,
         primaryDistributionBias: config.primaryDistributionBias,
         secondaryDistributionBias: config.secondaryDistributionBias,
       },

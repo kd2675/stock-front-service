@@ -78,7 +78,7 @@ export function AutoMarketConfigGuide() {
         <div>
           <p className="text-sm font-black text-white">항목 설명</p>
           <p className="mt-1 text-xs font-bold leading-5 text-stock-subtle">
-            실제 주문은 06·09·12·15시 주 압력 60%, 30분 보조 압력 40%, 참여자별 전략, 심리 프로필, 보고서 점수, 계좌 상태를 함께 계산해 생성됩니다.
+            주 압력은 06시와 가중치로 선택된 추가 슬롯에서 하루 1~4회 갱신되고, 30분 보조 압력과 60:40으로 합성됩니다. 실제 주문은 참여자별 전략, 심리 프로필, 보고서 점수, 계좌 상태도 함께 계산합니다.
           </p>
         </div>
         <span className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-admin-accent">stock_auto_market_config</span>

@@ -1,14 +1,16 @@
 import { DarkInput, DarkSelect, EnabledToggleButton } from "@/app/supply-demand/admin/AdminFormControls";
 import { AutoMarketConfigGuide } from "@/app/supply-demand/admin/AdminSignalGuide";
-import type { AutoMarketConfig, AutoMarketDailyRegime, AutoMarketDistributionBias } from "@/app/types/stock";
+import type { AutoMarketConfig, AutoMarketDailyRegime, AutoMarketDistributionBias, AutoMarketRegimeCountWeights } from "@/app/types/stock";
 
 type PressureKey = keyof AutoMarketDistributionBias;
+type RegimeCountWeightKey = keyof AutoMarketRegimeCountWeights;
 
 export type AutoMarketConfigDraft = {
   symbol: string;
   enabled: boolean;
   maxOrderQuantity: string;
   orderTtlSeconds: string;
+  primaryRegimeCountWeights: Record<RegimeCountWeightKey, string>;
   primaryDistributionBias: Record<PressureKey, string>;
   secondaryDistributionBias: Record<PressureKey, string>;
 };
@@ -18,6 +20,7 @@ export type AutoMarketConfigDraftSetters = {
   setEnabled: (value: boolean) => void;
   setMaxOrderQuantity: (value: string) => void;
   setOrderTtlSeconds: (value: string) => void;
+  setPrimaryRegimeCountWeight: (field: RegimeCountWeightKey, value: string) => void;
   setPrimaryDistributionBias: (field: PressureKey, value: string) => void;
   setSecondaryDistributionBias: (field: PressureKey, value: string) => void;
   setEditingSymbol: (value: string | null) => void;
@@ -52,6 +55,18 @@ const PRESSURE_FIELDS: Array<{
   { key: "executionAggressionPressure", label: "체결 공격성", negative: "수동", positive: "적극" },
 ];
 
+const REGIME_COUNT_WEIGHT_FIELDS: Array<{
+  key: RegimeCountWeightKey;
+  count: number;
+  label: string;
+  description: string;
+}> = [
+  { key: "oneTime", count: 1, label: "1회", description: "06시 값을 종일 유지" },
+  { key: "twoTimes", count: 2, label: "2회", description: "06시와 추가 슬롯 1개" },
+  { key: "threeTimes", count: 3, label: "3회", description: "06시와 추가 슬롯 2개" },
+  { key: "fourTimes", count: 4, label: "4회", description: "06·09·12·15시 모두 생성" },
+];
+
 const PHASE_LABELS: Record<AutoMarketDailyRegime["regimePhase"], string> = {
   SLOT_0600: "06:00 구간",
   SLOT_0900: "09:00 구간",
@@ -66,6 +81,10 @@ function clampPressure(value: number) {
 function signed(value: number) {
   const normalized = Math.round(clampPressure(value));
   return normalized > 0 ? `+${normalized}` : `${normalized}`;
+}
+
+function clampWeight(value: number) {
+  return Math.min(100, Math.max(0, Number.isFinite(value) ? Math.round(value) : 0));
 }
 
 function pressureTone(value: number) {
@@ -151,6 +170,79 @@ function DistributionBiasEditor({
   );
 }
 
+function RegimeCountWeightEditor({
+  values,
+  onChange,
+}: {
+  values: Record<RegimeCountWeightKey, string>;
+  onChange: (field: RegimeCountWeightKey, value: string) => void;
+}) {
+  const weights = REGIME_COUNT_WEIGHT_FIELDS.map((field) => ({
+    ...field,
+    weight: clampWeight(Number(values[field.key])),
+  }));
+  const total = weights.reduce((sum, field) => sum + field.weight, 0);
+  const expectedCount = total > 0
+    ? weights.reduce((sum, field) => sum + field.count * field.weight, 0) / total
+    : 0;
+
+  return (
+    <fieldset className="min-w-0 border-t border-white/10 pt-3">
+      <legend className="pr-3 text-sm font-black text-white">주 랜덤 일일 적용 횟수</legend>
+      <div className="mb-2 mt-1 flex flex-wrap items-center justify-between gap-2">
+        <p className="max-w-3xl text-[11px] font-bold leading-5 text-stock-subtle">
+          종목별로 다음 거래일의 적용 횟수를 추첨합니다. 06시는 항상 포함되고 나머지 슬롯은 무작위로 선택됩니다.
+        </p>
+        <span className={`text-[11px] font-black tabular-nums ${total > 0 ? "text-admin-accent-label" : "text-admin-danger"}`}>
+          {total > 0 ? `예상 평균 ${expectedCount.toFixed(2)}회` : "가중치가 필요합니다"}
+        </span>
+      </div>
+      <div className="grid gap-x-5 sm:grid-cols-2">
+        {weights.map((field) => {
+          const probability = total > 0 ? field.weight / total * 100 : 0;
+          return (
+            <label className="block border-b border-white/[0.07] py-2.5" key={field.key}>
+              <span className="flex items-start justify-between gap-3">
+                <span>
+                  <span className="block text-xs font-black text-white">{field.label}</span>
+                  <span className="mt-0.5 block text-[10px] font-bold text-admin-subtle">{field.description}</span>
+                </span>
+                <output className="min-w-24 text-right text-[11px] font-black tabular-nums text-admin-accent-label">
+                  가중치 {field.weight} · {probability.toFixed(1)}%
+                </output>
+              </span>
+              <span className="relative mt-2 block h-5">
+                <input
+                  aria-label={`주 랜덤 ${field.label} 적용 가중치`}
+                  className="peer absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
+                  max={100}
+                  min={0}
+                  onChange={(event) => onChange(field.key, event.target.value)}
+                  step={1}
+                  type="range"
+                  value={field.weight}
+                />
+                <span className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 overflow-hidden rounded-full bg-white/10 peer-focus-visible:ring-2 peer-focus-visible:ring-admin-accent peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-[#111827]">
+                  <span
+                    aria-hidden="true"
+                    className="block h-full rounded-full bg-admin-accent transition-[width] duration-150"
+                    style={{ width: `${field.weight}%` }}
+                  />
+                </span>
+                <span
+                  aria-hidden="true"
+                  className="absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[#111827] bg-white shadow-[0_0_0_1px_rgba(255,255,255,0.2)]"
+                  style={{ left: `${field.weight}%` }}
+                />
+              </span>
+            </label>
+          );
+        })}
+      </div>
+    </fieldset>
+  );
+}
+
 function PressureBar({ label, value }: { label: string; value: number }) {
   const normalized = clampPressure(value);
   return (
@@ -224,6 +316,11 @@ function AutoMarketDailyRegimeCell({ regime }: { regime?: AutoMarketDailyRegime 
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-bold text-stock-subtle">
         <span>{regime.simulationTradeDate}</span>
         <span className="text-admin-accent-label">{PHASE_LABELS[regime.regimePhase]}</span>
+        <span>
+          {(regime.sourceRegimePhase ?? regime.regimePhase) === regime.regimePhase
+            ? "주 신규 생성"
+            : `${PHASE_LABELS[regime.sourceRegimePhase ?? regime.regimePhase]} 값 유지`}
+        </span>
         {secondary ? <span>보조 {regime.currentModifier?.modifierWindowStartAt.slice(11, 16)}</span> : <span>보조 미생성</span>}
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -266,9 +363,15 @@ function ConfigEditor({
           ) : null}
         </div>
       </div>
+      <div className="mt-4">
+        <RegimeCountWeightEditor
+          onChange={draftSetters.setPrimaryRegimeCountWeight}
+          values={draft.primaryRegimeCountWeights}
+        />
+      </div>
       <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <DistributionBiasEditor
-          description="06·09·12·15시에 생성되는 주 랜덤의 최빈 구간입니다. 실제 주문 반영 비중은 60%입니다."
+          description="선택된 일일 슬롯에서 생성되는 주 랜덤의 최빈 구간입니다. 실제 주문 반영 비중은 60%입니다."
           label="주 랜덤 분포 편향"
           onChange={draftSetters.setPrimaryDistributionBias}
           values={draft.primaryDistributionBias}
@@ -308,7 +411,7 @@ export function AdminAutoMarketConfigPanel({
             각 설정값은 결과를 고정하지 않고 난수 분포가 가장 자주 모일 위치를 정합니다. 모든 생성값은 -100~100이며 주 60%, 보조 40%로 합성됩니다.
           </p>
         </div>
-        <span className="text-xs font-bold text-admin-accent">주 06·09·12·15시 · 보조 30분</span>
+        <span className="text-xs font-bold text-admin-accent">주 일일 1~4회 · 보조 30분</span>
       </div>
       <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto]">
         <DarkSelect label="자동장 대상 종목" value={draft.symbol} onChange={(value) => {

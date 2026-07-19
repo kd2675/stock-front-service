@@ -17,6 +17,12 @@ const DEFAULT_AUTO_MARKET_CONFIG_DRAFT: AutoMarketConfigDraft = {
   enabled: true,
   maxOrderQuantity: DEFAULT_AUTO_MARKET_MAX_ORDER_QUANTITY,
   orderTtlSeconds: DEFAULT_AUTO_MARKET_ORDER_TTL_SECONDS,
+  primaryRegimeCountWeights: {
+    oneTime: "0",
+    twoTimes: "0",
+    threeTimes: "0",
+    fourTimes: "100",
+  },
   primaryDistributionBias: createNeutralDistributionBiasDraft(),
   secondaryDistributionBias: createNeutralDistributionBiasDraft(),
 };
@@ -39,6 +45,10 @@ export function useAdminAutoMarketConfigDraftState() {
   const draftSetters: AutoMarketConfigDraftSetters = useMemo(() => ({
     setSymbol: (value) => setDraftField("symbol", value),
     setEnabled: (value) => setDraftField("enabled", value),
+    setPrimaryRegimeCountWeight: (field, value) => setDraft((current) => ({
+      ...current,
+      primaryRegimeCountWeights: { ...current.primaryRegimeCountWeights, [field]: value },
+    })),
     setPrimaryDistributionBias: (field, value) => setDraft((current) => ({
       ...current,
       primaryDistributionBias: { ...current.primaryDistributionBias, [field]: value },

@@ -40,11 +40,23 @@ export type AutoParticipantSelectionDraft = {
 };
 
 export function resolveAutoMarketConfigDraft(config: AutoMarketConfig): AutoMarketConfigDraftInput {
+  const regimeCountWeights = config.primaryRegimeCountWeights ?? {
+    oneTime: 0,
+    twoTimes: 0,
+    threeTimes: 0,
+    fourTimes: 100,
+  };
   return {
     symbol: config.symbol,
     enabled: config.enabled,
     maxOrderQuantity: String(config.maxOrderQuantity),
     orderTtlSeconds: String(config.orderTtlSeconds),
+    primaryRegimeCountWeights: {
+      oneTime: String(regimeCountWeights.oneTime),
+      twoTimes: String(regimeCountWeights.twoTimes),
+      threeTimes: String(regimeCountWeights.threeTimes),
+      fourTimes: String(regimeCountWeights.fourTimes),
+    },
     primaryDistributionBias: mapDistributionBiasToDraft(config.primaryDistributionBias),
     secondaryDistributionBias: mapDistributionBiasToDraft(config.secondaryDistributionBias),
   };
