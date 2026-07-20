@@ -61,6 +61,7 @@ export function buildAdminAutomationContentProps({
   } = actions;
 
   return {
+    accessToken: queries.accessToken,
     activeSection: activeAdminSection,
     autoMarketConfigs,
     autoMarketDraft: autoMarketConfigDraft,

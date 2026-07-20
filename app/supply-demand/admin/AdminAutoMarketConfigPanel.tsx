@@ -1,3 +1,8 @@
+"use client";
+
+import { useState } from "react";
+
+import { AdminAutoMarketRegimeHistory } from "@/app/supply-demand/admin/AdminAutoMarketRegimeHistory";
 import { DarkInput, DarkSelect, EnabledToggleButton } from "@/app/supply-demand/admin/AdminFormControls";
 import { AutoMarketConfigGuide } from "@/app/supply-demand/admin/AdminSignalGuide";
 import type { AutoMarketConfig, AutoMarketDailyRegime, AutoMarketDistributionBias, AutoMarketRegimeCountWeights } from "@/app/types/stock";
@@ -27,6 +32,7 @@ export type AutoMarketConfigDraftSetters = {
 };
 
 type AdminAutoMarketConfigPanelProps = {
+  accessToken: string | null;
   configs: AutoMarketConfig[];
   draft: AutoMarketConfigDraft;
   draftSetters: AutoMarketConfigDraftSetters;
@@ -409,6 +415,7 @@ function ConfigEditor({
 }
 
 export function AdminAutoMarketConfigPanel({
+  accessToken,
   configs,
   draft,
   draftSetters,
@@ -423,6 +430,8 @@ export function AdminAutoMarketConfigPanel({
   onRegenerateRegime,
   onRegenerateRegimeModifier,
 }: AdminAutoMarketConfigPanelProps) {
+  const [historySymbol, setHistorySymbol] = useState<string | null>(null);
+
   return (
     <section className="admin-panel mt-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -491,9 +500,26 @@ export function AdminAutoMarketConfigPanel({
             <div className="border-t border-white/[0.07] bg-white/[0.025] px-3 py-3">
               <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                 <p className="text-[11px] font-black text-admin-subtle">현재 구간 압력</p>
-                <DailyRegimeApplicationBadge regime={config.dailyRegime} />
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  <DailyRegimeApplicationBadge regime={config.dailyRegime} />
+                  <button
+                    type="button"
+                    aria-expanded={historySymbol === config.symbol}
+                    className="rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-black text-white transition hover:border-admin-accent/40 hover:text-admin-accent-label"
+                    onClick={() => setHistorySymbol((current) => current === config.symbol ? null : config.symbol)}
+                  >
+                    {historySymbol === config.symbol ? "기록 닫기" : "과거 기록"}
+                  </button>
+                </div>
               </div>
               <AutoMarketDailyRegimeCell regime={config.dailyRegime} />
+              {historySymbol === config.symbol ? (
+                <AdminAutoMarketRegimeHistory
+                  accessToken={accessToken}
+                  currentTradeDate={config.dailyRegime?.simulationTradeDate}
+                  symbol={config.symbol}
+                />
+              ) : null}
             </div>
             {editingSymbol === config.symbol ? (
               <div className="border-t border-white/10 bg-black/20 px-4 py-4">

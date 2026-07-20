@@ -14,6 +14,7 @@ import type {
 } from "@/app/types/stock";
 
 type AdminAutomationSectionProps = {
+  accessToken: string | null;
   activeSection: AdminSection;
   autoMarketConfigs: AutoMarketConfig[];
   autoMarketDraft: AutoMarketConfigDraft;
@@ -57,6 +58,7 @@ type AdminAutomationSectionProps = {
 };
 
 export function AdminAutomationSection({
+  accessToken,
   activeSection,
   autoMarketConfigs,
   autoMarketDraft,
@@ -117,6 +119,7 @@ export function AdminAutomationSection({
   if (activeSection === "participants-symbols") {
     return (
       <AdminAutoMarketConfigPanel
+        accessToken={accessToken}
         configs={autoMarketConfigs}
         draft={autoMarketDraft}
         draftSetters={autoMarketDraftSetters}

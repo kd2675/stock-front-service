@@ -9,6 +9,7 @@ import {
   getAdminFundFlowSummary,
   getAdminSymbolFlows,
   getAdminUserFundFlow,
+  getAutoMarketRegimeHistory,
   getAutoParticipants,
   getAutoParticipantOverviews,
   getAutoParticipantProfileOverviews,
@@ -206,6 +207,27 @@ export function latestManualCashFlowRunQueryOptions(
     },
     retry: false,
     staleTime: 0,
+  });
+}
+
+export function autoMarketRegimeHistoryQueryOptions(
+  token: string | null,
+  symbol: string,
+  options: {
+    enabled?: boolean;
+    tradeDate?: string;
+  } = {},
+) {
+  const normalizedSymbol = symbol.trim().toUpperCase();
+  const tradeDate = options.tradeDate?.trim() || undefined;
+  return adminAuthenticatedQueryOptions(token, {
+    queryKey: stockKeys.autoMarketRegimeHistory(normalizedSymbol, tradeDate),
+    request: (nextToken) => getAutoMarketRegimeHistory(nextToken, normalizedSymbol, tradeDate),
+    fallbackMessage: "랜덤 압력 기록을 조회하지 못했습니다.",
+    enabled: (options.enabled ?? true) && Boolean(normalizedSymbol),
+    refetchOnWindowFocus: false,
+    retry: 1,
+    staleTime: 60_000,
   });
 }
 

@@ -47,6 +47,12 @@ export const stockKeys = {
   eodOperationsOverview: () => [...stockKeys.market(), "batch-jobs", "eod", "overview"] as const,
   latestManualCashFlowRun: () => [...stockKeys.market(), "auto-market", "cash-flow", "run", "latest"] as const,
   autoMarketStatus: () => [...stockKeys.market(), "auto-market"] as const,
+  autoMarketRegimeHistoryRoot: () => [...stockKeys.autoMarketStatus(), "regime-history"] as const,
+  autoMarketRegimeHistory: (symbol: string, tradeDate?: string) => [
+    ...stockKeys.autoMarketRegimeHistoryRoot(),
+    symbol,
+    tradeDate ?? "CURRENT",
+  ] as const,
   autoMarketStatusDetailsRoot: () => [...stockKeys.autoMarketStatus(), "details"] as const,
   autoMarketStatusDetails: (options?: {
     includeConfigs?: boolean;

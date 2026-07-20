@@ -6,7 +6,7 @@ import {
   authenticatedPostJson,
   toQuery,
 } from "@/app/lib/stock-api/core";
-import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowScope, AdminFundFlowSummary, AdminSymbolFlowList, AdminTotalAssetHistoryPage, AutoMarketDistributionBias, AutoMarketRegimeCountWeights, AutoMarketStatus, AutoParticipant, AutoParticipantCashAdjustment, AutoParticipantOverview, AutoParticipantProfileOverview, AutoParticipantProfileType, BatchJobRuntimeStatus, EodOperationsOverview, EodPhaseRetryResult, ListingAutoPosition, ListingAutoPriceDirection, RecurringCashIntervalUnit, StockBatchJobRun } from "@/app/types/stock";
+import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowScope, AdminFundFlowSummary, AdminSymbolFlowList, AdminTotalAssetHistoryPage, AutoMarketDistributionBias, AutoMarketRegimeCountWeights, AutoMarketRegimeHistory, AutoMarketStatus, AutoParticipant, AutoParticipantCashAdjustment, AutoParticipantOverview, AutoParticipantProfileOverview, AutoParticipantProfileType, BatchJobRuntimeStatus, EodOperationsOverview, EodPhaseRetryResult, ListingAutoPosition, ListingAutoPriceDirection, RecurringCashIntervalUnit, StockBatchJobRun } from "@/app/types/stock";
 
 export type { AdminFundFlowScope } from "@/app/types/stock";
 
@@ -222,6 +222,14 @@ export function regenerateAutoMarketRegimeModifier(token: string, symbol: string
     token,
     `/api/stock/v1/markets/auto-market/configs/${encodeURIComponent(symbol)}/regime-modifier/regenerate`,
     {},
+  );
+}
+
+export function getAutoMarketRegimeHistory(token: string, symbol: string, tradeDate?: string) {
+  const query = toQuery({ tradeDate });
+  return authenticatedGetJson<AutoMarketRegimeHistory>(
+    token,
+    `/api/stock/v1/markets/auto-market/configs/${encodeURIComponent(symbol)}/regime-history${query}`,
   );
 }
 

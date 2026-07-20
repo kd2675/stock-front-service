@@ -183,6 +183,7 @@ export function useAdminPageQueries({
 
   return {
     ...queryResults,
+    accessToken,
     adminCashFlowPageQuery,
     adminAllFundFlowSummaryQuery,
     adminFlowOverviewQuery,

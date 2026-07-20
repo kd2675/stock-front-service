@@ -155,6 +155,7 @@ export async function invalidateAutoMarketConfigurationQueries(queryClient: Quer
   await invalidateQueryGroup(queryClient, [
     stockKeys.autoMarketStatusDetailsRoot(),
     stockKeys.autoMarketSummaryStatusRoot(),
+    stockKeys.autoMarketRegimeHistoryRoot(),
   ]);
 }
 
