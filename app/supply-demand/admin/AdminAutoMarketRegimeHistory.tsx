@@ -5,14 +5,12 @@ import { useMemo, useState } from "react";
 
 import { autoMarketRegimeHistoryQueryOptions } from "@/app/lib/react-query/stockAdminQueries";
 import { getStockErrorMessage } from "@/app/lib/react-query/stockResult";
-import type {
-  AutoMarketDistributionBias,
-  AutoMarketRegimeHistoryDailyRegime,
-  AutoMarketRegimeHistoryModifier,
-  AutoMarketRegimePhase,
-} from "@/app/types/stock";
+import type { AutoMarketDistributionBias } from "@/app/types/stock";
 
 type PressureKey = keyof AutoMarketDistributionBias;
+type EffectivePressureWindow = AutoMarketDistributionBias & {
+  modifierWindowStartAt: string;
+};
 
 const PRESSURE_FIELDS: Array<{ key: PressureKey; label: string }> = [
   { key: "pricePressure", label: "가격" },
@@ -21,13 +19,6 @@ const PRESSURE_FIELDS: Array<{ key: PressureKey; label: string }> = [
   { key: "liquidityPressure", label: "유동" },
   { key: "executionAggressionPressure", label: "공격" },
 ];
-
-const PHASE_LABELS: Record<AutoMarketRegimePhase, string> = {
-  SLOT_0600: "06:00",
-  SLOT_0900: "09:00",
-  SLOT_1200: "12:00",
-  SLOT_1500: "15:00",
-};
 
 function clampPressure(value: number) {
   return Math.min(100, Math.max(-100, Number.isFinite(value) ? value : 0));
@@ -62,10 +53,6 @@ function shiftDate(value: string, days: number) {
   return date.toISOString().slice(0, 10);
 }
 
-function shortSeed(seed: string) {
-  return seed.length > 8 ? `…${seed.slice(-8)}` : seed;
-}
-
 function PressureTrack({ value }: { value: number }) {
   const normalized = clampPressure(value);
   return (
@@ -80,69 +67,22 @@ function PressureTrack({ value }: { value: number }) {
   );
 }
 
-function DailyRegimeCard({ regime }: { regime: AutoMarketRegimeHistoryDailyRegime }) {
-  const isNew = regime.regimePhase === regime.sourceRegimePhase;
+function EffectiveWindowCard({ window }: { window: EffectivePressureWindow }) {
   return (
-    <article className="min-w-0 rounded-md border border-white/10 bg-black/20 p-3">
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <p className="text-sm font-black text-white">{PHASE_LABELS[regime.regimePhase]}</p>
-          <p className="mt-0.5 text-[10px] font-bold text-admin-subtle">
-            {isNew ? "주 신규 생성" : `${PHASE_LABELS[regime.sourceRegimePhase]} 값 유지`}
-          </p>
-        </div>
-        <span className="rounded-full border border-admin-accent/20 bg-admin-accent/10 px-2 py-1 text-[10px] font-black text-admin-accent-label">
-          주 70%
-        </span>
+    <article className="min-w-0 rounded-md border border-white/[0.08] bg-white/[0.025] p-3">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm font-black tabular-nums text-white">{window.modifierWindowStartAt.slice(11, 16)}</p>
+        <span className="text-[9px] font-black text-admin-accent-label">30분 적용</span>
       </div>
       <div className="mt-3 space-y-2">
         {PRESSURE_FIELDS.map((field) => (
           <div className="grid grid-cols-[34px_minmax(0,1fr)_32px] items-center gap-2 text-[10px] font-bold" key={field.key}>
             <span className="text-admin-subtle">{field.label}</span>
-            <PressureTrack value={regime[field.key]} />
-            <span className={`text-right tabular-nums ${pressureTone(regime[field.key])}`}>{signed(regime[field.key])}</span>
+            <PressureTrack value={window[field.key]} />
+            <span className={`text-right tabular-nums ${pressureTone(window[field.key])}`}>{signed(window[field.key])}</span>
           </div>
         ))}
       </div>
-      <p className="mt-3 truncate border-t border-white/[0.07] pt-2 text-[9px] font-bold tabular-nums text-admin-disabled" title={regime.seed}>
-        seed {shortSeed(regime.seed)}
-      </p>
-    </article>
-  );
-}
-
-function ModifierCard({
-  modifier,
-  primary,
-}: {
-  modifier: AutoMarketRegimeHistoryModifier;
-  primary?: AutoMarketRegimeHistoryDailyRegime;
-}) {
-  return (
-    <article className="min-w-0 rounded-md border border-white/[0.08] bg-white/[0.025] p-3">
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <p className="text-xs font-black text-white">{modifier.modifierWindowStartAt.slice(11, 16)}</p>
-          <p className="mt-0.5 text-[9px] font-bold text-admin-subtle">주 {PHASE_LABELS[modifier.regimePhase]}</p>
-        </div>
-        <span className="text-[9px] font-black text-admin-accent-label">보조 30% → 최종</span>
-      </div>
-      <div className="mt-2 space-y-1.5">
-        {PRESSURE_FIELDS.map((field) => {
-          const secondaryValue = modifier[field.key];
-          const finalValue = calculateFinal(primary?.[field.key] ?? 0, secondaryValue);
-          return (
-            <div className="grid grid-cols-[32px_1fr_1fr] items-center gap-1 text-[9px] font-bold" key={field.key}>
-              <span className="text-admin-subtle">{field.label}</span>
-              <span className={`text-right tabular-nums ${pressureTone(secondaryValue)}`}>보조 {signed(secondaryValue)}</span>
-              <span className={`text-right tabular-nums ${pressureTone(finalValue)}`}>최종 {signed(finalValue)}</span>
-            </div>
-          );
-        })}
-      </div>
-      <p className="mt-2 truncate border-t border-white/[0.06] pt-1.5 text-[8px] font-bold tabular-nums text-admin-disabled" title={modifier.seed}>
-        seed {shortSeed(modifier.seed)}
-      </p>
     </article>
   );
 }
@@ -164,9 +104,30 @@ export function AdminAutoMarketRegimeHistory({
   const history = historyQuery.data;
   const displayedTradeDate = selectedTradeDate || history?.simulationTradeDate || currentTradeDate || "";
   const currentSimulationTradeDate = history?.currentSimulationTradeDate || currentTradeDate || "";
-  const dailyRegimeByPhase = useMemo(() => new Map(
-    (history?.dailyRegimes ?? []).map((regime) => [regime.regimePhase, regime]),
-  ), [history?.dailyRegimes]);
+  const effectiveWindows = useMemo<EffectivePressureWindow[]>(() => {
+    if (!history) {
+      return [];
+    }
+    const dailyRegimeByPhase = new Map(history.dailyRegimes.map((regime) => [regime.regimePhase, regime]));
+    return history.modifiers.flatMap((modifier) => {
+      const dailyRegime = dailyRegimeByPhase.get(modifier.regimePhase);
+      if (!dailyRegime) {
+        return [];
+      }
+      return [{
+        modifierWindowStartAt: modifier.modifierWindowStartAt,
+        pricePressure: calculateFinal(dailyRegime.pricePressure, modifier.pricePressure),
+        assetPreferencePressure: calculateFinal(dailyRegime.assetPreferencePressure, modifier.assetPreferencePressure),
+        volatilityPressure: calculateFinal(dailyRegime.volatilityPressure, modifier.volatilityPressure),
+        liquidityPressure: calculateFinal(dailyRegime.liquidityPressure, modifier.liquidityPressure),
+        executionAggressionPressure: calculateFinal(
+          dailyRegime.executionAggressionPressure,
+          modifier.executionAggressionPressure,
+        ),
+      }];
+    });
+  }, [history]);
+  const omittedWindowCount = history ? history.modifiers.length - effectiveWindows.length : 0;
   const canMoveForward = Boolean(
     displayedTradeDate
       && currentSimulationTradeDate
@@ -177,9 +138,9 @@ export function AdminAutoMarketRegimeHistory({
     <div className="mt-4 rounded-md border border-admin-accent/20 bg-admin-canvas/60 p-3 sm:p-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-sm font-black text-white">랜덤 압력 기록</p>
+          <p className="text-sm font-black text-white">시간대별 종합 압력</p>
           <p className="mt-1 text-[11px] font-bold leading-5 text-stock-subtle">
-            저장된 주 슬롯과 30분 보조값을 조회합니다. 최종값은 당시 적용식인 주 70% + 보조 30%로 다시 계산합니다.
+            선택한 시뮬레이션 거래일에 주문 생성에 실제 적용된 압력을 30분 단위로 확인합니다.
           </p>
         </div>
         <div className="grid gap-2 sm:grid-cols-[minmax(190px,240px)_auto]">
@@ -200,7 +161,7 @@ export function AdminAutoMarketRegimeHistory({
               disabled={!displayedTradeDate}
               onClick={() => setSelectedTradeDate(shiftDate(displayedTradeDate, -1))}
             >
-              이전
+              이전일
             </button>
             <button
               type="button"
@@ -208,7 +169,7 @@ export function AdminAutoMarketRegimeHistory({
               disabled={!currentSimulationTradeDate || displayedTradeDate === currentSimulationTradeDate}
               onClick={() => setSelectedTradeDate(currentSimulationTradeDate)}
             >
-              현재
+              현재일
             </button>
             <button
               type="button"
@@ -216,7 +177,7 @@ export function AdminAutoMarketRegimeHistory({
               disabled={!canMoveForward}
               onClick={() => setSelectedTradeDate(shiftDate(displayedTradeDate, 1))}
             >
-              다음
+              다음일
             </button>
           </div>
         </div>
@@ -229,51 +190,36 @@ export function AdminAutoMarketRegimeHistory({
       ) : null}
       {historyQuery.isError ? (
         <div className="mt-4 rounded-md border border-admin-danger/30 bg-admin-danger-surface px-3 py-4 text-xs font-bold text-admin-danger">
-          {getStockErrorMessage(historyQuery.error, "랜덤 압력 기록을 조회하지 못했습니다.")}
+          {getStockErrorMessage(historyQuery.error, "시간대별 종합 압력을 조회하지 못했습니다.")}
         </div>
       ) : null}
       {history && !historyQuery.isFetching && !historyQuery.isError ? (
-        history.dailyRegimes.length === 0 && history.modifiers.length === 0 ? (
+        effectiveWindows.length === 0 ? (
           <div className="mt-4 rounded-md border border-white/10 bg-black/20 px-3 py-4 text-xs font-bold text-stock-subtle">
-            {history.simulationTradeDate}에 저장된 랜덤 압력 기록이 없습니다.
+            {history.simulationTradeDate}에 실제 적용된 시간대별 종합 압력 기록이 없습니다.
           </div>
         ) : (
-          <div className="mt-4 space-y-4">
-            <div className="flex flex-wrap items-center gap-2 text-[10px] font-black">
+          <div className="mt-4 space-y-3">
+            <div className="flex flex-wrap items-center gap-2 text-[10px] font-black text-stock-muted">
               <span className="rounded-full border border-admin-accent/25 bg-admin-accent/10 px-2.5 py-1 text-admin-accent-label">
-                주 신규 {history.dailyApplicationCount}회
+                {history.simulationTradeDate}
               </span>
               <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-stock-muted">
-                슬롯 {history.preparedRegimeSlotCount}/4
-              </span>
-              <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-stock-muted">
-                보조 {history.modifiers.length}개
+                총 {effectiveWindows.length}개 시간대
               </span>
             </div>
-            <section>
-              <h3 className="text-[11px] font-black text-admin-subtle">주 랜덤 슬롯</h3>
-              <div className="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                {history.dailyRegimes.map((regime) => <DailyRegimeCard key={regime.regimePhase} regime={regime} />)}
+            <section aria-label={`${history.simulationTradeDate} 시간대별 종합 압력`}>
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+                {effectiveWindows.map((window) => (
+                  <EffectiveWindowCard key={window.modifierWindowStartAt} window={window} />
+                ))}
               </div>
             </section>
-            <section>
-              <h3 className="text-[11px] font-black text-admin-subtle">30분 보조 랜덤과 최종 적용값</h3>
-              {history.modifiers.length > 0 ? (
-                <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-                  {history.modifiers.map((modifier) => (
-                    <ModifierCard
-                      key={modifier.modifierWindowStartAt}
-                      modifier={modifier}
-                      primary={dailyRegimeByPhase.get(modifier.regimePhase)}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="mt-2 rounded-md border border-white/10 bg-black/20 px-3 py-4 text-xs font-bold text-stock-subtle">
-                  이 거래일에는 보조 랜덤 기록이 없습니다.
-                </div>
-              )}
-            </section>
+            {omittedWindowCount > 0 ? (
+              <p className="rounded-md border border-admin-warning/25 bg-admin-warning/10 px-3 py-2 text-[10px] font-bold text-admin-warning-soft">
+                종합 계산에 필요한 기준값이 누락된 {omittedWindowCount}개 시간대는 표시에서 제외했습니다.
+              </p>
+            ) : null}
           </div>
         )
       ) : null}
