@@ -6,7 +6,7 @@ import {
   authenticatedPostJson,
   toQuery,
 } from "@/app/lib/stock-api/core";
-import type { AutoMarketStatus, CapitalIncreaseOfferingType, CorporateAction, CorporateActionEntitlement, CorporateActionType, Instrument, InstrumentMarketReport, InstrumentReport, ListingAutoPosition, ListingAutoPriceDirection, MarketSessionStatus, MarketType, OrderBook, OrderBookCandle, OrderBookCandleInterval, OrderBookInstrument, OrderBookMarketStatus, OrderBookRecentExecution, OrderBookTradeSummary, Price, PriceTick, Ranking, SimulationClock, SimulationClockJumpAction, SymbolMarketConfig } from "@/app/types/stock";
+import type { AutoMarketStatus, CapitalIncreaseOfferingType, CorporateAction, CorporateActionEntitlement, CorporateActionType, Instrument, InstrumentMarketReport, InstrumentReport, ListingAutoOperationMode, ListingAutoPosition, ListingAutoStrategyProfile, MarketSessionStatus, MarketType, OrderBook, OrderBookCandle, OrderBookCandleInterval, OrderBookInstrument, OrderBookMarketStatus, OrderBookRecentExecution, OrderBookTradeSummary, Price, PriceTick, Ranking, SimulationClock, SimulationClockJumpAction, SymbolMarketConfig } from "@/app/types/stock";
 
 export type StockOrderBookInstrumentCreatePayload = {
   symbol: string;
@@ -19,15 +19,20 @@ export type StockOrderBookInstrumentCreatePayload = {
     displayName?: string;
     enabled?: boolean;
     positionSide?: ListingAutoPosition;
+    operationMode?: ListingAutoOperationMode;
+    strategyProfile?: ListingAutoStrategyProfile;
     maxOrderQuantity?: number;
     orderTtlSeconds?: number;
     priceOffsetTicks?: number;
+    targetSpreadTicks?: number;
+    inventorySkewTicks?: number;
+    minimumProfitRate?: number;
+    aggressiveUnwindThreshold?: number;
+    aggressiveOrderRatio?: number;
     targetBuyQuantity?: number;
     targetSellQuantity?: number;
     targetHoldingQuantity?: number;
     inventoryBandQuantity?: number;
-    buyPriceOffsetDirection?: ListingAutoPriceDirection;
-    sellPriceOffsetDirection?: ListingAutoPriceDirection;
   };
 };
 

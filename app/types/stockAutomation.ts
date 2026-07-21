@@ -1,6 +1,6 @@
 export type ListingAutoPosition = "SELL_ONLY" | "BUY_ONLY" | "TWO_SIDED";
-
-export type ListingAutoPriceDirection = "UP" | "DOWN" | "RANDOM";
+export type ListingAutoOperationMode = "UNDERWRITER_RETURN" | "LIQUIDITY_PROVIDER" | "HYBRID";
+export type ListingAutoStrategyProfile = "LIQUIDITY_FIRST" | "BALANCED" | "RETURN_FIRST";
 
 export type AutoMarketRegimePhase = "SLOT_0600" | "SLOT_0900" | "SLOT_1200" | "SLOT_1500";
 
@@ -412,7 +412,12 @@ export type ListingAutoAccount = {
   displayName: string;
   enabled: boolean;
   positionSide: ListingAutoPosition;
+  operationMode: ListingAutoOperationMode;
+  strategyProfile: ListingAutoStrategyProfile;
   issuedShares: number;
+  initialInventoryQuantity: number;
+  initialIssuePrice: number;
+  initialInventoryCost: number;
   accountId: number | null;
   cashBalance: number;
   holdingQuantity: number;
@@ -421,17 +426,24 @@ export type ListingAutoAccount = {
   averagePrice: number;
   currentPrice: number;
   marketValue: number;
+  reservedBuyCash: number;
+  totalEquity: number;
+  netProfit: number;
+  returnRate: number;
   maxOrderQuantity: number;
   orderTtlSeconds: number;
   priceOffsetTicks: number;
+  targetSpreadTicks: number;
+  inventorySkewTicks: number;
+  minimumProfitRate: number;
+  aggressiveUnwindThreshold: number;
+  aggressiveOrderRatio: number;
   targetBuyQuantity: number;
   targetSellQuantity: number;
   targetHoldingQuantity: number;
   inventoryBandQuantity: number;
   openBuyQuantity: number;
   openSellQuantity: number;
-  buyPriceOffsetDirection: ListingAutoPriceDirection;
-  sellPriceOffsetDirection: ListingAutoPriceDirection;
   createdAt: string;
   updatedAt: string;
 };

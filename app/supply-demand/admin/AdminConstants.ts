@@ -7,7 +7,9 @@ import type {
   CorporateAction,
   CorporateActionType,
   InstrumentReport,
+  ListingAutoOperationMode,
   ListingAutoPosition,
+  ListingAutoStrategyProfile,
   OrderBookInstrument,
   OrderBookMarketStatus,
   RecurringCashIntervalUnit,
@@ -89,15 +91,20 @@ export const DEFAULT_CREATE_INSTRUMENT_FORM_VALUES: CreateInstrumentFormValues =
   listingAutoDisplayName: "",
   listingAutoEnabled: "true",
   listingAutoPositionSide: "SELL_ONLY",
+  listingAutoOperationMode: "UNDERWRITER_RETURN",
+  listingAutoStrategyProfile: "RETURN_FIRST",
   listingAutoMaxOrderQuantity: "100",
   listingAutoOrderTtlSeconds: "90",
   listingAutoPriceOffsetTicks: "3",
+  listingAutoTargetSpreadTicks: "8",
+  listingAutoInventorySkewTicks: "3",
+  listingAutoMinimumProfitRate: "1",
+  listingAutoAggressiveUnwindThreshold: "1",
+  listingAutoAggressiveOrderRatio: "0",
   listingAutoTargetBuyQuantity: "0",
   listingAutoTargetSellQuantity: "100",
   listingAutoTargetHoldingQuantity: "0",
   listingAutoInventoryBandQuantity: "0",
-  listingAutoBuyPriceOffsetDirection: "DOWN",
-  listingAutoSellPriceOffsetDirection: "UP",
 };
 
 export const DEFAULT_STOCK_EVENT_ACTION_TYPE: CorporateActionType = "INITIAL_ISSUE";
@@ -108,15 +115,20 @@ export const DEFAULT_AUTO_MARKET_INTENSITY = "5";
 export const DEFAULT_AUTO_MARKET_MAX_ORDER_QUANTITY = "4";
 export const DEFAULT_AUTO_MARKET_ORDER_TTL_SECONDS = "15";
 export const DEFAULT_LISTING_AUTO_POSITION_SIDE: ListingAutoPosition = "SELL_ONLY";
+export const DEFAULT_LISTING_AUTO_OPERATION_MODE: ListingAutoOperationMode = "UNDERWRITER_RETURN";
+export const DEFAULT_LISTING_AUTO_STRATEGY_PROFILE: ListingAutoStrategyProfile = "RETURN_FIRST";
 export const DEFAULT_LISTING_AUTO_MAX_ORDER_QUANTITY = "100";
 export const DEFAULT_LISTING_AUTO_ORDER_TTL_SECONDS = "90";
 export const DEFAULT_LISTING_AUTO_PRICE_OFFSET_TICKS = "3";
+export const DEFAULT_LISTING_AUTO_TARGET_SPREAD_TICKS = "8";
+export const DEFAULT_LISTING_AUTO_INVENTORY_SKEW_TICKS = "3";
+export const DEFAULT_LISTING_AUTO_MINIMUM_PROFIT_RATE = "1";
+export const DEFAULT_LISTING_AUTO_AGGRESSIVE_UNWIND_THRESHOLD = "1";
+export const DEFAULT_LISTING_AUTO_AGGRESSIVE_ORDER_RATIO = "0";
 export const DEFAULT_LISTING_AUTO_TARGET_BUY_QUANTITY = "0";
 export const DEFAULT_LISTING_AUTO_TARGET_SELL_QUANTITY = "100";
 export const DEFAULT_LISTING_AUTO_TARGET_HOLDING_QUANTITY = "0";
 export const DEFAULT_LISTING_AUTO_INVENTORY_BAND_QUANTITY = "0";
-export const DEFAULT_LISTING_AUTO_BUY_PRICE_OFFSET_DIRECTION = "DOWN" as const;
-export const DEFAULT_LISTING_AUTO_SELL_PRICE_OFFSET_DIRECTION = "UP" as const;
 export const MAX_LISTING_AUTO_NEW_ORDERS_PER_SIDE_PER_RUN = 10;
 export const DEFAULT_AUTO_PARTICIPANT_PROFILE_TYPE: AutoParticipantProfileType = "NOISE_TRADER";
 export const DEFAULT_RECURRING_CASH_INTERVAL_UNIT: RecurringCashIntervalUnit = "DAY";

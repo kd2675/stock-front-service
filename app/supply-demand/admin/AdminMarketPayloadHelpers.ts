@@ -4,13 +4,14 @@ import type { StockAutoMarketConfigPayload, StockListingAutoAccountConfigPayload
 import {
   integerRange,
   nonNegativeInteger,
+  numberRange,
   optionalTrimmedStringAsUndefined,
   positiveInteger,
   requiredUppercaseString,
 } from "@/app/lib/validation/zodFormSchemas";
 import type { AdminPayloadResult } from "@/app/supply-demand/admin/AdminPayloadResultTypes";
 import { MAX_LISTING_AUTO_NEW_ORDERS_PER_SIDE_PER_RUN } from "@/app/supply-demand/admin/AdminConstants";
-import type { ListingAutoPosition, ListingAutoPriceDirection } from "@/app/types/stock";
+import type { ListingAutoOperationMode, ListingAutoPosition, ListingAutoStrategyProfile } from "@/app/types/stock";
 
 export type AutoMarketConfigPayload = StockAutoMarketConfigPayload;
 
@@ -46,19 +47,24 @@ export type ListingAutoAccountConfigDraftInput = {
   displayName: string;
   enabled: boolean;
   positionSide: ListingAutoPosition;
+  operationMode: ListingAutoOperationMode;
+  strategyProfile: ListingAutoStrategyProfile;
   maxOrderQuantity: string;
   orderTtlSeconds: string;
   priceOffsetTicks: string;
+  targetSpreadTicks: string;
+  inventorySkewTicks: string;
+  minimumProfitRate: string;
+  aggressiveUnwindThreshold: string;
+  aggressiveOrderRatio: string;
   targetBuyQuantity: string;
   targetSellQuantity: string;
   targetHoldingQuantity: string;
   inventoryBandQuantity: string;
-  buyPriceOffsetDirection: ListingAutoPriceDirection;
-  sellPriceOffsetDirection: ListingAutoPriceDirection;
 };
 
 const AUTO_MARKET_CONFIG_MESSAGE = "자동장 대상 종목, 1~4회 주 랜덤 가중치, 주·보조 분포 편향, 최대 수량과 TTL을 올바르게 입력해 주세요.";
-const LISTING_AUTO_ACCOUNT_CONFIG_MESSAGE = "상장주관사 종목, 목표 보유 수량·허용 밴드·양쪽 호가 잔량, 최대 수량, TTL, 가격 분산 방향을 올바르게 입력해 주세요.";
+const LISTING_AUTO_ACCOUNT_CONFIG_MESSAGE = "상장주관사 운용 모드, 전략, 재고·호가·수익·위험 값을 올바르게 입력해 주세요.";
 
 const distributionBiasSchema = z.object({
   pricePressure: integerRange(-100, 100),
@@ -93,16 +99,25 @@ const listingAutoAccountConfigSchema = z.object({
   displayName: optionalTrimmedStringAsUndefined(),
   enabled: z.boolean(),
   positionSide: z.enum(["SELL_ONLY", "BUY_ONLY", "TWO_SIDED"]),
+  operationMode: z.enum(["UNDERWRITER_RETURN", "LIQUIDITY_PROVIDER", "HYBRID"]),
+  strategyProfile: z.enum(["LIQUIDITY_FIRST", "BALANCED", "RETURN_FIRST"]),
   maxOrderQuantity: positiveInteger(),
   orderTtlSeconds: positiveInteger(),
   priceOffsetTicks: nonNegativeInteger(),
+  targetSpreadTicks: integerRange(1, 50),
+  inventorySkewTicks: integerRange(0, 50),
+  minimumProfitRate: numberRange(0, 100),
+  aggressiveUnwindThreshold: numberRange(0, 1),
+  aggressiveOrderRatio: numberRange(0, 1),
   targetBuyQuantity: nonNegativeInteger(),
   targetSellQuantity: nonNegativeInteger(),
   targetHoldingQuantity: nonNegativeInteger(),
   inventoryBandQuantity: nonNegativeInteger(),
-  buyPriceOffsetDirection: z.enum(["UP", "DOWN", "RANDOM"]),
-  sellPriceOffsetDirection: z.enum(["UP", "DOWN", "RANDOM"]),
 }).superRefine((value, context) => {
+  if ((value.operationMode === "LIQUIDITY_PROVIDER" || value.operationMode === "HYBRID")
+      && value.positionSide !== "TWO_SIDED") {
+    context.addIssue({ code: "custom", path: ["positionSide"], message: "유동성공급형과 혼합형은 양방향 포지션이 필요합니다." });
+  }
   if ((value.positionSide === "BUY_ONLY" || value.positionSide === "TWO_SIDED") && value.targetBuyQuantity <= 0) {
     context.addIssue({ code: "custom", path: ["targetBuyQuantity"], message: "활성 매수 목표는 1주 이상이어야 합니다." });
   }
@@ -179,15 +194,20 @@ export function buildListingAutoAccountConfigPayload(draft: ListingAutoAccountCo
       displayName: parsed.data.displayName,
       enabled: parsed.data.enabled,
       positionSide: parsed.data.positionSide,
+      operationMode: parsed.data.operationMode,
+      strategyProfile: parsed.data.strategyProfile,
       maxOrderQuantity: parsed.data.maxOrderQuantity,
       orderTtlSeconds: parsed.data.orderTtlSeconds,
       priceOffsetTicks: parsed.data.priceOffsetTicks,
+      targetSpreadTicks: parsed.data.targetSpreadTicks,
+      inventorySkewTicks: parsed.data.inventorySkewTicks,
+      minimumProfitRate: parsed.data.minimumProfitRate,
+      aggressiveUnwindThreshold: parsed.data.aggressiveUnwindThreshold,
+      aggressiveOrderRatio: parsed.data.aggressiveOrderRatio,
       targetBuyQuantity: parsed.data.targetBuyQuantity,
       targetSellQuantity: parsed.data.targetSellQuantity,
       targetHoldingQuantity: parsed.data.targetHoldingQuantity,
       inventoryBandQuantity: parsed.data.inventoryBandQuantity,
-      buyPriceOffsetDirection: parsed.data.buyPriceOffsetDirection,
-      sellPriceOffsetDirection: parsed.data.sellPriceOffsetDirection,
     },
   };
 }

@@ -68,15 +68,20 @@ export function resolveListingAutoAccountConfigDraft(config: ListingAutoAccount)
     displayName: config.displayName,
     enabled: config.enabled,
     positionSide: config.positionSide,
+    operationMode: config.operationMode,
+    strategyProfile: config.strategyProfile,
     maxOrderQuantity: String(config.maxOrderQuantity),
     orderTtlSeconds: String(config.orderTtlSeconds),
     priceOffsetTicks: String(config.priceOffsetTicks),
+    targetSpreadTicks: String(config.targetSpreadTicks),
+    inventorySkewTicks: String(config.inventorySkewTicks),
+    minimumProfitRate: String(config.minimumProfitRate),
+    aggressiveUnwindThreshold: String(config.aggressiveUnwindThreshold),
+    aggressiveOrderRatio: String(config.aggressiveOrderRatio),
     targetBuyQuantity: String(config.targetBuyQuantity),
     targetSellQuantity: String(config.targetSellQuantity),
     targetHoldingQuantity: String(config.targetHoldingQuantity),
     inventoryBandQuantity: String(config.inventoryBandQuantity),
-    buyPriceOffsetDirection: config.buyPriceOffsetDirection,
-    sellPriceOffsetDirection: config.sellPriceOffsetDirection,
   };
 }
 

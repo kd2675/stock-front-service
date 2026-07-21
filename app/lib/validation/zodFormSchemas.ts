@@ -37,6 +37,10 @@ export function integerRange(min: number, max: number) {
   return z.coerce.number().int().min(min).max(max);
 }
 
+export function numberRange(min: number, max: number) {
+  return z.coerce.number().finite().min(min).max(max);
+}
+
 export function numberFromBlankZero(range: NumberRange = {}) {
   let numberSchema = z.number().finite();
   if (range.min !== undefined) {

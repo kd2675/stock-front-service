@@ -1,7 +1,8 @@
 import { RECURRING_CASH_INTERVAL_UNIT_LABELS } from "@/app/supply-demand/admin/AdminConstants";
 import type {
+  ListingAutoOperationMode,
   ListingAutoPosition,
-  ListingAutoPriceDirection,
+  ListingAutoStrategyProfile,
   RecurringCashIntervalUnit,
 } from "@/app/types/stock";
 
@@ -68,12 +69,14 @@ export function formatListingAutoPosition(positionSide: ListingAutoPosition): st
   return "매도 전용";
 }
 
-export function formatListingAutoPriceDirection(direction: ListingAutoPriceDirection): string {
-  if (direction === "UP") {
-    return "위";
-  }
-  if (direction === "DOWN") {
-    return "아래";
-  }
-  return "위·아래 무작위";
+export function formatListingAutoOperationMode(mode: ListingAutoOperationMode): string {
+  if (mode === "UNDERWRITER_RETURN") return "인수수익형";
+  if (mode === "LIQUIDITY_PROVIDER") return "유동성공급형";
+  return "혼합형";
+}
+
+export function formatListingAutoStrategyProfile(profile: ListingAutoStrategyProfile): string {
+  if (profile === "LIQUIDITY_FIRST") return "유동성 우선";
+  if (profile === "RETURN_FIRST") return "수익 우선";
+  return "균형";
 }

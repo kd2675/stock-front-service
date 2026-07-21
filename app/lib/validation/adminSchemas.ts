@@ -1,7 +1,9 @@
 import { z } from "zod";
 
 import {
+  integerRange,
   nonNegativeInteger,
+  numberRange,
   optionalTrimmedStringAsUndefined,
   positiveInteger,
   positiveNumber,
@@ -16,20 +18,29 @@ export const createInstrumentSchema = z.object({
   market: z.string().trim().default("ORDERBOOK"),
   initialPrice: positiveNumber("초기 가격은 0보다 큰 숫자로 입력해 주세요."),
   issuedShares: positiveInteger("초기 발행주식수는 1주 이상 정수로 입력해 주세요."),
-  priceLimitRate: z.coerce.number().finite("가격제한폭을 입력해 주세요.").positive("가격제한폭은 0보다 커야 합니다.").max(100, "가격제한폭은 100 이하로 입력해 주세요."),
+  priceLimitRate: positiveNumber("가격제한폭은 0보다 큰 숫자로 입력해 주세요.").max(100, "가격제한폭은 100 이하로 입력해 주세요."),
   listingAutoDisplayName: optionalTrimmedStringAsUndefined(),
   listingAutoEnabled: z.enum(["true", "false"]).default("true"),
   listingAutoPositionSide: z.enum(["SELL_ONLY", "BUY_ONLY", "TWO_SIDED"]).default("SELL_ONLY"),
+  listingAutoOperationMode: z.enum(["UNDERWRITER_RETURN", "LIQUIDITY_PROVIDER", "HYBRID"]).default("UNDERWRITER_RETURN"),
+  listingAutoStrategyProfile: z.enum(["LIQUIDITY_FIRST", "BALANCED", "RETURN_FIRST"]).default("RETURN_FIRST"),
   listingAutoMaxOrderQuantity: positiveInteger("상장주관사 최대 주문 수량은 1주 이상 정수로 입력해 주세요."),
   listingAutoOrderTtlSeconds: positiveInteger("상장주관사 호가 TTL은 1초 이상 정수로 입력해 주세요."),
   listingAutoPriceOffsetTicks: nonNegativeInteger("상장주관사 가격 분산 틱은 0 이상 정수로 입력해 주세요."),
+  listingAutoTargetSpreadTicks: integerRange(1, 50),
+  listingAutoInventorySkewTicks: integerRange(0, 50),
+  listingAutoMinimumProfitRate: numberRange(0, 100),
+  listingAutoAggressiveUnwindThreshold: numberRange(0, 1),
+  listingAutoAggressiveOrderRatio: numberRange(0, 1),
   listingAutoTargetBuyQuantity: nonNegativeInteger("상장주관사 목표 매수 잔량은 0 이상 정수로 입력해 주세요."),
   listingAutoTargetSellQuantity: nonNegativeInteger("상장주관사 목표 매도 잔량은 0 이상 정수로 입력해 주세요."),
   listingAutoTargetHoldingQuantity: nonNegativeInteger("상장주관사 목표 보유 수량은 0 이상 정수로 입력해 주세요."),
   listingAutoInventoryBandQuantity: nonNegativeInteger("상장주관사 보유 허용 밴드는 0 이상 정수로 입력해 주세요."),
-  listingAutoBuyPriceOffsetDirection: z.enum(["UP", "DOWN", "RANDOM"]).default("DOWN"),
-  listingAutoSellPriceOffsetDirection: z.enum(["UP", "DOWN", "RANDOM"]).default("UP"),
 }).superRefine((value, context) => {
+  if ((value.listingAutoOperationMode === "LIQUIDITY_PROVIDER" || value.listingAutoOperationMode === "HYBRID")
+      && value.listingAutoPositionSide !== "TWO_SIDED") {
+    context.addIssue({ code: "custom", path: ["listingAutoPositionSide"], message: "유동성공급형과 혼합형은 양방향 포지션이 필요합니다." });
+  }
   if ((value.listingAutoPositionSide === "BUY_ONLY" || value.listingAutoPositionSide === "TWO_SIDED")
       && value.listingAutoTargetBuyQuantity <= 0) {
     context.addIssue({ code: "custom", path: ["listingAutoTargetBuyQuantity"], message: "활성 매수 목표는 1주 이상이어야 합니다." });
