@@ -392,6 +392,7 @@ export type AutoParticipantProfileConfig = {
   dipBuyWeight: number;
   orderMultiplier: number;
   aggressionMultiplier: number;
+  pricePressureSensitivity: number;
   orderTtlMultiplier: number;
   quantityMultiplier: number;
   holdingPatienceWeight: number;

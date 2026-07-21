@@ -46,6 +46,7 @@ export function useAdminProfileConfigDraftState() {
     setDipBuyWeight: (value) => setDraftField("dipBuyWeight", value),
     setOrderMultiplier: (value) => setDraftField("orderMultiplier", value),
     setAggressionMultiplier: (value) => setDraftField("aggressionMultiplier", value),
+    setPricePressureSensitivity: (value) => setDraftField("pricePressureSensitivity", value),
     setOrderTtlMultiplier: (value) => setDraftField("orderTtlMultiplier", value),
     setQuantityMultiplier: (value) => setDraftField("quantityMultiplier", value),
     setHoldingPatienceWeight: (value) => setDraftField("holdingPatienceWeight", value),

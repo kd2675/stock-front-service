@@ -6,6 +6,7 @@ import { formatListingAutoPosition, formatListingAutoPriceDirection, formatNumbe
 import { DarkInput, DarkSelect } from "@/app/supply-demand/admin/AdminFormControls";
 import { DarkMetric } from "@/app/supply-demand/admin/AdminMetricCards";
 import { AdminTargetHoldingPercentageControl } from "@/app/supply-demand/admin/AdminTargetHoldingPercentageControl";
+import { calculateListingAutoTargetFit, type ListingAutoTargetFit } from "@/app/supply-demand/admin/listingAutoTargetFit";
 import type { ListingAutoAccount, ListingAutoPosition, ListingAutoPriceDirection } from "@/app/types/stock";
 
 export type ListingAutoAccountDraft = {
@@ -65,37 +66,27 @@ export function AdminListingAutoAccountPanel({
   const draftAccount = accounts.find((account) => account.symbol === draft.symbol) ?? null;
   const parsedTargetHoldingQuantity = Number(draft.targetHoldingQuantity);
   const targetHoldingQuantityValid = Number.isSafeInteger(parsedTargetHoldingQuantity) && parsedTargetHoldingQuantity >= 0;
-  const maximumSymmetricBand = draftAccount && targetHoldingQuantityValid
-    ? Math.min(parsedTargetHoldingQuantity, draftAccount.issuedShares - parsedTargetHoldingQuantity)
-    : 0;
-  const canApplyTargetHolding = draftAccount !== null && targetHoldingQuantityValid && maximumSymmetricBand > 0;
+  const targetHoldingFit = draftAccount && targetHoldingQuantityValid
+    ? calculateListingAutoTargetFit({
+        issuedShares: draftAccount.issuedShares,
+        holdingQuantity: draftAccount.holdingQuantity,
+        openBuyQuantity: draftAccount.openBuyQuantity,
+        openSellQuantity: draftAccount.openSellQuantity,
+        targetHoldingQuantity: parsedTargetHoldingQuantity,
+      })
+    : null;
+  const canApplyTargetHolding = targetHoldingFit !== null;
 
   const applyTargetHoldingConfig = () => {
-    if (!canApplyTargetHolding) {
+    if (!targetHoldingFit) {
       return;
     }
-    const positiveDraftQuantities = [draft.targetBuyQuantity, draft.targetSellQuantity, draft.maxOrderQuantity]
-      .map(Number)
-      .filter((quantity) => Number.isSafeInteger(quantity) && quantity > 0);
-    const requestedQuoteQuantity = Math.max(...positiveDraftQuantities, 1);
-    const nextBandQuantity = Math.min(requestedQuoteQuantity, maximumSymmetricBand);
-    const parsedMaxOrderQuantity = Number(draft.maxOrderQuantity);
-    const minimumMaxOrderQuantity = Math.ceil(
-      nextBandQuantity / MAX_LISTING_AUTO_NEW_ORDERS_PER_SIDE_PER_RUN,
-    );
-    const preferredMaxOrderQuantity = Number.isSafeInteger(parsedMaxOrderQuantity) && parsedMaxOrderQuantity > 0
-      ? parsedMaxOrderQuantity
-      : minimumMaxOrderQuantity;
-    const nextMaxOrderQuantity = Math.min(
-      nextBandQuantity,
-      Math.max(preferredMaxOrderQuantity, minimumMaxOrderQuantity),
-    );
     draftSetters.setEnabled(true);
     draftSetters.setPositionSide("TWO_SIDED");
-    draftSetters.setInventoryBandQuantity(String(nextBandQuantity));
-    draftSetters.setTargetBuyQuantity(String(nextBandQuantity));
-    draftSetters.setTargetSellQuantity(String(nextBandQuantity));
-    draftSetters.setMaxOrderQuantity(String(nextMaxOrderQuantity));
+    draftSetters.setInventoryBandQuantity(String(targetHoldingFit.inventoryBandQuantity));
+    draftSetters.setTargetBuyQuantity(String(targetHoldingFit.targetBuyQuantity));
+    draftSetters.setTargetSellQuantity(String(targetHoldingFit.targetSellQuantity));
+    draftSetters.setMaxOrderQuantity(String(targetHoldingFit.maxOrderQuantity));
   };
 
   return (
@@ -144,6 +135,7 @@ export function AdminListingAutoAccountPanel({
           onAction={applyTargetHoldingConfig}
           actionDisabled={!canApplyTargetHolding}
         />
+        <TargetHoldingFitPreview fit={targetHoldingFit} />
         <DarkInput label="보유 허용 밴드(±주)" value={draft.inventoryBandQuantity} onChange={draftSetters.setInventoryBandQuantity} placeholder="30000" />
         <DarkInput label="목표 매수 호가 잔량" value={draft.targetBuyQuantity} onChange={draftSetters.setTargetBuyQuantity} placeholder="100" />
         <DarkInput label="목표 매도 호가 잔량" value={draft.targetSellQuantity} onChange={draftSetters.setTargetSellQuantity} placeholder="100" />
@@ -213,11 +205,13 @@ export function AdminListingAutoAccountPanel({
               const targetHoldingPercent = account.issuedShares > 0
                 ? (account.targetHoldingQuantity / account.issuedShares) * 100
                 : 0;
+              const buyRefillQuantity = Math.max(0, effectiveBuyTarget - account.openBuyQuantity);
+              const sellRefillQuantity = Math.max(0, effectiveSellTarget - account.openSellQuantity);
               const buyOrderFragments = account.maxOrderQuantity > 0
-                ? Math.ceil(effectiveBuyTarget / account.maxOrderQuantity)
+                ? Math.ceil(buyRefillQuantity / account.maxOrderQuantity)
                 : 0;
               const sellOrderFragments = account.maxOrderQuantity > 0
-                ? Math.ceil(effectiveSellTarget / account.maxOrderQuantity)
+                ? Math.ceil(sellRefillQuantity / account.maxOrderQuantity)
                 : 0;
               return (
                 <Fragment key={account.symbol}>
@@ -258,7 +252,7 @@ export function AdminListingAutoAccountPanel({
                       허용 {formatNumber(lowerHoldingLimit)}~{formatNumber(upperHoldingLimit)}주 · 유효 호가 매수 {formatNumber(effectiveBuyTarget)} / 매도 {formatNumber(effectiveSellTarget)}주
                     </p>
                     <p className="mt-0.5 text-xs font-bold text-stock-subtle">
-                      필요 주문 조각 매수 {buyOrderFragments} / 매도 {sellOrderFragments}개 · 방향별 최대 {MAX_LISTING_AUTO_NEW_ORDERS_PER_SIDE_PER_RUN}개
+                      신규 보충 매수 {formatNumber(buyRefillQuantity)}주/{buyOrderFragments}개 · 매도 {formatNumber(sellRefillQuantity)}주/{sellOrderFragments}개 · 방향별 최대 {MAX_LISTING_AUTO_NEW_ORDERS_PER_SIDE_PER_RUN}개
                     </p>
                   </td>
                   <td className="px-3 py-2">
@@ -289,6 +283,7 @@ export function AdminListingAutoAccountPanel({
                           onAction={applyTargetHoldingConfig}
                           actionDisabled={!canApplyTargetHolding}
                         />
+                        <TargetHoldingFitPreview fit={targetHoldingFit} />
                         <DarkInput label="보유 허용 밴드(±주)" value={draft.inventoryBandQuantity} onChange={draftSetters.setInventoryBandQuantity} placeholder="30000" />
                         <DarkInput label="목표 매수 호가 잔량" value={draft.targetBuyQuantity} onChange={draftSetters.setTargetBuyQuantity} placeholder="100" />
                         <DarkInput label="목표 매도 호가 잔량" value={draft.targetSellQuantity} onChange={draftSetters.setTargetSellQuantity} placeholder="100" />
@@ -329,5 +324,52 @@ export function AdminListingAutoAccountPanel({
         </table>
       </DataTableViewport>
     </section>
+  );
+}
+
+function TargetHoldingFitPreview({ fit }: { fit: ListingAutoTargetFit | null }) {
+  if (!fit) {
+    return (
+      <div className="rounded-md border border-white/10 bg-black/20 px-3 py-3 text-xs font-bold leading-5 text-stock-subtle sm:col-span-2 lg:col-span-4">
+        목표가 0% 또는 100%이면 대칭 양방향 밴드를 만들 수 없습니다. 해당 경우에는 매도 전용 또는 매수 전용으로 직접 설정하세요.
+      </div>
+    );
+  }
+
+  const netDirection = fit.netTargetQuantity > 0
+    ? `순매수 ${formatNumber(fit.netTargetQuantity)}주`
+    : fit.netTargetQuantity < 0
+      ? `순매도 ${formatNumber(Math.abs(fit.netTargetQuantity))}주`
+      : "매수·매도 균형";
+
+  return (
+    <div className="overflow-hidden rounded-md border border-admin-accent/25 bg-[linear-gradient(135deg,rgba(49,130,246,0.12),rgba(0,0,0,0.18))] sm:col-span-2 lg:col-span-4">
+      <div className="grid gap-px bg-white/10 sm:grid-cols-2 lg:grid-cols-4">
+        <FitMetric label="권장 보유 밴드" value={`±${formatNumber(fit.inventoryBandQuantity)}주`} />
+        <FitMetric label="양쪽 목표 잔량" value={`${formatNumber(fit.targetBuyQuantity)}주`} />
+        <FitMetric label="주문 1건 상한" value={`${formatNumber(fit.maxOrderQuantity)}주`} />
+        <FitMetric label="현재 재고 보정" value={netDirection} />
+      </div>
+      <div className="px-3 py-2.5 text-[11px] font-bold leading-5 text-stock-subtle">
+        <p>
+          적용 후 허용 범위 {formatNumber(fit.lowerHoldingLimit)}~{formatNumber(fit.upperHoldingLimit)}주 · 현재 유효 목표 매수 {formatNumber(fit.effectiveBuyTarget)}주 / 매도 {formatNumber(fit.effectiveSellTarget)}주
+        </p>
+        <p>
+          현재 미체결 잔량을 제외한 신규 보충량 매수 {formatNumber(fit.buyRefillQuantity)}주({fit.buyOrderFragments}개) / 매도 {formatNumber(fit.sellRefillQuantity)}주({fit.sellOrderFragments}개)
+        </p>
+        <p>
+          대칭 가능 재고 범위의 30%를 밴드로 사용하고, 양쪽 잔량을 밴드와 같게 맞춥니다. 최대 수량은 한 번의 공급 실행에서 10개 이하로 채우도록 계산합니다. TTL·분산 틱·가격 방향은 변경하지 않습니다.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function FitMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="bg-admin-surface/95 px-3 py-2.5">
+      <p className="text-[10px] font-black uppercase tracking-[0.08em] text-admin-placeholder">{label}</p>
+      <p className="mt-1 text-sm font-black tabular-nums text-white">{value}</p>
+    </div>
   );
 }

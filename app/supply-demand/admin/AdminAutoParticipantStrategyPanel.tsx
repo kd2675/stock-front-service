@@ -101,11 +101,11 @@ export function AdminAutoParticipantStrategyPanel({
         </div>
         <div className="rounded-md bg-white/[0.04] px-3 py-2.5">
           <span className="font-black text-white">가격 반응</span>
-          <p className="mt-0.5">활동 강도 1은 가격 압력의 약 10%, 10은 약 100%를 호가 계산에 반영합니다. 강도가 높아도 압력이 0이면 방향을 만들지 않습니다.</p>
+          <p className="mt-0.5">활동 강도 1은 가격 압력의 10%, 10은 100%를 기본 반영하고 여기에 프로필별 가격 민감도를 곱합니다. 강도가 높아도 압력이 0이면 방향을 만들지 않습니다.</p>
         </div>
         <div className="rounded-md bg-white/[0.04] px-3 py-2.5">
           <span className="font-black text-white">기본값·프로필 보정</span>
-          <p className="mt-0.5">설정이 없으면 5입니다. 보고서 점수로 유효 강도를 보정한 뒤 프로필별 주문·공격성 배율과 매 주문 노이즈를 별도로 적용합니다.</p>
+          <p className="mt-0.5">설정이 없으면 5입니다. 보고서 점수는 활동 강도를 바꾸지 않고 별도 방향 압력으로 적용되며, 프로필별 가격 민감도·주문·공격성 배율과 매 주문 노이즈를 각각 적용합니다.</p>
         </div>
       </div>
       <DataTableViewport label="참여자 종목별 전략" tone="dark" className="mt-3">

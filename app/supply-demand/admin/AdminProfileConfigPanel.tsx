@@ -35,7 +35,7 @@ export function AdminProfileConfigPanel({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-black">프로필 행동 설정</h2>
-          <p className="mt-1 text-xs font-bold text-stock-subtle">자동 참여자 심리 프로필별 주문 빈도, 호가 공격성, 주문 유지 시간, 수량, 보유 성향, 주기적 현금 유입을 조정합니다.</p>
+          <p className="mt-1 text-xs font-bold text-stock-subtle">자동 참여자 심리 프로필별 주문 빈도, 가격 압력 민감도, 호가 공격성, 주문 유지 시간, 수량, 보유 성향, 주기적 현금 유입을 조정합니다.</p>
         </div>
       </div>
       <div className="mt-4 grid min-w-0 gap-4 lg:grid-cols-[minmax(240px,320px)_minmax(0,1fr)]">

@@ -98,6 +98,7 @@ export function resolveProfileConfigDraft(
     dipBuyWeight: String(config.dipBuyWeight),
     orderMultiplier: String(config.orderMultiplier),
     aggressionMultiplier: String(config.aggressionMultiplier),
+    pricePressureSensitivity: String(config.pricePressureSensitivity),
     orderTtlMultiplier: String(config.orderTtlMultiplier),
     quantityMultiplier: String(config.quantityMultiplier),
     holdingPatienceWeight: String(config.holdingPatienceWeight),

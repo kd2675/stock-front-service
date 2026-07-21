@@ -34,7 +34,7 @@ export default function AutoSignalGuide() {
         <div className="rounded-md bg-black/20 px-3 py-3 text-xs font-bold leading-5 text-admin-muted">
           <p className="font-black text-white">실제 적용 순서</p>
           <p className="mt-1">
-            참여자·종목 설정값을 기본으로 사용하고, 최신 보고서가 있으면 프로필의 뉴스 민감도만큼 보고서 점수와 섞어 유효 활동 강도를 만듭니다. 이 값이 주문 후보 우선순위, 주문 건수, 가격 압력의 호가 반영 강도에 쓰입니다.
+            참여자·종목 설정값을 그대로 활동 강도로 사용합니다. 최신 보고서 점수는 활동 강도를 바꾸지 않고 프로필의 뉴스 민감도만큼 별도 가격 방향 압력에 반영됩니다.
           </p>
         </div>
         <div className="rounded-md border border-admin-warning/20 bg-admin-warning/[0.06] px-3 py-3 text-xs font-bold leading-5 text-[#d8c49c]">
@@ -64,7 +64,7 @@ export function AutoMarketConfigGuide() {
     },
     {
       name: "1회 주문 최대 수량",
-      description: "자동장이 한 번에 만들 수 있는 주문 수량의 종목 단위 상한입니다. 실제 수량은 이 값에 프로필 수량 배율, 계좌 현금, 보유 수량, 예약 수량 제약을 반영해 더 작아질 수 있습니다.",
+      description: "자동장이 한 번에 만들 수 있는 주문 수량의 종목 단위 절대 상한입니다. 프로필 수량 배율은 추첨 수량에 연속 적용되지만 1배를 넘어도 이 상한은 넘지 않습니다. 수량 배율 0은 해당 프로필 주문 생성을 중지합니다.",
     },
     {
       name: "미체결 호가 TTL(초)",
@@ -169,8 +169,8 @@ const ORDER_BEHAVIOR_GUIDE_ITEMS = [
     scale: "1~10",
     low: "1 · 적은 주문",
     high: "10 · 많은 주문",
-    description: "참여자별 주문 후보 우선순위, 기본 주문 건수, 가격 압력의 호가 반영 크기를 조절합니다. 설정이 없으면 5이며 최신 보고서가 있으면 프로필 뉴스 민감도만큼 유효 강도가 보정됩니다.",
-    caution: "압력처럼 랜덤 생성되지 않습니다. 프로필별 주문·공격성 배율과 방향·가격 노이즈가 이후 단계에서 별도로 적용됩니다.",
+    description: "참여자별 주문 후보 우선순위, 기본 주문 건수, 가격 압력의 기본 호가 반영 크기를 조절합니다. 설정이 없으면 5이며 보고서 점수로 변경되지 않습니다.",
+    caution: "압력처럼 랜덤 생성되지 않습니다. 가격 반영에는 프로필별 가격 민감도가 추가로 곱해지고, 주문·공격성 배율과 방향·가격 노이즈는 별도로 적용됩니다.",
   },
 ] as const;
 

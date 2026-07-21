@@ -13,6 +13,7 @@ export type ProfileConfigDraft = {
   dipBuyWeight: string;
   orderMultiplier: string;
   aggressionMultiplier: string;
+  pricePressureSensitivity: string;
   orderTtlMultiplier: string;
   quantityMultiplier: string;
   holdingPatienceWeight: string;
@@ -40,6 +41,7 @@ export type ProfileConfigDraftSetters = {
   setDipBuyWeight: (value: string) => void;
   setOrderMultiplier: (value: string) => void;
   setAggressionMultiplier: (value: string) => void;
+  setPricePressureSensitivity: (value: string) => void;
   setOrderTtlMultiplier: (value: string) => void;
   setQuantityMultiplier: (value: string) => void;
   setHoldingPatienceWeight: (value: string) => void;
