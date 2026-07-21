@@ -55,7 +55,7 @@ export const ADMIN_NAVIGATION_GROUPS: readonly AdminNavigationGroup[] = [
     items: [
       { section: "funds-accounts", href: "/admin/funds/accounts", label: "계좌 현금", description: "사용자 계좌의 현금과 자금 흐름을 확인합니다." },
       { section: "funds-ledger", href: "/admin/funds/ledger", label: "현금 원장", description: "전체 현금 변동 원장을 조회합니다." },
-      { section: "funds-payroll", href: "/admin/funds/payroll", label: "월급 지급", description: "월급 대상과 수동 지급 실행 상태를 관리합니다." },
+      { section: "funds-payroll", href: "/admin/funds/payroll", label: "정기 자금", description: "정기 자금 대상과 수동 지급 실행 상태를 관리합니다." },
     ],
   },
   {

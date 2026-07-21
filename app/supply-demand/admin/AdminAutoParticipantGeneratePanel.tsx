@@ -66,9 +66,9 @@ export function AdminAutoParticipantGeneratePanel({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-sm font-black text-white">자동 생성</p>
-          <p className="mt-1 text-xs font-bold text-stock-subtle">다음 번호부터 참여자를 여러 명 만들고, 계좌·초기 현금·월급 설정을 같은 규칙으로 적용합니다.</p>
+          <p className="mt-1 text-xs font-bold text-stock-subtle">다음 번호부터 참여자를 여러 명 만들고, 계좌·초기 현금·정기 자금 설정을 같은 규칙으로 적용합니다.</p>
         </div>
-        <span className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-admin-accent">계좌/현금/월급 일괄 설정</span>
+        <span className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-admin-accent">계좌·현금·정기 자금 일괄 설정</span>
       </div>
       <div className="mt-3 grid min-w-0 gap-3">
         <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
@@ -101,10 +101,10 @@ export function AdminAutoParticipantGeneratePanel({
             <span className="min-w-0">계좌 즉시 생성</span>
           </label>
           <DarkInput label="초기 현금" value={autoGenerateInitialCashAmount} onChange={onAutoGenerateInitialCashAmountChange} placeholder="10000000" />
-          <DarkInput label="월급/정기 현금" value={autoGenerateRecurringCashAmount} onChange={onAutoGenerateRecurringCashAmountChange} placeholder="비우면 프로필" />
-          <DarkInput label="월급 주기 값" value={autoGenerateRecurringCashIntervalValue} onChange={onAutoGenerateRecurringCashIntervalValueChange} placeholder="30" />
+          <DarkInput label="정기 자금 금액" value={autoGenerateRecurringCashAmount} onChange={onAutoGenerateRecurringCashAmountChange} placeholder="비우면 프로필" />
+          <DarkInput label="지급 주기 값" value={autoGenerateRecurringCashIntervalValue} onChange={onAutoGenerateRecurringCashIntervalValueChange} placeholder="30" />
           <DarkSelect
-            label="월급 주기 단위"
+            label="지급 주기 단위"
             value={autoGenerateRecurringCashIntervalUnit}
             onChange={(value) => onAutoGenerateRecurringCashIntervalUnitChange(value as RecurringCashIntervalUnit)}
           >
@@ -113,7 +113,7 @@ export function AdminAutoParticipantGeneratePanel({
             ))}
           </DarkSelect>
           <p className="self-end text-xs font-bold leading-5 text-stock-subtle sm:col-span-2 lg:col-span-3">
-            초기 현금을 입력하면 계좌 생성이 자동 적용됩니다. 배당재투자형은 월급 대신 배당 이벤트만 사용합니다.
+            초기 현금을 입력하면 계좌 생성이 자동 적용됩니다. 배당재투자형은 정기 자금 대신 배당 이벤트만 사용합니다.
           </p>
         </div>
         <div className="flex justify-end">

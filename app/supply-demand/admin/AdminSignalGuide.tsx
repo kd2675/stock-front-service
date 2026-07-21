@@ -1,18 +1,19 @@
 export default function AutoSignalGuide() {
   return (
-    <section className="mt-5 rounded-lg border border-stock-accent/20 bg-[#10233a] p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="text-xs font-black text-admin-accent">AUTO SIGNAL FLOW</p>
-          <h2 className="mt-1 text-base font-black">자동 주문 활동 강도 계산 기준</h2>
-          <p className="mt-1 max-w-3xl text-xs font-bold leading-5 text-admin-muted">
+    <details className="group mt-5 rounded-md border border-stock-accent/20 bg-[#10233a]">
+      <summary className="flex min-h-14 cursor-pointer list-none items-start justify-between gap-3 p-4 marker:hidden">
+        <span className="min-w-0">
+          <span className="block text-xs font-black text-admin-accent">AUTO SIGNAL FLOW</span>
+          <span className="mt-1 block text-base font-black">자동 주문 활동 강도 계산 기준</span>
+          <span className="mt-1 block max-w-3xl text-xs font-bold leading-5 text-admin-muted">
             주문 활동 강도는 다섯 압력과 함께 최종 주문 행동을 만드는 여섯 번째 요인입니다. 다만 압력처럼 랜덤 생성되는 -100~100 값이 아니라 참여자·종목별 1~10 기준값입니다.
-          </p>
-        </div>
-        <span className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-admin-accent-soft">1-10 척도</span>
-      </div>
+          </span>
+        </span>
+        <span aria-hidden="true" className="shrink-0 text-admin-accent transition-transform group-open:rotate-180">⌄</span>
+      </summary>
 
-      <div className="mt-4 grid gap-3 lg:grid-cols-3">
+      <div className="border-t border-white/10 p-4">
+      <div className="grid gap-3 lg:grid-cols-3">
         <SignalGuideCard
           label="낮음 · 1-3"
           title="드문 주문 · 약한 가격 반응"
@@ -44,7 +45,8 @@ export default function AutoSignalGuide() {
           </p>
         </div>
       </div>
-    </section>
+      </div>
+    </details>
   );
 }
 
@@ -73,53 +75,59 @@ export function AutoMarketConfigGuide() {
   ];
 
   return (
-    <div className="mt-4 rounded-md border border-white/10 bg-black/20 p-3">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-black text-white">항목 설명</p>
-          <p className="mt-1 text-xs font-bold leading-5 text-stock-subtle">
+    <details className="group mt-4 min-w-0 rounded-md border border-white/10 bg-black/20">
+      <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 marker:hidden">
+        <span className="min-w-0">
+          <span className="block text-sm font-black text-white">자동장 설정·행동 기준</span>
+          <span className="mt-0.5 block text-[11px] font-bold leading-4 text-stock-subtle">각 압력과 주문 활동 강도가 주문 건수·방향·호가에 미치는 영향을 확인합니다.</span>
+        </span>
+        <span aria-hidden="true" className="shrink-0 text-admin-accent transition-transform group-open:rotate-180">⌄</span>
+      </summary>
+      <div className="border-t border-white/10 p-3">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <p className="max-w-4xl text-xs font-bold leading-5 text-stock-subtle">
             주 압력은 06시와 가중치로 선택된 추가 슬롯에서 하루 1~4회 갱신되고, 30분 보조 압력과 70:30으로 합성됩니다. 실제 주문은 참여자별 전략, 심리 프로필, 보고서 점수, 계좌 상태도 함께 계산합니다.
           </p>
+          <span className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-admin-accent">stock_auto_market_config</span>
         </div>
-        <span className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-admin-accent">stock_auto_market_config</span>
-      </div>
-      <div className="mt-3 grid gap-2 lg:grid-cols-4">
+        <div className="mt-3 grid gap-2 lg:grid-cols-4">
         {items.map((item) => (
           <div key={item.name} className="rounded-md bg-white/[0.04] px-3 py-3">
             <p className="text-xs font-black text-white">{item.name}</p>
             <p className="mt-1 text-xs font-bold leading-5 text-stock-subtle">{item.description}</p>
           </div>
         ))}
-      </div>
+        </div>
 
-      <div className="mt-4 border-t border-white/10 pt-4">
-        <div className="flex flex-wrap items-end justify-between gap-2">
-          <div>
-            <p className="text-sm font-black text-white">여섯 주문 행동 요인의 실제 영향</p>
-            <p className="mt-1 text-xs font-bold leading-5 text-stock-subtle">
-              다섯 압력은 종목별 랜덤 시장환경이고 주문 활동 강도는 참여자·종목별 기준 활동도입니다. 서로 척도와 생성 방식은 다르지만 최종 주문 건수·방향·호가를 함께 만듭니다.
-            </p>
+        <div className="mt-4 border-t border-white/10 pt-4">
+          <div className="flex flex-wrap items-end justify-between gap-2">
+            <div>
+              <p className="text-sm font-black text-white">여섯 주문 행동 요인의 실제 영향</p>
+              <p className="mt-1 text-xs font-bold leading-5 text-stock-subtle">
+                다섯 압력은 종목별 랜덤 시장환경이고 주문 활동 강도는 참여자·종목별 기준 활동도입니다. 서로 척도와 생성 방식은 다르지만 최종 주문 건수·방향·호가를 함께 만듭니다.
+              </p>
+            </div>
+            <span className="text-[11px] font-black text-stock-subtle">압력 -100~100 · 활동 강도 1~10</span>
           </div>
-          <span className="text-[11px] font-black text-stock-subtle">압력 -100~100 · 활동 강도 1~10</span>
-        </div>
-        <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
-          {ORDER_BEHAVIOR_GUIDE_ITEMS.map((item) => (
-            <article key={item.name} className="rounded-md border border-white/[0.07] bg-white/[0.04] p-3">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-black text-white">{item.name}</p>
-                <span className="text-[10px] font-black text-[#73808d]">{item.scale}</span>
-              </div>
-              <div className="mt-2 grid grid-cols-2 gap-2 text-[11px] font-black">
-                <span className="text-[#fca5a5]">{item.low}</span>
-                <span className="text-right text-[#86efac]">{item.high}</span>
-              </div>
-              <p className="mt-2 text-xs font-bold leading-5 text-[#9aa7b4]">{item.description}</p>
-              <p className="mt-2 border-t border-white/[0.07] pt-2 text-[11px] font-bold leading-4 text-[#73808d]">{item.caution}</p>
-            </article>
-          ))}
+          <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+            {ORDER_BEHAVIOR_GUIDE_ITEMS.map((item) => (
+              <article key={item.name} className="rounded-md border border-white/[0.07] bg-white/[0.04] p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-black text-white">{item.name}</p>
+                  <span className="text-[10px] font-black text-[#73808d]">{item.scale}</span>
+                </div>
+                <div className="mt-2 grid grid-cols-2 gap-2 text-[11px] font-black">
+                  <span className="text-[#fca5a5]">{item.low}</span>
+                  <span className="text-right text-[#86efac]">{item.high}</span>
+                </div>
+                <p className="mt-2 text-xs font-bold leading-5 text-[#9aa7b4]">{item.description}</p>
+                <p className="mt-2 border-t border-white/[0.07] pt-2 text-[11px] font-bold leading-4 text-[#73808d]">{item.caution}</p>
+              </article>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
+    </details>
   );
 }
 

@@ -199,7 +199,7 @@ export function latestManualCashFlowRunQueryOptions(
   return adminAuthenticatedQueryOptions(token, {
     queryKey: stockKeys.latestManualCashFlowRun(),
     request: getLatestAutoParticipantCashFlowRun,
-    fallbackMessage: "최근 수동 월급 지급 결과를 조회하지 못했습니다.",
+    fallbackMessage: "최근 수동 정기 자금 지급 결과를 조회하지 못했습니다.",
     enabled: options.enabled,
     refetchInterval: (query) => {
       const status = query.state.data?.status;

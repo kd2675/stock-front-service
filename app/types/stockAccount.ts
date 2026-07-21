@@ -194,6 +194,31 @@ export type AdminCorporateActionFlowSummary = {
   todayCreatedCount: number;
 };
 
+export type AdminInvestorCategory = "MANUAL_PARTICIPANT" | "AUTO_PARTICIPANT" | "LISTING_UNDERWRITER";
+
+export type AdminInvestorCategoryFlow = {
+  category: AdminInvestorCategory;
+  buyQuantity: number;
+  sellQuantity: number;
+  netQuantity: number;
+  participationQuantity: number;
+  buyAmount: number;
+  sellAmount: number;
+  netCashFlow: number;
+  buyShareRate: number;
+  sellShareRate: number;
+  executionShareRate: number;
+};
+
+export type AdminInvestorFlowSummary = {
+  simulationTradeDate: string;
+  totalBuyQuantity: number;
+  totalSellQuantity: number;
+  totalParticipationQuantity: number;
+  categories: AdminInvestorCategoryFlow[];
+  sourceUpdatedAt?: string | null;
+};
+
 export type AdminSymbolFlow = {
   symbol: string;
   name: string;
@@ -248,6 +273,7 @@ export type AdminFlowOverview = {
   fundFlow?: AdminFundFlowSummary | null;
   orderFlow: AdminOrderFlowSummary;
   corporateActionFlow: AdminCorporateActionFlowSummary;
+  investorFlow: AdminInvestorFlowSummary;
   symbolFlowTotalCount: number;
   symbolFlows: AdminSymbolFlow[];
   recentCashFlows: AdminRecentCashFlow[];

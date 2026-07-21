@@ -55,7 +55,7 @@ export function AdminAutoParticipantFormPanel({
           <option value="true">가동</option>
           <option value="false">정지</option>
         </DarkSelect>
-        <DarkInput label="개별 월급/현금" value={draft.recurringCashDisabled ? "" : draft.recurringCashAmount} onChange={draftSetters.setRecurringCashAmount} placeholder={draft.recurringCashDisabled ? "배당 이벤트만 사용" : "비우면 프로필"} disabled={draft.recurringCashDisabled} />
+        <DarkInput label="개별 정기 자금" value={draft.recurringCashDisabled ? "" : draft.recurringCashAmount} onChange={draftSetters.setRecurringCashAmount} placeholder={draft.recurringCashDisabled ? "배당 이벤트만 사용" : "비우면 프로필"} disabled={draft.recurringCashDisabled} />
         <DarkInput label="주기 값" value={draft.recurringCashDisabled ? "" : draft.recurringCashIntervalValue} onChange={draftSetters.setRecurringCashIntervalValue} placeholder={draft.recurringCashDisabled ? "-" : "0.5"} disabled={draft.recurringCashDisabled} />
         <DarkSelect label="주기 단위" value={draft.recurringCashDisabled ? "DAY" : draft.recurringCashIntervalUnit} onChange={(value) => draftSetters.setRecurringCashIntervalUnit(value as RecurringCashIntervalUnit)} disabled={draft.recurringCashDisabled}>
           {RECURRING_CASH_INTERVAL_UNIT_OPTIONS.map((option) => (

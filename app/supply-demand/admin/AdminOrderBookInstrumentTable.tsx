@@ -1,6 +1,5 @@
-import { Fragment, useState } from "react";
+import { useState } from "react";
 
-import DataTableViewport from "@/app/components/DataTableViewport";
 import { DarkInput } from "@/app/supply-demand/admin/AdminFormControls";
 import { formatCount, formatNumber, formatWon } from "@/app/supply-demand/admin/AdminFormatters";
 import type { MarketSessionStatus, OrderBookInstrument, OrderBookMarketStatus, SimulationClock } from "@/app/types/stock";
@@ -24,15 +23,28 @@ export function AdminOrderBookInstrumentTable({
   onChangeMarketStatus,
   onUpdateTradingRules,
 }: AdminOrderBookInstrumentTableProps) {
+  const [selectedSymbol, setSelectedSymbol] = useState("");
   const [editingSymbol, setEditingSymbol] = useState<string | null>(null);
   const [rulesDraft, setRulesDraft] = useState({ priceLimitRate: "" });
   const [rulesError, setRulesError] = useState<string | null>(null);
 
+  const selectedInstrument = instruments.find((instrument) => instrument.symbol === selectedSymbol) ?? instruments.at(0) ?? null;
+  const selectedConfig = selectedInstrument ? orderBookConfigBySymbol.get(selectedInstrument.symbol) : null;
+  const marketStatus = selectedConfig?.marketStatus ?? "OPEN";
+  const canSelectOpen = marketStatus === "OPEN" || (marketStatus === "HALTED" && simulationClock?.marketSession === "REGULAR");
+  const isUpdatingStatus = selectedInstrument ? updatingStatusSymbol === selectedInstrument.symbol : false;
+  const isUpdatingRules = selectedInstrument ? updatingTradingRulesSymbol === selectedInstrument.symbol : false;
+  const isEditing = selectedInstrument ? editingSymbol === selectedInstrument.symbol : false;
+
+  const selectInstrument = (instrument: OrderBookInstrument) => {
+    setSelectedSymbol(instrument.symbol);
+    setEditingSymbol(null);
+    setRulesError(null);
+  };
+
   const startEditingRules = (instrument: OrderBookInstrument) => {
     setEditingSymbol(instrument.symbol);
-    setRulesDraft({
-      priceLimitRate: String(instrument.priceLimitRate),
-    });
+    setRulesDraft({ priceLimitRate: String(instrument.priceLimitRate) });
     setRulesError(null);
   };
 
@@ -42,9 +54,7 @@ export function AdminOrderBookInstrumentTable({
   };
 
   const submitTradingRules = async () => {
-    if (!editingSymbol) {
-      return;
-    }
+    if (!editingSymbol) return;
     const priceLimitRate = Number(rulesDraft.priceLimitRate);
     if (!Number.isFinite(priceLimitRate) || priceLimitRate <= 0 || priceLimitRate > 100) {
       setRulesError("가격제한폭은 0보다 크고 100 이하로 입력해 주세요.");
@@ -52,115 +62,147 @@ export function AdminOrderBookInstrumentTable({
     }
     setRulesError(null);
     const saved = await onUpdateTradingRules(editingSymbol, { priceLimitRate });
-    if (saved) {
-      setEditingSymbol(null);
-    }
+    if (saved) setEditingSymbol(null);
   };
 
+  if (!selectedInstrument) {
+    return (
+      <section className="admin-panel mt-5">
+        <h2 className="text-base font-black">종목·장 상태</h2>
+        <p className="mt-3 rounded-md border border-dashed border-white/15 bg-black/15 px-3 py-4 text-sm font-bold text-stock-subtle">
+          아직 생성된 주문장 종목이 없습니다.
+        </p>
+      </section>
+    );
+  }
+
   return (
-    <DataTableViewport label="주문장 종목과 장 상태" tone="dark" className="mt-5">
-      <table className="min-w-[980px] w-full border-collapse text-sm">
-        <thead className="bg-white/10 text-left text-admin-muted">
-          <tr>
-            <th className="px-4 py-3">주문장 종목</th>
-            <th className="px-4 py-3">시장</th>
-            <th className="px-4 py-3">장 상태</th>
-            <th className="px-4 py-3">발행주식수</th>
-            <th className="px-4 py-3">유통주식수</th>
-            <th className="px-4 py-3">현재가</th>
-            <th className="px-4 py-3">기준가</th>
-            <th className="px-4 py-3">현재 호가/제한폭</th>
-            <th className="px-4 py-3">수정</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-white/10">
-          {instruments.map((instrument) => {
-            const config = orderBookConfigBySymbol.get(instrument.symbol);
-            const marketStatus = config?.marketStatus ?? "OPEN";
-            const canSelectOpen = marketStatus === "OPEN" || (marketStatus === "HALTED" && simulationClock?.marketSession === "REGULAR");
-            const isEditing = editingSymbol === instrument.symbol;
-            const isUpdatingRules = updatingTradingRulesSymbol === instrument.symbol;
-            return (
-              <Fragment key={instrument.symbol}>
-                <tr>
-                  <td className="px-4 py-3 font-black">{instrument.name} · {instrument.symbol}</td>
-                  <td className="px-4 py-3">{instrument.market}</td>
-                  <td className="px-4 py-3">
-                    <select
-                      value={marketStatus}
-                      onChange={(event) => onChangeMarketStatus(instrument.symbol, event.target.value as MarketSessionStatus)}
-                      disabled={updatingStatusSymbol === instrument.symbol}
-                      className="rounded-md border border-white/10 bg-admin-surface px-2 py-2 text-xs font-black text-white disabled:opacity-50"
-                    >
-                      <option value="OPEN" disabled={!canSelectOpen}>정규장</option>
-                      <option value="CLOSED">마감</option>
-                      <option value="HALTED">거래정지</option>
-                      <option value="CIRCUIT_BREAKER">서킷브레이크</option>
-                    </select>
-                  </td>
-                  <td className="px-4 py-3 tabular-nums">{formatCount(instrument.issuedShares, "주")}</td>
-                  <td className="px-4 py-3 tabular-nums">{formatCount(instrument.tradableShares, "주")}</td>
-                  <td className="px-4 py-3 tabular-nums">{formatWon(instrument.currentPrice)}</td>
-                  <td className="px-4 py-3 tabular-nums">{formatWon(instrument.initialPrice)}</td>
-                  <td className="px-4 py-3 tabular-nums">{formatNumber(instrument.tickSize)}원 / {formatNumber(instrument.priceLimitRate)}%</td>
-                  <td className="px-4 py-3">
-                    <button
-                      type="button"
-                      disabled={isUpdatingRules}
-                      onClick={() => startEditingRules(instrument)}
-                      className="rounded-md border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-black text-admin-accent-soft transition hover:border-admin-accent/60 disabled:cursor-wait disabled:opacity-50"
-                    >
-                      {isUpdatingRules ? "저장 중" : isEditing ? "수정 중" : "수정"}
-                    </button>
-                  </td>
-                </tr>
-                {isEditing ? (
-                  <tr className="bg-[#0f141a]">
-                    <td colSpan={9} className="px-4 py-4">
-                      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
-                        <DarkInput
-                          label="가격제한폭(%)"
-                          value={rulesDraft.priceLimitRate}
-                          onChange={(value) => setRulesDraft((current) => ({ ...current, priceLimitRate: value }))}
-                          placeholder="30"
-                          disabled={isUpdatingRules}
-                        />
-                        <div className="flex min-w-0 gap-2">
-                          <button
-                            type="button"
-                            onClick={() => void submitTradingRules()}
-                            disabled={isUpdatingRules}
-                            className="h-11 rounded-md bg-stock-accent px-4 text-sm font-black text-white transition hover:bg-stock-accent-strong disabled:cursor-wait disabled:opacity-50"
-                          >
-                            저장
-                          </button>
-                          <button
-                            type="button"
-                            onClick={cancelEditingRules}
-                            disabled={isUpdatingRules}
-                            className="h-11 rounded-md border border-white/10 px-4 text-sm font-black text-admin-muted transition hover:border-white/20 disabled:cursor-wait disabled:opacity-50"
-                          >
-                            취소
-                          </button>
-                        </div>
-                      </div>
-                      <p className="mt-2 text-xs font-bold text-stock-subtle">
-                        호가 단위는 주가 구간에 따라 자동 적용됩니다. 2천원 미만 1원, 2천-5천원 5원, 5천-2만원 10원, 2만-5만원 50원, 5만-20만원 100원, 20만-50만원 500원, 50만원 이상 1,000원입니다.
-                      </p>
-                      {rulesError ? <p className="mt-2 text-xs font-bold text-[#ff8a80]">{rulesError}</p> : null}
-                    </td>
-                  </tr>
-                ) : null}
-              </Fragment>
-            );
-          })}
-          {instruments.length === 0 ? (
-            <tr>
-              <td colSpan={9} className="px-4 py-5 text-stock-subtle">아직 생성된 수요와 공급 종목이 없습니다.</td>
-            </tr>
-          ) : null}
-        </tbody>
-      </table>
-    </DataTableViewport>
+    <section className="admin-panel mt-5 overflow-hidden">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-base font-black">종목·장 상태</h2>
+          <p className="mt-1 text-xs font-bold text-stock-subtle">종목을 먼저 선택한 뒤 장 상태와 가격제한폭을 확인·수정합니다.</p>
+        </div>
+        <span className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-admin-muted">{formatCount(instruments.length, "개 종목")}</span>
+      </div>
+
+      <label className="mt-4 block text-xs font-black text-admin-muted lg:hidden">
+        관리 종목
+        <select
+          value={selectedInstrument.symbol}
+          onChange={(event) => {
+            const instrument = instruments.find((candidate) => candidate.symbol === event.target.value);
+            if (instrument) selectInstrument(instrument);
+          }}
+          className="admin-control mt-1 w-full px-3 text-sm font-black"
+        >
+          {instruments.map((instrument) => <option key={instrument.symbol} value={instrument.symbol}>{instrument.name} · {instrument.symbol}</option>)}
+        </select>
+      </label>
+
+      <div className="mt-4 hidden grid-cols-1 gap-2 lg:grid lg:grid-cols-3">
+        {instruments.map((instrument) => {
+          const config = orderBookConfigBySymbol.get(instrument.symbol);
+          const selected = instrument.symbol === selectedInstrument.symbol;
+          return (
+            <button
+              key={instrument.symbol}
+              type="button"
+              onClick={() => selectInstrument(instrument)}
+              className={[
+                "min-w-0 rounded-md border px-3 py-3 text-left transition",
+                selected ? "border-admin-accent/50 bg-admin-accent-surface" : "border-white/10 bg-black/15 hover:border-white/20",
+              ].join(" ")}
+            >
+              <span className="flex items-center justify-between gap-3">
+                <span className="truncate text-sm font-black text-white">{instrument.name}</span>
+                <MarketStatusBadge status={config?.marketStatus ?? "OPEN"} />
+              </span>
+              <span className="mt-1 block text-xs font-bold text-stock-subtle">{instrument.symbol} · {instrument.market}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="min-w-0 rounded-md border border-white/10 bg-black/20 p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-lg font-black text-white">{selectedInstrument.name}</p>
+              <p className="mt-1 text-xs font-bold text-stock-subtle">{selectedInstrument.symbol} · {selectedInstrument.market}</p>
+            </div>
+            <MarketStatusBadge status={marketStatus} />
+          </div>
+
+          <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
+            <InstrumentMetric label="현재가" value={formatWon(selectedInstrument.currentPrice)} />
+            <InstrumentMetric label="기준가" value={formatWon(selectedInstrument.initialPrice)} />
+            <InstrumentMetric label="발행주식" value={formatCount(selectedInstrument.issuedShares, "주")} />
+            <InstrumentMetric label="유통주식" value={formatCount(selectedInstrument.tradableShares, "주")} />
+            <InstrumentMetric label="호가 단위" value={`${formatNumber(selectedInstrument.tickSize)}원`} />
+            <InstrumentMetric label="가격제한폭" value={`${formatNumber(selectedInstrument.priceLimitRate)}%`} />
+            <InstrumentMetric label="가격 제공자" value={selectedInstrument.priceProvider || "-"} />
+            <InstrumentMetric label="종목 상태" value={selectedInstrument.enabled ? "사용" : "중지"} />
+          </dl>
+        </div>
+
+        <div className="min-w-0 rounded-md border border-white/10 bg-white/[0.035] p-4">
+          <p className="text-sm font-black text-white">운영 설정</p>
+          <label className="mt-3 grid gap-1 text-xs font-black text-admin-muted">
+            장 상태
+            <select
+              value={marketStatus}
+              onChange={(event) => onChangeMarketStatus(selectedInstrument.symbol, event.target.value as MarketSessionStatus)}
+              disabled={isUpdatingStatus}
+              className="admin-control w-full px-3 text-sm font-black disabled:cursor-wait disabled:opacity-50"
+            >
+              <option value="OPEN" disabled={!canSelectOpen}>정규장</option>
+              <option value="CLOSED">마감</option>
+              <option value="HALTED">거래정지</option>
+              <option value="CIRCUIT_BREAKER">서킷브레이크</option>
+            </select>
+          </label>
+
+          {isEditing ? (
+            <div className="mt-3 border-t border-white/10 pt-3">
+              <DarkInput
+                label="가격제한폭(%)"
+                value={rulesDraft.priceLimitRate}
+                onChange={(value) => setRulesDraft({ priceLimitRate: value })}
+                placeholder="30"
+                disabled={isUpdatingRules}
+              />
+              {rulesError ? <p className="mt-2 text-xs font-bold text-admin-danger">{rulesError}</p> : null}
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button type="button" onClick={() => void submitTradingRules()} disabled={isUpdatingRules} className="min-h-11 rounded-md bg-stock-accent px-3 text-sm font-black text-white disabled:cursor-wait disabled:opacity-50">{isUpdatingRules ? "저장 중" : "저장"}</button>
+                <button type="button" onClick={cancelEditingRules} disabled={isUpdatingRules} className="min-h-11 rounded-md bg-white/10 px-3 text-sm font-black text-white disabled:opacity-50">취소</button>
+              </div>
+            </div>
+          ) : (
+            <button type="button" onClick={() => startEditingRules(selectedInstrument)} className="mt-3 min-h-11 w-full rounded-md bg-white/10 px-3 text-sm font-black text-white transition hover:bg-white/15">가격제한폭 수정</button>
+          )}
+        </div>
+      </div>
+
+      <details className="group mt-4 rounded-md border border-white/[0.07] bg-white/[0.025]">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 marker:hidden">
+          <span className="text-xs font-black text-admin-muted">호가 단위 적용 기준</span>
+          <span aria-hidden="true" className="text-admin-accent transition-transform group-open:rotate-180">⌄</span>
+        </summary>
+        <p className="border-t border-white/[0.07] px-3 py-3 text-xs font-bold leading-5 text-stock-subtle">
+          호가 단위는 주가 구간에 따라 자동 적용됩니다. 2천원 미만 1원, 2천-5천원 5원, 5천-2만원 10원, 2만-5만원 50원, 5만-20만원 100원, 20만-50만원 500원, 50만원 이상 1,000원입니다.
+        </p>
+      </details>
+    </section>
   );
+}
+
+function InstrumentMetric({ label, value }: { label: string; value: string }) {
+  return <div className="min-w-0"><dt className="text-[11px] font-bold text-admin-placeholder">{label}</dt><dd className="mt-1 break-words text-sm font-black tabular-nums text-white">{value}</dd></div>;
+}
+
+function MarketStatusBadge({ status }: { status: MarketSessionStatus }) {
+  const label = status === "OPEN" ? "정규장" : status === "CLOSED" ? "마감" : status === "HALTED" ? "거래정지" : "서킷브레이크";
+  const tone = status === "OPEN" ? "bg-admin-success-surface text-admin-success" : status === "CLOSED" ? "bg-white/10 text-admin-muted" : "bg-admin-warning-surface text-admin-warning";
+  return <span className={`shrink-0 rounded-sm px-2 py-1 text-[11px] font-black ${tone}`}>{label}</span>;
 }

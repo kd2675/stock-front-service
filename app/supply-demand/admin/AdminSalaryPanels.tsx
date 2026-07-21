@@ -49,14 +49,14 @@ export function SalaryEligibilityPanel({
     ? "지급 실행 중"
     : automaticCashFlowEnabled
       ? "자동 지급 ON"
-      : "수동 월급 지급";
+      : "수동 정기 자금 지급";
 
   return (
     <section className="admin-panel mt-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-base font-black">월급 지급 대상</h2>
-          <p className="mt-1 text-xs font-bold text-stock-subtle">수동 지급과 자동 지급 모두 가동 자동참여자, 유효한 월급 정책, ACTIVE 계좌 조건을 만족해야 실제 입금됩니다.</p>
+          <h2 className="text-base font-black">정기 자금 지급 대상</h2>
+          <p className="mt-1 text-xs font-bold text-stock-subtle">수동 지급과 자동 지급 모두 가동 자동참여자, 유효한 정기 자금 정책, ACTIVE 계좌 조건을 만족해야 실제 입금됩니다.</p>
           <p className="mt-1 max-w-3xl text-[11px] font-bold leading-5 text-admin-muted">
             기본 EOD 모드의 자동 지급은 00시 이후 거래일당 한 번만 주기 도래 여부를 확인합니다. 신규 설정은 일·월·년만 허용하며, 지나간 회차를 소급 지급하지 않습니다.
           </p>
@@ -76,18 +76,18 @@ export function SalaryEligibilityPanel({
         </div>
       </div>
       <p className="mt-2 text-xs font-bold text-stock-subtle">
-        수동 지급은 자동 월급 지급이 꺼져 있을 때만 실행할 수 있습니다. 마지막 수동 실행 {lastRun ? formatBatchJobRunSummary(lastRun) : "-"}
+        수동 지급은 자동 정기 자금 지급이 꺼져 있을 때만 실행할 수 있습니다. 마지막 수동 실행 {lastRun ? formatBatchJobRunSummary(lastRun) : "-"}
       </p>
 
       {error ? (
         <p className="mt-3 rounded-md bg-admin-danger-surface px-3 py-2 text-xs font-bold text-admin-danger">
-          자동참여자 계좌 overview를 조회하지 못했습니다. 월급 정책은 표시하지만 ACTIVE 계좌 여부는 확인 필요로 남습니다.
+          자동참여자 계좌 overview를 조회하지 못했습니다. 정기 자금 정책은 표시하지만 ACTIVE 계좌 여부는 확인 필요로 남습니다.
         </p>
       ) : null}
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <SalaryMetric label="지급 가능" value={formatCount(receivableCount, "명")} tone="good" />
-        <SalaryMetric label="월급 정책 있음" value={formatCount(policyCount, "명")} tone="neutral" />
+        <SalaryMetric label="정기 자금 정책" value={formatCount(policyCount, "명")} tone="neutral" />
         <SalaryMetric label="계좌 확인 필요" value={formatCount(accountCheckCount, "명")} tone="warn" />
         <SalaryMetric label="제외" value={formatCount(excludedCount, "명")} tone="muted" />
       </div>
@@ -119,7 +119,7 @@ export function SalaryEligibilityPanel({
         </div>
       </div>
 
-      <DataTableViewport label="월급 지급 대상" tone="dark" className="mt-4">
+      <DataTableViewport label="정기 자금 지급 대상" tone="dark" className="mt-4 hidden md:block">
         <table className="min-w-[1180px] w-full border-collapse text-sm">
           <thead className="bg-white/10 text-left text-admin-muted">
             <tr>
@@ -127,7 +127,7 @@ export function SalaryEligibilityPanel({
               <th className="px-3 py-2">참여자</th>
               <th className="px-3 py-2">프로필</th>
               <th className="px-3 py-2">지급 기준</th>
-              <th className="px-3 py-2">월급/주기</th>
+              <th className="px-3 py-2">금액/주기</th>
               <th className="px-3 py-2">계좌</th>
               <th className="px-3 py-2">현재 현금</th>
               <th className="px-3 py-2">제외 사유</th>
@@ -173,6 +173,39 @@ export function SalaryEligibilityPanel({
           </tbody>
         </table>
       </DataTableViewport>
+
+      <div className="mt-4 grid gap-3 md:hidden">
+        {rows.map((row) => (
+          <article key={row.participant.userKey} className={[
+            "rounded-md border p-3",
+            row.canReceive ? "border-admin-success/25 bg-admin-success-surface/35" : "border-white/10 bg-black/20",
+          ].join(" ")}>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-black text-white">{row.participant.displayName}</p>
+                <p className="mt-0.5 break-all text-[11px] font-bold text-stock-subtle">{row.participant.userKey}</p>
+              </div>
+              <span className={[
+                "shrink-0 rounded-sm px-2 py-1 text-[11px] font-black",
+                row.canReceive ? "bg-admin-success-surface text-admin-success" : "bg-white/10 text-admin-muted",
+              ].join(" ")}>{row.canReceive ? "지급 가능" : "제외"}</span>
+            </div>
+            <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+              <SalaryMobileDetail label="프로필" value={formatAutoParticipantProfile(row.participant.profileType)} />
+              <SalaryMobileDetail label="정책 기준" value={row.recurringPolicy.sourceLabel} />
+              <SalaryMobileDetail label="금액·주기" value={formatRecurringCashPolicy(row.recurringPolicy)} />
+              <SalaryMobileDetail label="계좌" value={`${formatAccountStatus(row.accountStatus)} · ${row.overview?.accountId ?? row.participant.accountId ?? "-"}`} />
+              <SalaryMobileDetail label="현재 현금" value={row.overview ? formatWon(row.overview.availableCash) : row.participant.cashBalance == null ? "-" : formatWon(row.participant.cashBalance)} />
+              <SalaryMobileDetail label="판정" value={row.blockers.length > 0 ? row.blockers.join(" / ") : "조건 충족"} />
+            </dl>
+          </article>
+        ))}
+        {rows.length === 0 ? <p className="rounded-md border border-dashed border-white/15 bg-black/15 px-3 py-4 text-sm font-bold text-stock-subtle">등록된 자동 참여자가 없습니다.</p> : null}
+      </div>
     </section>
   );
+}
+
+function SalaryMobileDetail({ label, value }: { label: string; value: string }) {
+  return <div className="min-w-0"><dt className="text-[10px] font-bold text-admin-placeholder">{label}</dt><dd className="mt-0.5 break-words font-black leading-5 text-admin-text-strong">{value}</dd></div>;
 }

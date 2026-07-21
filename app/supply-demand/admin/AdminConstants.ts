@@ -53,7 +53,7 @@ export const BATCH_JOB_RUNTIME_LABELS: Record<string, { label: string; descripti
     description: "상장주관사 자동계정이 초기 유동성 공급 주문을 냅니다.",
   },
   "auto-participant-cash-flow": {
-    label: "월급 지급",
+    label: "정기 자금 지급",
     description: "가동 자동참여자와 ACTIVE 계좌의 지급 주기를 야간에 확인해 현금을 지급합니다.",
   },
   "portfolio-settlement": {

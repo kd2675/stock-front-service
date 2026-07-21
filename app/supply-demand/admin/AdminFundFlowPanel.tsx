@@ -34,7 +34,7 @@ export function AdminFundFlowPanel({ userKey, fundFlow }: { userKey: string; fun
         <FundFlowLine label="평가 손익" value={formatWon(fundFlow.unrealizedProfit)} />
       </div>
 
-      <DataTableViewport label="최근 현금 흐름" tone="dark" className="mt-4">
+      <DataTableViewport label="최근 현금 흐름" tone="dark" className="mt-4 hidden md:block">
         <table className="min-w-[720px] w-full border-collapse text-sm">
           <thead className="bg-white/10 text-left text-admin-muted">
             <tr>
@@ -65,6 +65,20 @@ export function AdminFundFlowPanel({ userKey, fundFlow }: { userKey: string; fun
           </tbody>
         </table>
       </DataTableViewport>
+      <div className="mt-4 grid gap-2 md:hidden">
+        {fundFlow.recentCashFlows.slice(0, 10).map((cashFlow) => (
+          <article key={cashFlow.id} className="rounded-md border border-white/10 bg-white/[0.025] p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-xs font-black text-white">{formatCashFlowReason(cashFlow.reason)}</p>
+                <p className="mt-0.5 text-[11px] font-bold text-stock-subtle">{formatDateTime(cashFlow.createdAt)} · {cashFlow.createdBy ?? "-"}</p>
+              </div>
+              <p className={cashFlow.flowType === "WITHDRAW" ? "shrink-0 text-sm font-black tabular-nums text-admin-danger" : "shrink-0 text-sm font-black tabular-nums text-admin-success"}>{cashFlow.flowType === "WITHDRAW" ? "-" : "+"}{formatWon(cashFlow.amount)}</p>
+            </div>
+          </article>
+        ))}
+        {fundFlow.recentCashFlows.length === 0 ? <p className="rounded-md border border-dashed border-white/15 px-3 py-4 text-center text-sm font-bold text-stock-subtle">현금 흐름 원장 내역이 없습니다.</p> : null}
+      </div>
     </div>
   );
 }

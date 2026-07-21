@@ -205,8 +205,9 @@ function AdminSymbolFlowTable({
   priceLabel?: string;
 }) {
   return (
-    <DataTableViewport label="종목별 자금 흐름" tone="dark" className="mt-3">
-      <table className="min-w-[980px] w-full border-collapse text-sm">
+    <>
+      <DataTableViewport label="종목별 자금 흐름" tone="dark" className="mt-3 hidden md:block">
+        <table className="min-w-[980px] w-full border-collapse text-sm">
         <thead className="bg-white/10 text-left text-admin-muted">
           <tr>
             <th className="px-3 py-2">종목</th>
@@ -247,9 +248,38 @@ function AdminSymbolFlowTable({
             </tr>
           ) : null}
         </tbody>
-      </table>
-    </DataTableViewport>
+        </table>
+      </DataTableViewport>
+      <div className="mt-3 grid gap-3 md:hidden">
+        {flows.map((flow) => (
+          <article key={flow.symbol} className="rounded-md border border-white/10 bg-black/20 p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-black text-white">{flow.name}</p>
+                <p className="mt-0.5 text-[11px] font-bold text-stock-subtle">{flow.symbol} · {formatFlowMarketStatus(flow.marketStatus)}</p>
+              </div>
+              <div className="shrink-0 text-right">
+                <p className="text-sm font-black tabular-nums text-white">{formatOptionalWon(flow.currentPrice)}</p>
+                <p className={flow.changeRate == null ? "mt-0.5 text-xs font-black text-stock-subtle" : flow.changeRate >= 0 ? "mt-0.5 text-xs font-black text-admin-danger" : "mt-0.5 text-xs font-black text-admin-accent"}>{formatOptionalSignedPercent(flow.changeRate)}</p>
+              </div>
+            </div>
+            <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+              <FlowMobileDetail label="거래대금" value={formatWon(flow.turnoverAmount)} />
+              <FlowMobileDetail label="체결" value={formatCount(flow.executionCount, "건")} />
+              <FlowMobileDetail label="대기 주문" value={formatCount(flow.openOrderCount, "건")} />
+              <FlowMobileDetail label="보유자" value={formatCount(flow.holderCount, "명")} />
+              <FlowMobileDetail label="최근 체결" value={formatDateTime(flow.lastExecutedAt)} wide />
+            </dl>
+          </article>
+        ))}
+        {flows.length === 0 ? <p className="rounded-md border border-dashed border-white/15 bg-black/15 px-3 py-5 text-center text-sm font-bold text-stock-subtle">{loading ? loadingMessage : emptyMessage}</p> : null}
+      </div>
+    </>
   );
+}
+
+function FlowMobileDetail({ label, value, wide = false }: { label: string; value: string; wide?: boolean }) {
+  return <div className={wide ? "col-span-2 min-w-0" : "min-w-0"}><dt className="text-[10px] font-bold text-admin-placeholder">{label}</dt><dd className="mt-0.5 break-words font-black tabular-nums text-admin-text-strong">{value}</dd></div>;
 }
 
 function formatOptionalWon(value: number | null | undefined) {

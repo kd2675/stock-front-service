@@ -57,7 +57,7 @@ export function AdminPageShell({
       <AdminTopBar />
       <div className="mx-auto grid max-w-[1600px] gap-6 px-4 py-5 sm:px-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:px-8 lg:py-7">
         <aside className="hidden min-w-0 border-r border-white/10 pr-5 lg:block">
-          <div className="pb-6 pr-2">
+          <div className="sticky top-28 pb-6 pr-2">
             <AdminSidebarNavigation activeSection={activeAdminSection} />
           </div>
         </aside>

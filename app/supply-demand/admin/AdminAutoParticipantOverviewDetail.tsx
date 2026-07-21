@@ -34,7 +34,31 @@ export function AutoParticipantOverviewDetail({ overview }: { overview: AutoPart
         <ProfileMiniMetric label="2시간 거래대금" value={formatWon(overview.todayGrossAmount)} tone="muted" />
         <ProfileMiniMetric label="전략" value={`${formatInteger(overview.enabledStrategyCount)} / ${formatInteger(overview.strategyCount)}`} tone="blue" />
       </div>
-      <DataTableViewport label="자동참가자 보유 종목" tone="dark" className="mt-3">
+      <div className="mt-3 grid gap-2 md:hidden">
+        {overview.holdings.map((holding) => (
+          <article key={holding.symbol} className="rounded-md border border-white/10 bg-white/[0.025] p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-black text-white">{holding.symbol}</p>
+                <p className="mt-0.5 text-[11px] font-bold text-stock-subtle">현재가 {formatWon(holding.currentPrice)}</p>
+              </div>
+              <p className={["text-sm font-black tabular-nums", holding.unrealizedProfit > 0 ? "text-admin-success" : holding.unrealizedProfit < 0 ? "text-admin-danger" : "text-white"].join(" ")}>
+                {formatWon(holding.unrealizedProfit)}
+              </p>
+            </div>
+            <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-[11px] font-bold">
+              <div><dt className="text-admin-placeholder">보유 수량</dt><dd className="mt-0.5 tabular-nums text-white">{formatNumber(holding.quantity)}주</dd></div>
+              <div><dt className="text-admin-placeholder">가용 / 예약</dt><dd className="mt-0.5 tabular-nums text-white">{formatNumber(holding.availableQuantity)} / {formatNumber(holding.reservedQuantity)}주</dd></div>
+              <div><dt className="text-admin-placeholder">평균단가</dt><dd className="mt-0.5 tabular-nums text-white">{formatWon(holding.averagePrice)}</dd></div>
+              <div><dt className="text-admin-placeholder">평가액</dt><dd className="mt-0.5 tabular-nums text-white">{formatWon(holding.marketValue)}</dd></div>
+            </dl>
+          </article>
+        ))}
+        {overview.holdings.length === 0 ? (
+          <div className="rounded-md border border-dashed border-white/15 bg-black/15 px-3 py-4 text-xs font-bold text-stock-subtle">보유 중인 종목이 없습니다.</div>
+        ) : null}
+      </div>
+      <DataTableViewport label="자동참가자 보유 종목" tone="dark" className="mt-3 hidden md:block">
         <table className="min-w-[760px] w-full border-collapse text-sm">
           <thead className="bg-white/10 text-left text-admin-muted">
             <tr>

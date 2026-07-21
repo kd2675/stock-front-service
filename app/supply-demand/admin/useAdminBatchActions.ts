@@ -67,23 +67,23 @@ export function useAdminBatchActions({
     if (runCashFlowMutation.isPending) {
       return;
     }
-    const token = await requireAdminToken("관리자 로그인 후 월급 지급 배치를 실행할 수 있습니다.");
+    const token = await requireAdminToken("관리자 로그인 후 정기 자금 지급 배치를 실행할 수 있습니다.");
     if (!token) {
       return;
     }
     const result = await runCashFlowMutation.mutateAsync({ token });
-    const cashFlowRunResult = getAdminActionData(result, "월급 지급 배치 실행에 실패했습니다.");
+    const cashFlowRunResult = getAdminActionData(result, "정기 자금 지급 배치 실행에 실패했습니다.");
     if (!cashFlowRunResult.ok) {
       setMessage(cashFlowRunResult.message);
       return;
     }
     setLatestManualCashFlowRunQueryData(queryClient, cashFlowRunResult.data);
     if (cashFlowRunResult.data.status === "QUEUED") {
-      setMessage("월급 지급 배치 실행 신호를 접수했습니다. 배치 서버가 순서대로 처리합니다.");
+      setMessage("정기 자금 지급 배치 실행 신호를 접수했습니다. 배치 서버가 순서대로 처리합니다.");
     } else if (cashFlowRunResult.data.status === "SKIPPED") {
-      setMessage(cashFlowRunResult.data.message || "월급 지급 배치가 실행되지 않았습니다.");
+      setMessage(cashFlowRunResult.data.message || "정기 자금 지급 배치가 실행되지 않았습니다.");
     } else {
-      setMessage(`월급 지급 배치를 실행했습니다. 처리 ${formatCount(cashFlowRunResult.data.processedCount, "건")}`);
+      setMessage(`정기 자금 지급 배치를 실행했습니다. 처리 ${formatCount(cashFlowRunResult.data.processedCount, "건")}`);
     }
     reloadAdminCashFlowState();
     void invalidateLatestManualCashFlowRunQuery(queryClient);

@@ -18,7 +18,7 @@ export function AutoParticipantProfileSection({ participant }: { participant: Au
       <p className="mt-1 text-xs font-bold leading-5 text-stock-subtle">{formatAutoParticipantProfileDescription(participant.profileType)}</p>
       <p className="mt-1 text-xs font-bold leading-5 text-admin-muted">{formatAutoParticipantProfileBehavior(participant.profileType)}</p>
       <div className="mt-3 grid gap-1 border-t border-white/10 pt-2 text-xs font-bold leading-5 text-stock-subtle">
-        <p>월급/현금 {formatParticipantRecurringCash(participant)}</p>
+        <p>정기 자금 {formatParticipantRecurringCash(participant)}</p>
         <p>수정 {formatDateTime(participant.updatedAt)}</p>
       </div>
     </ParticipantInfoItem>

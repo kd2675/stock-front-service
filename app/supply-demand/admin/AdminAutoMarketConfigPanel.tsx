@@ -161,7 +161,7 @@ function DistributionBiasEditor({
   onChange: (field: PressureKey, value: string) => void;
 }) {
   return (
-    <fieldset className="min-w-0 border-t border-white/10 pt-3">
+    <fieldset className="min-w-0">
       <legend className="pr-3 text-sm font-black text-white">{label}</legend>
       <p className="mb-1 mt-1 text-[11px] font-bold leading-5 text-stock-subtle">{description}</p>
       {PRESSURE_FIELDS.map((field) => (
@@ -193,7 +193,7 @@ function RegimeCountWeightEditor({
     : 0;
 
   return (
-    <fieldset className="min-w-0 border-t border-white/10 pt-3">
+    <fieldset className="min-w-0">
       <legend className="pr-3 text-sm font-black text-white">주 랜덤 일일 적용 횟수</legend>
       <div className="mb-2 mt-1 flex flex-wrap items-center justify-between gap-2">
         <p className="max-w-3xl text-[11px] font-bold leading-5 text-stock-subtle">
@@ -329,11 +329,7 @@ function AutoMarketDailyRegimeCell({ regime }: { regime?: AutoMarketDailyRegime 
         </span>
         {secondary ? <span>보조 {regime.currentModifier?.modifierWindowStartAt.slice(11, 16)}</span> : <span>보조 미생성</span>}
       </div>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <RegimePressureGroup title="주 70%" values={primary} />
-        <RegimePressureGroup title="보조 30%" values={secondaryValues} />
-        <RegimePressureGroup title="최종 적용" values={finalValues} />
-      </div>
+      <RegimePressureGroup title="주 70% + 보조 30% · 최종 적용" values={finalValues} />
     </div>
   );
 }
@@ -364,53 +360,92 @@ function ConfigEditor({
   draftSetters,
   updating,
   onSubmit,
-  onClose,
 }: {
   draft: AutoMarketConfigDraft;
   draftSetters: AutoMarketConfigDraftSetters;
   updating: boolean;
   onSubmit: () => void;
-  onClose?: () => void;
 }) {
   return (
-    <div>
-      <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[0.9fr_0.9fr_0.9fr_auto]">
+    <form
+      className="grid min-w-0 gap-4"
+      onSubmit={(event) => {
+        event.preventDefault();
+        onSubmit();
+      }}
+    >
+      <FormSection title="주문 기본" description="종목의 자동 주문 생성 여부와 주문 1건의 안전 상한을 관리합니다.">
+        <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <DarkSelect label="자동 주문 생성" value={draft.enabled ? "true" : "false"} onChange={(value) => draftSetters.setEnabled(value === "true")}>
           <option value="true">가동</option>
           <option value="false">정지</option>
         </DarkSelect>
         <DarkInput label="1회 주문 최대 수량" value={draft.maxOrderQuantity} onChange={draftSetters.setMaxOrderQuantity} placeholder="4" />
-        <DarkInput label="미체결 호가 TTL(초)" value={draft.orderTtlSeconds} onChange={draftSetters.setOrderTtlSeconds} placeholder="15" />
-        <div className="grid grid-cols-2 gap-2 self-end">
-          <button type="button" onClick={onSubmit} disabled={updating} className="min-h-11 rounded-md bg-white px-3 py-3 text-sm font-black text-admin-canvas disabled:opacity-50">
-            {updating ? "저장 중" : "저장"}
-          </button>
-          {onClose ? (
-            <button type="button" onClick={onClose} className="min-h-11 rounded-md bg-white/10 px-3 py-3 text-sm font-black text-white">닫기</button>
-          ) : null}
+        <div className="min-w-0">
+          <DarkInput label="미체결 호가 TTL(시뮬 초)" value={draft.orderTtlSeconds} onChange={draftSetters.setOrderTtlSeconds} placeholder="15" />
+          <p className="mt-1 text-[10px] font-bold leading-4 text-admin-placeholder">현실 시간이 아니라 시뮬레이션 시간 기준입니다.</p>
         </div>
       </div>
-      <div className="mt-4">
+      </FormSection>
+
+      <div className="min-w-0 rounded-md border border-white/10 bg-white/[0.025] p-4">
         <RegimeCountWeightEditor
           onChange={draftSetters.setPrimaryRegimeCountWeight}
           values={draft.primaryRegimeCountWeights}
         />
       </div>
-      <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <DistributionBiasEditor
-          description="선택된 일일 슬롯에서 생성되는 주 랜덤의 최빈 구간입니다. 실제 주문 반영 비중은 70%입니다."
-          label="주 랜덤 분포 편향"
-          onChange={draftSetters.setPrimaryDistributionBias}
-          values={draft.primaryDistributionBias}
-        />
-        <DistributionBiasEditor
-          description="시뮬레이션 30분마다 생성되는 보조 랜덤의 최빈 구간입니다. 실제 주문 반영 비중은 30%입니다."
-          label="보조 랜덤 분포 편향"
-          onChange={draftSetters.setSecondaryDistributionBias}
-          values={draft.secondaryDistributionBias}
-        />
+
+      <details className="group min-w-0 rounded-md border border-white/10 bg-white/[0.025]">
+        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 marker:hidden">
+          <span className="min-w-0">
+            <span className="block text-sm font-black text-white">분포 편향 상세 설정</span>
+            <span className="mt-0.5 block text-[11px] font-bold leading-4 text-stock-subtle">주·보조 압력의 최빈 위치를 각각 조정합니다. 결과값을 고정하는 설정은 아닙니다.</span>
+          </span>
+          <span aria-hidden="true" className="shrink-0 text-admin-accent transition-transform group-open:rotate-180">⌄</span>
+        </summary>
+        <div className="grid min-w-0 gap-6 border-t border-white/10 px-4 pb-4 pt-3 lg:grid-cols-2">
+          <DistributionBiasEditor
+            description="선택된 일일 슬롯에서 생성되는 주 랜덤의 최빈 구간입니다. 실제 주문 반영 비중은 70%입니다."
+            label="주 랜덤 분포 편향"
+            onChange={draftSetters.setPrimaryDistributionBias}
+            values={draft.primaryDistributionBias}
+          />
+          <DistributionBiasEditor
+            description="시뮬레이션 30분마다 생성되는 보조 랜덤의 최빈 구간입니다. 실제 주문 반영 비중은 30%입니다."
+            label="보조 랜덤 분포 편향"
+            onChange={draftSetters.setSecondaryDistributionBias}
+            values={draft.secondaryDistributionBias}
+          />
+        </div>
+      </details>
+
+      <div className="flex flex-col gap-2 border-t border-white/10 pt-4 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-[11px] font-bold leading-5 text-admin-placeholder">
+          저장한 설정은 다음 자동 주문 생성부터 적용됩니다. 이미 생성된 주문과 현재 랜덤값은 즉시 바뀌지 않습니다.
+        </p>
+        <button type="submit" disabled={updating} className="min-h-11 shrink-0 rounded-md bg-white px-5 py-3 text-sm font-black text-admin-canvas transition hover:bg-admin-accent-label disabled:cursor-wait disabled:opacity-50">
+          {updating ? "저장 중" : `${draft.symbol} 설정 저장`}
+        </button>
       </div>
-    </div>
+    </form>
+  );
+}
+
+function FormSection({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <fieldset className="min-w-0 rounded-md border border-white/10 bg-white/[0.025] p-4">
+      <legend className="px-1 text-sm font-black text-white">{title}</legend>
+      <p className="mb-4 mt-1 text-[11px] font-bold leading-5 text-stock-subtle">{description}</p>
+      {children}
+    </fieldset>
   );
 }
 
@@ -431,109 +466,238 @@ export function AdminAutoMarketConfigPanel({
   onRegenerateRegimeModifier,
 }: AdminAutoMarketConfigPanelProps) {
   const [historySymbol, setHistorySymbol] = useState<string | null>(null);
+  const selectedConfig = configs.find((config) => config.symbol === draft.symbol) ?? configs[0] ?? null;
 
   return (
-    <section className="admin-panel mt-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-base font-black">종목별 자동장 압력 분포</h2>
-          <p className="mt-1 max-w-3xl text-xs font-bold leading-5 text-stock-subtle">
-            각 설정값은 결과를 고정하지 않고 난수 분포가 가장 자주 모일 위치를 정합니다. 모든 생성값은 -100~100이며 주 70%, 보조 30%로 합성됩니다.
-          </p>
+    <section className="admin-panel mt-5 overflow-hidden">
+      <PanelHeader configCount={configs.length} />
+
+      {configs.length === 0 ? (
+        <div className="mt-5 rounded-md border border-white/10 bg-black/10 px-3 py-4 text-sm font-bold text-stock-subtle">
+          자동장 설정 대상 종목이 없습니다.
         </div>
-        <span className="text-xs font-bold text-admin-accent">주 일일 1~4회 · 보조 30분</span>
-      </div>
-      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto]">
-        <DarkSelect label="자동장 대상 종목" value={draft.symbol} onChange={(value) => {
-          const config = configs.find((item) => item.symbol === value);
-          if (config) {
-            onSelectDraft(config);
-            return;
-          }
-          draftSetters.setSymbol(value);
-        }}>
-          <option value="">선택</option>
-          {configs.map((config) => <option key={config.symbol} value={config.symbol}>{config.symbol}</option>)}
-        </DarkSelect>
-        <button type="button" onClick={onSubmit} disabled={updating || !draft.symbol} className="min-h-11 self-end rounded-md bg-white px-4 py-3 text-sm font-black text-admin-canvas disabled:opacity-50">
-          {updating ? "저장 중" : "현재 설정 저장"}
-        </button>
-      </div>
-      <p className="mt-2 text-xs font-bold leading-5 text-stock-subtle">
-        편향 0은 중앙값 근처가 완만하게 많고, +100은 양의 극단 근처가, -100은 음의 극단 근처가 더 자주 나오도록 분포를 기울입니다.
-      </p>
-      <AutoMarketConfigGuide />
-      <div className="mt-4 space-y-3">
-        {configs.map((config) => (
-          <article key={config.symbol} className="overflow-hidden rounded-md border border-white/10 bg-black/10">
-            <div className="grid gap-4 p-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
-              <dl className="grid min-w-0 grid-cols-2 gap-3 sm:grid-cols-4">
-                <div className="min-w-0">
-                  <dt className="text-[11px] font-bold text-admin-subtle">종목</dt>
-                  <dd className="mt-1 truncate text-sm font-black text-white">{config.symbol}</dd>
-                </div>
-                <div>
-                  <dt className="text-[11px] font-bold text-admin-subtle">자동 주문 생성</dt>
-                  <dd className="mt-1">
-                    <EnabledToggleButton enabled={config.enabled} disabled={togglingSymbol === config.symbol} onToggle={() => onToggleEnabled(config)} />
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-[11px] font-bold text-admin-subtle">1회 최대 수량</dt>
-                  <dd className="mt-1 text-sm font-black tabular-nums text-white">{config.maxOrderQuantity}주</dd>
-                </div>
-                <div>
-                  <dt className="text-[11px] font-bold text-admin-subtle">미체결 TTL</dt>
-                  <dd className="mt-1 text-sm font-black tabular-nums text-white">{config.orderTtlSeconds}초</dd>
-                </div>
-              </dl>
-              <div className="grid grid-cols-3 gap-1.5 lg:w-[300px]">
-                <button type="button" onClick={() => onSelectDraft(config)} className="min-h-9 rounded-md bg-white/10 px-2 py-2 text-xs font-black text-white">설정</button>
-                <button type="button" onClick={() => onRegenerateRegime(config)} disabled={regeneratingRegimeSymbol === config.symbol} className="min-h-9 rounded-md bg-admin-warning/20 px-2 py-2 text-xs font-black text-admin-warning-soft disabled:opacity-50">
-                  {regeneratingRegimeSymbol === config.symbol ? "생성 중" : "주 재생성"}
-                </button>
-                <button type="button" onClick={() => onRegenerateRegimeModifier(config)} disabled={!config.dailyRegime || regeneratingRegimeModifierSymbol === config.symbol} className="min-h-9 rounded-md bg-admin-accent/15 px-2 py-2 text-xs font-black text-admin-accent-label disabled:opacity-50">
-                  {regeneratingRegimeModifierSymbol === config.symbol ? "생성 중" : "보조 재생성"}
-                </button>
-              </div>
-            </div>
-            <div className="border-t border-white/[0.07] bg-white/[0.025] px-3 py-3">
-              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                <p className="text-[11px] font-black text-admin-subtle">현재 구간 압력</p>
-                <div className="flex flex-wrap items-center justify-end gap-2">
-                  <DailyRegimeApplicationBadge regime={config.dailyRegime} />
-                  <button
-                    type="button"
-                    aria-expanded={historySymbol === config.symbol}
-                    className="rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-black text-white transition hover:border-admin-accent/40 hover:text-admin-accent-label"
-                    onClick={() => setHistorySymbol((current) => current === config.symbol ? null : config.symbol)}
-                  >
-                    {historySymbol === config.symbol ? "기록 닫기" : "과거 기록"}
-                  </button>
-                </div>
-              </div>
-              <AutoMarketDailyRegimeCell regime={config.dailyRegime} />
-              {historySymbol === config.symbol ? (
-                <AdminAutoMarketRegimeHistory
-                  accessToken={accessToken}
-                  currentTradeDate={config.dailyRegime?.simulationTradeDate}
-                  symbol={config.symbol}
+      ) : (
+        <div className="mt-5 grid min-w-0 gap-5 xl:grid-cols-[280px_minmax(0,1fr)]">
+          <SymbolSelector
+            activeSymbol={selectedConfig?.symbol ?? ""}
+            configs={configs}
+            editingSymbol={editingSymbol}
+            onSelect={onSelectDraft}
+          />
+
+          <div className="min-w-0">
+            {selectedConfig ? (
+              <>
+                <CurrentRegimeSummary
+                  config={selectedConfig}
+                  historyOpen={historySymbol === selectedConfig.symbol}
+                  regeneratingRegimeModifier={regeneratingRegimeModifierSymbol === selectedConfig.symbol}
+                  regeneratingRegime={regeneratingRegimeSymbol === selectedConfig.symbol}
+                  toggling={togglingSymbol === selectedConfig.symbol}
+                  onRegenerateRegime={() => onRegenerateRegime(selectedConfig)}
+                  onRegenerateRegimeModifier={() => onRegenerateRegimeModifier(selectedConfig)}
+                  onToggleEnabled={() => onToggleEnabled(selectedConfig)}
+                  onToggleHistory={() => setHistorySymbol((current) => current === selectedConfig.symbol ? null : selectedConfig.symbol)}
                 />
-              ) : null}
-            </div>
-            {editingSymbol === config.symbol ? (
-              <div className="border-t border-white/10 bg-black/20 px-4 py-4">
-                <ConfigEditor draft={draft} draftSetters={draftSetters} onClose={() => draftSetters.setEditingSymbol(null)} onSubmit={onSubmit} updating={updating} />
-              </div>
+
+                {historySymbol === selectedConfig.symbol ? (
+                  <AdminAutoMarketRegimeHistory
+                    accessToken={accessToken}
+                    currentTradeDate={selectedConfig.dailyRegime?.simulationTradeDate}
+                    symbol={selectedConfig.symbol}
+                  />
+                ) : null}
+
+                <div className="mt-4">
+                  <ConfigEditor draft={draft} draftSetters={draftSetters} onSubmit={onSubmit} updating={updating} />
+                </div>
+              </>
             ) : null}
-          </article>
-        ))}
-        {configs.length === 0 ? (
-          <div className="rounded-md border border-white/10 bg-black/10 px-3 py-4 text-sm font-bold text-stock-subtle">
-            자동장 설정 대상 종목이 없습니다.
           </div>
-        ) : null}
+        </div>
+      )}
+
+      <AutoMarketConfigGuide />
+    </section>
+  );
+}
+
+function PanelHeader({ configCount }: { configCount: number }) {
+  return (
+    <header className="flex flex-col gap-3 border-b border-white/10 pb-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="min-w-0 max-w-4xl">
+        <h2 className="text-base font-black">종목별 자동장</h2>
+        <p className="mt-1 text-xs font-bold leading-5 text-stock-subtle">
+          종목을 선택해 현재 종합 압력과 주문 상한을 확인하고, 주·보조 랜덤 분포를 한 화면에서 관리합니다. 압력은 주 70%, 보조 30%로 합성됩니다.
+        </p>
+      </div>
+      <span className="inline-flex w-fit shrink-0 items-center rounded-md border border-admin-accent/25 bg-admin-accent-surface px-2.5 py-1.5 text-xs font-black text-admin-accent">
+        {configCount}개 종목 · 보조 30분
+      </span>
+    </header>
+  );
+}
+
+function SymbolSelector({
+  activeSymbol,
+  configs,
+  editingSymbol,
+  onSelect,
+}: {
+  activeSymbol: string;
+  configs: AutoMarketConfig[];
+  editingSymbol: string | null;
+  onSelect: (config: AutoMarketConfig) => void;
+}) {
+  return (
+    <aside aria-label="자동장 종목 선택" className="min-w-0">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <h3 className="text-xs font-black text-admin-muted">종목 선택</h3>
+        <span className="text-[11px] font-bold text-admin-placeholder">설정·압력</span>
+      </div>
+      <label className="grid min-w-0 gap-1 text-xs font-bold text-admin-muted sm:hidden">
+        관리 종목
+        <select
+          className="admin-control h-11 w-full min-w-0 px-3 text-sm font-bold outline-none"
+          value={activeSymbol}
+          onChange={(event) => {
+            const config = configs.find((item) => item.symbol === event.target.value);
+            if (config) {
+              onSelect(config);
+            }
+          }}
+        >
+          {configs.map((config) => <option key={config.symbol} value={config.symbol}>{config.symbol} · {config.enabled ? "가동" : "정지"}</option>)}
+        </select>
+      </label>
+      <div className="hidden min-w-0 gap-2 sm:grid sm:grid-cols-3 xl:grid-cols-1">
+        {configs.map((config) => {
+          const active = config.symbol === activeSymbol;
+          const finalPricePressure = currentFinalPressure(config.dailyRegime, "pricePressure");
+          return (
+            <button
+              key={config.symbol}
+              type="button"
+              aria-pressed={active}
+              onClick={() => onSelect(config)}
+              className={[
+                "group min-w-0 rounded-md border p-3 text-left transition",
+                active
+                  ? "border-admin-accent/60 bg-admin-accent-surface shadow-[inset_3px_0_0_var(--admin-accent)]"
+                  : "border-white/10 bg-black/20 hover:border-white/20 hover:bg-white/[0.055]",
+              ].join(" ")}
+            >
+              <span className="flex items-start justify-between gap-2">
+                <span className="text-sm font-black text-white">{config.symbol}</span>
+                <span className={[
+                  "shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-black",
+                  config.enabled
+                    ? "border-admin-success/25 bg-admin-success/10 text-admin-success"
+                    : "border-white/10 bg-white/[0.04] text-admin-placeholder",
+                ].join(" ")}>{config.enabled ? "가동" : "정지"}</span>
+              </span>
+              <span className="mt-3 flex items-end justify-between gap-2">
+                <span>
+                  <span className="block text-[10px] font-bold text-admin-placeholder">현재 가격 압력</span>
+                  <span className={`mt-0.5 block text-lg font-black tabular-nums ${pressureTone(finalPricePressure)}`}>{signed(finalPricePressure)}</span>
+                </span>
+                <span className="text-right text-[10px] font-bold leading-4 text-admin-placeholder">
+                  최대 {config.maxOrderQuantity.toLocaleString()}주<br />TTL {config.orderTtlSeconds}초
+                </span>
+              </span>
+              <span className="mt-3 block h-1.5 overflow-hidden rounded-full bg-white/10">
+                <span
+                  className={`block h-full rounded-full ${finalPricePressure >= 0 ? "bg-admin-success" : "bg-admin-danger"}`}
+                  style={{ width: `${Math.abs(finalPricePressure)}%` }}
+                />
+              </span>
+              {active && editingSymbol === config.symbol ? <span className="sr-only">현재 편집 중</span> : null}
+            </button>
+          );
+        })}
+      </div>
+    </aside>
+  );
+}
+
+function CurrentRegimeSummary({
+  config,
+  historyOpen,
+  regeneratingRegime,
+  regeneratingRegimeModifier,
+  toggling,
+  onRegenerateRegime,
+  onRegenerateRegimeModifier,
+  onToggleEnabled,
+  onToggleHistory,
+}: {
+  config: AutoMarketConfig;
+  historyOpen: boolean;
+  regeneratingRegime: boolean;
+  regeneratingRegimeModifier: boolean;
+  toggling: boolean;
+  onRegenerateRegime: () => void;
+  onRegenerateRegimeModifier: () => void;
+  onToggleEnabled: () => void;
+  onToggleHistory: () => void;
+}) {
+  return (
+    <section aria-labelledby="auto-market-current-regime" className="min-w-0 rounded-md border border-white/10 bg-black/20 p-4">
+      <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 id="auto-market-current-regime" className="text-lg font-black text-white">{config.symbol}</h3>
+            <DailyRegimeApplicationBadge regime={config.dailyRegime} />
+          </div>
+          <p className="mt-1 text-xs font-bold leading-5 text-stock-subtle">현재 구간에서 주문 생성에 적용되는 종합 압력입니다.</p>
+        </div>
+        <div className="w-fit">
+          <EnabledToggleButton enabled={config.enabled} disabled={toggling} onToggle={onToggleEnabled} />
+        </div>
+      </div>
+
+      <div className="mt-4 rounded-md border border-white/[0.07] bg-white/[0.025] p-3">
+        <AutoMarketDailyRegimeCell regime={config.dailyRegime} />
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <ActionButton label={regeneratingRegime ? "생성 중" : "주 랜덤 재생성"} tone="warning" disabled={regeneratingRegime} onClick={onRegenerateRegime} />
+        <ActionButton label={regeneratingRegimeModifier ? "생성 중" : "보조 랜덤 재생성"} tone="accent" disabled={!config.dailyRegime || regeneratingRegimeModifier} onClick={onRegenerateRegimeModifier} />
+        <ActionButton label={historyOpen ? "과거 기록 닫기" : "과거 기록 보기"} disabled={false} onClick={onToggleHistory} />
+        <div className="flex min-h-10 items-center justify-center rounded-md border border-white/[0.07] bg-white/[0.025] px-2 text-center text-[10px] font-bold leading-4 text-admin-placeholder">
+          재생성은 현재값만 변경<br className="hidden sm:block" /> 저장 설정은 유지
+        </div>
       </div>
     </section>
   );
+}
+
+function ActionButton({
+  label,
+  tone = "neutral",
+  disabled,
+  onClick,
+}: {
+  label: string;
+  tone?: "neutral" | "warning" | "accent";
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  const toneClassName = tone === "warning"
+    ? "bg-admin-warning/15 text-admin-warning-soft"
+    : tone === "accent"
+      ? "bg-admin-accent/15 text-admin-accent-label"
+      : "bg-white/10 text-white";
+  return (
+    <button type="button" onClick={onClick} disabled={disabled} className={`min-h-10 rounded-md px-2 py-2 text-xs font-black transition disabled:cursor-wait disabled:opacity-40 ${toneClassName}`}>
+      {label}
+    </button>
+  );
+}
+
+function currentFinalPressure(regime: AutoMarketDailyRegime | null | undefined, key: PressureKey) {
+  if (!regime) {
+    return 0;
+  }
+  return calculateFinal(regime[key], regime.currentModifier?.[key] ?? 0);
 }

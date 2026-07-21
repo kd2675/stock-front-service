@@ -1,4 +1,3 @@
-import DataTableViewport from "@/app/components/DataTableViewport";
 import { parsePositiveIntegerInput } from "@/app/lib/numberParsing";
 import { formatAutoStrategyActivityLevel, formatCount } from "@/app/supply-demand/admin/AdminFormatters";
 import { DarkInput, DarkSelect, EnabledToggleButton } from "@/app/supply-demand/admin/AdminFormControls";
@@ -94,62 +93,67 @@ export function AdminAutoParticipantStrategyPanel({
           {savingStrategy ? "저장 중" : editingStrategyKey === selectedStrategyKey ? "활동 강도 저장" : "활동 강도 추가"}
         </button>
       </div>
-      <div className="mt-3 grid gap-2 text-xs font-bold leading-5 text-stock-subtle lg:grid-cols-3">
-        <div className="rounded-md bg-white/[0.04] px-3 py-2.5">
-          <span className="font-black text-white">주문 건수</span>
-          <p className="mt-0.5">1-3은 보통 1건, 4-7은 2건, 8-10은 3건에서 시작하며 프로필과 유동성 압력에 따라 0-8건으로 최종 조정됩니다.</p>
+      <details className="group mt-3 rounded-md border border-white/[0.07] bg-white/[0.025]">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 marker:hidden">
+          <span className="text-xs font-black text-admin-muted">활동 강도 계산 기준</span>
+          <span aria-hidden="true" className="text-admin-accent transition-transform group-open:rotate-180">⌄</span>
+        </summary>
+        <div className="grid gap-2 border-t border-white/[0.07] p-3 text-xs font-bold leading-5 text-stock-subtle lg:grid-cols-3">
+          <div className="rounded-md bg-white/[0.04] px-3 py-2.5">
+            <span className="font-black text-white">주문 건수</span>
+            <p className="mt-0.5">1-3은 보통 1건, 4-7은 2건, 8-10은 3건에서 시작하며 프로필과 유동성 압력에 따라 0-8건으로 최종 조정됩니다.</p>
+          </div>
+          <div className="rounded-md bg-white/[0.04] px-3 py-2.5">
+            <span className="font-black text-white">가격 반응</span>
+            <p className="mt-0.5">활동 강도 1은 가격 압력의 10%, 10은 100%를 기본 반영하고 여기에 프로필별 가격 민감도를 곱합니다. 강도가 높아도 압력이 0이면 방향을 만들지 않습니다.</p>
+          </div>
+          <div className="rounded-md bg-white/[0.04] px-3 py-2.5">
+            <span className="font-black text-white">기본값·프로필 보정</span>
+            <p className="mt-0.5">설정이 없으면 5입니다. 보고서 점수는 활동 강도를 바꾸지 않고 별도 방향 압력으로 적용되며, 프로필별 가격 민감도·주문·공격성 배율과 매 주문 노이즈를 각각 적용합니다.</p>
+          </div>
         </div>
-        <div className="rounded-md bg-white/[0.04] px-3 py-2.5">
-          <span className="font-black text-white">가격 반응</span>
-          <p className="mt-0.5">활동 강도 1은 가격 압력의 10%, 10은 100%를 기본 반영하고 여기에 프로필별 가격 민감도를 곱합니다. 강도가 높아도 압력이 0이면 방향을 만들지 않습니다.</p>
-        </div>
-        <div className="rounded-md bg-white/[0.04] px-3 py-2.5">
-          <span className="font-black text-white">기본값·프로필 보정</span>
-          <p className="mt-0.5">설정이 없으면 5입니다. 보고서 점수는 활동 강도를 바꾸지 않고 별도 방향 압력으로 적용되며, 프로필별 가격 민감도·주문·공격성 배율과 매 주문 노이즈를 각각 적용합니다.</p>
-        </div>
+      </details>
+      <div className="mt-3 grid min-w-0 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+        {selectedSymbolConfigs.map((config) => {
+          const rowKey = `${config.userKey}:${config.symbol}`;
+          const selected = editingStrategyKey === rowKey;
+          return (
+            <article key={rowKey} className={[
+              "min-w-0 rounded-md border p-3",
+              selected ? "border-admin-accent/45 bg-admin-accent-surface/50" : "border-white/10 bg-white/[0.025]",
+            ].join(" ")}>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-black text-white">{config.symbol}</p>
+                  <p className="mt-0.5 text-[11px] font-bold text-stock-subtle">{formatAutoStrategyActivityLevel(config.intensity)}</p>
+                </div>
+                <EnabledToggleButton
+                  enabled={config.enabled}
+                  disabled={togglingStrategyKey === rowKey}
+                  onToggle={() => onToggleStrategyEnabled(config)}
+                />
+              </div>
+              <div className="mt-3 flex items-end justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-bold text-admin-placeholder">활동 강도</p>
+                  <p className="mt-0.5 text-lg font-black tabular-nums text-admin-accent">{config.intensity}<span className="text-xs text-admin-placeholder">/10</span></p>
+                </div>
+                <button type="button" onClick={() => onSelectStrategyDraft(config)} className="min-h-9 rounded-md bg-white/10 px-3 py-2 text-xs font-black text-white transition hover:bg-white/15">
+                  값 불러오기
+                </button>
+              </div>
+              <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
+                <div className="h-full rounded-full bg-admin-accent" style={{ width: `${Math.min(Math.max(config.intensity, 0), 10) * 10}%` }} />
+              </div>
+            </article>
+          );
+        })}
+        {selectedSymbolConfigs.length === 0 ? (
+          <div className="rounded-md border border-dashed border-white/15 bg-black/15 px-3 py-4 text-xs font-bold leading-5 text-stock-subtle sm:col-span-2 xl:col-span-3">
+            이 참여자에게 지정된 종목별 주문 활동 강도가 없습니다. 종목을 선택해 추가하세요.
+          </div>
+        ) : null}
       </div>
-      <DataTableViewport label="참여자 종목별 전략" tone="dark" className="mt-3">
-        <table className="min-w-[640px] w-full border-collapse text-sm">
-          <thead className="bg-white/10 text-left text-admin-muted">
-            <tr>
-              <th className="px-3 py-2">종목</th>
-              <th className="px-3 py-2">상태</th>
-              <th className="px-3 py-2">활동 수준</th>
-              <th className="px-3 py-2">활동 강도</th>
-              <th className="px-3 py-2">수정</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-white/10">
-            {selectedSymbolConfigs.map((config) => {
-              const rowKey = `${config.userKey}:${config.symbol}`;
-              return (
-                <tr key={rowKey} className={editingStrategyKey === rowKey ? "bg-[#10233a]/50" : undefined}>
-                  <td className="px-3 py-2 font-black">{config.symbol}</td>
-                  <td className="px-3 py-2">
-                    <EnabledToggleButton
-                      enabled={config.enabled}
-                      disabled={togglingStrategyKey === rowKey}
-                      onToggle={() => onToggleStrategyEnabled(config)}
-                    />
-                  </td>
-                  <td className="px-3 py-2">{formatAutoStrategyActivityLevel(config.intensity)}</td>
-                  <td className="px-3 py-2 tabular-nums">{config.intensity}/10</td>
-                  <td className="px-3 py-2">
-                    <button type="button" onClick={() => onSelectStrategyDraft(config)} className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-white">
-                      값 불러오기
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-            {selectedSymbolConfigs.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-3 py-4 text-stock-subtle">이 참여자에게 지정된 종목별 주문 활동 강도가 없습니다. 종목을 선택해 추가하세요.</td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </DataTableViewport>
     </div>
   );
 }

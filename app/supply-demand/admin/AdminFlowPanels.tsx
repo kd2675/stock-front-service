@@ -1,6 +1,7 @@
 import { ADMIN_SYMBOL_FLOW_PREVIEW_SIZE } from "@/app/supply-demand/admin/AdminConstants";
 import { formatDateTime } from "@/app/supply-demand/admin/AdminFormatters";
 import { AdminFlowFundSummaryPanel } from "@/app/supply-demand/admin/AdminFlowFundSummaryPanel";
+import { AdminInvestorFlowPanel } from "@/app/supply-demand/admin/AdminInvestorFlowPanel";
 import { AdminOrderCorporateFlowPanel } from "@/app/supply-demand/admin/AdminOrderCorporateFlowPanel";
 import { AdminRecentCashFlowPreviewPanel } from "@/app/supply-demand/admin/AdminRecentCashFlowPreviewPanel";
 import { AdminSymbolFlowTablePanel } from "@/app/supply-demand/admin/AdminSymbolFlowTablePanel";
@@ -69,17 +70,22 @@ export function AdminFlowOverviewPanel({
         </div>
       </div>
 
-      <AdminFlowFundSummaryPanel
-        fundFlow={fundFlow}
-        allFundFlow={allFundFlow}
-        loading={loadingFundFlow}
-        loadingAll={loadingAllFundFlow}
-        error={fundFlowError}
-        allError={allFundFlowError}
-        onLoadAll={onLoadAllFundFlow}
-        onLoadTotalAssetHistory={onLoadTotalAssetHistory}
-      />
-      <AdminOrderCorporateFlowPanel orderFlow={orderFlow} corporateActionFlow={corporateActionFlow} />
+      <div>
+        <AdminFlowFundSummaryPanel
+          fundFlow={fundFlow}
+          allFundFlow={allFundFlow}
+          loading={loadingFundFlow}
+          loadingAll={loadingAllFundFlow}
+          error={fundFlowError}
+          allError={allFundFlowError}
+          onLoadAll={onLoadAllFundFlow}
+          onLoadTotalAssetHistory={onLoadTotalAssetHistory}
+        />
+      </div>
+      <AdminInvestorFlowPanel investorFlow={overview?.investorFlow} />
+      <div>
+        <AdminOrderCorporateFlowPanel orderFlow={orderFlow} corporateActionFlow={corporateActionFlow} />
+      </div>
 
       <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,0.8fr)]">
         <AdminSymbolFlowTablePanel

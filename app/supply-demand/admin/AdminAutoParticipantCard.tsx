@@ -109,7 +109,7 @@ function AutoParticipantCardHeader({
       <div className="flex flex-wrap items-center gap-2">
         <EnabledToggleButton enabled={participant.enabled} disabled={toggling} onToggle={() => onToggleParticipant(participant)} />
         <button type="button" onClick={() => onSelectParticipant(participant)} className="min-h-9 rounded-md bg-white/10 px-3 py-1.5 text-xs font-black text-white">
-          수정
+          선택·수정
         </button>
         <button
           type="button"
