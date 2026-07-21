@@ -5,7 +5,7 @@ import { AdminInvestorFlowPanel } from "@/app/supply-demand/admin/AdminInvestorF
 import { AdminOrderCorporateFlowPanel } from "@/app/supply-demand/admin/AdminOrderCorporateFlowPanel";
 import { AdminRecentCashFlowPreviewPanel } from "@/app/supply-demand/admin/AdminRecentCashFlowPreviewPanel";
 import { AdminSymbolFlowTablePanel } from "@/app/supply-demand/admin/AdminSymbolFlowTablePanel";
-import type { AdminFlowOverview, AdminFundFlowSummary, AdminSymbolFlowList, AdminTotalAssetHistoryPage } from "@/app/types/stock";
+import type { AdminFlowOverview, AdminFundFlowSummary, AdminInvestorFlowHistory, AdminInvestorFlowSummary, AdminSymbolFlowList, AdminTotalAssetHistoryPage } from "@/app/types/stock";
 
 export function AdminFlowOverviewPanel({
   overview,
@@ -15,10 +15,17 @@ export function AdminFlowOverviewPanel({
   loadingAllFundFlow,
   fundFlowError,
   allFundFlowError,
+  investorFlow,
+  investorFlowError,
+  investorFlowHistory,
+  investorFlowHistoryError,
+  investorFlowHistoryLoading,
+  investorFlowRefreshing,
   symbolFlowList,
   loadingSymbolFlows,
   onLoadAllFundFlow,
   onLoadTotalAssetHistory,
+  onLoadInvestorFlowHistory,
   onLoadWeeklySymbolFlows,
   onRefresh,
 }: {
@@ -29,10 +36,17 @@ export function AdminFlowOverviewPanel({
   loadingAllFundFlow: boolean;
   fundFlowError: boolean;
   allFundFlowError: boolean;
+  investorFlow: AdminInvestorFlowSummary | null;
+  investorFlowError: boolean;
+  investorFlowHistory: AdminInvestorFlowHistory | null;
+  investorFlowHistoryError: boolean;
+  investorFlowHistoryLoading: boolean;
+  investorFlowRefreshing: boolean;
   symbolFlowList: AdminSymbolFlowList;
   loadingSymbolFlows: boolean;
   onLoadAllFundFlow: () => void;
   onLoadTotalAssetHistory: (page: number) => Promise<AdminTotalAssetHistoryPage | null>;
+  onLoadInvestorFlowHistory: () => void;
   onLoadWeeklySymbolFlows: (dayOffset: number) => Promise<AdminSymbolFlowList | null>;
   onRefresh: () => void;
 }) {
@@ -82,7 +96,15 @@ export function AdminFlowOverviewPanel({
           onLoadTotalAssetHistory={onLoadTotalAssetHistory}
         />
       </div>
-      <AdminInvestorFlowPanel investorFlow={overview?.investorFlow} />
+      <AdminInvestorFlowPanel
+        error={investorFlowError}
+        history={investorFlowHistory}
+        historyError={investorFlowHistoryError}
+        historyLoading={investorFlowHistoryLoading}
+        investorFlow={investorFlow}
+        refreshing={investorFlowRefreshing}
+        onLoadHistory={onLoadInvestorFlowHistory}
+      />
       <div>
         <AdminOrderCorporateFlowPanel orderFlow={orderFlow} corporateActionFlow={corporateActionFlow} />
       </div>

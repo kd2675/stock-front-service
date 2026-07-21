@@ -106,9 +106,9 @@ export function formatCorporateActionStatus(status: CorporateActionStatus) {
 export function formatFlowCategory(category: InstrumentInvestorCategoryFlow["category"]) {
   switch (category) {
     case "MANUAL_PARTICIPANT":
-      return "일반 참가자";
+      return "유저";
     case "AUTO_PARTICIPANT":
-      return "자동 참가자";
+      return "자동 참여자";
     case "LISTING_UNDERWRITER":
       return "상장주관사";
   }

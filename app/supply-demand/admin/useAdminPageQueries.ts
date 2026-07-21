@@ -4,6 +4,8 @@ import {
   adminCashFlowsQueryOptions,
   adminFlowOverviewQueryOptions,
   adminFundFlowSummaryQueryOptions,
+  adminInvestorFlowHistoryQueryOptions,
+  adminInvestorFlowSummaryQueryOptions,
   adminUserFundFlowQueryOptions,
   autoParticipantsQueryOptions,
   autoParticipantProfileOverviewsQueryOptions,
@@ -125,6 +127,14 @@ export function useAdminPageQueries({
     symbolFlowScope: "RECENT_SIMULATION_DAY",
     symbolFlowLimit: ADMIN_SYMBOL_FLOW_PREVIEW_SIZE,
   }));
+  const adminInvestorFlowSummaryQuery = useQuery(adminInvestorFlowSummaryQueryOptions(accessToken, {
+    enabled: queryFlags.shouldUseAdminFlowOverview,
+    refetchIntervalMs: ADMIN_LIVE_SUMMARY_REFETCH_MS,
+  }));
+  const adminInvestorFlowHistoryQuery = useQuery(adminInvestorFlowHistoryQueryOptions(accessToken, {
+    days: 7,
+    enabled: false,
+  }));
   const adminCashFlowPageQuery = useQuery(adminCashFlowsQueryOptions(accessToken, adminCashFlowPageIndex, ADMIN_CASH_FLOW_PAGE_SIZE, {
     enabled: isAdminAllowed && queryFlags.isCashFlowLedgerSection,
   }));
@@ -188,6 +198,8 @@ export function useAdminPageQueries({
     adminAllFundFlowSummaryQuery,
     adminFlowOverviewQuery,
     adminFundFlowSummaryQuery,
+    adminInvestorFlowHistoryQuery,
+    adminInvestorFlowSummaryQuery,
     autoMarketDetailsQuery,
     autoParticipantsQuery,
     autoParticipantProfileOverviewsQuery,

@@ -6,6 +6,8 @@ import type { AdminSection } from "@/app/supply-demand/admin/AdminNavigationConf
 import type {
   AdminFlowOverview,
   AdminFundFlowSummary,
+  AdminInvestorFlowHistory,
+  AdminInvestorFlowSummary,
   AdminSymbolFlowList,
   AdminTotalAssetHistoryPage,
   AutoMarketStatus,
@@ -30,10 +32,17 @@ type AdminMarketSectionProps = {
   loadingAllFundFlow: boolean;
   fundFlowError: boolean;
   allFundFlowError: boolean;
+  investorFlow: AdminInvestorFlowSummary | null;
+  investorFlowError: boolean;
+  investorFlowHistory: AdminInvestorFlowHistory | null;
+  investorFlowHistoryError: boolean;
+  investorFlowHistoryLoading: boolean;
+  investorFlowRefreshing: boolean;
   symbolFlowList: AdminSymbolFlowList;
   loadingSymbolFlows: boolean;
   onLoadAllFundFlow: () => void;
   onLoadTotalAssetHistory: (page: number) => Promise<AdminTotalAssetHistoryPage | null>;
+  onLoadInvestorFlowHistory: () => void;
   onLoadWeeklySymbolFlows: (dayOffset: number) => Promise<AdminSymbolFlowList | null>;
   onRefreshFlow: () => void;
   instruments: OrderBookInstrument[];
@@ -60,10 +69,17 @@ export function AdminMarketSection({
   loadingAllFundFlow,
   fundFlowError,
   allFundFlowError,
+  investorFlow,
+  investorFlowError,
+  investorFlowHistory,
+  investorFlowHistoryError,
+  investorFlowHistoryLoading,
+  investorFlowRefreshing,
   symbolFlowList,
   loadingSymbolFlows,
   onLoadAllFundFlow,
   onLoadTotalAssetHistory,
+  onLoadInvestorFlowHistory,
   onLoadWeeklySymbolFlows,
   onRefreshFlow,
   instruments,
@@ -99,10 +115,17 @@ export function AdminMarketSection({
         loadingAllFundFlow={loadingAllFundFlow}
         fundFlowError={fundFlowError}
         allFundFlowError={allFundFlowError}
+        investorFlow={investorFlow}
+        investorFlowError={investorFlowError}
+        investorFlowHistory={investorFlowHistory}
+        investorFlowHistoryError={investorFlowHistoryError}
+        investorFlowHistoryLoading={investorFlowHistoryLoading}
+        investorFlowRefreshing={investorFlowRefreshing}
         symbolFlowList={symbolFlowList}
         loadingSymbolFlows={loadingSymbolFlows}
         onLoadAllFundFlow={onLoadAllFundFlow}
         onLoadTotalAssetHistory={onLoadTotalAssetHistory}
+        onLoadInvestorFlowHistory={onLoadInvestorFlowHistory}
         onLoadWeeklySymbolFlows={onLoadWeeklySymbolFlows}
         onRefresh={onRefreshFlow}
       />

@@ -7,6 +7,8 @@ import type { SimulationClockJumpAction } from "@/app/types/stock";
 
 const SIMULATION_CLOCK_ACTION_MESSAGES: Record<SimulationClockJumpAction, string> = {
   NEXT_MARKET_OPEN: "시계를 다음 장 06:00으로 이동했습니다. 개장 동기화 상태를 다시 확인합니다.",
+  NEXT_AUTO_MARKET_PREPARATION_START: "시계를 다음 일자 05:30으로 이동했습니다. 자동장 준비와 개장 검증을 시작합니다.",
+  NEXT_PREOPEN_TRANSFORM_START: "시계를 다음 일자 04:30으로 이동했습니다. 증권 변환과 시장 데이터 준비를 시작합니다.",
   NEXT_SIMULATION_DAY_START: "시계를 다음 일자 00:00으로 이동했습니다. 야간 후처리는 coordinator 단계에 따라 진행됩니다.",
   TODAY_MARKET_CLOSE: "시계를 오늘 18:00 경계로 이동했습니다. EOD coordinator가 시장 차단과 원장 동결을 이어서 처리합니다.",
 };

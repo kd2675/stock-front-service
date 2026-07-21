@@ -7,6 +7,8 @@ import {
   getAdminCashFlows,
   getAdminFlowOverview,
   getAdminFundFlowSummary,
+  getAdminInvestorFlowHistory,
+  getAdminInvestorFlowSummary,
   getAdminSymbolFlows,
   getAdminUserFundFlow,
   getAutoMarketRegimeHistory,
@@ -92,6 +94,39 @@ export function adminFlowOverviewQueryOptions(
       symbolFlowScope,
     }),
     fallbackMessage: "전체 흐름을 조회하지 못했습니다.",
+    enabled: options.enabled,
+  });
+}
+
+export function adminInvestorFlowSummaryQueryOptions(
+  token: string | null,
+  options: {
+    enabled?: boolean;
+    refetchIntervalMs?: number | false;
+  } = {},
+) {
+  return adminAuthenticatedQueryOptions(token, {
+    queryKey: stockKeys.adminInvestorFlowSummary(),
+    request: (nextToken) => getAdminInvestorFlowSummary(nextToken),
+    fallbackMessage: "당일 참여자 체결 흐름을 조회하지 못했습니다.",
+    enabled: options.enabled,
+    refetchInterval: options.refetchIntervalMs ?? false,
+    refetchIntervalInBackground: false,
+  });
+}
+
+export function adminInvestorFlowHistoryQueryOptions(
+  token: string | null,
+  options: {
+    days?: number;
+    enabled?: boolean;
+  } = {},
+) {
+  const days = options.days ?? 7;
+  return adminAuthenticatedQueryOptions(token, {
+    queryKey: stockKeys.adminInvestorFlowHistory(days),
+    request: (nextToken) => getAdminInvestorFlowHistory(nextToken, days),
+    fallbackMessage: "최근 7일 참여자 체결 흐름을 조회하지 못했습니다.",
     enabled: options.enabled,
   });
 }

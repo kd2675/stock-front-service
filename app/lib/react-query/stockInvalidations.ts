@@ -52,6 +52,8 @@ async function invalidateAdminFlowImpactedQueries(
   await invalidateQueryGroup(queryClient, [
     ...queryKeys,
     stockKeys.adminFlowOverviewRoot(),
+    stockKeys.adminInvestorFlowHistoryRoot(),
+    stockKeys.adminInvestorFlowSummary(),
     ...(options.includeFundFlowSummary ? [stockKeys.adminFundFlowSummaryRoot()] : []),
   ]);
 }
@@ -200,6 +202,8 @@ export async function invalidateSimulationClockQueries(queryClient: QueryClient)
     stockKeys.orderBookMarketStatusRoot(),
     stockKeys.adminFlowOverviewRoot(),
     stockKeys.adminFundFlowSummaryRoot(),
+    stockKeys.adminInvestorFlowHistoryRoot(),
+    stockKeys.adminInvestorFlowSummary(),
   ]);
 }
 

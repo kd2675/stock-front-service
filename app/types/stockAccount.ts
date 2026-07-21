@@ -194,10 +194,13 @@ export type AdminCorporateActionFlowSummary = {
   todayCreatedCount: number;
 };
 
-export type AdminInvestorCategory = "MANUAL_PARTICIPANT" | "AUTO_PARTICIPANT" | "LISTING_UNDERWRITER";
+export type AdminParticipantCategory =
+  | "MANUAL_PARTICIPANT"
+  | "AUTO_PARTICIPANT"
+  | "LISTING_UNDERWRITER";
 
-export type AdminInvestorCategoryFlow = {
-  category: AdminInvestorCategory;
+export type AdminParticipantCategoryFlow = {
+  category: AdminParticipantCategory;
   buyQuantity: number;
   sellQuantity: number;
   netQuantity: number;
@@ -215,8 +218,14 @@ export type AdminInvestorFlowSummary = {
   totalBuyQuantity: number;
   totalSellQuantity: number;
   totalParticipationQuantity: number;
-  categories: AdminInvestorCategoryFlow[];
+  categories: AdminParticipantCategoryFlow[];
   sourceUpdatedAt?: string | null;
+};
+
+export type AdminInvestorFlowHistory = {
+  rangeStart: string;
+  rangeEnd: string;
+  dailyFlows: AdminInvestorFlowSummary[];
 };
 
 export type AdminSymbolFlow = {

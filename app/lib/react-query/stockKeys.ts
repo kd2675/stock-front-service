@@ -27,6 +27,9 @@ export const stockKeys = {
     options?.fundFlowScope ?? "RECENT_SIMULATION_DAY",
     options?.symbolFlowScope ?? "RECENT_SIMULATION_DAY",
   ] as const,
+  adminInvestorFlowSummary: () => [...stockKeys.market(), "admin", "investor-flow-summary"] as const,
+  adminInvestorFlowHistoryRoot: () => [...stockKeys.market(), "admin", "investor-flow-history"] as const,
+  adminInvestorFlowHistory: (days = 7) => [...stockKeys.adminInvestorFlowHistoryRoot(), days] as const,
   adminSymbolFlowsRoot: () => [...stockKeys.market(), "admin", "symbol-flows"] as const,
   adminSymbolFlows: (options?: { limit?: number; scope?: AdminFundFlowScope; includeDailyCumulative?: boolean; dailyCumulativeDays?: number; dailyCumulativeDayOffset?: number }) => [
     ...stockKeys.adminSymbolFlowsRoot(),

@@ -30,16 +30,16 @@ export function InstrumentTradingActivityReport({ report }: { report: Instrument
 export function InstrumentInvestorFlowReport({ report }: { report: InstrumentMarketReport }) {
   const flow = report.analytics.investorFlow;
   return (
-    <ReportSection eyebrow="PARTICIPANT FLOW" title="참가자 유형별 수급">
+    <ReportSection eyebrow="PARTICIPANT FLOW" title="참여자별 수급">
       <div className="grid gap-4 xl:grid-cols-3">
         {flow.windows.map((window) => <FlowWindowCard key={window.window} window={window} />)}
       </div>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <ActivityMetric label="자동 참가자 거래 비중" value={`${formatNumber(flow.autoParticipantExecutionShareRateLatestTradingDay)}%`} detail="최근 완료 거래일 양방향 체결금액" />
+        <ActivityMetric label="자동 참여자 거래 비중" value={`${formatNumber(flow.autoParticipantExecutionShareRateLatestTradingDay)}%`} detail="최근 완료 거래일 양방향 체결금액" />
         <ActivityMetric label="최대 계좌 거래 집중도" value={`${formatNumber(flow.topAccountExecutionShareRate20Days)}%`} detail="최근 20거래일 계좌별 체결금액" />
       </div>
       <p className="mt-3 text-xs font-bold leading-5 text-stock-subtle">
-        순매수 수량은 매수-매도, 순현금흐름은 매도 유입-매수 유출입니다. 이 분류는 실제 개인·외국인·기관 분류가 아니라 모의시장의 일반 참가자·자동 참가자·상장주관사 계정 유형입니다.
+        순매수 수량은 매수-매도, 순현금흐름은 매도 유입-매수 유출입니다. 실물시장 투자자 분류가 아니라 모의시장의 유저·자동 참여자·상장주관사 계정 역할을 기준으로 집계합니다.
       </p>
     </ReportSection>
   );
