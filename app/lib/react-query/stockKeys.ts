@@ -106,6 +106,7 @@ export const stockKeys = {
     options?.limit ?? 100,
   ] as const,
   corporateActions: (symbol: string) => [...stockKeys.orderBookInstruments(), symbol, "corporate-actions"] as const,
+  cashDividendGuidance: (symbol: string) => [...stockKeys.orderBookInstruments(), symbol, "cash-dividend-guidance"] as const,
   instrumentReports: (symbol: string) => [...stockKeys.orderBookInstruments(), symbol, "reports"] as const,
   account: () => [...stockKeys.all, "account"] as const,
   accountStatus: () => [...stockKeys.account(), "status"] as const,

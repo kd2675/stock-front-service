@@ -1,5 +1,6 @@
 import {
   getAutoMarketStatus,
+  getCashDividendGuidance,
   getCorporateActionFeed,
   getCorporateActions,
   getInstrumentReports,
@@ -26,6 +27,7 @@ import {
   type StockQueryOptionsConfig,
 } from "@/app/lib/react-query/stockQueryCore";
 import type {
+  CashDividendGuidance,
   CorporateAction,
   InstrumentReport,
   InstrumentMarketReport,
@@ -270,6 +272,17 @@ export function corporateActionsQueryOptions(symbol: string, options: MarketQuer
     request: getCorporateActions,
     fallbackMessage: "주식 이벤트를 조회하지 못했습니다.",
     refetchInterval: options.refetchIntervalMs ?? 30_000,
+    symbol,
+  });
+}
+
+export function cashDividendGuidanceQueryOptions(symbol: string, options: MarketQueryToggleOptions = {}) {
+  return symbolMarketQueryOptions<CashDividendGuidance>({
+    enabled: options.enabled,
+    queryKey: stockKeys.cashDividendGuidance(symbol),
+    request: getCashDividendGuidance,
+    fallbackMessage: "현금배당 권유 기준을 조회하지 못했습니다.",
+    refetchInterval: options.refetchIntervalMs ?? false,
     symbol,
   });
 }

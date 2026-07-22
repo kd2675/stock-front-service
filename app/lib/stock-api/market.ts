@@ -6,7 +6,7 @@ import {
   authenticatedPostJson,
   toQuery,
 } from "@/app/lib/stock-api/core";
-import type { AutoMarketStatus, CapitalIncreaseOfferingType, CorporateAction, CorporateActionEntitlement, CorporateActionType, Instrument, InstrumentMarketReport, InstrumentReport, ListingAutoOperationMode, ListingAutoPosition, ListingAutoStrategyProfile, MarketSessionStatus, MarketType, OrderBook, OrderBookCandle, OrderBookCandleInterval, OrderBookInstrument, OrderBookMarketStatus, OrderBookRecentExecution, OrderBookTradeSummary, Price, PriceTick, Ranking, SimulationClock, SimulationClockJumpAction, SymbolMarketConfig } from "@/app/types/stock";
+import type { AutoMarketStatus, CapitalIncreaseOfferingType, CashDividendGuidance, CorporateAction, CorporateActionEntitlement, CorporateActionType, Instrument, InstrumentMarketReport, InstrumentReport, ListingAutoOperationMode, ListingAutoPosition, ListingAutoStrategyProfile, MarketSessionStatus, MarketType, OrderBook, OrderBookCandle, OrderBookCandleInterval, OrderBookInstrument, OrderBookMarketStatus, OrderBookRecentExecution, OrderBookTradeSummary, Price, PriceTick, Ranking, SimulationClock, SimulationClockJumpAction, SymbolMarketConfig } from "@/app/types/stock";
 
 export type StockOrderBookInstrumentCreatePayload = {
   symbol: string;
@@ -129,6 +129,10 @@ export function applyCorporateAction(
 
 export function getCorporateActions(symbol: string) {
   return getJson<CorporateAction[]>(`/api/stock/v1/markets/order-book-instruments/${encodeURIComponent(symbol)}/corporate-actions`);
+}
+
+export function getCashDividendGuidance(symbol: string) {
+  return getJson<CashDividendGuidance>(`/api/stock/v1/markets/order-book-instruments/${encodeURIComponent(symbol)}/cash-dividend-guidance`);
 }
 
 export function getCorporateActionFeed(options: StockCorporateActionFeedOptions = {}) {

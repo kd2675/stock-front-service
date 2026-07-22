@@ -1,11 +1,17 @@
+import { AdminCashDividendGuidance } from "@/app/supply-demand/admin/AdminCashDividendGuidance";
 import { DarkDateInput, DarkInput, DarkSelect } from "@/app/supply-demand/admin/AdminFormControls";
 import type { StockEventDraft, StockEventDraftSetters } from "@/app/supply-demand/admin/AdminStockEventTypes";
+import type { CashDividendGuidance } from "@/app/types/stock";
 
 type AdminCorporateActionFormPanelProps = {
   applyingAction: boolean;
   draft: StockEventDraft;
   draftSetters: StockEventDraftSetters;
   currentSimulationDate?: string;
+  cashDividendGuidance?: CashDividendGuidance;
+  cashDividendGuidanceLoading: boolean;
+  cashDividendGuidanceErrorMessage: string | null;
+  onRetryCashDividendGuidance: () => void;
   onSubmit: () => void;
 };
 
@@ -14,6 +20,10 @@ export function AdminCorporateActionFormPanel({
   draft,
   draftSetters,
   currentSimulationDate,
+  cashDividendGuidance,
+  cashDividendGuidanceLoading,
+  cashDividendGuidanceErrorMessage,
+  onRetryCashDividendGuidance,
   onSubmit,
 }: AdminCorporateActionFormPanelProps) {
   const exRightsMinDate = addIsoDateDays(currentSimulationDate, 1);
@@ -53,7 +63,18 @@ export function AdminCorporateActionFormPanel({
             <DarkInput label="분할 후" value={draft.splitTo} onChange={draftSetters.setSplitTo} placeholder="5" inputMode="numeric" />
           </>
         ) : draft.actionType === "CASH_DIVIDEND" ? (
-          <DarkInput label="1주당 배당금" value={draft.actionDividendAmount} onChange={draftSetters.setActionDividendAmount} placeholder="1000" inputMode="decimal" />
+          <div className="grid gap-3 sm:col-span-2 xl:col-span-3 xl:grid-cols-[minmax(220px,0.65fr)_minmax(0,2fr)] xl:items-start">
+            <DarkInput label="1주당 배당금" value={draft.actionDividendAmount} onChange={draftSetters.setActionDividendAmount} placeholder="1000" inputMode="decimal" />
+            <AdminCashDividendGuidance
+              guidance={cashDividendGuidance}
+              loading={cashDividendGuidanceLoading}
+              errorMessage={cashDividendGuidanceErrorMessage}
+              rawAmount={draft.actionDividendAmount}
+              symbol={draft.actionSymbol}
+              onApplyAmount={draftSetters.setActionDividendAmount}
+              onRetry={onRetryCashDividendGuidance}
+            />
+          </div>
         ) : draft.actionType === "BONUS_ISSUE" || draft.actionType === "STOCK_DIVIDEND" ? (
           <DarkInput label="배정 주식수" value={draft.actionShares} onChange={draftSetters.setActionShares} placeholder="10000" inputMode="numeric" />
         ) : draft.actionType === "DELISTING" ? (

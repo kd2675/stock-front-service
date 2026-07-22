@@ -173,6 +173,32 @@ export type CorporateAction = {
   createdAt: string;
 };
 
+export type CashDividendGuidanceHistory = {
+  actionId: number;
+  status: CorporateActionStatus;
+  originalDividendPerShare: number;
+  splitAdjustedDividendPerShare: number;
+  basePrice?: number | null;
+  dividendYield?: number | null;
+  actualPaidCash: number;
+  eligibleShareQuantity: number;
+  exRightsDate?: string | null;
+  paymentDate?: string | null;
+};
+
+export type CashDividendGuidance = {
+  symbol: string;
+  referencePrice: number;
+  referencePriceBasis: "PREVIOUS_CLOSE" | "CURRENT_PRICE";
+  issuedShares: number;
+  tradableShares: number;
+  recentHoldingQuantity?: number | null;
+  holdingReferenceCloseRunId?: number | null;
+  holdingReferenceBusinessDate?: string | null;
+  completedDividendCount: number;
+  history: CashDividendGuidanceHistory[];
+};
+
 export type CorporateActionEntitlement = {
   id: number;
   accountId: number;

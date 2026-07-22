@@ -1,9 +1,14 @@
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
 import type { UseFormReturn } from "react-hook-form";
 
 import type {
   CreateInstrumentFormValues,
   CreateInstrumentPayload,
 } from "@/app/lib/validation/adminSchemas";
+import { cashDividendGuidanceQueryOptions } from "@/app/lib/react-query/stockMarketQueries";
+import { getStockErrorMessage } from "@/app/lib/react-query/stockResult";
 import { AdminCorporateActionFormPanel } from "@/app/supply-demand/admin/AdminCorporateActionFormPanel";
 import { DarkSelect } from "@/app/supply-demand/admin/AdminFormControls";
 import { AdminInitialIssueFormPanel } from "@/app/supply-demand/admin/AdminInitialIssueFormPanel";
@@ -36,6 +41,16 @@ export function AdminStockEventPanel({
   onSubmit,
 }: AdminStockEventPanelProps) {
   const isInitialIssue = mode === "instruments";
+  const guidanceSymbol = !isInitialIssue && draft.actionType === "CASH_DIVIDEND"
+    ? draft.actionSymbol
+    : "";
+  const cashDividendGuidanceQuery = useQuery(cashDividendGuidanceQueryOptions(guidanceSymbol, {
+    enabled: Boolean(guidanceSymbol),
+    refetchIntervalMs: false,
+  }));
+  const cashDividendGuidanceErrorMessage = cashDividendGuidanceQuery.isError
+    ? getStockErrorMessage(cashDividendGuidanceQuery.error, "현금배당 권유 기준을 조회하지 못했습니다.")
+    : null;
 
   return (
     <section className="admin-panel mt-5">
@@ -95,6 +110,10 @@ export function AdminStockEventPanel({
           draft={draft}
           draftSetters={draftSetters}
           currentSimulationDate={currentSimulationDate}
+          cashDividendGuidance={cashDividendGuidanceQuery.data}
+          cashDividendGuidanceLoading={cashDividendGuidanceQuery.isLoading}
+          cashDividendGuidanceErrorMessage={cashDividendGuidanceErrorMessage}
+          onRetryCashDividendGuidance={() => void cashDividendGuidanceQuery.refetch()}
           onSubmit={onSubmit}
         />
       )}
