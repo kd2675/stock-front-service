@@ -8,6 +8,7 @@ export type StockEventDraft = {
   offeringType: CapitalIncreaseOfferingType;
   actionDividendAmount: string;
   exRightsDate: string;
+  recordDate: string;
   subscriptionStartDate: string;
   subscriptionEndDate: string;
   paymentDate: string;
@@ -26,6 +27,7 @@ export type StockEventDraftSetters = {
   setOfferingType: (value: CapitalIncreaseOfferingType) => void;
   setActionDividendAmount: (value: string) => void;
   setExRightsDate: (value: string) => void;
+  setRecordDate: (value: string) => void;
   setSubscriptionStartDate: (value: string) => void;
   setSubscriptionEndDate: (value: string) => void;
   setPaymentDate: (value: string) => void;

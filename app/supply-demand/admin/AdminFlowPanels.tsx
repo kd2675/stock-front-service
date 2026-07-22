@@ -61,8 +61,8 @@ export function AdminFlowOverviewPanel({
     <section className="admin-panel mt-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-base font-black">전체 흐름 대시보드</h2>
-          <p className="mt-1 text-xs font-bold text-stock-subtle">전체 계좌 자금, 주문장 종목 체결, 최근 현금 원장을 봅니다. 자금과 종목 흐름은 기본적으로 시뮬레이션 하루 기준입니다.</p>
+          <h2 className="text-base font-black">시장 흐름 요약</h2>
+          <p className="mt-1 text-xs font-bold text-stock-subtle">전체 계좌 자산, 참여자별 체결, 주문장 종목 거래와 최근 현금 원장을 확인합니다. 자산과 거래 흐름은 기본적으로 시뮬레이션 하루 기준입니다.</p>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
           <span className="rounded-md bg-admin-accent-surface px-2 py-1 text-xs font-black text-admin-accent">

@@ -21,7 +21,7 @@ export function AdminCashFlowLedgerPanel({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-black">전체 현금 원장</h2>
-          <p className="mt-1 text-xs font-bold text-stock-subtle">유저와 자동참여자 계좌의 입금, 회수, 정기 자금, 배당 현금 흐름을 페이지 단위로 조회합니다.</p>
+          <p className="mt-1 text-xs font-bold text-stock-subtle">유저와 자동 참여자 계좌의 입금, 회수, 정기 자금, 배당 현금 흐름을 페이지 단위로 조회합니다.</p>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
           <span className="rounded-md bg-admin-accent-surface px-2 py-1 text-xs font-black text-admin-accent">

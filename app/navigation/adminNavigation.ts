@@ -3,15 +3,15 @@ export type AdminTab = "dashboard" | "market" | "funds" | "participants" | "corp
 export type AdminSection =
   | "dashboard"
   | "market-instruments"
-  | "market-flows"
+  | "market-auto-market"
   | "market-liquidity"
+  | "market-flows"
   | "funds-accounts"
   | "funds-ledger"
   | "funds-payroll"
   | "participants-overview"
   | "participants-list"
   | "participants-profiles"
-  | "participants-symbols"
   | "corporate-instruments"
   | "corporate-actions"
   | "corporate-history"
@@ -37,53 +37,53 @@ export const ADMIN_NAVIGATION_GROUPS: readonly AdminNavigationGroup[] = [
     tab: "dashboard",
     label: "대시보드",
     items: [
-      { section: "dashboard", href: "/admin", label: "운영 현황", description: "시장과 자동장 핵심 상태를 확인합니다." },
+      { section: "dashboard", href: "/admin", label: "운영 현황", description: "시뮬레이션 시각과 장 상태, 자동장 핵심 상태를 한눈에 확인합니다." },
     ],
   },
   {
     tab: "market",
     label: "시장 운영",
     items: [
-      { section: "market-instruments", href: "/admin/market/instruments", label: "종목·장 상태", description: "종목별 장 상태와 가격 제한을 관리합니다." },
-      { section: "market-flows", href: "/admin/market/flows", label: "시장 자금 흐름", description: "주문·체결·기업 이벤트 자금 흐름을 봅니다." },
-      { section: "market-liquidity", href: "/admin/market/liquidity", label: "유동성 공급", description: "상장주관사 자동계정의 호가 공급을 관리합니다." },
+      { section: "market-instruments", href: "/admin/market/instruments", label: "종목·장 상태", description: "종목별 거래 상태와 가격 제한을 확인하고 제어합니다." },
+      { section: "market-auto-market", href: "/admin/market/auto-market", label: "종목별 자동장", description: "종목별 자동 주문 생성, 주문 상한, TTL과 시장 압력 분포를 관리합니다." },
+      { section: "market-liquidity", href: "/admin/market/liquidity", label: "유동성 공급", description: "상장주관사 자동계정의 재고 목표와 호가 공급 정책을 관리합니다." },
+      { section: "market-flows", href: "/admin/market/flows", label: "시장 흐름", description: "전체 계좌 자산과 참여자별 체결, 종목별 거래·현금 흐름을 확인합니다." },
     ],
   },
   {
     tab: "funds",
     label: "계좌·자금",
     items: [
-      { section: "funds-accounts", href: "/admin/funds/accounts", label: "계좌 현금", description: "사용자 계좌의 현금과 자금 흐름을 확인합니다." },
-      { section: "funds-ledger", href: "/admin/funds/ledger", label: "현금 원장", description: "전체 현금 변동 원장을 조회합니다." },
-      { section: "funds-payroll", href: "/admin/funds/payroll", label: "정기 자금", description: "정기 자금 대상과 수동 지급 실행 상태를 관리합니다." },
+      { section: "funds-accounts", href: "/admin/funds/accounts", label: "유저 계좌 자금", description: "로그인 유저의 모의투자 계좌를 조회하고 현금을 입금·회수합니다." },
+      { section: "funds-ledger", href: "/admin/funds/ledger", label: "현금 원장", description: "모든 계좌의 입금·회수·배당·정기 자금 원장을 조회합니다." },
+      { section: "funds-payroll", href: "/admin/funds/payroll", label: "정기 자금", description: "자동 참여자의 지급 대상과 야간 정기 자금 실행 상태를 관리합니다." },
     ],
   },
   {
     tab: "participants",
-    label: "자동참여자",
+    label: "자동 참여자",
     items: [
-      { section: "participants-overview", href: "/admin/participants/overview", label: "프로필 현황", description: "프로필별 계좌와 성과를 요약합니다." },
-      { section: "participants-list", href: "/admin/participants/list", label: "참여자 목록", description: "자동참여자 계정과 개별 전략을 관리합니다." },
-      { section: "participants-profiles", href: "/admin/participants/profiles", label: "프로필 정책", description: "프로필별 기본 성향과 주문 정책을 설정합니다." },
-      { section: "participants-symbols", href: "/admin/participants/symbols", label: "종목별 자동장", description: "종목별 주문 수량과 랜덤 분포를 설정합니다." },
+      { section: "participants-overview", href: "/admin/participants/overview", label: "프로필별 현황", description: "프로필별 계좌·자산·보유·주문·체결 성과를 요약합니다." },
+      { section: "participants-list", href: "/admin/participants/list", label: "참여자 관리", description: "자동 참여자 계정을 조회·등록·대량 생성하고 개별 종목 전략을 관리합니다." },
+      { section: "participants-profiles", href: "/admin/participants/profiles", label: "프로필 정책", description: "프로필별 주문 행동과 가격 반응, 보유·자금 정책을 설정합니다." },
     ],
   },
   {
     tab: "corporate",
     label: "기업 관리",
     items: [
-      { section: "corporate-instruments", href: "/admin/corporate/instruments", label: "신규 상장", description: "신규 종목과 상장주관사 계정을 생성합니다." },
-      { section: "corporate-actions", href: "/admin/corporate/actions", label: "기업 이벤트", description: "증자·배당·분할·상장폐지를 등록합니다." },
-      { section: "corporate-history", href: "/admin/corporate/history", label: "이벤트 이력", description: "종목별 기업 이벤트 처리 상태를 조회합니다." },
-      { section: "corporate-reports", href: "/admin/corporate/reports", label: "종목 보고서", description: "투자자에게 공개할 종목 보고서를 관리합니다." },
+      { section: "corporate-instruments", href: "/admin/corporate/instruments", label: "신규 상장", description: "신규 종목과 상장주관사 자동계정을 함께 생성합니다." },
+      { section: "corporate-actions", href: "/admin/corporate/actions", label: "기업 이벤트 등록", description: "증자·배당·분할·상장폐지의 일정과 처리 조건을 등록합니다." },
+      { section: "corporate-history", href: "/admin/corporate/history", label: "이벤트 처리 이력", description: "종목별 기업 이벤트의 진행 상태와 처리 결과를 조회합니다." },
+      { section: "corporate-reports", href: "/admin/corporate/reports", label: "종목 보고서", description: "투자자에게 공개하고 자동장 신호에 반영할 종목 보고서를 관리합니다." },
     ],
   },
   {
     tab: "system",
     label: "시스템",
     items: [
-      { section: "system-eod", href: "/admin/system/eod", label: "장마감 운영", description: "거래일 장마감·정산·야간 후처리 단계를 확인합니다." },
-      { section: "system-jobs", href: "/admin/system/jobs", label: "배치·작업", description: "배치 가동 여부와 수동 작업을 제어합니다." },
+      { section: "system-eod", href: "/admin/system/eod", label: "장마감 운영", description: "거래일 원장 동결, 정산, 야간 후처리와 다음 장 준비 상태를 확인합니다." },
+      { section: "system-jobs", href: "/admin/system/jobs", label: "배치·작업", description: "배치별 자동 실행 상태를 확인하고 허용된 수동 작업을 제어합니다." },
     ],
   },
 ];

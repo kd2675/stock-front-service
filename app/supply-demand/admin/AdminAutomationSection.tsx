@@ -116,7 +116,7 @@ export function AdminAutomationSection({
     );
   }
 
-  if (activeSection === "participants-symbols") {
+  if (activeSection === "market-auto-market") {
     return (
       <AdminAutoMarketConfigPanel
         accessToken={accessToken}

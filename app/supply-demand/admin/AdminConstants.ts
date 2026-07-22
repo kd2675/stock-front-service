@@ -42,7 +42,7 @@ export const BATCH_JOB_RUNTIME_LABELS: Record<string, { label: string; descripti
   },
   "auto-market": {
     label: "자동장 주문 생성",
-    description: "자동참여자와 종목별 자동장 기본값 기준으로 호가를 냅니다.",
+    description: "자동 참여자와 종목별 자동장 기본값 기준으로 호가를 냅니다.",
   },
   "auto-market-order-expiry": {
     label: "자동장 주문 만료",
@@ -54,7 +54,7 @@ export const BATCH_JOB_RUNTIME_LABELS: Record<string, { label: string; descripti
   },
   "auto-participant-cash-flow": {
     label: "정기 자금 지급",
-    description: "가동 자동참여자와 ACTIVE 계좌의 지급 주기를 야간에 확인해 현금을 지급합니다.",
+    description: "가동 자동 참여자와 ACTIVE 계좌의 지급 주기를 야간에 확인해 현금을 지급합니다.",
   },
   "portfolio-settlement": {
     label: "포트폴리오 정산",

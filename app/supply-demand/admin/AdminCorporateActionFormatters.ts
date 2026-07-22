@@ -65,16 +65,21 @@ export function formatCorporateActionPrice(action: CorporateAction): string {
   if (!action.basePrice || !action.theoreticalExRightsPrice) {
     return "-";
   }
-  return `${formatWon(action.basePrice)} -> ${formatWon(action.theoreticalExRightsPrice)}`;
+  const pricePhase = action.status === "ANNOUNCED" ? "등록 시 예상" : "권리락 확정";
+  return `${pricePhase} · ${formatWon(action.basePrice)} -> ${formatWon(action.theoreticalExRightsPrice)}`;
 }
 
 export function formatCorporateActionSchedule(action: CorporateAction): string {
   const dates = [
     action.exRightsDate ? `권리락 ${action.exRightsDate}` : null,
+    action.recordDate ? `주주확정 ${action.recordDate}` : null,
     action.subscriptionStartDate && action.subscriptionEndDate ? `청약 ${action.subscriptionStartDate}~${action.subscriptionEndDate}` : null,
     action.paymentDate ? `${action.actionType === "PAID_IN_CAPITAL_INCREASE" ? "납입" : "지급"} ${action.paymentDate}` : null,
     action.listingDate ? `상장 ${action.listingDate}` : null,
     action.delistingDate ? `폐지 ${action.delistingDate}` : null,
+    action.entitlementCloseCycleId && action.entitlementCloseRunId
+      ? `권리기준 C${action.entitlementCloseCycleId}/R${action.entitlementCloseRunId}`
+      : null,
   ].filter(Boolean);
   return dates.length ? dates.join(" / ") : "-";
 }

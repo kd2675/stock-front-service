@@ -376,7 +376,7 @@ export function AdminEodSection({
         <section aria-labelledby="eod-readiness-checks" className="border-y border-white/10 py-5">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 id="eod-readiness-checks" className="text-base font-black text-white">개장 readiness 검사</h2>
+              <h2 id="eod-readiness-checks" className="text-base font-black text-white">개장 준비 검사</h2>
               <p className="mt-1 max-w-3xl text-xs font-bold leading-5 text-stock-subtle">
                 05:30 검사 시 고정된 최대 10개 제어 결과입니다. 화면 갱신은 주문·체결·기업행사 원장을 다시 집계하지 않습니다.
               </p>

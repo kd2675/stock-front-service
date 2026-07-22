@@ -8,7 +8,7 @@ export function AutoParticipantOverviewDetail({ overview }: { overview: AutoPart
     <section className="mt-3 rounded-md border border-white/10 bg-black/20 p-3">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-sm font-black text-white">자동참가자 투자 현황</p>
+          <p className="text-sm font-black text-white">자동 참여자 투자 현황</p>
           <p className="mt-1 text-xs font-bold text-stock-subtle">실제 계좌 기준의 현금, 보유 주식, 주문, 2시간 시뮬레이션일 체결 흐름입니다.</p>
         </div>
         <div className="flex flex-wrap gap-2 text-xs font-black">
@@ -58,7 +58,7 @@ export function AutoParticipantOverviewDetail({ overview }: { overview: AutoPart
           <div className="rounded-md border border-dashed border-white/15 bg-black/15 px-3 py-4 text-xs font-bold text-stock-subtle">보유 중인 종목이 없습니다.</div>
         ) : null}
       </div>
-      <DataTableViewport label="자동참가자 보유 종목" tone="dark" className="mt-3 hidden md:block">
+      <DataTableViewport label="자동 참여자 보유 종목" tone="dark" className="mt-3 hidden md:block">
         <table className="min-w-[760px] w-full border-collapse text-sm">
           <thead className="bg-white/10 text-left text-admin-muted">
             <tr>

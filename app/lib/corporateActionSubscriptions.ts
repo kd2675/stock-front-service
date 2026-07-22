@@ -39,7 +39,13 @@ export function getMaxSubscribableShares(
   entitlement?: CorporateActionEntitlement,
 ) {
   if (action.offeringType === "SHAREHOLDER_ALLOCATION") {
-    return normalizeNonNegativeInteger(entitlement?.shareQuantity) ?? 0;
+    if (entitlement
+      && (entitlement.status === "SUBSCRIBED" || entitlement.status === "PAID" || entitlement.status === "EXPIRED")) {
+      return 0;
+    }
+    const allocatedShares = normalizeNonNegativeInteger(entitlement?.shareQuantity) ?? 0;
+    const subscribedShares = normalizeNonNegativeInteger(entitlement?.subscribedShareQuantity) ?? 0;
+    return Math.max(0, allocatedShares - subscribedShares);
   }
   return normalizeNonNegativeInteger(action.remainingShareQuantity);
 }
@@ -60,7 +66,7 @@ export function resolveCorporateActionSubscriptionState({
     return subscriptionState("done", "지급 완료", "신주 지급이 완료되었습니다.", maxShares);
   }
   if (entitlement?.status === "EXPIRED") {
-    return subscriptionState("blocked", "권리 만료", "청약하지 않은 권리가 만료되었습니다.", maxShares);
+    return subscriptionState("blocked", "권리 만료", "미사용 주주배정 권리가 만료되었습니다.", maxShares);
   }
   if (action.status === "PAID" || action.status === "LISTED" || action.status === "DELISTED") {
     return subscriptionState("blocked", "청약 마감", "청약 접수가 종료된 이벤트입니다.", maxShares);
@@ -92,9 +98,9 @@ export function resolveCorporateActionSubscriptionState({
       return subscriptionState("waiting", "권리 반영 전", "권리락 처리 후 배정 권리를 확인할 수 있습니다.", maxShares);
     }
     if (!entitlement) {
-      return subscriptionState("blocked", "권리 없음", "기준일 보유 수량에 따라 배정된 청약 권리가 없습니다.", maxShares);
+      return subscriptionState("blocked", "권리 없음", "권리락 직전 전체 장마감 보유량으로 배정된 청약 권리가 없습니다.", maxShares);
     }
-    if (entitlement.status !== "ANNOUNCED") {
+    if (entitlement.status !== "ANNOUNCED" && entitlement.status !== "PARTIALLY_SUBSCRIBED") {
       return subscriptionState("blocked", "청약 불가", "현재 권리 상태로는 청약할 수 없습니다.", maxShares);
     }
   } else {
@@ -118,7 +124,10 @@ export function resolveCorporateActionSubscriptionState({
   if (marketSession !== "AFTER_CLOSE") {
     return subscriptionState("waiting", "장 마감 후", "청약 기간 중 장 마감 후에 접수할 수 있습니다.", maxShares);
   }
-  return subscriptionState("ready", "접수 가능", "청약 수량과 예상 납입금을 확인해 주세요.", maxShares);
+  const message = entitlement?.status === "PARTIALLY_SUBSCRIBED"
+    ? `누적 ${entitlement.subscribedShareQuantity ?? 0}주를 청약했습니다. 남은 권리 안에서 추가 청약할 수 있습니다.`
+    : "청약 수량과 예상 납입금을 확인해 주세요.";
+  return subscriptionState("ready", "접수 가능", message, maxShares);
 }
 
 export function isCapitalIncreaseOpen(action: CapitalIncreaseAction, currentDate?: string | null) {

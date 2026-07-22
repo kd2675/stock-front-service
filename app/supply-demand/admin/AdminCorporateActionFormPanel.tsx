@@ -17,8 +17,9 @@ export function AdminCorporateActionFormPanel({
   onSubmit,
 }: AdminCorporateActionFormPanelProps) {
   const exRightsMinDate = addIsoDateDays(currentSimulationDate, 1);
+  const recordMinDate = maxIsoDate(currentSimulationDate, addIsoDateDays(draft.exRightsDate, 1));
   const subscriptionStartMinDate = draft.offeringType === "SHAREHOLDER_ALLOCATION"
-    ? maxIsoDate(currentSimulationDate, addIsoDateDays(draft.exRightsDate, 1))
+    ? maxIsoDate(currentSimulationDate, draft.recordDate)
     : currentSimulationDate;
   const subscriptionEndMinDate = maxIsoDate(currentSimulationDate, draft.subscriptionStartDate);
   const paymentReferenceDate = draft.actionType === "CASH_DIVIDEND"
@@ -78,11 +79,11 @@ export function AdminCorporateActionFormPanel({
         <div className="mt-3 grid gap-2 rounded-md border border-admin-accent/20 bg-admin-accent-surface/40 p-3 text-xs font-bold leading-5 text-admin-muted sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
           <p>
             {draft.offeringType === "SHAREHOLDER_ALLOCATION"
-              ? "주주배정은 권리락 처리로 계좌별 권리를 만든 뒤, 배정 수량 안에서 청약합니다."
+              ? "주주배정은 권리락 직전 전체 장마감 보유량으로 계좌별 권리를 고정한 뒤, 배정 수량 안에서 청약합니다."
               : "일반공모는 권리락 없이 전체 남은 모집 수량 안에서 선착순으로 청약합니다."}
           </p>
           <span className="rounded-sm bg-white/[0.06] px-2 py-1 text-admin-accent">
-            {simulationDateAvailable ? `기준일 ${currentSimulationDate}` : "시뮬레이션 기준일 확인 필요"}
+            {simulationDateAvailable ? `현재 시뮬레이션일 ${currentSimulationDate}` : "시뮬레이션 날짜 확인 필요"}
           </span>
         </div>
       ) : null}
@@ -97,7 +98,10 @@ export function AdminCorporateActionFormPanel({
         {draft.actionType === "PAID_IN_CAPITAL_INCREASE" ? (
           <>
             {draft.offeringType === "SHAREHOLDER_ALLOCATION" ? (
-              <DarkDateInput label="권리락일" value={draft.exRightsDate} onChange={draftSetters.setExRightsDate} placeholder="2026-06-22" minDate={exRightsMinDate} />
+              <>
+                <DarkDateInput label="권리락일" value={draft.exRightsDate} onChange={draftSetters.setExRightsDate} placeholder="2026-06-22" minDate={exRightsMinDate} />
+                <DarkDateInput label="주주확정 기준일" value={draft.recordDate} onChange={draftSetters.setRecordDate} placeholder="2026-06-23" minDate={recordMinDate} />
+              </>
             ) : null}
             <DarkDateInput label="청약 시작일" value={draft.subscriptionStartDate} onChange={draftSetters.setSubscriptionStartDate} placeholder="2026-06-23" minDate={subscriptionStartMinDate} />
             <DarkDateInput label="청약 마감일" value={draft.subscriptionEndDate} onChange={draftSetters.setSubscriptionEndDate} placeholder="2026-06-24" minDate={subscriptionEndMinDate} />

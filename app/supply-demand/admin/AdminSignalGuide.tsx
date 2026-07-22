@@ -54,7 +54,7 @@ export function AutoMarketConfigGuide() {
   const items = [
     {
       name: "자동장 대상 종목",
-      description: "자동참여자 주문을 생성할 주문장 종목입니다. 주문장 종목이 비활성화되었거나 장 상태가 OPEN이 아니면 배치가 이 종목을 읽지 않습니다.",
+      description: "자동 참여자 주문을 생성할 주문장 종목입니다. 주문장 종목이 비활성화되었거나 장 상태가 OPEN이 아니면 배치가 이 종목을 읽지 않습니다.",
     },
     {
       name: "자동 주문 생성",

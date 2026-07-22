@@ -12,6 +12,7 @@ export type CorporateActionDraftInput = {
   offeringType: CapitalIncreaseOfferingType;
   actionDividendAmount: string;
   exRightsDate: string;
+  recordDate: string;
   subscriptionStartDate: string;
   subscriptionEndDate: string;
   paymentDate: string;
@@ -147,10 +148,10 @@ export function buildCorporateActionPayload(draft: CorporateActionDraftInput, cu
         };
       }
       const isShareholderAllocation = draft.offeringType === "SHAREHOLDER_ALLOCATION";
-      if (isShareholderAllocation && !draft.exRightsDate) {
+      if (isShareholderAllocation && (!draft.exRightsDate || !draft.recordDate)) {
         return {
           ok: false,
-          message: "주주배정 유상증자는 권리락일이 필요합니다.",
+          message: "주주배정 유상증자는 권리락일과 주주확정 기준일이 필요합니다.",
         };
       }
       if (isShareholderAllocation) {
@@ -171,15 +172,17 @@ export function buildCorporateActionPayload(draft: CorporateActionDraftInput, cu
       ];
       if (isShareholderAllocation) {
         scheduleFields.unshift(["권리락일", draft.exRightsDate]);
+        scheduleFields.splice(1, 0, ["주주확정 기준일", draft.recordDate]);
       }
       const scheduleValidation = validateScheduleNotBeforeCurrent(scheduleFields, currentSimulationDate);
       if (!scheduleValidation.ok) {
         return scheduleValidation;
       }
-      if (isShareholderAllocation && draft.subscriptionStartDate <= draft.exRightsDate) {
+      if (isShareholderAllocation
+        && (draft.recordDate <= draft.exRightsDate || draft.subscriptionStartDate < draft.recordDate)) {
         return {
           ok: false,
-          message: "주주배정 청약 시작일은 권리락일 다음 날짜 이후여야 합니다.",
+          message: "주주배정 일정은 권리락일, 주주확정 기준일, 청약 시작일 순서여야 합니다.",
         };
       }
       if (draft.subscriptionEndDate < draft.subscriptionStartDate || draft.paymentDate <= draft.subscriptionEndDate || draft.listingDate <= draft.paymentDate) {
@@ -193,6 +196,7 @@ export function buildCorporateActionPayload(draft: CorporateActionDraftInput, cu
       payload.subscriptionEndDate = draft.subscriptionEndDate;
       if (isShareholderAllocation) {
         payload.exRightsDate = draft.exRightsDate;
+        payload.recordDate = draft.recordDate;
       }
       payload.paymentDate = draft.paymentDate;
       payload.listingDate = draft.listingDate;

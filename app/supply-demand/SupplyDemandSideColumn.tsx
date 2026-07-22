@@ -130,7 +130,7 @@ export function SupplyDemandSideColumn({
         actions={corporateActions}
         availableCash={portfolio?.account.cashBalance}
         cashErrorMessage={corporateActionCashErrorMessage}
-        currentDate={simulationClock?.simulationDate}
+        currentDate={simulationClock?.activeBusinessDate || simulationClock?.simulationDate}
         entitlements={corporateActionEntitlements}
         entitlementsReady={corporateActionEntitlementsReady}
         errorMessage={corporateActionsErrorMessage}

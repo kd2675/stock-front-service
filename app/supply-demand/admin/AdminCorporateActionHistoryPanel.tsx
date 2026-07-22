@@ -34,7 +34,7 @@ export function AdminCorporateActionHistoryPanel({
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_240px] lg:items-end">
         <div>
           <h2 className="text-base font-black">선택 종목 이벤트 이력</h2>
-          <p className="mt-1 text-xs font-bold text-stock-subtle">이벤트 상태, 일정과 유상증자 청약·잔여 수량을 서버 원장 기준으로 조회합니다.</p>
+          <p className="mt-1 text-xs font-bold text-stock-subtle">이벤트 상태, 일정과 유상증자 청약·잔여 수량을 서버 원장 기준으로 조회합니다. 가격은 공시 때 예상값이며 권리락 직전 전체 장마감 종가로 확정됩니다.</p>
         </div>
         <DarkSelect label="이력 조회 종목" value={symbol} onChange={onSymbolChange}>
           <option value="">선택</option>

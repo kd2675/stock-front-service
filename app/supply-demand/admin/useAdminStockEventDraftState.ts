@@ -19,6 +19,7 @@ const DEFAULT_STOCK_EVENT_DRAFT: StockEventDraft = {
   offeringType: "SHAREHOLDER_ALLOCATION",
   actionDividendAmount: "",
   exRightsDate: "",
+  recordDate: "",
   subscriptionStartDate: "",
   subscriptionEndDate: "",
   paymentDate: "",
@@ -46,6 +47,7 @@ export function useAdminStockEventDraftState() {
       const next = {
         ...previous,
         exRightsDate: previous.exRightsDate || defaults.exRightsDate || "",
+        recordDate: previous.recordDate || defaults.recordDate || "",
         subscriptionStartDate: previous.subscriptionStartDate || defaults.subscriptionStartDate || "",
         subscriptionEndDate: previous.subscriptionEndDate || defaults.subscriptionEndDate || "",
         paymentDate: previous.paymentDate || defaults.paymentDate || "",
@@ -63,6 +65,7 @@ export function useAdminStockEventDraftState() {
       actionIssuePrice: "",
       actionDividendAmount: "",
       exRightsDate: "",
+      recordDate: "",
       subscriptionStartDate: "",
       subscriptionEndDate: "",
       paymentDate: "",
@@ -102,6 +105,7 @@ export function useAdminStockEventDraftState() {
     }),
     setActionDividendAmount: (value) => setDraftField("actionDividendAmount", value),
     setExRightsDate: (value) => setDraftField("exRightsDate", value),
+    setRecordDate: (value) => setDraftField("recordDate", value),
     setSubscriptionStartDate: (value) => setDraftField("subscriptionStartDate", value),
     setSubscriptionEndDate: (value) => setDraftField("subscriptionEndDate", value),
     setPaymentDate: (value) => setDraftField("paymentDate", value),
@@ -150,6 +154,7 @@ function defaultDatesForAction(
     if (offeringType === "PUBLIC_OFFERING") {
       return {
         exRightsDate: "",
+        recordDate: "",
         subscriptionStartDate: simulationDate,
         subscriptionEndDate: secondDate,
         paymentDate: thirdDate,
@@ -159,9 +164,10 @@ function defaultDatesForAction(
     }
     return {
       exRightsDate: nextDate,
-      subscriptionStartDate: secondDate,
-      subscriptionEndDate: thirdDate,
-      paymentDate: fourthDate,
+      recordDate: secondDate,
+      subscriptionStartDate: thirdDate,
+      subscriptionEndDate: fourthDate,
+      paymentDate: fifthDate,
       listingDate: sixthDate,
       delistingDate: "",
     };
@@ -169,6 +175,7 @@ function defaultDatesForAction(
   if (actionType === "CASH_DIVIDEND") {
     return {
       exRightsDate: nextDate,
+      recordDate: "",
       subscriptionStartDate: "",
       subscriptionEndDate: "",
       paymentDate: secondDate,
@@ -179,6 +186,7 @@ function defaultDatesForAction(
   if (actionType === "BONUS_ISSUE" || actionType === "STOCK_DIVIDEND") {
     return {
       exRightsDate: nextDate,
+      recordDate: "",
       subscriptionStartDate: "",
       subscriptionEndDate: "",
       paymentDate: "",
@@ -189,6 +197,7 @@ function defaultDatesForAction(
   if (actionType === "STOCK_SPLIT") {
     return {
       exRightsDate: "",
+      recordDate: "",
       subscriptionStartDate: "",
       subscriptionEndDate: "",
       paymentDate: "",
@@ -199,6 +208,7 @@ function defaultDatesForAction(
   if (actionType === "DELISTING") {
     return {
       exRightsDate: "",
+      recordDate: "",
       subscriptionStartDate: "",
       subscriptionEndDate: "",
       paymentDate: "",
@@ -213,6 +223,7 @@ function clearCorporateActionDateFields(draft: StockEventDraft): StockEventDraft
   return {
     ...draft,
     exRightsDate: "",
+    recordDate: "",
     subscriptionStartDate: "",
     subscriptionEndDate: "",
     paymentDate: "",
@@ -223,6 +234,7 @@ function clearCorporateActionDateFields(draft: StockEventDraft): StockEventDraft
 
 function datesEqual(left: StockEventDraft, right: StockEventDraft) {
   return left.exRightsDate === right.exRightsDate
+    && left.recordDate === right.recordDate
     && left.subscriptionStartDate === right.subscriptionStartDate
     && left.subscriptionEndDate === right.subscriptionEndDate
     && left.paymentDate === right.paymentDate

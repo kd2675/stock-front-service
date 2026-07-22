@@ -41,7 +41,7 @@ export function AdminStockEventPanel({
     <section className="admin-panel mt-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-base font-black">주식 이벤트 발생</h2>
+          <h2 className="text-base font-black">{isInitialIssue ? "신규 상장 등록" : "기업 이벤트 등록"}</h2>
           <p className="mt-1 text-xs font-bold text-stock-subtle">{isInitialIssue ? "종목과 상장주관사 자동계정을 함께 생성합니다." : "상장 후 기업 이벤트의 일정과 처리 조건을 등록합니다."}</p>
         </div>
         <span className="text-xs font-bold text-admin-accent">{isInitialIssue ? "신규 종목" : "기존 종목"}</span>

@@ -53,12 +53,13 @@ export function resolveAdminPageQueryFlags({
   const isEventsSection = activeAdminTab === "corporate";
   const isMarketSection = activeAdminSection === "dashboard"
     || activeAdminSection === "market-instruments"
+    || activeAdminSection === "market-auto-market"
     || activeAdminSection === "market-flows";
   const shouldLoadBatchRuntimeControls = activeAdminSection === "system-jobs" || activeAdminSection === "funds-payroll";
   const shouldLoadAutoParticipants = activeAdminSection === "funds-payroll" || activeAdminSection === "participants-list";
   const includeParticipants = false;
   const includeParticipantStrategyDetails = activeAdminSection === "participants-list" && editingAutoParticipantUserKey !== null;
-  const includeConfigs = activeAdminSection === "participants-symbols" || includeParticipantStrategyDetails;
+  const includeConfigs = activeAdminSection === "market-auto-market" || includeParticipantStrategyDetails;
   const includeParticipantSymbolConfigs = includeParticipantStrategyDetails;
   const includeParticipantProfileConfigs = activeAdminSection === "funds-payroll" || activeAdminSection === "participants-profiles";
   const includeListingAutoAccounts = activeAdminSection === "market-liquidity";

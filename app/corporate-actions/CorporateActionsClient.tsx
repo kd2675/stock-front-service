@@ -64,12 +64,13 @@ export default function CorporateActionsClient() {
     },
     onError: (error) => setMessage(getCorporateActionSubscriptionErrorMessage(error)),
   });
+  const activeBusinessDate = simulationClock?.activeBusinessDate || simulationClock?.simulationDate;
 
   const capitalIncreases = useMemo(
     () => corporateActions
       .filter(isSupportedCapitalIncrease)
-      .sort((left, right) => compareCapitalIncreases(left, right, simulationClock?.simulationDate)),
-    [corporateActions, simulationClock?.simulationDate],
+      .sort((left, right) => compareCapitalIncreases(left, right, activeBusinessDate)),
+    [activeBusinessDate, corporateActions],
   );
   const entitlementByActionId = useMemo(
     () => new Map(entitlements.map((entitlement) => [entitlement.actionId, entitlement])),
@@ -84,7 +85,7 @@ export default function CorporateActionsClient() {
       return false;
     }
     if (viewFilter === "OPEN") {
-      return isCapitalIncreaseOpen(action, simulationClock?.simulationDate);
+      return isCapitalIncreaseOpen(action, activeBusinessDate);
     }
     if (viewFilter === "MINE") {
       return entitlementByActionId.has(action.id);
@@ -94,10 +95,10 @@ export default function CorporateActionsClient() {
   const selectedAction = filteredActions.find((action) => action.id === selectedActionId)
     ?? filteredActions[0]
     ?? null;
-  const openCount = capitalIncreases.filter((action) => isCapitalIncreaseOpen(action, simulationClock?.simulationDate)).length;
+  const openCount = capitalIncreases.filter((action) => isCapitalIncreaseOpen(action, activeBusinessDate)).length;
   const subscribedCount = capitalIncreases.filter((action) => {
     const status = entitlementByActionId.get(action.id)?.status;
-    return status === "SUBSCRIBED" || status === "PAID";
+    return status === "PARTIALLY_SUBSCRIBED" || status === "SUBSCRIBED" || status === "PAID";
   }).length;
 
   useLoginRequiredRedirect({ authStatus, isHydrated });
@@ -149,7 +150,7 @@ export default function CorporateActionsClient() {
             <p className="text-xs font-black tracking-[0.18em] text-stock-accent">CAPITAL INCREASE</p>
             <h1 className="mt-2 break-keep text-3xl font-black tracking-tight sm:text-4xl">유상증자 기업 이벤트</h1>
             <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-stock-muted">
-              주주배정은 권리락일 기준 보유자에게 배정된 수량 안에서, 일반공모는 전체 남은 모집 수량 안에서 청약합니다.
+              주주배정은 권리락 직전 전체 장마감 스냅샷으로 확정된 배정 수량 안에서, 일반공모는 전체 남은 모집 수량 안에서 청약합니다.
               두 방식 모두 청약 기간의 장 마감 후에만 접수됩니다.
             </p>
           </div>
@@ -165,7 +166,7 @@ export default function CorporateActionsClient() {
         <div className="grid gap-3 md:grid-cols-2">
           <OfferingGuide
             title="주주배정"
-            description="권리락 처리 후 내 계좌에 생성된 배정 권리 수량이 청약 상한입니다. 권리가 없으면 청약할 수 없습니다."
+            description="권리락 직전 전체 장마감 보유량으로 생성된 내 배정 권리가 청약 상한입니다. 권리가 없으면 청약할 수 없습니다."
           />
           <OfferingGuide
             title="일반공모"
@@ -223,7 +224,7 @@ export default function CorporateActionsClient() {
         <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(420px,1.1fr)] lg:items-start">
           <CorporateActionEventList
             actions={filteredActions}
-            currentDate={simulationClock?.simulationDate}
+            currentDate={activeBusinessDate}
             entitlements={entitlements}
             entitlementsReady={entitlementsReady}
             instrumentBySymbol={instrumentBySymbol}
@@ -239,7 +240,7 @@ export default function CorporateActionsClient() {
                 actions={[selectedAction]}
                 availableCash={portfolio?.account.cashBalance}
                 cashErrorMessage={cashErrorMessage}
-                currentDate={simulationClock?.simulationDate}
+                currentDate={activeBusinessDate}
                 entitlements={entitlements.filter((entitlement) => entitlement.actionId === selectedAction.id)}
                 entitlementsReady={entitlementsReady}
                 isLoading={isLoading}

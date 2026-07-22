@@ -47,6 +47,7 @@ export type StockCorporateActionPayload = {
   splitFrom?: number;
   splitTo?: number;
   exRightsDate?: string;
+  recordDate?: string;
   offeringType?: CapitalIncreaseOfferingType;
   subscriptionStartDate?: string;
   subscriptionEndDate?: string;

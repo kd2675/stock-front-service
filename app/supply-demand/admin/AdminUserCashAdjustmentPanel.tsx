@@ -38,8 +38,8 @@ export function AdminUserCashAdjustmentPanel({
     <section className="admin-panel mt-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-base font-black">실제 유저 계좌 현금</h2>
-          <p className="mt-1 text-xs font-bold text-stock-subtle">자동참여자가 아닌 로그인 유저의 모의투자 계좌에 입금하거나 회수합니다.</p>
+          <h2 className="text-base font-black">유저 계좌 자금</h2>
+          <p className="mt-1 text-xs font-bold text-stock-subtle">로그인 유저의 모의투자 계좌를 조회하고 현금을 입금·회수합니다. 자동 참여자 계좌는 대상이 아닙니다.</p>
         </div>
         <span className="text-xs font-bold text-admin-accent">stock_account_cash_flow 원장 기록</span>
       </div>

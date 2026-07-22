@@ -786,10 +786,12 @@ export function AdminAutoMarketRegimeHistory({
     endDate: rangeEndDate || undefined,
   }));
   const history = historyQuery.data;
-  const days = useMemo<EffectiveHistoryDay[]>(() => (history?.days ?? []).map((day) => ({
-    ...day,
-    effectiveWindows: buildEffectiveWindows(day),
-  })), [history]);
+  const days = useMemo<EffectiveHistoryDay[]>(() => (history?.days ?? [])
+    .map((day) => ({
+      ...day,
+      effectiveWindows: buildEffectiveWindows(day),
+    }))
+    .sort((left, right) => right.simulationTradeDate.localeCompare(left.simulationTradeDate)), [history]);
   const displayedRangeEndDate = rangeEndDate || history?.rangeEndDate || currentTradeDate || "";
   const currentSimulationTradeDate = history?.currentSimulationDateTime.slice(0, 10) || currentTradeDate || "";
   const rangeIsChanging = Boolean(
@@ -798,6 +800,11 @@ export function AdminAutoMarketRegimeHistory({
       && displayedRangeEndDate
       && history.rangeEndDate !== displayedRangeEndDate,
   );
+  const displayedRangeStartDate = displayedRangeEndDate
+    ? history && !rangeIsChanging && history.rangeEndDate === displayedRangeEndDate
+      ? history.rangeStartDate
+      : shiftDate(displayedRangeEndDate, -6)
+    : "";
   const visibleSelectedTradeDate = days.some((day) => day.simulationTradeDate === selectedTradeDate)
     ? selectedTradeDate
     : history?.rangeEndDate ?? selectedTradeDate;
@@ -832,30 +839,37 @@ export function AdminAutoMarketRegimeHistory({
 
   return (
     <div className="mt-4 rounded-md border border-admin-accent/20 bg-admin-canvas/60 p-3 sm:p-4">
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
-        <div>
-          <p className="text-sm font-black text-white">7일 종합 압력 기록</p>
-          <p className="mt-1 max-w-3xl text-[11px] font-bold leading-5 text-stock-subtle">
-            7일 범위의 30분 단위 종합 압력을 비교하고, 선택한 날짜의 적용 완료·현재 적용·적용 예정 값을 확인합니다.
-          </p>
-        </div>
-        <div className="grid gap-2 sm:grid-cols-[minmax(190px,240px)_auto]">
-          <label className="grid min-w-0 gap-1 text-xs font-bold text-admin-muted">
-            범위 종료일
-            <input
-              className="admin-control h-11 w-full min-w-0 px-3 text-sm font-black tabular-nums text-white outline-none"
-              max={currentSimulationTradeDate || undefined}
-              onChange={(event) => {
-                setRangeEndDate(event.target.value);
-                setSelectedTradeDate(event.target.value);
-                setSelectedWindowStartAt(null);
-                setFullDayDetailsOpen(false);
-              }}
-              type="date"
-              value={displayedRangeEndDate}
-            />
-          </label>
-          <div className="grid grid-cols-3 gap-1.5 self-end">
+      <header>
+        <p className="text-sm font-black text-white">7일 종합 압력 기록</p>
+        <p className="mt-1 max-w-3xl text-[11px] font-bold leading-5 text-stock-subtle">
+          7일 범위의 30분 단위 종합 압력을 비교하고, 선택한 날짜의 적용 완료·현재 적용·적용 예정 값을 확인합니다.
+        </p>
+      </header>
+
+      <div className="mt-4 grid min-w-0 gap-3 rounded-md border border-white/[0.08] bg-black/20 p-3 lg:grid-cols-[minmax(190px,240px)_minmax(220px,1fr)_minmax(160px,auto)] lg:items-start">
+        <label className="grid min-w-0 gap-1 text-xs font-bold text-admin-muted">
+          조회 종료일
+          <input
+            aria-describedby="regime-history-visible-range"
+            className="admin-control h-11 w-full min-w-0 px-3 text-sm font-black tabular-nums text-white outline-none"
+            max={currentSimulationTradeDate || undefined}
+            onChange={(event) => {
+              setRangeEndDate(event.target.value);
+              setSelectedTradeDate(event.target.value);
+              setSelectedWindowStartAt(null);
+              setFullDayDetailsOpen(false);
+            }}
+            type="date"
+            value={displayedRangeEndDate}
+          />
+          <span className="text-[10px] font-bold tabular-nums text-admin-placeholder" id="regime-history-visible-range">
+            조회 범위 {displayedRangeStartDate && displayedRangeEndDate ? `${displayedRangeStartDate} ~ ${displayedRangeEndDate}` : "선택 필요"}
+          </span>
+        </label>
+
+        <fieldset className="min-w-0">
+          <legend className="mb-1 text-xs font-bold text-admin-muted">7일 단위 이동</legend>
+          <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
               className="min-h-11 rounded-md bg-white/10 px-3 text-xs font-black text-white transition hover:bg-white/15 disabled:opacity-40"
@@ -866,19 +880,6 @@ export function AdminAutoMarketRegimeHistory({
             </button>
             <button
               type="button"
-              className="min-h-11 rounded-md bg-admin-accent/15 px-3 text-xs font-black text-admin-accent-label transition hover:bg-admin-accent/20 disabled:opacity-40"
-              disabled={!currentSimulationTradeDate || displayedRangeEndDate === currentSimulationTradeDate}
-              onClick={() => {
-                setRangeEndDate(currentSimulationTradeDate);
-                setSelectedTradeDate(currentSimulationTradeDate);
-                setSelectedWindowStartAt(null);
-                setFullDayDetailsOpen(false);
-              }}
-            >
-              현재 7일
-            </button>
-            <button
-              type="button"
               className="min-h-11 rounded-md bg-white/10 px-3 text-xs font-black text-white transition hover:bg-white/15 disabled:opacity-40"
               disabled={!canMoveForward}
               onClick={() => moveRange(7)}
@@ -886,12 +887,29 @@ export function AdminAutoMarketRegimeHistory({
               다음 7일
             </button>
           </div>
+        </fieldset>
+
+        <div className="min-w-0">
+          <p className="mb-1 text-xs font-bold text-admin-muted">최신 범위</p>
+          <button
+            type="button"
+            className="min-h-11 w-full rounded-md bg-admin-accent/15 px-3 text-xs font-black text-admin-accent-label transition hover:bg-admin-accent/20 disabled:opacity-40"
+            disabled={!currentSimulationTradeDate || displayedRangeEndDate === currentSimulationTradeDate}
+            onClick={() => {
+              setRangeEndDate(currentSimulationTradeDate);
+              setSelectedTradeDate(currentSimulationTradeDate);
+              setSelectedWindowStartAt(null);
+              setFullDayDetailsOpen(false);
+            }}
+          >
+            최근 7일로 이동
+          </button>
         </div>
       </div>
 
       {historyQuery.isFetching ? (
         <div className="mt-4 rounded-md border border-white/10 bg-black/20 px-3 py-3 text-xs font-bold text-stock-subtle">
-          {displayedRangeEndDate ? `${shiftDate(displayedRangeEndDate, -6)} ~ ${displayedRangeEndDate}` : "현재 7일"} 기록을 조회하는 중입니다.
+          선택한 7일 기록을 조회하는 중입니다.
         </div>
       ) : null}
       {historyQuery.isError ? (
@@ -906,8 +924,8 @@ export function AdminAutoMarketRegimeHistory({
             <div className="flex flex-col gap-3 border-b border-white/[0.08] pb-3 xl:flex-row xl:items-end xl:justify-between">
               <div>
                 <h3 className="text-xs font-black text-white" id="regime-history-comparison-title">7일 비교</h3>
-                <p className="mt-1 text-[10px] font-bold tabular-nums text-admin-muted">
-                  {history.rangeStartDate} ~ {history.rangeEndDate} · {comparisonView === "TREND"
+                <p className="mt-1 text-[10px] font-bold text-admin-muted">
+                  {comparisonView === "TREND"
                     ? "동일한 축에서 날짜별 흐름을 비교하고 점을 누르면 상세값을 선택합니다."
                     : "색은 방향과 강도를 나타내며 정확한 값은 마우스나 키보드 포커스로 확인합니다."}
                 </p>

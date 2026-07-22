@@ -144,11 +144,12 @@ export function CorporateActionSubscriptionPanel({
 
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <SmallMetric label="발행가" value={formatWon(action.issuePrice)} />
-                  <SmallMetric label={action.offeringType === "SHAREHOLDER_ALLOCATION" ? "내 배정 권리" : "남은 모집"} value={maxShares === null ? "-" : `${formatNumber(maxShares)}주`} />
+                  <SmallMetric label={action.offeringType === "SHAREHOLDER_ALLOCATION" ? "청약 가능 잔여" : "남은 모집"} value={maxShares === null ? "-" : `${formatNumber(maxShares)}주`} />
                 </div>
 
-                <div className="mt-2 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
+                <div className={`mt-2 grid grid-cols-2 gap-2 text-xs ${action.offeringType === "SHAREHOLDER_ALLOCATION" ? "sm:grid-cols-5" : "sm:grid-cols-4"}`}>
                   {action.offeringType === "SHAREHOLDER_ALLOCATION" ? <ScheduleItem label="권리락" value={action.exRightsDate} /> : null}
+                  {action.offeringType === "SHAREHOLDER_ALLOCATION" ? <ScheduleItem label="주주확정" value={action.recordDate} /> : null}
                   <ScheduleItem label="청약 마감" value={action.subscriptionEndDate} />
                   <ScheduleItem label="납입" value={action.paymentDate} />
                   <ScheduleItem label="신주상장" value={action.listingDate} />
@@ -158,7 +159,7 @@ export function CorporateActionSubscriptionPanel({
                   <p className="mt-3 whitespace-pre-wrap break-words text-xs font-semibold leading-5 text-stock-muted">{action.description}</p>
                 ) : null}
 
-                {entitlement?.status === "SUBSCRIBED" || entitlement?.status === "PAID" ? (
+                {entitlement?.status === "SUBSCRIBED" || entitlement?.status === "PAID" || entitlement?.status === "EXPIRED" ? (
                   <div className="mt-3 rounded-md bg-stock-surface-muted p-3 text-sm">
                     <div className="flex items-center justify-between gap-3">
                       <span className="font-bold text-stock-muted">청약 수량</span>
@@ -168,9 +169,21 @@ export function CorporateActionSubscriptionPanel({
                       <span className="font-bold text-stock-muted">청약 금액</span>
                       <span className="font-black tabular-nums text-stock-ink">{formatWon(entitlement.subscribedCashAmount)}</span>
                     </div>
+                    {(entitlement.forfeitedShareQuantity ?? 0) > 0 ? (
+                      <div className="mt-2 flex items-center justify-between gap-3">
+                        <span className="font-bold text-stock-muted">미청약 포기</span>
+                        <span className="font-black tabular-nums text-stock-ink">{formatNumber(entitlement.forfeitedShareQuantity ?? 0)}주</span>
+                      </div>
+                    ) : null}
                   </div>
                 ) : (
                   <>
+                    {entitlement?.status === "PARTIALLY_SUBSCRIBED" ? (
+                      <div className="mt-3 flex items-center justify-between gap-3 rounded-md bg-stock-accent-surface px-3 py-2 text-xs font-bold text-stock-accent-strong">
+                        <span>누적 청약</span>
+                        <span className="tabular-nums">{formatNumber(entitlement.subscribedShareQuantity ?? 0)}주 · {formatWon(entitlement.subscribedCashAmount)}</span>
+                      </div>
+                    ) : null}
                     <label htmlFor={inputId} className="mt-3 block text-xs font-bold text-stock-muted">청약 수량</label>
                     <div className="mt-1 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
                       <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] rounded-md border border-stock-border-strong bg-white focus-within:border-stock-accent focus-within:ring-2 focus-within:ring-stock-accent/15">

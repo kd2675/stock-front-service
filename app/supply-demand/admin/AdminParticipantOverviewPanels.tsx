@@ -46,7 +46,7 @@ export function ParticipantProfileOverviewPanel({
     <section className="admin-panel mt-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-base font-black">프로필별 자동참가자 현황</h2>
+          <h2 className="text-base font-black">프로필별 자동 참여자 현황</h2>
           <p className="mt-1 text-xs font-bold text-stock-subtle">
             기본 조회는 요청 시점의 시뮬레이션 시간부터 최근 1일만 반영합니다. 전체 이력은 별도 조회로 확인합니다.
           </p>
@@ -73,8 +73,8 @@ export function ParticipantProfileOverviewPanel({
       </div>
 
       <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
-        <ProfileMiniMetric label="전체 자동참가자" value={formatCount(total.totalCount, "명")} tone="blue" />
-        <ProfileMiniMetric label="가동 참가자" value={formatCount(total.enabledCount, "명")} tone="green" />
+        <ProfileMiniMetric label="전체 자동 참여자" value={formatCount(total.totalCount, "명")} tone="blue" />
+        <ProfileMiniMetric label="가동 참여자" value={formatCount(total.enabledCount, "명")} tone="green" />
         <ProfileMiniMetric label="가용 현금" value={formatWon(total.availableCash)} tone="blue" />
         <ProfileMiniMetric label="보유 평가액" value={formatWon(total.holdingMarketValue)} tone="muted" />
         <ProfileMiniMetric label="총 손익" value={formatWon(total.totalProfit)} tone={total.totalProfit > 0 ? "green" : total.totalProfit < 0 ? "red" : "muted"} />
@@ -121,8 +121,8 @@ export function ParticipantProfileOverviewPanel({
               </div>
             </div>
             <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
-              <ProfileMiniMetric label="전체 자동참가자" value={formatCount(allTotal.totalCount, "명")} tone="blue" />
-              <ProfileMiniMetric label="가동 참가자" value={formatCount(allTotal.enabledCount, "명")} tone="green" />
+              <ProfileMiniMetric label="전체 자동 참여자" value={formatCount(allTotal.totalCount, "명")} tone="blue" />
+              <ProfileMiniMetric label="가동 참여자" value={formatCount(allTotal.enabledCount, "명")} tone="green" />
               <ProfileMiniMetric label="가용 현금" value={formatWon(allTotal.availableCash)} tone="blue" />
               <ProfileMiniMetric label="보유 평가액" value={formatWon(allTotal.holdingMarketValue)} tone="muted" />
               <ProfileMiniMetric label="총 손익" value={formatWon(allTotal.totalProfit)} tone={allTotal.totalProfit > 0 ? "green" : allTotal.totalProfit < 0 ? "red" : "muted"} />

@@ -56,7 +56,7 @@ export function SalaryEligibilityPanel({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-black">정기 자금 지급 대상</h2>
-          <p className="mt-1 text-xs font-bold text-stock-subtle">수동 지급과 자동 지급 모두 가동 자동참여자, 유효한 정기 자금 정책, ACTIVE 계좌 조건을 만족해야 실제 입금됩니다.</p>
+          <p className="mt-1 text-xs font-bold text-stock-subtle">수동 지급과 자동 지급 모두 가동 자동 참여자, 유효한 정기 자금 정책, ACTIVE 계좌 조건을 만족해야 실제 입금됩니다.</p>
           <p className="mt-1 max-w-3xl text-[11px] font-bold leading-5 text-admin-muted">
             기본 EOD 모드의 자동 지급은 00시 이후 거래일당 한 번만 주기 도래 여부를 확인합니다. 신규 설정은 일·월·년만 허용하며, 지나간 회차를 소급 지급하지 않습니다.
           </p>
@@ -81,7 +81,7 @@ export function SalaryEligibilityPanel({
 
       {error ? (
         <p className="mt-3 rounded-md bg-admin-danger-surface px-3 py-2 text-xs font-bold text-admin-danger">
-          자동참여자 계좌 overview를 조회하지 못했습니다. 정기 자금 정책은 표시하지만 ACTIVE 계좌 여부는 확인 필요로 남습니다.
+          자동 참여자 계좌 현황을 조회하지 못했습니다. 정기 자금 정책은 표시하지만 ACTIVE 계좌 여부는 확인 필요로 남습니다.
         </p>
       ) : null}
 
