@@ -482,7 +482,10 @@ export function AdminAutoMarketConfigPanel({
             activeSymbol={selectedConfig?.symbol ?? ""}
             configs={configs}
             editingSymbol={editingSymbol}
-            onSelect={onSelectDraft}
+            onSelect={(config) => {
+              setHistorySymbol(null);
+              onSelectDraft(config);
+            }}
           />
 
           <div className="min-w-0">
