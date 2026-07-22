@@ -6,7 +6,7 @@ import {
   authenticatedPostJson,
   toQuery,
 } from "@/app/lib/stock-api/core";
-import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowScope, AdminFundFlowSummary, AdminInvestorFlowHistory, AdminInvestorFlowSummary, AdminSymbolFlowList, AdminTotalAssetHistoryPage, AutoMarketDistributionBias, AutoMarketRegimeCountWeights, AutoMarketRegimeHistory, AutoMarketStatus, AutoParticipant, AutoParticipantCashAdjustment, AutoParticipantOverview, AutoParticipantProfileOverview, AutoParticipantProfileType, BatchJobRuntimeStatus, EodOperationsOverview, EodPhaseRetryResult, ListingAutoOperationMode, ListingAutoPosition, ListingAutoStrategyProfile, RecurringCashIntervalUnit, StockBatchJobRun } from "@/app/types/stock";
+import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowScope, AdminFundFlowSummary, AdminInvestorFlowHistory, AdminInvestorFlowSummary, AdminSymbolFlowList, AdminTotalAssetHistoryPage, AutoMarketDistributionBias, AutoMarketRegimeCountWeights, AutoMarketRegimeHistoryRange, AutoMarketStatus, AutoParticipant, AutoParticipantCashAdjustment, AutoParticipantOverview, AutoParticipantProfileOverview, AutoParticipantProfileType, BatchJobRuntimeStatus, EodOperationsOverview, EodPhaseRetryResult, ListingAutoOperationMode, ListingAutoPosition, ListingAutoStrategyProfile, RecurringCashIntervalUnit, StockBatchJobRun } from "@/app/types/stock";
 
 export type { AdminFundFlowScope } from "@/app/types/stock";
 
@@ -242,11 +242,11 @@ export function regenerateAutoMarketRegimeModifier(token: string, symbol: string
   );
 }
 
-export function getAutoMarketRegimeHistory(token: string, symbol: string, tradeDate?: string) {
-  const query = toQuery({ tradeDate });
-  return authenticatedGetJson<AutoMarketRegimeHistory>(
+export function getAutoMarketRegimeHistoryRange(token: string, symbol: string, endDate?: string) {
+  const query = toQuery({ endDate });
+  return authenticatedGetJson<AutoMarketRegimeHistoryRange>(
     token,
-    `/api/stock/v1/markets/auto-market/configs/${encodeURIComponent(symbol)}/regime-history${query}`,
+    `/api/stock/v1/markets/auto-market/configs/${encodeURIComponent(symbol)}/regime-history/range${query}`,
   );
 }
 

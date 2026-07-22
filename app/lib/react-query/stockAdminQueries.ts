@@ -11,7 +11,7 @@ import {
   getAdminInvestorFlowSummary,
   getAdminSymbolFlows,
   getAdminUserFundFlow,
-  getAutoMarketRegimeHistory,
+  getAutoMarketRegimeHistoryRange,
   getAutoParticipants,
   getAutoParticipantOverviews,
   getAutoParticipantProfileOverviews,
@@ -245,21 +245,22 @@ export function latestManualCashFlowRunQueryOptions(
   });
 }
 
-export function autoMarketRegimeHistoryQueryOptions(
+export function autoMarketRegimeHistoryRangeQueryOptions(
   token: string | null,
   symbol: string,
   options: {
     enabled?: boolean;
-    tradeDate?: string;
+    endDate?: string;
   } = {},
 ) {
   const normalizedSymbol = symbol.trim().toUpperCase();
-  const tradeDate = options.tradeDate?.trim() || undefined;
+  const endDate = options.endDate?.trim() || undefined;
   return adminAuthenticatedQueryOptions(token, {
-    queryKey: stockKeys.autoMarketRegimeHistory(normalizedSymbol, tradeDate),
-    request: (nextToken) => getAutoMarketRegimeHistory(nextToken, normalizedSymbol, tradeDate),
-    fallbackMessage: "랜덤 압력 기록을 조회하지 못했습니다.",
+    queryKey: stockKeys.autoMarketRegimeHistoryRange(normalizedSymbol, endDate),
+    request: (nextToken) => getAutoMarketRegimeHistoryRange(nextToken, normalizedSymbol, endDate),
+    fallbackMessage: "7일 랜덤 압력 기록을 조회하지 못했습니다.",
     enabled: (options.enabled ?? true) && Boolean(normalizedSymbol),
+    placeholderData: keepPreviousData,
     refetchOnWindowFocus: false,
     retry: 1,
     staleTime: 60_000,

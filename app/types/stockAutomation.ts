@@ -65,14 +65,25 @@ export type AutoMarketRegimeHistoryModifier = AutoMarketDistributionBias & {
   updatedAt: string;
 };
 
-export type AutoMarketRegimeHistory = {
-  symbol: string;
+export type AutoMarketRegimeHistorySourceStatus = "COMPLETE" | "PARTIAL" | "MISSING";
+
+export type AutoMarketRegimeHistoryDay = {
   simulationTradeDate: string;
-  currentSimulationTradeDate: string;
   dailyApplicationCount: number;
   preparedRegimeSlotCount: number;
+  expectedWindowCount: number;
+  availableWindowCount: number;
+  sourceStatus: AutoMarketRegimeHistorySourceStatus;
   dailyRegimes: AutoMarketRegimeHistoryDailyRegime[];
   modifiers: AutoMarketRegimeHistoryModifier[];
+};
+
+export type AutoMarketRegimeHistoryRange = {
+  symbol: string;
+  rangeStartDate: string;
+  rangeEndDate: string;
+  currentSimulationDateTime: string;
+  days: AutoMarketRegimeHistoryDay[];
 };
 
 export type AutoMarketConfig = {

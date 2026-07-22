@@ -1,3 +1,7 @@
+"use client";
+
+import { useState } from "react";
+
 import { MAX_LISTING_AUTO_NEW_ORDERS_PER_SIDE_PER_RUN } from "@/app/supply-demand/admin/AdminConstants";
 import {
   formatListingAutoOperationMode,
@@ -6,13 +10,19 @@ import {
   formatWon,
 } from "@/app/supply-demand/admin/AdminFormatters";
 import { DarkInput, DarkSelect } from "@/app/supply-demand/admin/AdminFormControls";
+import { AdminListingAutoQuantityPresetModal } from "@/app/supply-demand/admin/AdminListingAutoQuantityPresetModal";
 import { AdminTargetHoldingPercentageControl } from "@/app/supply-demand/admin/AdminTargetHoldingPercentageControl";
 import {
   LISTING_AUTO_OPERATION_MODES,
   LISTING_AUTO_STRATEGY_PROFILES,
   listingAutoStrategyPreset,
 } from "@/app/supply-demand/admin/listingAutoPolicy";
-import { calculateListingAutoTargetFit, type ListingAutoTargetFit } from "@/app/supply-demand/admin/listingAutoTargetFit";
+import {
+  calculateListingAutoTargetFit,
+  LISTING_AUTO_QUANTITY_PRESETS,
+  type ListingAutoQuantityPresetId,
+  type ListingAutoTargetFit,
+} from "@/app/supply-demand/admin/listingAutoTargetFit";
 import type {
   ListingAutoAccount,
   ListingAutoOperationMode,
@@ -94,29 +104,35 @@ export function AdminListingAutoAccountPanel({
   onSelectDraft,
   onSubmit,
 }: Props) {
+  const [quantityPresetDialogOpen, setQuantityPresetDialogOpen] = useState(false);
   const draftAccount = accounts.find((account) => account.symbol === draft.symbol) ?? null;
   const parsedTargetHoldingQuantity = Number(draft.targetHoldingQuantity);
   const targetHoldingQuantityValid = Number.isSafeInteger(parsedTargetHoldingQuantity) && parsedTargetHoldingQuantity >= 0;
-  const targetHoldingFit = draftAccount && targetHoldingQuantityValid
-    ? calculateListingAutoTargetFit({
+  const initialQuantityPresetId = recommendedQuantityPresetId(draft.operationMode);
+  const initialQuantityPreset = LISTING_AUTO_QUANTITY_PRESETS.find((preset) => preset.id === initialQuantityPresetId)
+    ?? LISTING_AUTO_QUANTITY_PRESETS[2];
+  const targetHoldingFitInput = draftAccount && targetHoldingQuantityValid
+    ? {
         issuedShares: draftAccount.issuedShares,
         holdingQuantity: draftAccount.holdingQuantity,
         openBuyQuantity: draftAccount.openBuyQuantity,
         openSellQuantity: draftAccount.openSellQuantity,
         targetHoldingQuantity: parsedTargetHoldingQuantity,
-      })
+      }
+    : null;
+  const targetHoldingFit = targetHoldingFitInput
+    ? calculateListingAutoTargetFit({ ...targetHoldingFitInput, quantityPresetId: initialQuantityPresetId })
     : null;
 
-  const applyTargetHoldingConfig = () => {
-    if (!targetHoldingFit) {
-      return;
+  const applyTargetHoldingConfig = (fit: ListingAutoTargetFit) => {
+    if (draft.positionSide !== "TWO_SIDED") {
+      draftSetters.setPositionSide("TWO_SIDED");
     }
-    draftSetters.setEnabled(true);
-    draftSetters.setPositionSide("TWO_SIDED");
-    draftSetters.setInventoryBandQuantity(String(targetHoldingFit.inventoryBandQuantity));
-    draftSetters.setTargetBuyQuantity(String(targetHoldingFit.targetBuyQuantity));
-    draftSetters.setTargetSellQuantity(String(targetHoldingFit.targetSellQuantity));
-    draftSetters.setMaxOrderQuantity(String(targetHoldingFit.maxOrderQuantity));
+    draftSetters.setInventoryBandQuantity(String(fit.inventoryBandQuantity));
+    draftSetters.setTargetBuyQuantity(String(fit.targetBuyQuantity));
+    draftSetters.setTargetSellQuantity(String(fit.targetSellQuantity));
+    draftSetters.setMaxOrderQuantity(String(fit.maxOrderQuantity));
+    setQuantityPresetDialogOpen(false);
   };
 
   const applyStrategyProfile = (profile: ListingAutoStrategyProfile) => {
@@ -130,32 +146,33 @@ export function AdminListingAutoAccountPanel({
   };
 
   return (
-    <section className="admin-panel mt-5 overflow-hidden">
-      <PanelHeader accountCount={accounts.length} />
+    <>
+      <section className="admin-panel mt-5 overflow-hidden">
+        <PanelHeader accountCount={accounts.length} />
 
-      {accounts.length === 0 ? (
-        <EmptyAccounts />
-      ) : (
-        <div className="mt-5 grid min-w-0 gap-5 xl:grid-cols-[280px_minmax(0,1fr)]">
-          <AccountSelector
-            accounts={accounts}
-            activeSymbol={draft.symbol}
-            editingSymbol={editingSymbol}
-            onSelect={onSelectDraft}
-          />
+        {accounts.length === 0 ? (
+          <EmptyAccounts />
+        ) : (
+          <div className="mt-5 grid min-w-0 gap-5 xl:grid-cols-[280px_minmax(0,1fr)]">
+            <AccountSelector
+              accounts={accounts}
+              activeSymbol={draft.symbol}
+              editingSymbol={editingSymbol}
+              onSelect={onSelectDraft}
+            />
 
-          <div className="min-w-0">
-            {selectedAccount ? (
-              <>
-                <AccountSummary account={selectedAccount} />
+            <div className="min-w-0">
+              {selectedAccount ? (
+                <>
+                  <AccountSummary account={selectedAccount} />
 
-                <form
-                  className="mt-4 grid min-w-0 gap-4"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    onSubmit();
-                  }}
-                >
+                  <form
+                    className="mt-4 grid min-w-0 gap-4"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      onSubmit();
+                    }}
+                  >
                   <FormSection title="운용 기본" description="계정 상태와 운용 목적을 먼저 정합니다.">
                     <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                       <DarkInput label="표시명" value={draft.displayName} onChange={draftSetters.setDisplayName} placeholder="상장주관사" className="sm:col-span-2" />
@@ -191,10 +208,10 @@ export function AdminListingAutoAccountPanel({
                         targetHoldingQuantity={draft.targetHoldingQuantity}
                         onTargetHoldingQuantityChange={draftSetters.setTargetHoldingQuantity}
                         actionLabel="권장 수량 적용"
-                        onAction={applyTargetHoldingConfig}
+                        onAction={() => setQuantityPresetDialogOpen(true)}
                         actionDisabled={!targetHoldingFit}
                       />
-                      <TargetHoldingFitPreview fit={targetHoldingFit} />
+                      <TargetHoldingFitPreview fit={targetHoldingFit} presetLabel={initialQuantityPreset.label} />
                       <DarkInput label="보유 허용 밴드(±주)" value={draft.inventoryBandQuantity} onChange={draftSetters.setInventoryBandQuantity} placeholder="30000" />
                       <DarkInput label="목표 매수 호가 잔량" value={draft.targetBuyQuantity} onChange={draftSetters.setTargetBuyQuantity} placeholder="30000" />
                       <DarkInput label="목표 매도 호가 잔량" value={draft.targetSellQuantity} onChange={draftSetters.setTargetSellQuantity} placeholder="30000" />
@@ -216,17 +233,34 @@ export function AdminListingAutoAccountPanel({
                       {updating ? "저장 중" : `${selectedAccount.symbol} 설정 저장`}
                     </button>
                   </div>
-                </form>
-              </>
-            ) : (
-              <div className="grid min-h-52 place-items-center rounded-md border border-dashed border-white/15 bg-black/15 px-4 text-center">
-                <p className="text-sm font-bold text-stock-subtle">왼쪽에서 관리할 계정을 선택하세요.</p>
-              </div>
-            )}
+                  </form>
+                </>
+              ) : (
+                <div className="grid min-h-52 place-items-center rounded-md border border-dashed border-white/15 bg-black/15 px-4 text-center">
+                  <p className="text-sm font-bold text-stock-subtle">왼쪽에서 관리할 계정을 선택하세요.</p>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
-    </section>
+        )}
+      </section>
+
+      {quantityPresetDialogOpen && targetHoldingFitInput ? (
+        <AdminListingAutoQuantityPresetModal
+          fitInput={targetHoldingFitInput}
+          initialPresetId={initialQuantityPresetId}
+          positionSide={draft.positionSide}
+          currentValues={{
+            inventoryBandQuantity: draft.inventoryBandQuantity,
+            targetBuyQuantity: draft.targetBuyQuantity,
+            targetSellQuantity: draft.targetSellQuantity,
+            maxOrderQuantity: draft.maxOrderQuantity,
+          }}
+          onApply={applyTargetHoldingConfig}
+          onClose={() => setQuantityPresetDialogOpen(false)}
+        />
+      ) : null}
+    </>
   );
 }
 
@@ -445,7 +479,7 @@ function AdvancedPolicyFields({
   );
 }
 
-function TargetHoldingFitPreview({ fit }: { fit: ListingAutoTargetFit | null }) {
+function TargetHoldingFitPreview({ fit, presetLabel }: { fit: ListingAutoTargetFit | null; presetLabel: string }) {
   if (!fit) {
     return (
       <div className="rounded-md border border-white/10 bg-black/20 px-3 py-3 text-xs font-bold leading-5 text-stock-subtle sm:col-span-2 lg:col-span-4">
@@ -468,10 +502,20 @@ function TargetHoldingFitPreview({ fit }: { fit: ListingAutoTargetFit | null }) 
         <FitMetric label="현재 재고 보정" value={netDirection} />
       </div>
       <p className="px-3 py-2.5 text-[11px] font-bold leading-5 text-stock-subtle">
-        적용 후 {formatNumber(fit.lowerHoldingLimit)}~{formatNumber(fit.upperHoldingLimit)}주 · 유효 목표 매수 {formatNumber(fit.effectiveBuyTarget)}주 / 매도 {formatNumber(fit.effectiveSellTarget)}주 · 신규 보충 {fit.buyOrderFragments + fit.sellOrderFragments}건
+        {presetLabel} 기본 추천 · 적용 후 {formatNumber(fit.lowerHoldingLimit)}~{formatNumber(fit.upperHoldingLimit)}주 · 유효 목표 매수 {formatNumber(fit.effectiveBuyTarget)}주 / 매도 {formatNumber(fit.effectiveSellTarget)}주 · 신규 보충 {fit.buyOrderFragments + fit.sellOrderFragments}건
       </p>
     </div>
   );
+}
+
+function recommendedQuantityPresetId(operationMode: ListingAutoOperationMode): ListingAutoQuantityPresetId {
+  if (operationMode === "LIQUIDITY_PROVIDER") {
+    return "ACTIVE";
+  }
+  if (operationMode === "HYBRID") {
+    return "BALANCED";
+  }
+  return "CONSERVATIVE";
 }
 
 function SummaryMetric({ label, value, detail }: { label: string; value: string; detail: string }) {

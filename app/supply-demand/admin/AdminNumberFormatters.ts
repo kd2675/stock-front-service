@@ -9,6 +9,18 @@ export function formatWon(value: number | null | undefined) {
   return formatStockWon(normalizeFiniteNumber(value));
 }
 
+export function formatCompactWon(value: number | null | undefined) {
+  const normalizedValue = normalizeFiniteNumber(value);
+  const absoluteValue = Math.abs(normalizedValue);
+  if (absoluteValue >= 1_000_000_000_000) {
+    return `${formatStockNumber(normalizedValue / 1_000_000_000_000)}조원`;
+  }
+  if (absoluteValue >= 100_000_000) {
+    return `${formatStockNumber(normalizedValue / 100_000_000)}억원`;
+  }
+  return formatStockWon(normalizedValue);
+}
+
 export function formatNumber(value: number | null | undefined) {
   return formatStockNumber(normalizeFiniteNumber(value));
 }

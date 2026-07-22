@@ -199,6 +199,14 @@ export type AdminParticipantCategory =
   | "AUTO_PARTICIPANT"
   | "LISTING_UNDERWRITER";
 
+export type AdminInvestorFlowSourceStatus =
+  | "LIVE_ASYNC"
+  | "CLOSED_SNAPSHOT"
+  | "NO_TRADING"
+  | "EOD_PENDING"
+  | "EOD_FAILED"
+  | "MISSING";
+
 export type AdminParticipantCategoryFlow = {
   category: AdminParticipantCategory;
   buyQuantity: number;
@@ -220,6 +228,8 @@ export type AdminInvestorFlowSummary = {
   totalParticipationQuantity: number;
   categories: AdminParticipantCategoryFlow[];
   sourceUpdatedAt?: string | null;
+  sourceStatus: AdminInvestorFlowSourceStatus;
+  closeRunId: number | null;
 };
 
 export type AdminInvestorFlowHistory = {

@@ -51,10 +51,11 @@ export const stockKeys = {
   latestManualCashFlowRun: () => [...stockKeys.market(), "auto-market", "cash-flow", "run", "latest"] as const,
   autoMarketStatus: () => [...stockKeys.market(), "auto-market"] as const,
   autoMarketRegimeHistoryRoot: () => [...stockKeys.autoMarketStatus(), "regime-history"] as const,
-  autoMarketRegimeHistory: (symbol: string, tradeDate?: string) => [
+  autoMarketRegimeHistoryRange: (symbol: string, endDate?: string) => [
     ...stockKeys.autoMarketRegimeHistoryRoot(),
+    "range",
     symbol,
-    tradeDate ?? "CURRENT",
+    endDate ?? "CURRENT",
   ] as const,
   autoMarketStatusDetailsRoot: () => [...stockKeys.autoMarketStatus(), "details"] as const,
   autoMarketStatusDetails: (options?: {

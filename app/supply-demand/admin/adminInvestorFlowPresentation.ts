@@ -1,5 +1,10 @@
-import { formatNumber, formatWon } from "@/app/supply-demand/admin/AdminFormatters";
-import type { AdminInvestorFlowSummary, AdminParticipantCategory, AdminParticipantCategoryFlow } from "@/app/types/stock";
+import { formatCompactWon, formatNumber, formatWon } from "@/app/supply-demand/admin/AdminFormatters";
+import type {
+  AdminInvestorFlowSourceStatus,
+  AdminInvestorFlowSummary,
+  AdminParticipantCategory,
+  AdminParticipantCategoryFlow,
+} from "@/app/types/stock";
 
 export const ADMIN_PARTICIPANT_CATEGORIES: AdminParticipantCategory[] = [
   "MANUAL_PARTICIPANT",
@@ -29,11 +34,96 @@ export const ADMIN_PARTICIPANT_CATEGORY_META: Record<AdminParticipantCategory, {
   },
 };
 
+export type AdminParticipantAmountFlow = AdminParticipantCategoryFlow & {
+  netBuyAmount: number;
+  participationAmount: number;
+  buyAmountShareRate: number;
+  sellAmountShareRate: number;
+  amountShareRate: number;
+};
+
+export const ADMIN_INVESTOR_FLOW_SOURCE_META: Record<AdminInvestorFlowSourceStatus, {
+  label: string;
+  description: string;
+  badgeClassName: string;
+}> = {
+  LIVE_ASYNC: {
+    label: "장중 비동기",
+    description: "계좌별 당일 요약을 비동기로 반영합니다.",
+    badgeClassName: "bg-admin-accent-surface text-admin-accent",
+  },
+  CLOSED_SNAPSHOT: {
+    label: "장마감 스냅샷",
+    description: "장마감 보고서 집계가 완료된 불변 데이터입니다.",
+    badgeClassName: "bg-admin-success-surface text-admin-success",
+  },
+  NO_TRADING: {
+    label: "정상 무거래일",
+    description: "거래가 없도록 정상적으로 건너뛴 시뮬레이션 일자입니다.",
+    badgeClassName: "bg-white/10 text-admin-muted",
+  },
+  EOD_PENDING: {
+    label: "EOD 집계 대기",
+    description: "장마감 보고서 집계가 아직 완료되지 않았습니다.",
+    badgeClassName: "bg-admin-warning-surface text-admin-warning",
+  },
+  EOD_FAILED: {
+    label: "EOD 집계 실패",
+    description: "장마감 후처리 실패로 권위 있는 보고서가 없습니다.",
+    badgeClassName: "bg-admin-danger-surface text-admin-danger",
+  },
+  MISSING: {
+    label: "집계 누락",
+    description: "이 날짜의 권위 있는 cycle 또는 보고서를 찾지 못했습니다.",
+    badgeClassName: "bg-admin-danger-surface text-admin-danger",
+  },
+};
+
+export function resolveInvestorFlowSourceStatus(
+  flow: AdminInvestorFlowSummary,
+  currentSimulationDate: string,
+): AdminInvestorFlowSourceStatus {
+  if (flow.sourceStatus) {
+    return flow.sourceStatus;
+  }
+  return flow.simulationTradeDate === currentSimulationDate ? "LIVE_ASYNC" : "MISSING";
+}
+
+export function isInvestorFlowIncludedInAggregate(sourceStatus: AdminInvestorFlowSourceStatus) {
+  return sourceStatus === "LIVE_ASYNC" || sourceStatus === "CLOSED_SNAPSHOT" || sourceStatus === "NO_TRADING";
+}
+
 export function resolveParticipantCategories(flow: AdminInvestorFlowSummary) {
   const categoryByKey = new Map(flow.categories.map((category) => [category.category, category]));
   return ADMIN_PARTICIPANT_CATEGORIES.map(
     (category) => categoryByKey.get(category) ?? emptyParticipantCategory(category),
   );
+}
+
+export function summarizeInvestorFlowAmounts(
+  categories: AdminParticipantCategoryFlow[],
+) {
+  const totalBuyAmount = categories.reduce((sum, category) => sum + category.buyAmount, 0);
+  const totalSellAmount = categories.reduce((sum, category) => sum + category.sellAmount, 0);
+  const totalParticipationAmount = totalBuyAmount + totalSellAmount;
+  const amountCategories: AdminParticipantAmountFlow[] = categories.map((category) => {
+    const participationAmount = category.buyAmount + category.sellAmount;
+    return {
+      ...category,
+      netBuyAmount: category.buyAmount - category.sellAmount,
+      participationAmount,
+      buyAmountShareRate: percentageOf(category.buyAmount, totalBuyAmount),
+      sellAmountShareRate: percentageOf(category.sellAmount, totalSellAmount),
+      amountShareRate: percentageOf(participationAmount, totalParticipationAmount),
+    };
+  });
+  return {
+    categories: amountCategories,
+    totalBuyAmount,
+    totalSellAmount,
+    totalParticipationAmount,
+    balanced: totalBuyAmount === totalSellAmount,
+  };
 }
 
 export function presentNetQuantity(netQuantity: number) {
@@ -54,22 +144,29 @@ export function presentNetQuantity(netQuantity: number) {
   return { label: "순수량", value: "0주", valueClassName: "text-white" };
 }
 
-export function presentNetCashFlow(netCashFlow: number) {
-  if (netCashFlow > 0) {
+export function presentNetBuyAmount(netBuyAmount: number) {
+  if (netBuyAmount > 0) {
     return {
-      label: "현금 순유입",
-      value: `+${formatWon(netCashFlow)}`,
+      label: "순매수 금액",
+      value: `+${formatCompactWon(netBuyAmount)}`,
+      exactValue: `+${formatWon(netBuyAmount)}`,
       valueClassName: "text-admin-success",
     };
   }
-  if (netCashFlow < 0) {
+  if (netBuyAmount < 0) {
     return {
-      label: "현금 순유출",
-      value: formatWon(Math.abs(netCashFlow)),
+      label: "순매도 금액",
+      value: `-${formatCompactWon(Math.abs(netBuyAmount))}`,
+      exactValue: `-${formatWon(Math.abs(netBuyAmount))}`,
       valueClassName: "text-admin-danger",
     };
   }
-  return { label: "순현금", value: "0원", valueClassName: "text-white" };
+  return {
+    label: "순매수 금액",
+    value: "0원",
+    exactValue: "0원",
+    valueClassName: "text-white",
+  };
 }
 
 export function formatParticipationRate(value: number) {
@@ -97,4 +194,8 @@ export function emptyParticipantCategory(category: AdminParticipantCategory): Ad
     sellShareRate: 0,
     executionShareRate: 0,
   };
+}
+
+function percentageOf(value: number, total: number) {
+  return total > 0 ? (value * 100) / total : 0;
 }
