@@ -168,7 +168,8 @@ export type AutoParticipantOverview = {
   estimatedTotalAsset: number;
   netCashFlow: number;
   totalProfit: number;
-  returnRate: number;
+  returnRate: number | null;
+  returnRateStatus: PortfolioReturnRateStatus;
   holdingCount: number;
   totalHoldingQuantity: number;
   reservedSellQuantity: number;
@@ -213,7 +214,8 @@ export type AutoParticipantProfileOverview = {
   estimatedTotalAsset: number;
   netCashFlow: number;
   totalProfit: number;
-  returnRate: number;
+  returnRate: number | null;
+  returnRateStatus: PortfolioReturnRateStatus;
   holdingCount: number;
   totalHoldingQuantity: number;
   reservedSellQuantity: number;
@@ -231,6 +233,36 @@ export type AutoParticipantProfileOverview = {
   lastOrderAt?: string | null;
   lastExecutionAt?: string | null;
   symbolHoldings: AutoParticipantProfileSymbolHolding[];
+};
+
+export type PortfolioReturnRateStatus =
+  | "DEFINED"
+  | "UNDEFINED_ZERO_CONTRIBUTION"
+  | "UNDEFINED_NEGATIVE_CONTRIBUTION"
+  | "LEGACY_UNVERIFIED";
+
+export type AutoParticipantPerformanceBasis = "LIVE_ESTIMATE" | "LATEST_CLOSED";
+
+export type AutoParticipantPerformanceMetric = {
+  accountCount: number;
+  eligibleAccountCount: number;
+  undefinedAccountCount: number;
+  totalAsset: number;
+  netContribution: number;
+  totalProfit: number;
+  aggregateReturnRate: number | null;
+  medianAccountReturnRate: number | null;
+  profitableAccountCount: number;
+  profitableAccountRate: number | null;
+};
+
+export type AutoParticipantPerformanceSummary = {
+  basis: AutoParticipantPerformanceBasis;
+  businessDate: string | null;
+  calculatedAt: string | null;
+  calculationMethod: "NET_CONTRIBUTION_RETURN";
+  closeCycleId: number | null;
+  total: AutoParticipantPerformanceMetric;
 };
 
 export type AutoParticipantCashAdjustment = {

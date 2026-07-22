@@ -8,6 +8,7 @@ import {
   adminInvestorFlowSummaryQueryOptions,
   adminUserFundFlowQueryOptions,
   autoParticipantsQueryOptions,
+  autoParticipantPerformanceSummaryQueryOptions,
   autoParticipantProfileOverviewsQueryOptions,
   batchJobRuntimeControlsQueryOptions,
   eodOperationsOverviewQueryOptions,
@@ -84,6 +85,16 @@ export function useAdminPageQueries({
     }),
     select: resolveParticipantProfileOverviewSummaries,
   });
+  const autoParticipantLivePerformanceQuery = useQuery(autoParticipantPerformanceSummaryQueryOptions(
+    accessToken,
+    "LIVE_ESTIMATE",
+    { enabled: queryFlags.shouldUseAutoParticipantProfileOverviews },
+  ));
+  const autoParticipantClosedPerformanceQuery = useQuery(autoParticipantPerformanceSummaryQueryOptions(
+    accessToken,
+    "LATEST_CLOSED",
+    { enabled: queryFlags.shouldUseAutoParticipantProfileOverviews },
+  ));
   const autoParticipantsQuery = useQuery(autoParticipantsQueryOptions(accessToken, {
     enabled: queryFlags.shouldUseAutoParticipants,
   }));
@@ -202,6 +213,8 @@ export function useAdminPageQueries({
     adminInvestorFlowSummaryQuery,
     autoMarketDetailsQuery,
     autoParticipantsQuery,
+    autoParticipantLivePerformanceQuery,
+    autoParticipantClosedPerformanceQuery,
     autoParticipantProfileOverviewsQuery,
     autoParticipantProfileOverviewsAllQuery,
     batchJobRuntimeControlsQuery,

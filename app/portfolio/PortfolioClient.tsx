@@ -116,7 +116,7 @@ export default function PortfolioClient() {
         <div className="min-w-0 space-y-5">
           <PortfolioHeader
             accountCode={portfolio?.account.accountCode ?? profileQuery.data?.account?.accountCode ?? "-"}
-            returnRate={portfolio?.returnRate ?? 0}
+            returnRate={portfolio?.returnRate ?? null}
             totalAsset={portfolio?.totalAsset ?? 0}
             username={profileQuery.data?.username ?? user?.username ?? "사용자"}
           />
@@ -160,7 +160,7 @@ function PortfolioHeader({
   username,
 }: {
   accountCode: string;
-  returnRate: number;
+  returnRate: number | null;
   totalAsset: number;
   username: string;
 }) {
@@ -188,7 +188,7 @@ function PortfolioHeader({
           </p>
         </div>
         <div className="min-w-0 rounded-md bg-white p-4 text-stock-ink">
-          <p className="text-xs font-bold text-stock-muted">계좌 수익률</p>
+          <p className="text-xs font-bold text-stock-muted">순입금 대비 수익률</p>
           <p className={`mt-1 text-3xl font-black tabular-nums ${profitTextClass(returnRate)}`}>{formatPercent(returnRate)}</p>
         </div>
       </div>
@@ -519,7 +519,10 @@ function filterAndSortHoldingRows(rows: HoldingRow[], filter: HoldingFilter, sor
   });
 }
 
-function formatPercent(value: number) {
+function formatPercent(value: number | null) {
+  if (value === null) {
+    return "—";
+  }
   const prefix = value > 0 ? "+" : "";
   return `${prefix}${formatKoKrFixedTwo(value)}%`;
 }
@@ -529,7 +532,10 @@ function formatSignedWon(value: number) {
   return `${prefix}${formatWon(value)}`;
 }
 
-function profitTone(value: number): "default" | "red" | "blue" {
+function profitTone(value: number | null): "default" | "red" | "blue" {
+  if (value === null) {
+    return "default";
+  }
   if (value > 0) {
     return "red";
   }
@@ -539,7 +545,10 @@ function profitTone(value: number): "default" | "red" | "blue" {
   return "default";
 }
 
-function profitTextClass(value: number) {
+function profitTextClass(value: number | null) {
+  if (value === null) {
+    return "text-stock-subtle";
+  }
   return toneClassName(profitTone(value));
 }
 

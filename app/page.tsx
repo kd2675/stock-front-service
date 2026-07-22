@@ -8,7 +8,7 @@ import StockBrandLink from "@/app/components/StockBrandLink";
 import useAuthSession from "@/app/hooks/useAuthSession";
 import { buildAccountRequiredPath } from "@/app/lib/accountRouting";
 import { getAccessTokenForAuthStatus, isAdminRole } from "@/app/lib/auth";
-import { autoParticipantOverviewsQueryOptions } from "@/app/lib/react-query/stockAdminQueries";
+import { autoParticipantOverviewsQueryOptions, autoParticipantPerformanceSummaryQueryOptions } from "@/app/lib/react-query/stockAdminQueries";
 import {
   formatCount,
   formatInteger,
@@ -60,9 +60,14 @@ export default function StockHomePage() {
     includeHoldings: false,
     refetchIntervalMs: false,
   }));
+  const participantPerformanceQuery = useQuery(autoParticipantPerformanceSummaryQueryOptions(
+    token,
+    "LIVE_ESTIMATE",
+    { enabled: isAdmin && isLoggedIn },
+  ));
   const participantOverviews = participantOverviewsQuery.data ?? EMPTY_PARTICIPANT_OVERVIEWS;
   const rankedParticipants = useMemo(() => rankParticipants(participantOverviews), [participantOverviews]);
-  const summary = useMemo(() => summarizeParticipants(participantOverviews), [participantOverviews]);
+  const summary = participantPerformanceQuery.data?.total ?? null;
 
   return (
     <main className="min-h-screen bg-stock-canvas text-stock-ink">
@@ -104,9 +109,13 @@ export default function StockHomePage() {
           </p>
 
           <div className="mt-8 grid gap-3 sm:grid-cols-3">
-            <HomeMetric label="자동참여자" value={formatCount(summary.participantCount, "명")} />
-            <HomeMetric label="평균 수익률" value={formatSignedPercent(summary.averageReturnRate)} tone={summary.averageReturnRate} />
-            <HomeMetric label="총 손익" value={formatWon(summary.totalProfit)} tone={summary.totalProfit} />
+            <HomeMetric label="자동참여자 계좌" value={formatCount(summary?.accountCount ?? 0, "명")} />
+            <HomeMetric
+              label="합산 순입금 대비 수익률"
+              value={summary?.aggregateReturnRate == null ? "—" : formatSignedPercent(summary.aggregateReturnRate)}
+              tone={summary?.aggregateReturnRate ?? 0}
+            />
+            <HomeMetric label="합산 손익" value={formatWon(summary?.totalProfit ?? 0)} tone={summary?.totalProfit ?? 0} />
           </div>
         </div>
 
@@ -231,8 +240,8 @@ function ParticipantRankRow({ participant, rank }: { participant: AutoParticipan
           자산 {formatWon(participant.estimatedTotalAsset)} · 손익 {formatWon(participant.totalProfit)} · 체결 {formatInteger(participant.todayExecutionCount)}건
         </p>
       </div>
-      <p className={["text-right text-xl font-black tabular-nums", profitClass(participant.returnRate)].join(" ")}>
-        {formatSignedPercent(participant.returnRate)}
+      <p className={["text-right text-xl font-black tabular-nums", profitClass(participant.returnRate ?? 0)].join(" ")}>
+        {participant.returnRate === null ? "—" : formatSignedPercent(participant.returnRate)}
       </p>
     </article>
   );
@@ -250,24 +259,10 @@ function HomeMetric({ label, value, tone = 0 }: { label: string; value: string; 
 function rankParticipants(participants: AutoParticipantOverview[]) {
   return [...participants].sort((left, right) => {
     if (right.returnRate !== left.returnRate) {
-      return right.returnRate - left.returnRate;
+      return (right.returnRate ?? Number.NEGATIVE_INFINITY) - (left.returnRate ?? Number.NEGATIVE_INFINITY);
     }
     return right.totalProfit - left.totalProfit;
   });
-}
-
-function summarizeParticipants(participants: AutoParticipantOverview[]) {
-  const participantCount = participants.length;
-  const totalProfit = participants.reduce((sum, participant) => sum + participant.totalProfit, 0);
-  const averageReturnRate = participantCount
-    ? participants.reduce((sum, participant) => sum + participant.returnRate, 0) / participantCount
-    : 0;
-
-  return {
-    averageReturnRate,
-    participantCount,
-    totalProfit,
-  };
 }
 
 function profitClass(value: number, neutralClassName = "text-white") {

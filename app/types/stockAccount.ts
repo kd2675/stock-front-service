@@ -1,4 +1,5 @@
 import type { MarketSessionStatus } from "@/app/types/stockMarket";
+import type { PortfolioReturnRateStatus } from "@/app/types/stockAutomation";
 
 export type Account = {
   accountId: number;
@@ -43,7 +44,10 @@ export type Portfolio = {
   marketValue: number;
   reservedBuyCash: number;
   totalAsset: number;
-  returnRate: number;
+  netContribution: number;
+  totalProfit: number;
+  returnRate: number | null;
+  returnRateStatus: PortfolioReturnRateStatus;
   pendingOrderCount: number;
   holdings: Holding[];
 };
@@ -54,7 +58,10 @@ export type PortfolioSnapshot = {
   cashBalance: number;
   pendingSubscriptionAsset: number;
   marketValue: number;
-  returnRate: number;
+  netContribution: number | null;
+  totalProfit: number | null;
+  returnRate: number | null;
+  returnRateStatus: PortfolioReturnRateStatus;
 };
 
 export type ProfitSummary = {

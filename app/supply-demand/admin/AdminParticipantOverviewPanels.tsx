@@ -4,10 +4,8 @@ import useModalDialog from "@/app/hooks/useModalDialog";
 import { formatCount, formatDateTime, formatInteger, formatNumber, formatSignedPercent, formatWon } from "@/app/supply-demand/admin/AdminFormatters";
 import { ProfileMiniMetric, ProfileOverviewInfoItem } from "@/app/supply-demand/admin/AdminMetricCards";
 import type { ParticipantProfileOverviewSummary } from "@/app/supply-demand/admin/AdminParticipantPolicyHelpers";
-import {
-  resolveParticipantProfileOverviewReturnRate,
-  resolveParticipantProfileOverviewTotal,
-} from "@/app/supply-demand/admin/AdminParticipantOverviewTotals";
+import { resolveParticipantProfileOverviewTotal } from "@/app/supply-demand/admin/AdminParticipantOverviewTotals";
+import type { AutoParticipantPerformanceBasis, AutoParticipantPerformanceSummary } from "@/app/types/stock";
 
 export function ParticipantProfileOverviewPanel({
   summaries,
@@ -18,6 +16,8 @@ export function ParticipantProfileOverviewPanel({
   loadingAll,
   allError,
   onLoadAll,
+  livePerformanceSummary,
+  closedPerformanceSummary,
 }: {
   summaries: ParticipantProfileOverviewSummary[];
   loading: boolean;
@@ -27,11 +27,16 @@ export function ParticipantProfileOverviewPanel({
   loadingAll: boolean;
   allError: boolean;
   onLoadAll: () => void;
+  livePerformanceSummary: AutoParticipantPerformanceSummary | null;
+  closedPerformanceSummary: AutoParticipantPerformanceSummary | null;
 }) {
   const total = useMemo(() => resolveParticipantProfileOverviewTotal(summaries), [summaries]);
-  const totalReturnRate = useMemo(() => resolveParticipantProfileOverviewReturnRate(total), [total]);
   const allTotal = useMemo(() => resolveParticipantProfileOverviewTotal(allSummaries), [allSummaries]);
-  const allTotalReturnRate = useMemo(() => resolveParticipantProfileOverviewReturnRate(allTotal), [allTotal]);
+  const [performanceBasis, setPerformanceBasis] = useState<AutoParticipantPerformanceBasis>("LIVE_ESTIMATE");
+  const performanceSummary = performanceBasis === "LATEST_CLOSED"
+    ? closedPerformanceSummary
+    : livePerformanceSummary;
+  const performance = performanceSummary?.total ?? null;
   const [showAllModal, setShowAllModal] = useState(false);
   const allHistoryDialogRef = useModalDialog<HTMLDivElement>(showAllModal, () => setShowAllModal(false));
 
@@ -77,12 +82,75 @@ export function ParticipantProfileOverviewPanel({
         <ProfileMiniMetric label="가동 참여자" value={formatCount(total.enabledCount, "명")} tone="green" />
         <ProfileMiniMetric label="가용 현금" value={formatWon(total.availableCash)} tone="blue" />
         <ProfileMiniMetric label="보유 평가액" value={formatWon(total.holdingMarketValue)} tone="muted" />
-        <ProfileMiniMetric label="총 손익" value={formatWon(total.totalProfit)} tone={total.totalProfit > 0 ? "green" : total.totalProfit < 0 ? "red" : "muted"} />
-        <ProfileMiniMetric label="전체 수익률" value={formatSignedPercent(totalReturnRate)} tone={totalReturnRate > 0 ? "green" : totalReturnRate < 0 ? "red" : "muted"} />
         <ProfileMiniMetric label="2시간 거래대금" value={formatWon(total.todayGrossAmount)} tone="muted" />
         <ProfileMiniMetric label="대기 주문" value={formatCount(total.openOrderCount, "건")} tone="muted" />
         <ProfileMiniMetric label="대기 매수/매도" value={`${formatInteger(total.openBuyQuantity)} / ${formatInteger(total.openSellQuantity)}주`} tone="muted" />
         <ProfileMiniMetric label="전략" value={`${formatInteger(total.enabledStrategyCount)} / ${formatInteger(total.strategyCount)}`} tone="blue" />
+      </div>
+
+      <div className="mt-4 rounded-md border border-white/10 bg-black/20 p-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-black text-white">자동 참여자 성과</p>
+            <p className="mt-1 text-[11px] font-bold text-stock-subtle">
+              합산 성과와 계좌 분포를 분리합니다. 계좌 수익률의 단순 평균은 대표값으로 사용하지 않습니다.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {(["LIVE_ESTIMATE", "LATEST_CLOSED"] as const).map((basis) => (
+              <button
+                key={basis}
+                type="button"
+                onClick={() => setPerformanceBasis(basis)}
+                className={[
+                  "min-h-8 rounded-md border px-3 py-1 text-[11px] font-black transition",
+                  performanceBasis === basis
+                    ? "border-admin-accent/70 bg-admin-accent/15 text-admin-accent-soft"
+                    : "border-white/10 text-stock-subtle hover:border-white/30",
+                ].join(" ")}
+              >
+                {basis === "LIVE_ESTIMATE" ? "장중 추정" : "최근 장마감 확정"}
+              </button>
+            ))}
+          </div>
+        </div>
+        <p className="mt-2 text-[11px] font-bold text-stock-subtle">
+          {performanceSummary
+            ? `${performanceSummary.basis === "LIVE_ESTIMATE" ? "장중 추정" : "장마감 확정"} · ${performanceSummary.businessDate ?? "기준일 없음"}${performanceSummary.calculatedAt ? ` · ${formatDateTime(performanceSummary.calculatedAt)}` : ""}`
+            : "성과 기준 데이터를 조회하지 못했습니다."}
+        </p>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+          <ProfileMiniMetric
+            label="합산 손익"
+            value={performance ? formatWon(performance.totalProfit) : "—"}
+            tone={profitTone(performance?.totalProfit)}
+          />
+          <ProfileMiniMetric
+            label="합산 순입금 대비 수익률"
+            value={formatOptionalPercent(performance?.aggregateReturnRate)}
+            tone={profitTone(performance?.aggregateReturnRate)}
+          />
+          <ProfileMiniMetric
+            label="계좌 중앙 수익률"
+            value={formatOptionalPercent(performance?.medianAccountReturnRate)}
+            tone={profitTone(performance?.medianAccountReturnRate)}
+          />
+          <ProfileMiniMetric
+            label="수익 계좌"
+            value={performance && performance.profitableAccountRate !== null
+              ? `${formatInteger(performance.profitableAccountCount)} / ${formatInteger(performance.eligibleAccountCount)}명 · ${formatNumber(performance.profitableAccountRate)}%`
+              : "—"}
+            tone="green"
+          />
+          <ProfileMiniMetric
+            label="산출 제외"
+            value={performance ? formatCount(performance.undefinedAccountCount, "명") : "—"}
+            tone={performance?.undefinedAccountCount ? "red" : "muted"}
+          />
+        </div>
+        <p className="mt-2 text-[11px] font-bold text-stock-subtle">
+          합산 순입금 대비 수익률 = 합산 손익 ÷ 합산 외부 순입금. 중앙값과 수익 계좌 비율은 순입금이 양수인 계좌만 사용합니다.
+        </p>
       </div>
 
       <div className="mt-4 grid min-w-0 gap-3">
@@ -125,8 +193,8 @@ export function ParticipantProfileOverviewPanel({
               <ProfileMiniMetric label="가동 참여자" value={formatCount(allTotal.enabledCount, "명")} tone="green" />
               <ProfileMiniMetric label="가용 현금" value={formatWon(allTotal.availableCash)} tone="blue" />
               <ProfileMiniMetric label="보유 평가액" value={formatWon(allTotal.holdingMarketValue)} tone="muted" />
-              <ProfileMiniMetric label="총 손익" value={formatWon(allTotal.totalProfit)} tone={allTotal.totalProfit > 0 ? "green" : allTotal.totalProfit < 0 ? "red" : "muted"} />
-              <ProfileMiniMetric label="전체 수익률" value={formatSignedPercent(allTotalReturnRate)} tone={allTotalReturnRate > 0 ? "green" : allTotalReturnRate < 0 ? "red" : "muted"} />
+              <ProfileMiniMetric label="합산 손익" value={performance ? formatWon(performance.totalProfit) : "—"} tone={profitTone(performance?.totalProfit)} />
+              <ProfileMiniMetric label="합산 순입금 대비 수익률" value={formatOptionalPercent(performance?.aggregateReturnRate)} tone={profitTone(performance?.aggregateReturnRate)} />
             </div>
             <div className="mt-4 grid min-w-0 gap-3">
               {allSummaries.map((summary) => (
@@ -179,9 +247,9 @@ const ParticipantProfileOverviewCard = memo(function ParticipantProfileOverviewC
           <p className="font-black tabular-nums text-white">{formatWon(summary.netCashFlow)}</p>
           <p className="mt-1 text-xs font-bold text-stock-subtle">외부 현금 흐름 기준</p>
         </ProfileOverviewInfoItem>
-        <ProfileOverviewInfoItem label="손익/수익률">
+        <ProfileOverviewInfoItem label="손익/프로필 합산 수익률">
           <p className={["font-black tabular-nums", summary.totalProfit > 0 ? "text-admin-success" : summary.totalProfit < 0 ? "text-admin-danger" : "text-white"].join(" ")}>{formatWon(summary.totalProfit)}</p>
-          <p className={["mt-1 text-xs font-black tabular-nums", summary.returnRate > 0 ? "text-admin-success" : summary.returnRate < 0 ? "text-admin-danger" : "text-stock-subtle"].join(" ")}>{formatSignedPercent(summary.returnRate)}</p>
+          <p className={["mt-1 text-xs font-black tabular-nums", profitTextClass(summary.returnRate)].join(" ")}>{formatOptionalPercent(summary.returnRate)}</p>
         </ProfileOverviewInfoItem>
         <ProfileOverviewInfoItem label="보유">
           <p className="font-black tabular-nums text-white">{formatCount(summary.holdingCount, "종목")}</p>
@@ -224,3 +292,21 @@ const ParticipantProfileOverviewCard = memo(function ParticipantProfileOverviewC
     </article>
   );
 });
+
+function formatOptionalPercent(value: number | null | undefined) {
+  return value === null || value === undefined ? "—" : formatSignedPercent(value);
+}
+
+function profitTone(value: number | null | undefined): "green" | "red" | "muted" {
+  if (value === null || value === undefined || value === 0) {
+    return "muted";
+  }
+  return value > 0 ? "green" : "red";
+}
+
+function profitTextClass(value: number | null | undefined) {
+  if (value === null || value === undefined || value === 0) {
+    return "text-stock-subtle";
+  }
+  return value > 0 ? "text-admin-success" : "text-admin-danger";
+}

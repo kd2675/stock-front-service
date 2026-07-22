@@ -22,7 +22,11 @@ export function AutoParticipantOverviewDetail({ overview }: { overview: AutoPart
         <ProfileMiniMetric label="보유 평가액" value={formatWon(overview.holdingMarketValue)} tone="muted" />
         <ProfileMiniMetric label="추정 총자산" value={formatWon(overview.estimatedTotalAsset)} tone="blue" />
         <ProfileMiniMetric label="순입금" value={formatWon(overview.netCashFlow)} tone="muted" />
-        <ProfileMiniMetric label="수익률" value={formatSignedPercent(overview.returnRate)} tone={overview.returnRate > 0 ? "green" : overview.returnRate < 0 ? "red" : "muted"} />
+        <ProfileMiniMetric
+          label="계좌 순입금 대비 수익률"
+          value={overview.returnRate === null ? "—" : formatSignedPercent(overview.returnRate)}
+          tone={overview.returnRate === null ? "muted" : overview.returnRate > 0 ? "green" : overview.returnRate < 0 ? "red" : "muted"}
+        />
         <ProfileMiniMetric label="총 손익" value={formatWon(overview.totalProfit)} tone={overview.totalProfit > 0 ? "green" : overview.totalProfit < 0 ? "red" : "muted"} />
         <ProfileMiniMetric label="보유 종목" value={formatCount(overview.holdingCount, "개")} tone="muted" />
         <ProfileMiniMetric label="보유 수량" value={`${formatNumber(overview.totalHoldingQuantity)}주`} tone="muted" />

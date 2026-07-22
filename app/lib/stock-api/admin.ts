@@ -6,7 +6,7 @@ import {
   authenticatedPostJson,
   toQuery,
 } from "@/app/lib/stock-api/core";
-import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowBreakdown, AdminFundFlowScope, AdminInvestorFlowHistory, AdminInvestorFlowSummary, AdminParticipantScope, AdminSymbolFlowList, AdminTotalAssetHistoryPage, AutoMarketDistributionBias, AutoMarketRegimeCountWeights, AutoMarketRegimeHistoryRange, AutoMarketStatus, AutoParticipant, AutoParticipantCashAdjustment, AutoParticipantOverview, AutoParticipantProfileOverview, AutoParticipantProfileType, BatchJobRuntimeStatus, EodOperationsOverview, EodPhaseRetryResult, ListingAutoOperationMode, ListingAutoPosition, ListingAutoStrategyProfile, RecurringCashIntervalUnit, StockBatchJobRun } from "@/app/types/stock";
+import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowBreakdown, AdminFundFlowScope, AdminInvestorFlowHistory, AdminInvestorFlowSummary, AdminParticipantScope, AdminSymbolFlowList, AdminTotalAssetHistoryPage, AutoMarketDistributionBias, AutoMarketRegimeCountWeights, AutoMarketRegimeHistoryRange, AutoMarketStatus, AutoParticipant, AutoParticipantCashAdjustment, AutoParticipantOverview, AutoParticipantPerformanceBasis, AutoParticipantPerformanceSummary, AutoParticipantProfileOverview, AutoParticipantProfileType, BatchJobRuntimeStatus, EodOperationsOverview, EodPhaseRetryResult, ListingAutoOperationMode, ListingAutoPosition, ListingAutoStrategyProfile, RecurringCashIntervalUnit, StockBatchJobRun } from "@/app/types/stock";
 
 export type { AdminFundFlowScope } from "@/app/types/stock";
 
@@ -168,6 +168,17 @@ export function getAutoParticipantProfileOverviews(token: string, options?: { ac
     profileTypes: normalizedProfileTypes,
   });
   return authenticatedGetJson<AutoParticipantProfileOverview[]>(token, `/api/stock/v1/markets/auto-market/participants/profile-overviews${query}`);
+}
+
+export function getAutoParticipantPerformanceSummary(
+  token: string,
+  basis: AutoParticipantPerformanceBasis,
+) {
+  const query = new URLSearchParams({ basis });
+  return authenticatedGetJson<AutoParticipantPerformanceSummary>(
+    token,
+    `/api/stock/v1/markets/auto-market/participants/performance-summary?${query.toString()}`,
+  );
 }
 
 export function runAutoParticipantCashFlow(token: string) {

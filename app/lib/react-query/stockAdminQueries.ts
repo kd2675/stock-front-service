@@ -14,11 +14,13 @@ import {
   getAutoMarketRegimeHistoryRange,
   getAutoParticipants,
   getAutoParticipantOverviews,
+  getAutoParticipantPerformanceSummary,
   getAutoParticipantProfileOverviews,
   getBatchJobRuntimeControls,
   getEodOperationsOverview,
   getLatestAutoParticipantCashFlowRun,
 } from "@/app/lib/stock";
+import type { AutoParticipantPerformanceBasis } from "@/app/types/stock";
 import { stockKeys } from "@/app/lib/react-query/stockKeys";
 import {
   ADMIN_LEDGER_STALE_MS,
@@ -328,5 +330,20 @@ export function autoParticipantProfileOverviewsQueryOptions(
     enabled: options.enabled,
     refetchInterval: options.refetchIntervalMs ?? false,
     staleTime: options.staleTimeMs ?? ADMIN_SNAPSHOT_STALE_MS,
+  });
+}
+
+export function autoParticipantPerformanceSummaryQueryOptions(
+  token: string | null,
+  basis: AutoParticipantPerformanceBasis,
+  options: { enabled?: boolean } = {},
+) {
+  return adminSnapshotQueryOptions(token, {
+    queryKey: stockKeys.autoParticipantPerformanceSummary(basis),
+    request: (nextToken) => getAutoParticipantPerformanceSummary(nextToken, basis),
+    fallbackMessage: "자동 참여자 성과 요약을 조회하지 못했습니다.",
+    enabled: options.enabled,
+    refetchInterval: false,
+    staleTime: ADMIN_SNAPSHOT_STALE_MS,
   });
 }

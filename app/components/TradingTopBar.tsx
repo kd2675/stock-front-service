@@ -200,7 +200,11 @@ function AccountPanel({
         <AccountPanelMetric label="총자산" value={formatWon(portfolio?.totalAsset)} />
         <AccountPanelMetric label="현금" value={formatWon(portfolio?.account.cashBalance ?? profile?.account?.cashBalance)} />
         <AccountPanelMetric label="평가금액" value={formatWon(portfolio?.marketValue)} />
-        <AccountPanelMetric label="수익률" value={portfolio ? `${formatNumber(portfolio.returnRate)}%` : "-"} tone={portfolio && portfolio.returnRate < 0 ? "blue" : "red"} />
+        <AccountPanelMetric
+          label="순입금 대비 수익률"
+          value={portfolio?.returnRate == null ? "—" : `${formatNumber(portfolio.returnRate)}%`}
+          tone={portfolio?.returnRate == null ? "default" : portfolio.returnRate < 0 ? "blue" : "red"}
+        />
       </div>
 
       <div className="mt-4">

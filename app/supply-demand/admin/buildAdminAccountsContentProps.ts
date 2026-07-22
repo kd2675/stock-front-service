@@ -21,6 +21,8 @@ export function buildAdminAccountsContentProps({
     adminCashFlowPageQuery,
     autoMarketDetailsQuery,
     autoParticipantsQuery,
+    autoParticipantLivePerformanceQuery,
+    autoParticipantClosedPerformanceQuery,
     autoParticipantProfileOverviewsQuery,
     autoParticipantProfileOverviewsAllQuery,
     batchJobRuntimeControls,
@@ -47,7 +49,9 @@ export function buildAdminAccountsContentProps({
     cashFlowPage: adminCashFlowPage,
     lastCashFlowRun,
     loadingCashFlowPage: adminCashFlowPageQuery.isFetching,
-    loadingProfileOverviews: autoParticipantProfileOverviewsQuery.isFetching,
+    loadingProfileOverviews: autoParticipantProfileOverviewsQuery.isFetching
+      || autoParticipantLivePerformanceQuery.isFetching
+      || autoParticipantClosedPerformanceQuery.isFetching,
     loadingProfileOverviewAll: autoParticipantProfileOverviewsAllQuery.isFetching,
     loadingSalaryEligibility: autoParticipantsQuery.isFetching || autoMarketDetailsQuery.isFetching,
     loadingUserFundFlow: userFundFlowQuery.isFetching,
@@ -55,15 +59,23 @@ export function buildAdminAccountsContentProps({
     onCashFlowPageChange: setAdminCashFlowPageIndex,
     onLoadUserFundFlow: () => void loadUserFundFlow(),
     onRefreshCashFlowPage: () => void adminCashFlowPageQuery.refetch(),
-    onRefreshProfileOverviews: () => void autoParticipantProfileOverviewsQuery.refetch(),
+    onRefreshProfileOverviews: () => {
+      void autoParticipantProfileOverviewsQuery.refetch();
+      void autoParticipantLivePerformanceQuery.refetch();
+      void autoParticipantClosedPerformanceQuery.refetch();
+    },
     onLoadAllProfileOverviews: () => void autoParticipantProfileOverviewsAllQuery.refetch(),
     onRunCashFlow: () => void runAutoParticipantCashFlowNow(),
     onUserCashAmountChange: setUserCashAdjustmentAmount,
     onUserCashKeyChange: setUserCashAdjustmentUserKey,
-    profileOverviewError: autoParticipantProfileOverviewsQuery.isError,
+    profileOverviewError: autoParticipantProfileOverviewsQuery.isError
+      || autoParticipantLivePerformanceQuery.isError
+      || autoParticipantClosedPerformanceQuery.isError,
     profileOverviewAllError: autoParticipantProfileOverviewsAllQuery.isError,
     profileOverviewAllSummaries: autoParticipantProfileOverviewsAllQuery.data ?? [],
     profileOverviewSummaries: participantProfileOverviewSummaries,
+    livePerformanceSummary: autoParticipantLivePerformanceQuery.data ?? null,
+    closedPerformanceSummary: autoParticipantClosedPerformanceQuery.data ?? null,
     runningCashFlow,
     salaryEligibility,
     salaryEligibilityError: autoParticipantsQuery.isError || autoMarketDetailsQuery.isError,

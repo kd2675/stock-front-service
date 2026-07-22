@@ -43,7 +43,11 @@ export function AutoParticipantAssetSection({
           <ParticipantMetricLine label="예약 매수금" value={formatWon(overview.reservedBuyCash)} />
           <ParticipantMetricLine label="순입금" value={formatWon(overview.netCashFlow)} />
           <ParticipantMetricLine label="손익" value={formatWon(overview.totalProfit)} valueClassName={resolveProfitTextClass(overview.totalProfit)} />
-          <ParticipantMetricLine label="수익률" value={formatSignedPercent(overview.returnRate)} valueClassName={resolveProfitTextClass(overview.returnRate)} />
+          <ParticipantMetricLine
+            label="계좌 순입금 대비 수익률"
+            value={overview.returnRate === null ? "—" : formatSignedPercent(overview.returnRate)}
+            valueClassName={resolveProfitTextClass(overview.returnRate)}
+          />
         </div>
       ) : (
         <div className="grid gap-1 text-sm font-bold leading-5 text-stock-subtle">
@@ -122,7 +126,10 @@ export function AutoParticipantActivitySection({
   );
 }
 
-function resolveProfitTextClass(value: number) {
+function resolveProfitTextClass(value: number | null) {
+  if (value === null) {
+    return "text-stock-subtle";
+  }
   if (value > 0) {
     return "text-admin-success";
   }

@@ -58,8 +58,3 @@ export function resolveParticipantProfileOverviewTotal(
     },
   );
 }
-
-export function resolveParticipantProfileOverviewReturnRate(total: ParticipantProfileOverviewTotal) {
-  const principal = total.estimatedTotalAsset - total.totalProfit;
-  return principal === 0 ? 0 : (total.totalProfit / principal) * 100;
-}

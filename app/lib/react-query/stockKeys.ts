@@ -99,6 +99,12 @@ export const stockKeys = {
     options?.activityScope ?? "RECENT_SIMULATION_DAY",
     [...(options?.profileTypes ?? [])].sort(),
   ] as const,
+  autoParticipantPerformanceSummary: (basis: string) => [
+    ...stockKeys.autoMarketStatus(),
+    "participants",
+    "performance-summary",
+    basis,
+  ] as const,
   corporateActionFeedRoot: () => [...stockKeys.market(), "corporate-actions", "feed"] as const,
   corporateActionFeed: (options?: { actionType?: CorporateActionType; limit?: number }) => [
     ...stockKeys.corporateActionFeedRoot(),

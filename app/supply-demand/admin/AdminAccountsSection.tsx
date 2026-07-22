@@ -8,6 +8,7 @@ import { SalaryEligibilityPanel } from "@/app/supply-demand/admin/AdminSalaryPan
 import type { AdminSalaryEligibilityRowsState } from "@/app/supply-demand/admin/useAdminSalaryEligibilityRows";
 import type {
   AdminCashFlowPage,
+  AutoParticipantPerformanceSummary,
   BatchJobRuntimeStatus,
   FundFlow,
   StockBatchJobRun,
@@ -44,6 +45,8 @@ type AdminAccountsSectionProps = {
   loadingProfileOverviewAll: boolean;
   profileOverviewError: boolean;
   profileOverviewAllError: boolean;
+  livePerformanceSummary: AutoParticipantPerformanceSummary | null;
+  closedPerformanceSummary: AutoParticipantPerformanceSummary | null;
 };
 
 export function AdminAccountsSection({
@@ -77,6 +80,8 @@ export function AdminAccountsSection({
   loadingProfileOverviewAll,
   profileOverviewError,
   profileOverviewAllError,
+  livePerformanceSummary,
+  closedPerformanceSummary,
 }: AdminAccountsSectionProps) {
   if (activeSection === "funds-ledger") {
     return (
@@ -141,6 +146,8 @@ export function AdminAccountsSection({
         loadingAll={loadingProfileOverviewAll}
         allError={profileOverviewAllError}
         onLoadAll={onLoadAllProfileOverviews}
+        livePerformanceSummary={livePerformanceSummary}
+        closedPerformanceSummary={closedPerformanceSummary}
       />
     );
   }
