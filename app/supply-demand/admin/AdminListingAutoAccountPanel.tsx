@@ -372,10 +372,14 @@ function AccountSelector({
 function AccountSummary({ account }: { account: ListingAutoAccount }) {
   const state = deriveAccountOperatingState(account);
   const netProfitClassName = account.netProfit >= 0 ? "text-admin-success" : "text-admin-danger";
-  const inventoryPosition = account.inventoryBandQuantity > 0
-    ? Math.max(-1, Math.min((account.holdingQuantity - account.targetHoldingQuantity) / account.inventoryBandQuantity, 1))
+  const issuedSharePercent = (quantity: number) => account.issuedShares > 0
+    ? Math.max(0, Math.min(100, (quantity / account.issuedShares) * 100))
     : 0;
-  const inventoryMarker = 2 + ((inventoryPosition + 1) / 2) * 96;
+  const lowerHoldingPercent = issuedSharePercent(state.lowerHoldingLimit);
+  const upperHoldingPercent = issuedSharePercent(state.upperHoldingLimit);
+  const targetHoldingPercent = issuedSharePercent(account.targetHoldingQuantity);
+  const currentHoldingPercent = issuedSharePercent(account.holdingQuantity);
+  const currentHoldingMarker = Math.max(1, Math.min(99, currentHoldingPercent));
 
   return (
     <section aria-labelledby="listing-account-summary" className="min-w-0 rounded-md border border-white/10 bg-black/20 p-4">
@@ -410,11 +414,42 @@ function AccountSummary({ account }: { account: ListingAutoAccount }) {
           <span className="text-admin-muted">재고 밴드 {formatNumber(state.lowerHoldingLimit)}~{formatNumber(state.upperHoldingLimit)}주</span>
           <span className="tabular-nums text-admin-accent">목표 {state.targetHoldingPercent.toFixed(2)}% · {formatNumber(account.targetHoldingQuantity)}주</span>
         </div>
-        <div className="relative mt-2 h-2 rounded-full bg-white/10">
-          <span className="absolute inset-y-0 left-1/2 w-px bg-white/50" />
-          <span className="absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-admin-surface bg-admin-accent" style={{ left: `${inventoryMarker}%` }} />
+        <div
+          aria-label={`전체 발행량 기준 재고 위치. 허용 밴드 ${lowerHoldingPercent.toFixed(2)}%에서 ${upperHoldingPercent.toFixed(2)}%, 목표 ${targetHoldingPercent.toFixed(2)}%, 현재 보유 ${currentHoldingPercent.toFixed(2)}%`}
+          className="relative mt-2 h-2.5 rounded-full bg-white/10"
+          role="img"
+        >
+          <span
+            aria-hidden="true"
+            className="absolute inset-y-0 left-0 rounded-l-full bg-white/15"
+            style={{ width: `${currentHoldingPercent}%` }}
+          />
+          <span
+            aria-hidden="true"
+            className="absolute inset-y-0 rounded-full border-x border-admin-accent/70 bg-admin-accent/25"
+            style={{ left: `${lowerHoldingPercent}%`, width: `${Math.max(0, upperHoldingPercent - lowerHoldingPercent)}%` }}
+          />
+          <span
+            aria-hidden="true"
+            className="absolute -bottom-1 -top-1 w-0.5 -translate-x-1/2 rounded-full bg-white/80"
+            style={{ left: `${targetHoldingPercent}%` }}
+          />
+          <span
+            aria-hidden="true"
+            className="absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-admin-surface bg-admin-accent"
+            style={{ left: `${currentHoldingMarker}%` }}
+          />
         </div>
-        <div className="mt-1 flex justify-between text-[10px] font-bold text-admin-placeholder"><span>하한</span><span>목표</span><span>상한</span></div>
+        <div className="mt-1.5 grid grid-cols-3 gap-2 text-[10px] font-bold tabular-nums text-admin-placeholder">
+          <span>하한 {lowerHoldingPercent.toFixed(2)}%</span>
+          <span className="text-center text-white">목표 {targetHoldingPercent.toFixed(2)}%</span>
+          <span className="text-right">상한 {upperHoldingPercent.toFixed(2)}%</span>
+        </div>
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[9px] font-bold text-admin-subtle">
+          <span><i className="mr-1 inline-block h-1.5 w-3 rounded-sm bg-admin-accent/35" />허용 밴드</span>
+          <span><i className="mr-1 inline-block h-3 w-0.5 bg-white/80 align-middle" />목표</span>
+          <span><i className="mr-1 inline-block size-2 rounded-full bg-admin-accent" />현재 보유 {currentHoldingPercent.toFixed(2)}%</span>
+        </div>
       </div>
     </section>
   );
