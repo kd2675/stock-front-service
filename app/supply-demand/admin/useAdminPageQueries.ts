@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   adminCashFlowsQueryOptions,
   adminFlowOverviewQueryOptions,
-  adminFundFlowSummaryQueryOptions,
+  adminFundFlowBreakdownQueryOptions,
   adminInvestorFlowHistoryQueryOptions,
   adminInvestorFlowSummaryQueryOptions,
   adminUserFundFlowQueryOptions,
@@ -112,11 +112,11 @@ export function useAdminPageQueries({
     participantSymbolConfigUserKey: queryFlags.includeParticipantSymbolConfigs ? editingAutoParticipantUserKey ?? undefined : undefined,
     refetchIntervalMs: false,
   }));
-  const adminFundFlowSummaryQuery = useQuery(adminFundFlowSummaryQueryOptions(accessToken, {
+  const adminFundFlowBreakdownQuery = useQuery(adminFundFlowBreakdownQueryOptions(accessToken, {
     enabled: queryFlags.shouldUseAdminFlowOverview,
     scope: "RECENT_SIMULATION_DAY",
   }));
-  const adminAllFundFlowSummaryQuery = useQuery(adminFundFlowSummaryQueryOptions(accessToken, {
+  const adminCumulativeFundFlowBreakdownQuery = useQuery(adminFundFlowBreakdownQueryOptions(accessToken, {
     enabled: false,
     scope: "ALL",
   }));
@@ -195,9 +195,9 @@ export function useAdminPageQueries({
     ...queryResults,
     accessToken,
     adminCashFlowPageQuery,
-    adminAllFundFlowSummaryQuery,
+    adminCumulativeFundFlowBreakdownQuery,
     adminFlowOverviewQuery,
-    adminFundFlowSummaryQuery,
+    adminFundFlowBreakdownQuery,
     adminInvestorFlowHistoryQuery,
     adminInvestorFlowSummaryQuery,
     autoMarketDetailsQuery,

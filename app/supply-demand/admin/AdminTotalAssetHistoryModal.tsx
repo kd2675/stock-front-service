@@ -9,13 +9,15 @@ import {
   type AdminAssetHistoryMetric,
   type AdminAssetHistoryMetricDefinition,
 } from "@/app/supply-demand/admin/adminTotalAssetHistoryMetrics";
-import type { AdminTotalAssetHistoryPage, AdminTotalAssetHistoryPoint } from "@/app/types/stock";
+import { ADMIN_PARTICIPANT_SCOPE_LABELS } from "@/app/supply-demand/admin/adminInvestorFlowPresentation";
+import type { AdminParticipantScope, AdminTotalAssetHistoryPage, AdminTotalAssetHistoryPoint } from "@/app/types/stock";
 
 export function AdminTotalAssetHistoryModal({
   history,
   loading,
   error,
   open,
+  participantScope,
   selectedMetric,
   onMetricChange,
   onClose,
@@ -25,6 +27,7 @@ export function AdminTotalAssetHistoryModal({
   loading: boolean;
   error: boolean;
   open: boolean;
+  participantScope: AdminParticipantScope;
   selectedMetric: AdminAssetHistoryMetric;
   onMetricChange: (metric: AdminAssetHistoryMetric) => void;
   onClose: () => void;
@@ -44,17 +47,21 @@ export function AdminTotalAssetHistoryModal({
   const pageLabel = history && history.totalPages > 0
     ? `${history.page + 1} / ${history.totalPages}주`
     : "정산 기록 없음";
+  const participantLabel = ADMIN_PARTICIPANT_SCOPE_LABELS[history?.participantScope ?? participantScope];
 
   return (
     <div className="modal-scroll fixed inset-0 z-50 overflow-y-auto bg-black/70 px-4 py-8 backdrop-blur-sm">
       <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="total-asset-history-title" className="mx-auto w-full max-w-6xl rounded-lg border border-white/10 bg-admin-modal p-4 shadow-[var(--shadow-dialog)] outline-none">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h3 id="total-asset-history-title" className="text-base font-black text-white">전체 자산·보유량 · 7일 변화</h3>
+            <h3 id="total-asset-history-title" className="text-base font-black text-white">{participantLabel} 자산·보유량 · 7일 변화</h3>
             <p className="mt-1 max-w-3xl text-xs font-bold leading-5 text-stock-subtle">
-              장 마감 정산이 완료된 활성 참여자 계좌를 일자별로 합산합니다. 운영 재고용 상장 계좌는 모든 지표에서 제외됩니다.
+              장마감 때 역할과 자산을 함께 동결한 활성 계좌를 일자별로 합산합니다. 현재 계정의 역할이 바뀌어도 과거 분류는 다시 계산하지 않습니다.
               가용 현금은 미체결 매수 예약 반환 후 금액이며, 청약 대기자산은 청약으로 현금에서 차감된 뒤 신주 상장 전까지 별도로 보유되는 금액만 표시합니다.
             </p>
+            {history?.roleFrozenFrom ? (
+              <p className="mt-1 text-[11px] font-bold text-admin-muted">역할 동결 이력 시작일 {history.roleFrozenFrom}</p>
+            ) : null}
           </div>
           <div className="flex flex-wrap items-center justify-end gap-2">
             <span className="rounded-md bg-admin-accent-surface px-2 py-1 text-xs font-black text-admin-accent">{pageLabel}</span>
@@ -125,7 +132,7 @@ export function AdminTotalAssetHistoryModal({
               </div>
             )}
 
-            <TotalAssetHistoryTable points={points} selectedMetric={selectedMetric} />
+            <TotalAssetHistoryTable points={points} selectedMetric={selectedMetric} participantLabel={participantLabel} />
           </>
         ) : (
           <div className="mt-4 rounded-md border border-white/10 bg-black/20 px-3 py-10 text-center text-sm font-bold text-stock-subtle">
@@ -149,9 +156,11 @@ function HistoryMetric({ label, value, valueClassName = "text-white" }: { label:
 function TotalAssetHistoryTable({
   points,
   selectedMetric,
+  participantLabel,
 }: {
   points: AdminTotalAssetHistoryPoint[];
   selectedMetric: AdminAssetHistoryMetric;
+  participantLabel: string;
 }) {
   const metricDefinition = ADMIN_ASSET_HISTORY_METRICS[selectedMetric];
 
@@ -180,14 +189,14 @@ function TotalAssetHistoryTable({
           </tbody>
         </table>
       </div>
-      <DataTableViewport label="전체 자산·보유량 일자별 변화" tone="dark" className="mt-4 hidden lg:block">
+      <DataTableViewport label={`${participantLabel} 자산·보유량 일자별 변화`} tone="dark" className="mt-4 hidden lg:block">
         <table className="w-full min-w-[1420px] border-collapse text-sm">
-          <caption className="sr-only">전체 자산·보유량 일자별 정산</caption>
+          <caption className="sr-only">{participantLabel} 자산·보유량 일자별 정산</caption>
           <thead className="bg-white/10 text-left text-admin-muted">
             <tr>
               <th className="px-3 py-2">정산일</th>
               <th className="px-3 py-2 text-right">참여 계좌</th>
-              <th className="px-3 py-2 text-right">전체 총자산</th>
+              <th className="px-3 py-2 text-right">총자산</th>
               <th className="px-3 py-2 text-right">전일 대비</th>
               <th className="px-3 py-2 text-right">변화율</th>
               <th className="px-3 py-2 text-right">가용 현금</th>

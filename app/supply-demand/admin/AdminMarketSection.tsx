@@ -5,9 +5,10 @@ import { AdminSimulationClockControlPanel } from "@/app/supply-demand/admin/Admi
 import type { AdminSection } from "@/app/supply-demand/admin/AdminNavigationConfig";
 import type {
   AdminFlowOverview,
-  AdminFundFlowSummary,
+  AdminFundFlowBreakdown,
   AdminInvestorFlowHistory,
   AdminInvestorFlowSummary,
+  AdminParticipantScope,
   AdminSymbolFlowList,
   AdminTotalAssetHistoryPage,
   AutoMarketStatus,
@@ -26,12 +27,12 @@ type AdminMarketSectionProps = {
   orderBookInstrumentCount: number;
   openOrderBookConfigCount: number;
   adminFlowOverview: AdminFlowOverview | null;
-  fundFlow: AdminFundFlowSummary | null;
-  allFundFlow: AdminFundFlowSummary | null;
+  fundFlow: AdminFundFlowBreakdown | null;
+  cumulativeFundFlow: AdminFundFlowBreakdown | null;
   loadingFundFlow: boolean;
-  loadingAllFundFlow: boolean;
+  loadingCumulativeFundFlow: boolean;
   fundFlowError: boolean;
-  allFundFlowError: boolean;
+  cumulativeFundFlowError: boolean;
   investorFlow: AdminInvestorFlowSummary | null;
   investorFlowError: boolean;
   investorFlowHistory: AdminInvestorFlowHistory | null;
@@ -40,8 +41,8 @@ type AdminMarketSectionProps = {
   investorFlowRefreshing: boolean;
   symbolFlowList: AdminSymbolFlowList;
   loadingSymbolFlows: boolean;
-  onLoadAllFundFlow: () => void;
-  onLoadTotalAssetHistory: (page: number) => Promise<AdminTotalAssetHistoryPage | null>;
+  onLoadCumulativeFundFlow: () => void;
+  onLoadTotalAssetHistory: (page: number, participantScope: AdminParticipantScope) => Promise<AdminTotalAssetHistoryPage | null>;
   onLoadInvestorFlowHistory: () => void;
   onLoadWeeklySymbolFlows: (dayOffset: number) => Promise<AdminSymbolFlowList | null>;
   onRefreshFlow: () => void;
@@ -64,11 +65,11 @@ export function AdminMarketSection({
   openOrderBookConfigCount,
   adminFlowOverview,
   fundFlow,
-  allFundFlow,
+  cumulativeFundFlow,
   loadingFundFlow,
-  loadingAllFundFlow,
+  loadingCumulativeFundFlow,
   fundFlowError,
-  allFundFlowError,
+  cumulativeFundFlowError,
   investorFlow,
   investorFlowError,
   investorFlowHistory,
@@ -77,7 +78,7 @@ export function AdminMarketSection({
   investorFlowRefreshing,
   symbolFlowList,
   loadingSymbolFlows,
-  onLoadAllFundFlow,
+  onLoadCumulativeFundFlow,
   onLoadTotalAssetHistory,
   onLoadInvestorFlowHistory,
   onLoadWeeklySymbolFlows,
@@ -110,11 +111,11 @@ export function AdminMarketSection({
       <AdminFlowOverviewPanel
         overview={adminFlowOverview}
         fundFlow={fundFlow}
-        allFundFlow={allFundFlow}
+        cumulativeFundFlow={cumulativeFundFlow}
         loadingFundFlow={loadingFundFlow}
-        loadingAllFundFlow={loadingAllFundFlow}
+        loadingCumulativeFundFlow={loadingCumulativeFundFlow}
         fundFlowError={fundFlowError}
-        allFundFlowError={allFundFlowError}
+        cumulativeFundFlowError={cumulativeFundFlowError}
         investorFlow={investorFlow}
         investorFlowError={investorFlowError}
         investorFlowHistory={investorFlowHistory}
@@ -123,7 +124,7 @@ export function AdminMarketSection({
         investorFlowRefreshing={investorFlowRefreshing}
         symbolFlowList={symbolFlowList}
         loadingSymbolFlows={loadingSymbolFlows}
-        onLoadAllFundFlow={onLoadAllFundFlow}
+        onLoadCumulativeFundFlow={onLoadCumulativeFundFlow}
         onLoadTotalAssetHistory={onLoadTotalAssetHistory}
         onLoadInvestorFlowHistory={onLoadInvestorFlowHistory}
         onLoadWeeklySymbolFlows={onLoadWeeklySymbolFlows}

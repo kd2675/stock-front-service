@@ -133,6 +133,20 @@ export type AdminFundFlowSummary = {
 
 export type AdminFundFlowScope = "RECENT_SIMULATION_DAY" | "ALL";
 
+export type AdminParticipantScope = "ALL" | AdminParticipantCategory;
+
+export type AdminParticipantFundFlow = {
+  participantCategory: AdminParticipantCategory;
+  summary: AdminFundFlowSummary;
+};
+
+export type AdminFundFlowBreakdown = {
+  scope: AdminFundFlowScope;
+  generatedAt: string;
+  total: AdminFundFlowSummary;
+  categories: AdminParticipantFundFlow[];
+};
+
 export type AdminTotalAssetHistoryPoint = {
   snapshotDate: string;
   accountCount: number;
@@ -161,6 +175,8 @@ export type AdminTotalAssetPeriodSummary = {
 };
 
 export type AdminTotalAssetHistoryPage = {
+  participantScope: AdminParticipantScope;
+  roleFrozenFrom: string | null;
   content: AdminTotalAssetHistoryPoint[];
   summary: AdminTotalAssetPeriodSummary | null;
   page: number;
@@ -289,7 +305,7 @@ export type AdminCashFlowPage = {
 };
 
 export type AdminFlowOverview = {
-  fundFlow?: AdminFundFlowSummary | null;
+  fundFlow?: AdminFundFlowBreakdown | null;
   orderFlow: AdminOrderFlowSummary;
   corporateActionFlow: AdminCorporateActionFlowSummary;
   investorFlow: AdminInvestorFlowSummary;

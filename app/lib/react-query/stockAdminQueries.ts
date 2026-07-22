@@ -6,7 +6,7 @@ import {
   type AutoParticipantActivityScope,
   getAdminCashFlows,
   getAdminFlowOverview,
-  getAdminFundFlowSummary,
+  getAdminFundFlowBreakdown,
   getAdminInvestorFlowHistory,
   getAdminInvestorFlowSummary,
   getAdminSymbolFlows,
@@ -52,7 +52,7 @@ function adminSnapshotQueryOptions<TData>(
   });
 }
 
-export function adminFundFlowSummaryQueryOptions(
+export function adminFundFlowBreakdownQueryOptions(
   token: string | null,
   options: {
     enabled?: boolean;
@@ -61,8 +61,8 @@ export function adminFundFlowSummaryQueryOptions(
 ) {
   const scope = options.scope ?? "RECENT_SIMULATION_DAY";
   return adminAuthenticatedQueryOptions(token, {
-    queryKey: stockKeys.adminFundFlowSummary({ scope }),
-    request: (nextToken) => getAdminFundFlowSummary(nextToken, { scope }),
+    queryKey: stockKeys.adminFundFlowBreakdown({ scope }),
+    request: (nextToken) => getAdminFundFlowBreakdown(nextToken, { scope }),
     fallbackMessage: "전체 자금 흐름을 조회하지 못했습니다.",
     enabled: options.enabled,
   });

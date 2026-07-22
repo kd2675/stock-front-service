@@ -16,8 +16,8 @@ export const stockKeys = {
   rankings: () => [...stockKeys.market(), "rankings"] as const,
   orderBookMarketStatusRoot: () => [...stockKeys.market(), "order-book-market"] as const,
   orderBookMarketStatus: (options?: { includeConfigs?: boolean; includeTodayExecution?: boolean }) => [...stockKeys.market(), "order-book-market", options?.includeConfigs ?? true, options?.includeTodayExecution ?? true] as const,
-  adminFundFlowSummaryRoot: () => [...stockKeys.market(), "admin", "fund-flow-summary"] as const,
-  adminFundFlowSummary: (options?: { scope?: AdminFundFlowScope }) => [...stockKeys.adminFundFlowSummaryRoot(), options?.scope ?? "RECENT_SIMULATION_DAY"] as const,
+  adminFundFlowBreakdownRoot: () => [...stockKeys.market(), "admin", "fund-flow-breakdown"] as const,
+  adminFundFlowBreakdown: (options?: { scope?: AdminFundFlowScope }) => [...stockKeys.adminFundFlowBreakdownRoot(), options?.scope ?? "RECENT_SIMULATION_DAY"] as const,
   adminFlowOverviewRoot: () => [...stockKeys.market(), "admin", "flow-overview"] as const,
   adminFlowOverview: (options?: { symbolFlowLimit?: number; includeFundFlow?: boolean; includeSymbolFlows?: boolean; fundFlowScope?: AdminFundFlowScope; symbolFlowScope?: AdminFundFlowScope }) => [
     ...stockKeys.adminFlowOverviewRoot(),

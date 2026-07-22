@@ -2,8 +2,11 @@ import { formatCompactWon, formatNumber, formatWon } from "@/app/supply-demand/a
 import type {
   AdminInvestorFlowSourceStatus,
   AdminInvestorFlowSummary,
+  AdminFundFlowBreakdown,
+  AdminFundFlowSummary,
   AdminParticipantCategory,
   AdminParticipantCategoryFlow,
+  AdminParticipantScope,
 } from "@/app/types/stock";
 
 export const ADMIN_PARTICIPANT_CATEGORIES: AdminParticipantCategory[] = [
@@ -33,6 +36,31 @@ export const ADMIN_PARTICIPANT_CATEGORY_META: Record<AdminParticipantCategory, {
     surfaceClassName: "border-admin-warning/25 bg-admin-warning/[0.06]",
   },
 };
+
+export const ADMIN_PARTICIPANT_SCOPES: AdminParticipantScope[] = [
+  "ALL",
+  ...ADMIN_PARTICIPANT_CATEGORIES,
+];
+
+export const ADMIN_PARTICIPANT_SCOPE_LABELS: Record<AdminParticipantScope, string> = {
+  ALL: "전체",
+  MANUAL_PARTICIPANT: ADMIN_PARTICIPANT_CATEGORY_META.MANUAL_PARTICIPANT.label,
+  AUTO_PARTICIPANT: ADMIN_PARTICIPANT_CATEGORY_META.AUTO_PARTICIPANT.label,
+  LISTING_UNDERWRITER: ADMIN_PARTICIPANT_CATEGORY_META.LISTING_UNDERWRITER.label,
+};
+
+export function resolveParticipantFundFlow(
+  breakdown: AdminFundFlowBreakdown | null,
+  scope: AdminParticipantScope,
+): AdminFundFlowSummary | null {
+  if (!breakdown) {
+    return null;
+  }
+  if (scope === "ALL") {
+    return breakdown.total;
+  }
+  return breakdown.categories.find((category) => category.participantCategory === scope)?.summary ?? null;
+}
 
 export type AdminParticipantAmountFlow = AdminParticipantCategoryFlow & {
   netBuyAmount: number;

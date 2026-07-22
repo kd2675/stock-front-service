@@ -5,28 +5,34 @@ import { formatCount, formatWon } from "@/app/supply-demand/admin/AdminFormatter
 import { FundFlowLine, SalaryMetric } from "@/app/supply-demand/admin/AdminMetricCards";
 import { AdminTotalAssetHistoryModal } from "@/app/supply-demand/admin/AdminTotalAssetHistoryModal";
 import type { AdminAssetHistoryMetric } from "@/app/supply-demand/admin/adminTotalAssetHistoryMetrics";
-import type { AdminFundFlowSummary, AdminTotalAssetHistoryPage } from "@/app/types/stock";
+import {
+  ADMIN_PARTICIPANT_SCOPES,
+  ADMIN_PARTICIPANT_SCOPE_LABELS,
+  resolveParticipantFundFlow,
+} from "@/app/supply-demand/admin/adminInvestorFlowPresentation";
+import type { AdminFundFlowBreakdown, AdminFundFlowSummary, AdminParticipantScope, AdminTotalAssetHistoryPage } from "@/app/types/stock";
 
 export function AdminFlowFundSummaryPanel({
   fundFlow,
-  allFundFlow,
+  cumulativeFundFlow,
   loading,
-  loadingAll,
+  loadingCumulative,
   error,
-  allError,
-  onLoadAll,
+  cumulativeError,
+  onLoadCumulative,
   onLoadTotalAssetHistory,
 }: {
-  fundFlow: AdminFundFlowSummary | null;
-  allFundFlow: AdminFundFlowSummary | null;
+  fundFlow: AdminFundFlowBreakdown | null;
+  cumulativeFundFlow: AdminFundFlowBreakdown | null;
   loading: boolean;
-  loadingAll: boolean;
+  loadingCumulative: boolean;
   error: boolean;
-  allError: boolean;
-  onLoadAll: () => void;
-  onLoadTotalAssetHistory: (page: number) => Promise<AdminTotalAssetHistoryPage | null>;
+  cumulativeError: boolean;
+  onLoadCumulative: () => void;
+  onLoadTotalAssetHistory: (page: number, participantScope: AdminParticipantScope) => Promise<AdminTotalAssetHistoryPage | null>;
 }) {
-  const [showAllFundFlow, setShowAllFundFlow] = useState(false);
+  const [selectedParticipantScope, setSelectedParticipantScope] = useState<AdminParticipantScope>("ALL");
+  const [showCumulativeFundFlow, setShowCumulativeFundFlow] = useState(false);
   const [showTotalAssetHistory, setShowTotalAssetHistory] = useState(false);
   const [totalAssetHistoryMetric, setTotalAssetHistoryMetric] = useState<AdminAssetHistoryMetric>("TOTAL_ASSET");
   const [totalAssetHistory, setTotalAssetHistory] = useState<AdminTotalAssetHistoryPage | null>(null);
@@ -34,10 +40,10 @@ export function AdminFlowFundSummaryPanel({
   const [totalAssetHistoryError, setTotalAssetHistoryError] = useState(false);
   const totalAssetHistoryRequestIdRef = useRef(0);
 
-  const openAllFundFlow = () => {
-    setShowAllFundFlow(true);
-    if (!allFundFlow && !loadingAll) {
-      onLoadAll();
+  const openCumulativeFundFlow = () => {
+    setShowCumulativeFundFlow(true);
+    if (!cumulativeFundFlow && !loadingCumulative) {
+      onLoadCumulative();
     }
   };
 
@@ -46,7 +52,7 @@ export function AdminFlowFundSummaryPanel({
     setLoadingTotalAssetHistory(true);
     setTotalAssetHistoryError(false);
     try {
-      const nextHistory = await onLoadTotalAssetHistory(page);
+      const nextHistory = await onLoadTotalAssetHistory(page, selectedParticipantScope);
       if (requestId !== totalAssetHistoryRequestIdRef.current) {
         return;
       }
@@ -67,14 +73,17 @@ export function AdminFlowFundSummaryPanel({
   };
 
   const openTotalAssetHistory = (metric: AdminAssetHistoryMetric) => {
-    setShowAllFundFlow(false);
+    setShowCumulativeFundFlow(false);
     setTotalAssetHistoryMetric(metric);
     setTotalAssetHistory(null);
     setShowTotalAssetHistory(true);
     void loadTotalAssetHistory(0);
   };
 
-  if (!fundFlow) {
+  const selectedFundFlow = resolveParticipantFundFlow(fundFlow, selectedParticipantScope);
+  const selectedParticipantLabel = ADMIN_PARTICIPANT_SCOPE_LABELS[selectedParticipantScope];
+
+  if (!selectedFundFlow) {
     return (
       <>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-white/10 bg-black/20 p-4">
@@ -83,22 +92,24 @@ export function AdminFlowFundSummaryPanel({
           </p>
           <button
             type="button"
-            onClick={openAllFundFlow}
+            onClick={openCumulativeFundFlow}
             className="min-h-9 rounded-md border border-white/15 px-3 py-2 text-xs font-black text-admin-accent-soft transition hover:border-admin-accent hover:text-white"
           >
-            전체 보기
+            누적 흐름
           </button>
         </div>
-        <AdminAllFundFlowModal
-          fundFlow={allFundFlow}
-          loading={loadingAll}
-          error={allError}
-          open={showAllFundFlow}
-          onClose={() => setShowAllFundFlow(false)}
-          onRefresh={onLoadAll}
+        <AdminCumulativeFundFlowModal
+          breakdown={cumulativeFundFlow}
+          selectedParticipantScope={selectedParticipantScope}
+          loading={loadingCumulative}
+          error={cumulativeError}
+          open={showCumulativeFundFlow}
+          onClose={() => setShowCumulativeFundFlow(false)}
+          onRefresh={onLoadCumulative}
           onOpenTotalAssetHistory={openTotalAssetHistory}
+          onParticipantScopeChange={setSelectedParticipantScope}
         />
-        <AdminTotalAssetHistoryModal history={totalAssetHistory} loading={loadingTotalAssetHistory} error={totalAssetHistoryError} open={showTotalAssetHistory} selectedMetric={totalAssetHistoryMetric} onMetricChange={setTotalAssetHistoryMetric} onClose={() => setShowTotalAssetHistory(false)} onLoadPage={(page) => void loadTotalAssetHistory(page)} />
+        <AdminTotalAssetHistoryModal history={totalAssetHistory} loading={loadingTotalAssetHistory} error={totalAssetHistoryError} open={showTotalAssetHistory} participantScope={selectedParticipantScope} selectedMetric={totalAssetHistoryMetric} onMetricChange={setTotalAssetHistoryMetric} onClose={() => setShowTotalAssetHistory(false)} onLoadPage={(page) => void loadTotalAssetHistory(page)} />
       </>
     );
   }
@@ -108,29 +119,37 @@ export function AdminFlowFundSummaryPanel({
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 className="text-sm font-black text-white">시뮬레이션 자산·자금 현황</h3>
-          <p className="mt-1 text-xs font-bold text-stock-subtle">현재 자산 구성과 보유량, 시뮬레이션 장 시작부터 지금까지의 입출금·체결·손익입니다. 체결 금액과 손익은 정상 집계 시 약 30초 늦을 수 있고, 장애·재기동 시에는 야간 원본 대사 후 확정됩니다.</p>
+          <p className="mt-1 text-xs font-bold text-stock-subtle">{selectedParticipantLabel} 계좌의 현재 자산 구성과 보유량, 시뮬레이션 장 시작부터 지금까지의 입출금·체결·손익입니다. 체결 금액과 손익은 정상 집계 시 약 30초 늦을 수 있고, 장애·재기동 시에는 야간 원본 대사 후 확정됩니다.</p>
         </div>
         <button
           type="button"
-          onClick={openAllFundFlow}
+          onClick={openCumulativeFundFlow}
           className="min-h-9 rounded-md border border-white/15 px-3 py-2 text-xs font-black text-admin-accent-soft transition hover:border-admin-accent hover:text-white"
         >
-          전체 보기
+          누적 흐름
         </button>
       </div>
 
-      <AdminFundFlowMetricGrids fundFlow={fundFlow} executionLabel="하루 체결 (비동기·보통 30초)" onOpenTotalAssetHistory={openTotalAssetHistory} />
-
-      <AdminAllFundFlowModal
-        fundFlow={allFundFlow}
-        loading={loadingAll}
-        error={allError}
-        open={showAllFundFlow}
-        onClose={() => setShowAllFundFlow(false)}
-        onRefresh={onLoadAll}
-        onOpenTotalAssetHistory={openTotalAssetHistory}
+      <ParticipantScopeTabs
+        breakdown={fundFlow}
+        selectedScope={selectedParticipantScope}
+        onSelect={setSelectedParticipantScope}
       />
-      <AdminTotalAssetHistoryModal history={totalAssetHistory} loading={loadingTotalAssetHistory} error={totalAssetHistoryError} open={showTotalAssetHistory} selectedMetric={totalAssetHistoryMetric} onMetricChange={setTotalAssetHistoryMetric} onClose={() => setShowTotalAssetHistory(false)} onLoadPage={(page) => void loadTotalAssetHistory(page)} />
+
+      <AdminFundFlowMetricGrids fundFlow={selectedFundFlow} executionLabel="하루 체결 참여 (비동기·보통 30초)" onOpenTotalAssetHistory={openTotalAssetHistory} />
+
+      <AdminCumulativeFundFlowModal
+        breakdown={cumulativeFundFlow}
+        selectedParticipantScope={selectedParticipantScope}
+        loading={loadingCumulative}
+        error={cumulativeError}
+        open={showCumulativeFundFlow}
+        onClose={() => setShowCumulativeFundFlow(false)}
+        onRefresh={onLoadCumulative}
+        onOpenTotalAssetHistory={openTotalAssetHistory}
+        onParticipantScopeChange={setSelectedParticipantScope}
+      />
+      <AdminTotalAssetHistoryModal history={totalAssetHistory} loading={loadingTotalAssetHistory} error={totalAssetHistoryError} open={showTotalAssetHistory} participantScope={selectedParticipantScope} selectedMetric={totalAssetHistoryMetric} onMetricChange={setTotalAssetHistoryMetric} onClose={() => setShowTotalAssetHistory(false)} onLoadPage={(page) => void loadTotalAssetHistory(page)} />
     </>
   );
 }
@@ -153,7 +172,7 @@ function AdminFundFlowMetricGrids({
         </span>
       </div>
       <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <SalaryMetric label="전체 총자산" value={formatWon(fundFlow.totalAsset)} tone="good" actionHint="7일 변화" onClick={() => onOpenTotalAssetHistory("TOTAL_ASSET")} />
+        <SalaryMetric label="총자산" value={formatWon(fundFlow.totalAsset)} tone="good" actionHint="7일 변화" onClick={() => onOpenTotalAssetHistory("TOTAL_ASSET")} />
         <SalaryMetric label="가용 현금" value={formatWon(fundFlow.totalCashBalance)} tone="neutral" actionHint="7일 변화" onClick={() => onOpenTotalAssetHistory("CASH_BALANCE")} />
         <SalaryMetric label="주문·청약 대기금" value={formatWon(fundFlow.totalReservedBuyCash)} tone="warn" detail="장중 미체결 매수 주문과 청약 대기금 합계" />
         <SalaryMetric label="보유 주식 평가액" value={formatWon(fundFlow.totalHoldingMarketValue)} tone="neutral" actionHint="7일 변화" onClick={() => onOpenTotalAssetHistory("MARKET_VALUE")} />
@@ -174,6 +193,7 @@ function AdminFundFlowMetricGrids({
         <FundFlowLine label="실현 손익" value={formatWon(fundFlow.realizedProfit)} />
         <FundFlowLine label={executionLabel} value={formatCount(fundFlow.executionCount, "건")} />
       </div>
+      <p className="mt-2 text-[11px] font-bold leading-5 text-admin-muted">체결 참여는 한 번의 매매에서 매수 계좌와 매도 계좌를 각각 1건으로 센 계좌 측 체결 원장 수입니다.</p>
     </>
   );
 }
@@ -224,22 +244,26 @@ function AssetCompositionBar({ fundFlow }: { fundFlow: AdminFundFlowSummary }) {
   );
 }
 
-function AdminAllFundFlowModal({
-  fundFlow,
+function AdminCumulativeFundFlowModal({
+  breakdown,
+  selectedParticipantScope,
   loading,
   error,
   open,
   onClose,
   onRefresh,
   onOpenTotalAssetHistory,
+  onParticipantScopeChange,
 }: {
-  fundFlow: AdminFundFlowSummary | null;
+  breakdown: AdminFundFlowBreakdown | null;
+  selectedParticipantScope: AdminParticipantScope;
   loading: boolean;
   error: boolean;
   open: boolean;
   onClose: () => void;
   onRefresh: () => void;
   onOpenTotalAssetHistory: (metric: AdminAssetHistoryMetric) => void;
+  onParticipantScopeChange: (scope: AdminParticipantScope) => void;
 }) {
   const dialogRef = useModalDialog<HTMLDivElement>(open, onClose);
 
@@ -247,13 +271,16 @@ function AdminAllFundFlowModal({
     return null;
   }
 
+  const fundFlow = resolveParticipantFundFlow(breakdown, selectedParticipantScope);
+  const participantLabel = ADMIN_PARTICIPANT_SCOPE_LABELS[selectedParticipantScope];
+
   return (
     <div className="modal-scroll fixed inset-0 z-50 overflow-y-auto bg-black/70 px-4 py-8 backdrop-blur-sm">
-      <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="all-fund-flow-title" className="mx-auto w-full max-w-5xl rounded-lg border border-white/10 bg-admin-modal p-4 shadow-[var(--shadow-dialog)] outline-none">
+      <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="cumulative-fund-flow-title" className="mx-auto w-full max-w-5xl rounded-lg border border-white/10 bg-admin-modal p-4 shadow-[var(--shadow-dialog)] outline-none">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h3 id="all-fund-flow-title" className="text-base font-black text-white">전체 누적 자금 흐름</h3>
-            <p className="mt-1 text-xs font-bold leading-5 text-stock-subtle">서비스에 쌓인 전체 원장과 전체 체결 기준의 누적 흐름입니다. 계좌 잔액과 총자산은 현재 스냅샷입니다.</p>
+            <h3 id="cumulative-fund-flow-title" className="text-base font-black text-white">{participantLabel} · 누적 자금 흐름</h3>
+            <p className="mt-1 text-xs font-bold leading-5 text-stock-subtle">선택한 참여자 역할의 누적 입출금·체결·손익입니다. 계좌 잔액과 총자산은 현재 스냅샷입니다.</p>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-2">
             {loading ? (
@@ -279,14 +306,56 @@ function AdminAllFundFlowModal({
           </div>
         </div>
 
+        <ParticipantScopeTabs
+          breakdown={breakdown}
+          selectedScope={selectedParticipantScope}
+          onSelect={onParticipantScopeChange}
+        />
+
         {fundFlow ? (
-          <AdminFundFlowMetricGrids fundFlow={fundFlow} executionLabel="전체 체결 (비동기·보통 30초)" onOpenTotalAssetHistory={onOpenTotalAssetHistory} />
+          <AdminFundFlowMetricGrids fundFlow={fundFlow} executionLabel="누적 체결 참여 (비동기·보통 30초)" onOpenTotalAssetHistory={onOpenTotalAssetHistory} />
         ) : (
           <div className="mt-4 rounded-md border border-white/10 bg-black/20 p-4 text-sm font-bold leading-6 text-stock-subtle">
-            {loading ? "전체 누적 자금 흐름을 조회하고 있습니다." : "전체 누적 자금 흐름을 아직 조회하지 못했습니다."}
+            {loading ? "누적 자금 흐름을 조회하고 있습니다." : "누적 자금 흐름을 아직 조회하지 못했습니다."}
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function ParticipantScopeTabs({
+  breakdown,
+  selectedScope,
+  onSelect,
+}: {
+  breakdown: AdminFundFlowBreakdown | null;
+  selectedScope: AdminParticipantScope;
+  onSelect: (scope: AdminParticipantScope) => void;
+}) {
+  return (
+    <div className="mt-4 grid grid-cols-2 gap-1 rounded-md border border-white/10 bg-black/25 p-1 sm:grid-cols-4" role="tablist" aria-label="자산·자금 참여자 범위">
+      {ADMIN_PARTICIPANT_SCOPES.map((scope) => {
+        const active = scope === selectedScope;
+        const summary = resolveParticipantFundFlow(breakdown, scope);
+        return (
+          <button
+            key={scope}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            onClick={() => onSelect(scope)}
+            className={active
+              ? "min-h-10 rounded-sm bg-admin-accent px-3 py-2 text-xs font-black text-admin-canvas"
+              : "min-h-10 rounded-sm px-3 py-2 text-xs font-black text-admin-muted transition hover:bg-white/[0.06] hover:text-white"}
+          >
+            <span>{ADMIN_PARTICIPANT_SCOPE_LABELS[scope]}</span>
+            <span className={active ? "ml-1.5 tabular-nums text-admin-canvas/70" : "ml-1.5 tabular-nums text-admin-disabled"}>
+              {summary ? formatCount(summary.activeAccountCount, "개") : "—"}
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
 }

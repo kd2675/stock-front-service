@@ -6,7 +6,7 @@ import {
   authenticatedPostJson,
   toQuery,
 } from "@/app/lib/stock-api/core";
-import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowScope, AdminFundFlowSummary, AdminInvestorFlowHistory, AdminInvestorFlowSummary, AdminSymbolFlowList, AdminTotalAssetHistoryPage, AutoMarketDistributionBias, AutoMarketRegimeCountWeights, AutoMarketRegimeHistoryRange, AutoMarketStatus, AutoParticipant, AutoParticipantCashAdjustment, AutoParticipantOverview, AutoParticipantProfileOverview, AutoParticipantProfileType, BatchJobRuntimeStatus, EodOperationsOverview, EodPhaseRetryResult, ListingAutoOperationMode, ListingAutoPosition, ListingAutoStrategyProfile, RecurringCashIntervalUnit, StockBatchJobRun } from "@/app/types/stock";
+import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowBreakdown, AdminFundFlowScope, AdminInvestorFlowHistory, AdminInvestorFlowSummary, AdminParticipantScope, AdminSymbolFlowList, AdminTotalAssetHistoryPage, AutoMarketDistributionBias, AutoMarketRegimeCountWeights, AutoMarketRegimeHistoryRange, AutoMarketStatus, AutoParticipant, AutoParticipantCashAdjustment, AutoParticipantOverview, AutoParticipantProfileOverview, AutoParticipantProfileType, BatchJobRuntimeStatus, EodOperationsOverview, EodPhaseRetryResult, ListingAutoOperationMode, ListingAutoPosition, ListingAutoStrategyProfile, RecurringCashIntervalUnit, StockBatchJobRun } from "@/app/types/stock";
 
 export type { AdminFundFlowScope } from "@/app/types/stock";
 
@@ -101,11 +101,11 @@ export function getAdminFlowOverview(token: string, options?: { symbolFlowLimit?
   return authenticatedGetJson<AdminFlowOverview>(token, `/api/stock/v1/markets/admin/flow-overview${query}`);
 }
 
-export function getAdminFundFlowSummary(token: string, options?: { scope?: AdminFundFlowScope }) {
+export function getAdminFundFlowBreakdown(token: string, options?: { scope?: AdminFundFlowScope }) {
   const query = toQuery({
     scope: options?.scope,
   });
-  return authenticatedGetJson<AdminFundFlowSummary>(token, `/api/stock/v1/markets/admin/fund-flow-summary${query}`);
+  return authenticatedGetJson<AdminFundFlowBreakdown>(token, `/api/stock/v1/markets/admin/fund-flow-breakdown${query}`);
 }
 
 export function getAdminInvestorFlowSummary(token: string) {
@@ -119,10 +119,10 @@ export function getAdminInvestorFlowHistory(token: string, days = 7) {
   );
 }
 
-export function getAdminTotalAssetHistory(token: string, page: number) {
+export function getAdminTotalAssetHistory(token: string, page: number, participantScope: AdminParticipantScope) {
   return authenticatedGetJson<AdminTotalAssetHistoryPage>(
     token,
-    `/api/stock/v1/markets/admin/total-asset-history${toQuery({ page })}`,
+    `/api/stock/v1/markets/admin/total-asset-history${toQuery({ page, participantScope })}`,
   );
 }
 
