@@ -12,6 +12,7 @@ export type AutoParticipantDraftInput = {
   displayName: string;
   enabled: boolean;
   profileType: AutoParticipantProfileType;
+  behaviorSeed: string;
   recurringCashAmount: string;
   recurringCashIntervalValue: string;
   recurringCashIntervalUnit: RecurringCashIntervalUnit;
@@ -39,6 +40,7 @@ const autoParticipantBaseSchema = z.object({
   displayName: requiredTrimmedString(),
   enabled: z.boolean(),
   profileType: z.string().min(1).transform((value) => value as AutoParticipantProfileType),
+  behaviorSeed: z.string().trim().regex(/^\d*$/),
 });
 
 export function parseAutoParticipantRecurringCashDraft(
@@ -99,6 +101,7 @@ export function buildAutoParticipantPayload(draft: AutoParticipantDraftInput): A
       displayName: parsedBase.data.displayName,
       enabled: parsedBase.data.enabled,
       profileType: parsedBase.data.profileType,
+      behaviorSeed: parsedBase.data.behaviorSeed || null,
       ...recurringCashPayload,
     },
   };

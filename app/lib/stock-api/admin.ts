@@ -6,7 +6,7 @@ import {
   authenticatedPostJson,
   toQuery,
 } from "@/app/lib/stock-api/core";
-import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowBreakdown, AdminFundFlowScope, AdminInvestorFlowHistory, AdminInvestorFlowSummary, AdminParticipantScope, AdminSymbolFlowList, AdminTotalAssetHistoryPage, AutoMarketDistributionBias, AutoMarketRegimeCountWeights, AutoMarketRegimeHistoryRange, AutoMarketStatus, AutoParticipant, AutoParticipantCashAdjustment, AutoParticipantOverview, AutoParticipantPerformanceBasis, AutoParticipantPerformanceSummary, AutoParticipantProfileOverview, AutoParticipantProfileType, BatchJobRuntimeStatus, EodOperationsOverview, EodPhaseRetryResult, ListingAutoOperationMode, ListingAutoPosition, ListingAutoStrategyProfile, RecurringCashIntervalUnit, StockBatchJobRun } from "@/app/types/stock";
+import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowBreakdown, AdminFundFlowScope, AdminInvestorFlowHistory, AdminInvestorFlowSummary, AdminParticipantScope, AdminSymbolFlowList, AdminTotalAssetHistoryPage, AutoMarketDistributionBias, AutoMarketRegimeCountWeights, AutoMarketRegimeHistoryRange, AutoMarketStatus, AutoParticipant, AutoParticipantBehaviorModelVersion, AutoParticipantCashAdjustment, AutoParticipantOverview, AutoParticipantPerformanceBasis, AutoParticipantPerformanceSummary, AutoParticipantProfileExitMode, AutoParticipantProfileInventoryMode, AutoParticipantProfileOverview, AutoParticipantProfilePricingMode, AutoParticipantProfileType, BatchJobRuntimeStatus, EodOperationsOverview, EodPhaseRetryResult, ListingAutoOperationMode, ListingAutoPosition, ListingAutoStrategyProfile, RecurringCashIntervalUnit, StockBatchJobRun } from "@/app/types/stock";
 
 export type { AdminFundFlowScope } from "@/app/types/stock";
 
@@ -44,6 +44,7 @@ export type StockAutoMarketConfigPayload = {
 };
 
 export type StockAutoParticipantProfileConfigPayload = {
+  behaviorModelVersion: AutoParticipantBehaviorModelVersion;
   newsWeight: number;
   momentumWeight: number;
   contrarianWeight: number;
@@ -55,6 +56,8 @@ export type StockAutoParticipantProfileConfigPayload = {
   panicSellWeight: number;
   dipBuyWeight: number;
   orderMultiplier: number;
+  decisionFrequencyMultiplier: number;
+  ordersPerDecisionMultiplier: number;
   aggressionMultiplier: number;
   pricePressureSensitivity: number;
   orderTtlMultiplier: number;
@@ -62,15 +65,21 @@ export type StockAutoParticipantProfileConfigPayload = {
   holdingPatienceWeight: number;
   deepLossHoldWeight: number;
   profitTakingWeight: number;
-  recurringDepositAmount: number;
-  recurringDepositIntervalValue: number;
-  recurringDepositIntervalUnit: RecurringCashIntervalUnit;
+  pricingMode: AutoParticipantProfilePricingMode;
+  exitMode: AutoParticipantProfileExitMode;
+  inventoryMode: AutoParticipantProfileInventoryMode;
+  fundingPolicy: {
+    recurringDepositAmount: number;
+    recurringDepositIntervalValue: number;
+    recurringDepositIntervalUnit: RecurringCashIntervalUnit;
+  };
 };
 
 export type StockAutoParticipantPayload = {
   displayName: string;
   enabled?: boolean;
   profileType?: AutoParticipantProfileType;
+  behaviorSeed?: string | null;
   recurringCashAmount?: number | null;
   recurringCashIntervalValue?: number | null;
   recurringCashIntervalUnit?: RecurringCashIntervalUnit | null;

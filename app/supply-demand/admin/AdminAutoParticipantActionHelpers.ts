@@ -19,6 +19,7 @@ export function toAutoParticipantTogglePayload(participant: AutoParticipant, ena
     displayName: participant.displayName,
     enabled,
     profileType: participant.profileType,
+    behaviorSeed: participant.behaviorSeed ?? null,
     recurringCashAmount: participant.recurringCashAmount ?? null,
     recurringCashIntervalValue: participant.recurringCashIntervalValue ?? null,
     recurringCashIntervalUnit: participant.recurringCashIntervalUnit ?? null,

@@ -16,9 +16,18 @@ export function AutoParticipantProfileSection({ participant }: { participant: Au
     <ParticipantInfoItem label="운용 프로필">
       <p className="font-black text-white">{formatAutoParticipantProfile(participant.profileType)}</p>
       <p className="mt-1 text-xs font-bold leading-5 text-stock-subtle">{formatAutoParticipantProfileDescription(participant.profileType)}</p>
-      <p className="mt-1 text-xs font-bold leading-5 text-admin-muted">{formatAutoParticipantProfileBehavior(participant.profileType)}</p>
+      <p className="mt-1 text-xs font-bold leading-5 text-admin-muted">
+        {participant.behaviorModelVersion === "V2" ? "프로필 V2 · " : "프로필 V1 · "}
+        {formatAutoParticipantProfileBehavior(participant.profileType)}
+      </p>
+      <p className="mt-2 text-[11px] font-black text-admin-accent">
+        프로필 행동 {participant.behaviorModelVersion} · 실주문
+      </p>
       <div className="mt-3 grid gap-1 border-t border-white/10 pt-2 text-xs font-bold leading-5 text-stock-subtle">
         <p>정기 자금 {formatParticipantRecurringCash(participant)}</p>
+        <p>월급 매수 예산 {formatWon(participant.paydayAvailableBudget)}</p>
+        <p>배당 재투자 예산 {formatWon(participant.dividendAvailableBudget)}</p>
+        <p>주문 예약 예산 {formatWon(participant.fundingReservedAmount)}</p>
         <p>수정 {formatDateTime(participant.updatedAt)}</p>
       </div>
     </ParticipantInfoItem>
@@ -60,9 +69,11 @@ export function AutoParticipantAssetSection({
 }
 
 export function AutoParticipantHoldingSection({
+  participant,
   overview,
   overviewLoading,
 }: {
+  participant: AutoParticipant;
   overview: AutoParticipantOverview | null;
   overviewLoading: boolean;
 }) {
@@ -78,6 +89,10 @@ export function AutoParticipantHoldingSection({
             <ParticipantMetricLine label="보유 종목" value={formatCount(overview.holdingCount, "종목")} />
             <ParticipantMetricLine label="평가액" value={formatWon(overview.holdingMarketValue)} valueClassName="text-admin-accent" />
             <ParticipantMetricLine label="전략" value={`${formatInteger(overview.enabledStrategyCount)} / ${formatInteger(overview.strategyCount)}`} />
+            <ParticipantMetricLine label="상태 추적 종목" value={formatCount(participant.trackedPositionCount, "종목")} />
+            <ParticipantMetricLine label="평균 보유 거래일" value={`${formatNumber(participant.averageHoldingTradingDays)}일`} />
+            <ParticipantMetricLine label="누적 물타기 회차" value={formatCount(participant.averageDownRoundCount, "회")} />
+            <ParticipantMetricLine label="사용한 전용 예산" value={formatWon(participant.fundingSpentAmount)} />
           </div>
           {holdingPreview.length ? (
             <div className="mt-3 grid gap-0.5 border-t border-white/10 pt-2 text-xs font-bold leading-5 text-admin-muted">

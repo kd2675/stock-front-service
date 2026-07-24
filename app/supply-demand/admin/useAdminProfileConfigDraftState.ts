@@ -34,6 +34,7 @@ export function useAdminProfileConfigDraftState() {
   }, [applyProfileConfigDraft]);
 
   const draftSetters: ProfileConfigDraftSetters = useMemo(() => ({
+    setBehaviorModelVersion: (value) => setDraftField("behaviorModelVersion", value),
     setNewsWeight: (value) => setDraftField("newsWeight", value),
     setMomentumWeight: (value) => setDraftField("momentumWeight", value),
     setContrarianWeight: (value) => setDraftField("contrarianWeight", value),
@@ -45,6 +46,8 @@ export function useAdminProfileConfigDraftState() {
     setPanicSellWeight: (value) => setDraftField("panicSellWeight", value),
     setDipBuyWeight: (value) => setDraftField("dipBuyWeight", value),
     setOrderMultiplier: (value) => setDraftField("orderMultiplier", value),
+    setDecisionFrequencyMultiplier: (value) => setDraftField("decisionFrequencyMultiplier", value),
+    setOrdersPerDecisionMultiplier: (value) => setDraftField("ordersPerDecisionMultiplier", value),
     setAggressionMultiplier: (value) => setDraftField("aggressionMultiplier", value),
     setPricePressureSensitivity: (value) => setDraftField("pricePressureSensitivity", value),
     setOrderTtlMultiplier: (value) => setDraftField("orderTtlMultiplier", value),
@@ -52,6 +55,9 @@ export function useAdminProfileConfigDraftState() {
     setHoldingPatienceWeight: (value) => setDraftField("holdingPatienceWeight", value),
     setDeepLossHoldWeight: (value) => setDraftField("deepLossHoldWeight", value),
     setProfitTakingWeight: (value) => setDraftField("profitTakingWeight", value),
+    setPricingMode: (value) => setDraftField("pricingMode", value),
+    setExitMode: (value) => setDraftField("exitMode", value),
+    setInventoryMode: (value) => setDraftField("inventoryMode", value),
     setRecurringDepositAmount: (value) => setDraftField("recurringDepositAmount", value),
     setRecurringDepositIntervalValue: (value) => setDraftField("recurringDepositIntervalValue", value),
     setRecurringDepositIntervalUnit: (value) => setDraftField("recurringDepositIntervalUnit", value),

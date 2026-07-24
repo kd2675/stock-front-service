@@ -20,6 +20,7 @@ export type AutoParticipantEditValues = {
   displayName: string;
   enabled: boolean;
   profileType: AutoParticipantProfileType;
+  behaviorSeed: string;
   recurringCashAmount: string;
   recurringCashIntervalValue: string;
   recurringCashIntervalUnit: RecurringCashIntervalUnit;
@@ -91,6 +92,7 @@ export function resolveProfileConfigDraft(
 ): ProfileConfigDraftValues {
   return {
     profileType: config.profileType,
+    behaviorModelVersion: config.behaviorModelVersion ?? "V2",
     newsWeight: String(config.newsWeight),
     momentumWeight: String(config.momentumWeight),
     contrarianWeight: String(config.contrarianWeight),
@@ -102,6 +104,8 @@ export function resolveProfileConfigDraft(
     panicSellWeight: String(config.panicSellWeight),
     dipBuyWeight: String(config.dipBuyWeight),
     orderMultiplier: String(config.orderMultiplier),
+    decisionFrequencyMultiplier: String(config.decisionFrequencyMultiplier),
+    ordersPerDecisionMultiplier: String(config.ordersPerDecisionMultiplier),
     aggressionMultiplier: String(config.aggressionMultiplier),
     pricePressureSensitivity: String(config.pricePressureSensitivity),
     orderTtlMultiplier: String(config.orderTtlMultiplier),
@@ -109,9 +113,16 @@ export function resolveProfileConfigDraft(
     holdingPatienceWeight: String(config.holdingPatienceWeight),
     deepLossHoldWeight: String(config.deepLossHoldWeight),
     profitTakingWeight: String(config.profitTakingWeight),
-    recurringDepositAmount: String(config.recurringDepositAmount),
-    recurringDepositIntervalValue: String(config.recurringDepositIntervalValue ?? config.recurringDepositIntervalDays),
-    recurringDepositIntervalUnit: config.recurringDepositIntervalUnit ?? defaultRecurringCashIntervalUnit,
+    pricingMode: config.pricingMode,
+    exitMode: config.exitMode,
+    inventoryMode: config.inventoryMode,
+    recurringDepositAmount: String(config.fundingPolicy.recurringDepositAmount),
+    recurringDepositIntervalValue: String(
+      config.fundingPolicy.recurringDepositIntervalValue
+        ?? config.fundingPolicy.recurringDepositIntervalDays,
+    ),
+    recurringDepositIntervalUnit:
+      config.fundingPolicy.recurringDepositIntervalUnit ?? defaultRecurringCashIntervalUnit,
   };
 }
 
@@ -140,6 +151,7 @@ export function resolveAutoParticipantSelectionDraft(options: {
       displayName: options.participant.displayName,
       enabled: options.participant.enabled,
       profileType: options.participant.profileType,
+      behaviorSeed: options.participant.behaviorSeed ?? "",
       recurringCashAmount: options.participant.recurringCashAmount == null ? "" : String(options.participant.recurringCashAmount),
       recurringCashIntervalValue: options.participant.recurringCashIntervalValue == null ? "" : String(options.participant.recurringCashIntervalValue),
       recurringCashIntervalUnit: options.participant.recurringCashIntervalUnit ?? options.defaultRecurringCashIntervalUnit,

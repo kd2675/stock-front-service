@@ -12,6 +12,7 @@ export function useAdminAutoParticipantActions({
   cashAdjustmentAmount,
   displayName,
   editingAutoParticipantUserKey,
+  behaviorSeed,
   enabled,
   existingParticipants,
   generateDraft,
@@ -30,6 +31,7 @@ export function useAdminAutoParticipantActions({
   cashAdjustmentAmount: string;
   displayName: string;
   editingAutoParticipantUserKey: string | null;
+  behaviorSeed: string;
   enabled: boolean;
   existingParticipants: AutoParticipant[];
   generateDraft: AutoParticipantGenerateDraft;
@@ -55,6 +57,7 @@ export function useAdminAutoParticipantActions({
     autoParticipantUserKey,
     displayName,
     editingAutoParticipantUserKey,
+    behaviorSeed,
     enabled,
     profileType,
     recurringCashAmount,

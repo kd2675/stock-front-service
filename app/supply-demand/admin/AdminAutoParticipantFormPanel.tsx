@@ -72,7 +72,7 @@ export function AdminAutoParticipantFormPanel({
         <span className="mx-2 text-[#5a6572]">/</span>
         <span>{formatAutoParticipantProfileDescription(draft.profileType)}</span>
         <span className="mx-2 text-[#5a6572]">/</span>
-        <span>{formatAutoParticipantProfileBehavior(draft.profileType)}</span>
+        <span>프로필 행동 설정 · {formatAutoParticipantProfileBehavior(draft.profileType)}</span>
       </div>
     </>
   );

@@ -3,6 +3,7 @@ import type { AutoParticipantProfileType, RecurringCashIntervalUnit } from "@/ap
 export type AutoParticipantEditDraft = {
   displayName: string;
   profileType: AutoParticipantProfileType;
+  behaviorSeed: string;
   enabled: boolean;
   recurringCashAmount: string;
   recurringCashIntervalValue: string;
@@ -14,6 +15,7 @@ export type AutoParticipantEditDraft = {
 export type AutoParticipantEditDraftSetters = {
   setDisplayName: (value: string) => void;
   setProfileType: (value: AutoParticipantProfileType) => void;
+  setBehaviorSeed: (value: string) => void;
   setEnabled: (value: boolean) => void;
   setRecurringCashAmount: (value: string) => void;
   setRecurringCashIntervalValue: (value: string) => void;

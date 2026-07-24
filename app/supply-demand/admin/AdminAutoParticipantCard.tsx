@@ -63,7 +63,7 @@ export const AdminAutoParticipantCard = memo(function AdminAutoParticipantCard({
       <div className="mt-3 grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-[1.15fr_1.25fr_1.1fr_1.1fr]">
         <AutoParticipantProfileSection participant={participant} />
         <AutoParticipantAssetSection participant={participant} overview={overview} overviewLoading={overviewLoading} />
-        <AutoParticipantHoldingSection overview={overview} overviewLoading={overviewLoading} />
+        <AutoParticipantHoldingSection participant={participant} overview={overview} overviewLoading={overviewLoading} />
         <AutoParticipantActivitySection overview={overview} overviewLoading={overviewLoading} />
       </div>
 

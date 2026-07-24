@@ -26,11 +26,24 @@ export function buildProfileConfigPayload(draft: ProfileConfigDraftInput): Admin
       message: PROFILE_CONFIG_MESSAGE,
     };
   }
+  const {
+    recurringDepositAmount,
+    recurringDepositIntervalValue,
+    ...behaviorNumberPayload
+  } = numberPayload;
   const payload: ProfileConfigPayload = {
-    ...numberPayload,
-    recurringDepositIntervalUnit: isDividendReinvestorProfile
-      ? DEFAULT_RECURRING_CASH_INTERVAL_UNIT
-      : draft.recurringDepositIntervalUnit,
+    ...behaviorNumberPayload,
+    behaviorModelVersion: draft.behaviorModelVersion,
+    pricingMode: draft.pricingMode,
+    exitMode: draft.exitMode,
+    inventoryMode: draft.inventoryMode,
+    fundingPolicy: {
+      recurringDepositAmount,
+      recurringDepositIntervalValue,
+      recurringDepositIntervalUnit: isDividendReinvestorProfile
+        ? DEFAULT_RECURRING_CASH_INTERVAL_UNIT
+        : draft.recurringDepositIntervalUnit,
+    },
   };
 
   return {
@@ -43,7 +56,7 @@ function buildProfileConfigNumberPayload(
   draft: ProfileConfigDraftInput,
   isDividendReinvestorProfile: boolean,
 ) {
-  const payload = {} as Pick<ProfileConfigPayload, ProfileConfigNumericKey>;
+  const payload = {} as Record<ProfileConfigNumericKey, number>;
   for (const field of PROFILE_CONFIG_NUMERIC_FIELDS) {
     const value = isDividendReinvestorProfile && isRecurringDepositNumberKey(field.key)
       ? 0

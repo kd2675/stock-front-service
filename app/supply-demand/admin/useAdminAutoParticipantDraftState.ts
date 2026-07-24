@@ -30,6 +30,7 @@ type AutoParticipantDraftSelectionOptions = {
 const DEFAULT_AUTO_PARTICIPANT_EDIT_DRAFT: AutoParticipantEditDraft = {
   displayName: "",
   profileType: DEFAULT_AUTO_PARTICIPANT_PROFILE_TYPE,
+  behaviorSeed: "",
   enabled: true,
   recurringCashAmount: "",
   recurringCashIntervalValue: "",
@@ -130,6 +131,7 @@ export function useAdminAutoParticipantDraftState() {
   const autoParticipantEditDraftSetters: AutoParticipantEditDraftSetters = useMemo(() => ({
     setDisplayName: (value) => setAutoParticipantEditDraftField("displayName", value),
     setProfileType: (value) => setAutoParticipantEditDraftField("profileType", value),
+    setBehaviorSeed: (value) => setAutoParticipantEditDraftField("behaviorSeed", value),
     setEnabled: (value) => setAutoParticipantEditDraftField("enabled", value),
     setRecurringCashAmount: (value) => setAutoParticipantEditDraftField("recurringCashAmount", value),
     setRecurringCashIntervalValue: (value) => setAutoParticipantEditDraftField("recurringCashIntervalValue", value),
@@ -145,6 +147,7 @@ export function useAdminAutoParticipantDraftState() {
     clearAutoStrategyDraft,
     editingAutoParticipantUserKey,
     editingStrategyKey: autoParticipantStrategyDraft.editingKey,
+    behaviorSeed: autoParticipantEditDraft.behaviorSeed,
     enabled: autoParticipantEditDraft.enabled,
     profileType: autoParticipantEditDraft.profileType,
     recurringCashAmount: autoParticipantEditDraft.recurringCashAmount,

@@ -43,7 +43,7 @@ const READINESS_LABELS: Readonly<Record<string, string>> = {
   CORPORATE_TRANSFORMS: "기업행사 증권 변환",
   AUTO_MARKET_REGIME: "자동장 regime",
   AUTO_MARKET_PROFILE_QUEUE: "프로필 Redis 큐",
-  RUNTIME_IDENTITY: "배포·스키마 호환성",
+  RUNTIME_IDENTITY: "EOD 실행 계약",
 };
 
 function timelinePhase(phase: string) {
@@ -360,7 +360,16 @@ export function AdminEodSection({
                 value={attempt ? `#${attempt.attemptNo} · ${attemptedOperationLabel(attempt.phase)} · ${statusLabel(attempt.status)}` : "-"}
                 note={attempt ? `${formatDateTime(attempt.startedAt)} → ${attempt.completedAt ? formatDateTime(attempt.completedAt) : "진행 중"} · ${formatElapsed(attempt.startedAt, attempt.completedAt ?? overview?.generatedAt)}` : undefined}
               />
-              <DefinitionItem label="실행 버전" value={`${cycle.buildVersion ?? "unknown"} / ${cycle.schemaVersion ?? "unknown"}`} />
+              <DefinitionItem
+                label="실행 식별자"
+                value={`${cycle.buildVersion ?? "unknown"} / ${cycle.schemaVersion ?? "unknown"}`}
+                note="build / 물리 DB schema revision 감사값"
+              />
+              <DefinitionItem
+                label="EOD 실행 계약"
+                value={cycle.eodContractVersion ?? "미선언"}
+                note={attempt ? `최근 attempt 계약 ${attempt.eodContractVersion ?? "미선언"}` : "phase 입출력·재시작 호환성 기준"}
+              />
               <DefinitionItem label="마지막 신호" value={signal ? `#${signal.id} · ${signal.status}` : "-"} note={signal?.message ?? signal?.errorMessage ?? undefined} />
               <DefinitionItem
                 label="신호 실행 가능"

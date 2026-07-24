@@ -17,6 +17,7 @@ export function useAdminAutoParticipantMutationActions({
   autoParticipantUserKey,
   displayName,
   editingAutoParticipantUserKey,
+  behaviorSeed,
   enabled,
   profileType,
   recurringCashAmount,
@@ -31,6 +32,7 @@ export function useAdminAutoParticipantMutationActions({
   autoParticipantUserKey: string;
   displayName: string;
   editingAutoParticipantUserKey: string | null;
+  behaviorSeed: string;
   enabled: boolean;
   profileType: AutoParticipantProfileType;
   recurringCashAmount: string;
@@ -57,6 +59,7 @@ export function useAdminAutoParticipantMutationActions({
       displayName,
       enabled,
       profileType,
+      behaviorSeed,
       recurringCashAmount,
       recurringCashIntervalValue,
       recurringCashIntervalUnit,
@@ -86,6 +89,7 @@ export function useAdminAutoParticipantMutationActions({
     autoParticipantUserKey,
     displayName,
     editingAutoParticipantUserKey,
+    behaviorSeed,
     enabled,
     profileType,
     recurringCashAmount,

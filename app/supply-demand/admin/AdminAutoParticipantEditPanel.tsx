@@ -34,7 +34,11 @@ export function AdminAutoParticipantEditPanel({
     <div className="mt-3 border-t border-white/10 pt-3">
       <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[1.2fr_1.1fr_0.8fr_0.9fr_0.75fr_0.75fr_auto]">
         <DarkInput label="표시명" value={draft.displayName} onChange={draftSetters.setDisplayName} placeholder="자동 참여자 1" />
-        <DarkSelect label="심리 프로필" value={draft.profileType} onChange={(value) => draftSetters.setProfileType(value as AutoParticipantProfileType)}>
+        <DarkSelect
+          label="심리 프로필"
+          value={draft.profileType}
+          onChange={(value) => draftSetters.setProfileType(value as AutoParticipantProfileType)}
+        >
           {AUTO_PARTICIPANT_PROFILE_OPTIONS.map((profile) => (
             <option key={profile.value} value={profile.value}>{profile.label}</option>
           ))}
@@ -59,6 +63,12 @@ export function AdminAutoParticipantEditPanel({
           </button>
         </div>
       </div>
+      <div className="mt-3 grid min-w-0 grid-cols-1 gap-3 border-t border-white/10 pt-3">
+        <DarkInput label="재현 seed" value={draft.behaviorSeed} onChange={draftSetters.setBehaviorSeed} placeholder="비우면 기존 seed 유지" />
+      </div>
+      <p className="mt-2 text-[11px] font-bold leading-5 text-admin-muted">
+        행동 모델은 개인별로 선택하지 않고 심리 프로필 설정에서 일괄 적용합니다. 재현 seed는 같은 시장 상태에서 참여자별 판단 편차를 안정적으로 유지합니다.
+      </p>
       {!draft.recurringCashDisabled ? (
         <p className="mt-2 text-[11px] font-bold leading-5 text-admin-muted">
           기본 EOD 모드에서는 입력 주기를 최소 대기 간격으로 사용해 00시 이후 거래일당 최대 한 번 지급하며, 지나간 회차는 소급 지급하지 않습니다.
@@ -69,7 +79,7 @@ export function AdminAutoParticipantEditPanel({
           <p className="text-xs font-bold text-stock-subtle">선택 참여자 실제 계좌</p>
           <p className="mt-1 break-all text-sm font-black text-white">{participant.displayName} · {participant.userKey}</p>
           <p className="mt-1 text-xs font-bold text-admin-muted">
-            {formatAutoParticipantProfile(participant.profileType)} · 현재 현금 {participant.cashBalance == null ? "계좌 미개설" : formatWon(participant.cashBalance)}
+            {formatAutoParticipantProfile(participant.profileType)} · 프로필 {participant.behaviorModelVersion} · 현재 현금 {participant.cashBalance == null ? "계좌 미개설" : formatWon(participant.cashBalance)}
           </p>
         </div>
         <DarkInput label="입금/회수 금액" value={draft.cashAdjustmentAmount} onChange={draftSetters.setCashAdjustmentAmount} placeholder="1,000,000" />

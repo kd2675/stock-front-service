@@ -133,9 +133,9 @@ export function resolveRecurringCashPolicy(
   return resolveRecurringCashValues({
     source: "PROFILE",
     sourceLabel: "프로필 기본값",
-    amount: profileConfig.recurringDepositAmount,
-    intervalValue: profileConfig.recurringDepositIntervalValue,
-    intervalUnit: profileConfig.recurringDepositIntervalUnit,
+    amount: profileConfig.fundingPolicy.recurringDepositAmount,
+    intervalValue: profileConfig.fundingPolicy.recurringDepositIntervalValue,
+    intervalUnit: profileConfig.fundingPolicy.recurringDepositIntervalUnit,
   });
 }
 

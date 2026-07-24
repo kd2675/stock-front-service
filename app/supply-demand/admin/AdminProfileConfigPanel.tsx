@@ -1,6 +1,9 @@
 import { useMemo, useState } from "react";
 
-import { formatAutoParticipantProfile, formatAutoParticipantProfileDescription } from "@/app/lib/autoParticipantProfiles";
+import {
+  formatAutoParticipantProfile,
+  formatAutoParticipantProfileDescription,
+} from "@/app/lib/autoParticipantProfiles";
 import { DarkInput, DarkSelect } from "@/app/supply-demand/admin/AdminFormControls";
 import { AdminProfileConfigFormPanel } from "@/app/supply-demand/admin/AdminProfileConfigFormPanel";
 import { AdminProfileConfigSummaryPanel } from "@/app/supply-demand/admin/AdminProfileConfigSummaryPanel";
@@ -47,7 +50,7 @@ export function AdminProfileConfigPanel({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-black">프로필 행동 설정</h2>
-          <p className="mt-1 text-xs font-bold text-stock-subtle">자동 참여자 심리 프로필별 주문 빈도, 가격 압력 민감도, 호가 공격성, 주문 유지 시간, 수량, 보유 성향, 주기적 현금 유입을 조정합니다.</p>
+          <p className="mt-1 text-xs font-bold text-stock-subtle">프로필별 행동 모델과 의사결정 빈도, 회당 주문 수, 가격·청산·재고 모드, 호가 공격성, 주문 유지 시간과 수량을 일괄 조정합니다. 같은 프로필의 모든 자동 참여자에게 적용됩니다.</p>
         </div>
       </div>
       <div className="mt-4 rounded-md border border-white/10 bg-black/15 p-3">
@@ -81,7 +84,7 @@ export function AdminProfileConfigPanel({
               >
                 <span className="flex items-start justify-between gap-2">
                   <span className="text-sm font-black text-white">{formatAutoParticipantProfile(config.profileType)}</span>
-                  <span className="shrink-0 rounded-sm bg-white/10 px-1.5 py-0.5 text-[10px] font-black text-admin-muted">{config.customized ? "커스텀" : "기본"}</span>
+                  <span className="shrink-0 rounded-sm bg-white/10 px-1.5 py-0.5 text-[10px] font-black text-admin-muted">{config.behaviorModelVersion} · {config.customized ? "커스텀" : "기본"}</span>
                 </span>
                 <span className="mt-1 block text-xs font-bold leading-5 text-stock-subtle">{formatAutoParticipantProfileDescription(config.profileType)}</span>
               </button>

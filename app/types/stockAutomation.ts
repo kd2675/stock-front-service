@@ -127,12 +127,18 @@ export type AutoParticipantProfileType =
   | "OBSERVER";
 
 export type RecurringCashIntervalUnit = "SECOND" | "MINUTE" | "HOUR" | "DAY" | "MONTH" | "YEAR";
+export type AutoParticipantBehaviorModelVersion = "V1" | "V2";
+export type AutoParticipantProfilePricingMode = "DIRECTIONAL" | "MARKET_MAKING";
+export type AutoParticipantProfileExitMode = "SIGNAL_DRIVEN" | "TAKE_PROFIT_FIRST" | "HOLD_LOSSES";
+export type AutoParticipantProfileInventoryMode = "SIGNAL_DRIVEN" | "TARGET_ALLOCATION";
 
 export type AutoParticipant = {
   userKey: string;
   displayName: string;
   enabled: boolean;
   profileType: AutoParticipantProfileType;
+  behaviorModelVersion: AutoParticipantBehaviorModelVersion;
+  behaviorSeed?: string | null;
   recurringCashAmount?: number | null;
   recurringCashIntervalValue?: number | null;
   recurringCashIntervalUnit?: RecurringCashIntervalUnit | null;
@@ -142,6 +148,14 @@ export type AutoParticipant = {
   createdAt: string;
   updatedAt: string;
   withdrawnAt?: string | null;
+  paydayAvailableBudget: number;
+  dividendAvailableBudget: number;
+  fundingReservedAmount: number;
+  fundingSpentAmount: number;
+  activeFundingBudgetCount: number;
+  trackedPositionCount: number;
+  averageHoldingTradingDays: number;
+  averageDownRoundCount: number;
 };
 
 export type AutoParticipantHolding = {
@@ -327,6 +341,7 @@ export type EodCycle = {
   lastErrorMessage?: string | null;
   buildVersion?: string | null;
   schemaVersion?: string | null;
+  eodContractVersion?: string | null;
   createdAt: string;
   updatedAt: string;
   closeRunStatus?: string | null;
@@ -363,6 +378,7 @@ export type EodPhaseAttempt = {
   errorMessage?: string | null;
   buildVersion?: string | null;
   schemaVersion?: string | null;
+  eodContractVersion?: string | null;
 };
 
 export type EodReadinessCheck = {
@@ -423,6 +439,7 @@ export type AutoParticipantSymbolConfig = {
 
 export type AutoParticipantProfileConfig = {
   profileType: AutoParticipantProfileType;
+  behaviorModelVersion: AutoParticipantBehaviorModelVersion;
   newsWeight: number;
   momentumWeight: number;
   contrarianWeight: number;
@@ -434,6 +451,8 @@ export type AutoParticipantProfileConfig = {
   panicSellWeight: number;
   dipBuyWeight: number;
   orderMultiplier: number;
+  decisionFrequencyMultiplier: number;
+  ordersPerDecisionMultiplier: number;
   aggressionMultiplier: number;
   pricePressureSensitivity: number;
   orderTtlMultiplier: number;
@@ -441,10 +460,19 @@ export type AutoParticipantProfileConfig = {
   holdingPatienceWeight: number;
   deepLossHoldWeight: number;
   profitTakingWeight: number;
+  pricingMode: AutoParticipantProfilePricingMode;
+  exitMode: AutoParticipantProfileExitMode;
+  inventoryMode: AutoParticipantProfileInventoryMode;
   recurringDepositAmount: number;
   recurringDepositIntervalValue: number;
   recurringDepositIntervalUnit: RecurringCashIntervalUnit;
   recurringDepositIntervalDays: number;
+  fundingPolicy: {
+    recurringDepositAmount: number;
+    recurringDepositIntervalValue: number;
+    recurringDepositIntervalUnit: RecurringCashIntervalUnit;
+    recurringDepositIntervalDays: number;
+  };
   customized: boolean;
   updatedAt?: string | null;
 };

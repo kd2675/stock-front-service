@@ -1,6 +1,7 @@
-import type { AutoParticipantProfileType, RecurringCashIntervalUnit } from "@/app/types/stock";
+import type { AutoParticipantBehaviorModelVersion, AutoParticipantProfileExitMode, AutoParticipantProfileInventoryMode, AutoParticipantProfilePricingMode, AutoParticipantProfileType, RecurringCashIntervalUnit } from "@/app/types/stock";
 
 export type ProfileConfigDraft = {
+  behaviorModelVersion: AutoParticipantBehaviorModelVersion;
   newsWeight: string;
   momentumWeight: string;
   contrarianWeight: string;
@@ -12,6 +13,8 @@ export type ProfileConfigDraft = {
   panicSellWeight: string;
   dipBuyWeight: string;
   orderMultiplier: string;
+  decisionFrequencyMultiplier: string;
+  ordersPerDecisionMultiplier: string;
   aggressionMultiplier: string;
   pricePressureSensitivity: string;
   orderTtlMultiplier: string;
@@ -19,6 +22,9 @@ export type ProfileConfigDraft = {
   holdingPatienceWeight: string;
   deepLossHoldWeight: string;
   profitTakingWeight: string;
+  pricingMode: AutoParticipantProfilePricingMode;
+  exitMode: AutoParticipantProfileExitMode;
+  inventoryMode: AutoParticipantProfileInventoryMode;
   recurringDepositAmount: string;
   recurringDepositIntervalValue: string;
   recurringDepositIntervalUnit: RecurringCashIntervalUnit;
@@ -29,6 +35,7 @@ export type ProfileConfigDraftWithType = ProfileConfigDraft & {
 };
 
 export type ProfileConfigDraftSetters = {
+  setBehaviorModelVersion: (value: AutoParticipantBehaviorModelVersion) => void;
   setNewsWeight: (value: string) => void;
   setMomentumWeight: (value: string) => void;
   setContrarianWeight: (value: string) => void;
@@ -40,6 +47,8 @@ export type ProfileConfigDraftSetters = {
   setPanicSellWeight: (value: string) => void;
   setDipBuyWeight: (value: string) => void;
   setOrderMultiplier: (value: string) => void;
+  setDecisionFrequencyMultiplier: (value: string) => void;
+  setOrdersPerDecisionMultiplier: (value: string) => void;
   setAggressionMultiplier: (value: string) => void;
   setPricePressureSensitivity: (value: string) => void;
   setOrderTtlMultiplier: (value: string) => void;
@@ -47,6 +56,9 @@ export type ProfileConfigDraftSetters = {
   setHoldingPatienceWeight: (value: string) => void;
   setDeepLossHoldWeight: (value: string) => void;
   setProfitTakingWeight: (value: string) => void;
+  setPricingMode: (value: AutoParticipantProfilePricingMode) => void;
+  setExitMode: (value: AutoParticipantProfileExitMode) => void;
+  setInventoryMode: (value: AutoParticipantProfileInventoryMode) => void;
   setRecurringDepositAmount: (value: string) => void;
   setRecurringDepositIntervalValue: (value: string) => void;
   setRecurringDepositIntervalUnit: (value: RecurringCashIntervalUnit) => void;

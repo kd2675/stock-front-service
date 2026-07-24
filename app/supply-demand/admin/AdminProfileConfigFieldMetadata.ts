@@ -6,8 +6,8 @@ import {
 } from "@/app/supply-demand/admin/AdminConstants";
 import type { ProfileConfigDraft, ProfileConfigDraftSetters } from "@/app/supply-demand/admin/AdminProfileConfigTypes";
 
-export type ProfileConfigNumericKey = Exclude<keyof ProfileConfigDraft, "recurringDepositIntervalUnit">;
-export type ProfileConfigTextSetterKey = Exclude<keyof ProfileConfigDraftSetters, "setRecurringDepositIntervalUnit">;
+export type ProfileConfigNumericKey = Exclude<keyof ProfileConfigDraft, "behaviorModelVersion" | "recurringDepositIntervalUnit" | "pricingMode" | "exitMode" | "inventoryMode">;
+export type ProfileConfigTextSetterKey = Exclude<keyof ProfileConfigDraftSetters, "setBehaviorModelVersion" | "setRecurringDepositIntervalUnit" | "setPricingMode" | "setExitMode" | "setInventoryMode">;
 
 type ProfileConfigNumericField = {
   key: ProfileConfigNumericKey;
@@ -21,7 +21,7 @@ type ProfileConfigNumericField = {
   suffix?: string;
 };
 
-export const PROFILE_CONFIG_BEHAVIOR_FIELDS = [
+export const PROFILE_CONFIG_SIGNAL_FIELDS = [
   { key: "newsWeight", setterKey: "setNewsWeight", formLabel: "뉴스 민감(0-1)", summaryLabel: "뉴스", placeholder: "0.6", min: 0, max: 1, defaultValue: DEFAULT_PROFILE_WEIGHT },
   { key: "momentumWeight", setterKey: "setMomentumWeight", formLabel: "추세 추종(0-1)", summaryLabel: "추세", placeholder: "0.6", min: 0, max: 1, defaultValue: DEFAULT_PROFILE_WEIGHT },
   { key: "contrarianWeight", setterKey: "setContrarianWeight", formLabel: "역추세(0-1)", summaryLabel: "역추세", placeholder: "0.6", min: 0, max: 1, defaultValue: DEFAULT_PROFILE_WEIGHT },
@@ -32,14 +32,24 @@ export const PROFILE_CONFIG_BEHAVIOR_FIELDS = [
   { key: "noiseWeight", setterKey: "setNoiseWeight", formLabel: "노이즈(0-1)", summaryLabel: "노이즈", placeholder: "0.8", min: 0, max: 1, defaultValue: DEFAULT_PROFILE_WEIGHT },
   { key: "panicSellWeight", setterKey: "setPanicSellWeight", formLabel: "패닉 매도(0-1)", summaryLabel: "패닉", placeholder: "0.5", min: 0, max: 1, defaultValue: DEFAULT_PROFILE_WEIGHT },
   { key: "dipBuyWeight", setterKey: "setDipBuyWeight", formLabel: "저가 매수(0-1)", summaryLabel: "저가매수", placeholder: "0.5", min: 0, max: 1, defaultValue: DEFAULT_PROFILE_WEIGHT },
-  { key: "orderMultiplier", setterKey: "setOrderMultiplier", formLabel: "주문 빈도 배율(0=중지)", summaryLabel: "주문 빈도", placeholder: "1", min: 0, max: 5, defaultValue: DEFAULT_PROFILE_MULTIPLIER, suffix: "배" },
-  { key: "aggressionMultiplier", setterKey: "setAggressionMultiplier", formLabel: "호가 공격성(0-5)", summaryLabel: "호가 공격성", placeholder: "1", min: 0, max: 5, defaultValue: DEFAULT_PROFILE_MULTIPLIER, suffix: "배" },
-  { key: "pricePressureSensitivity", setterKey: "setPricePressureSensitivity", formLabel: "가격 압력 민감도(0-2)", summaryLabel: "가격 민감도", placeholder: "1", min: 0, max: 2, defaultValue: DEFAULT_PROFILE_MULTIPLIER, suffix: "배" },
-  { key: "orderTtlMultiplier", setterKey: "setOrderTtlMultiplier", formLabel: "TTL 배율(0.1-10)", summaryLabel: "TTL", placeholder: "1", min: 0.1, max: 10, defaultValue: DEFAULT_PROFILE_MULTIPLIER, suffix: "배" },
-  { key: "quantityMultiplier", setterKey: "setQuantityMultiplier", formLabel: "수량 배율(0=중지)", summaryLabel: "수량", placeholder: "1", min: 0, max: 5, defaultValue: DEFAULT_PROFILE_MULTIPLIER, suffix: "배" },
   { key: "holdingPatienceWeight", setterKey: "setHoldingPatienceWeight", formLabel: "보유 인내(0-1)", summaryLabel: "보유 인내", placeholder: "0.5", min: 0, max: 1, defaultValue: DEFAULT_PROFILE_WEIGHT },
   { key: "deepLossHoldWeight", setterKey: "setDeepLossHoldWeight", formLabel: "손실 보유(0-1)", summaryLabel: "손실 보유", placeholder: "0.5", min: 0, max: 1, defaultValue: DEFAULT_PROFILE_WEIGHT },
   { key: "profitTakingWeight", setterKey: "setProfitTakingWeight", formLabel: "익절 성향(0-1)", summaryLabel: "익절", placeholder: "0.8", min: 0, max: 1, defaultValue: DEFAULT_PROFILE_WEIGHT },
+] as const satisfies ReadonlyArray<ProfileConfigNumericField>;
+
+export const PROFILE_CONFIG_EXECUTION_FIELDS = [
+  { key: "orderMultiplier", setterKey: "setOrderMultiplier", formLabel: "V1 호환 주문 배율", summaryLabel: "V1 호환 배율", placeholder: "1", min: 0, max: 5, defaultValue: DEFAULT_PROFILE_MULTIPLIER, suffix: "배" },
+  { key: "decisionFrequencyMultiplier", setterKey: "setDecisionFrequencyMultiplier", formLabel: "의사결정 빈도(0=중지)", summaryLabel: "의사결정 빈도", placeholder: "1", min: 0, max: 20, defaultValue: DEFAULT_PROFILE_MULTIPLIER, suffix: "배" },
+  { key: "ordersPerDecisionMultiplier", setterKey: "setOrdersPerDecisionMultiplier", formLabel: "회당 주문 수(0=중지)", summaryLabel: "회당 주문 수", placeholder: "1", min: 0, max: 5, defaultValue: DEFAULT_PROFILE_MULTIPLIER, suffix: "배" },
+  { key: "aggressionMultiplier", setterKey: "setAggressionMultiplier", formLabel: "호가 공격성(0-5)", summaryLabel: "호가 공격성", placeholder: "1", min: 0, max: 5, defaultValue: DEFAULT_PROFILE_MULTIPLIER, suffix: "배" },
+  { key: "pricePressureSensitivity", setterKey: "setPricePressureSensitivity", formLabel: "가격 압력 민감도(0-2)", summaryLabel: "가격 민감도", placeholder: "1", min: 0, max: 2, defaultValue: DEFAULT_PROFILE_MULTIPLIER, suffix: "배" },
+  { key: "orderTtlMultiplier", setterKey: "setOrderTtlMultiplier", formLabel: "주문 유지 시간(0.1-10)", summaryLabel: "주문 유지 시간", placeholder: "1", min: 0.1, max: 10, defaultValue: DEFAULT_PROFILE_MULTIPLIER, suffix: "배" },
+  { key: "quantityMultiplier", setterKey: "setQuantityMultiplier", formLabel: "주문 수량(0=중지)", summaryLabel: "주문 수량", placeholder: "1", min: 0, max: 5, defaultValue: DEFAULT_PROFILE_MULTIPLIER, suffix: "배" },
+] as const satisfies ReadonlyArray<ProfileConfigNumericField>;
+
+export const PROFILE_CONFIG_BEHAVIOR_FIELDS = [
+  ...PROFILE_CONFIG_SIGNAL_FIELDS,
+  ...PROFILE_CONFIG_EXECUTION_FIELDS,
 ] as const satisfies ReadonlyArray<ProfileConfigNumericField>;
 
 export const PROFILE_CONFIG_RECURRING_DEPOSIT_FIELDS = [
@@ -59,6 +69,10 @@ export function buildDefaultProfileConfigDraft(): ProfileConfigDraft {
 
   return {
     ...numericDefaults,
+    behaviorModelVersion: "V2",
+    pricingMode: "DIRECTIONAL",
+    exitMode: "SIGNAL_DRIVEN",
+    inventoryMode: "SIGNAL_DRIVEN",
     recurringDepositIntervalUnit: DEFAULT_RECURRING_CASH_INTERVAL_UNIT,
   };
 }
