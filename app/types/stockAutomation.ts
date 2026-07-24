@@ -157,6 +157,10 @@ export type AutoParticipant = {
   trackedPositionCount: number;
   averageHoldingTradingDays: number;
   averageDownRoundCount: number;
+  withdrawalReturnedCashAmount: number;
+  withdrawalReturnedShareQuantity: number;
+  withdrawalReturnedSymbolCount: number;
+  accountClosedOnWithdrawal: boolean;
 };
 
 export type AutoParticipantHolding = {

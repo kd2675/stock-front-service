@@ -139,10 +139,6 @@ export function useAdminAutoParticipantMutationActions({
     if (withdrawAutoParticipantMutation.isPending) {
       return;
     }
-    const confirmed = window.confirm(`${participant.displayName} 자동 참여자를 탈퇴 처리할까요? 미체결 자동 주문은 취소됩니다.`);
-    if (!confirmed) {
-      return;
-    }
     const token = await requireAdminToken("관리자 로그인 후 자동 참여자를 탈퇴 처리할 수 있습니다.");
     if (!token) {
       return;
@@ -157,7 +153,14 @@ export function useAdminAutoParticipantMutationActions({
     if (editingAutoParticipantUserKey === participant.userKey) {
       resetAutoParticipantDraft();
     }
-    setMessage("자동 참여자를 탈퇴 처리했습니다.");
+    const settlement = result.data;
+    const returnedShareQuantity = settlement?.withdrawalReturnedShareQuantity ?? 0;
+    const returnedSymbolCount = settlement?.withdrawalReturnedSymbolCount ?? 0;
+    const returnedCashAmount = settlement?.withdrawalReturnedCashAmount ?? 0;
+    setMessage(
+      `자동 참여자를 탈퇴 처리했습니다. 주식 ${returnedShareQuantity.toLocaleString("ko-KR")}주`
+      + `(${returnedSymbolCount.toLocaleString("ko-KR")}종목) 반납 · 현금 ${returnedCashAmount.toLocaleString("ko-KR")}원 회수 · 계좌 종료`,
+    );
     reloadAutoParticipantState();
   }, [
     editingAutoParticipantUserKey,

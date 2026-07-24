@@ -83,10 +83,10 @@ export function AdminDormantAssetsPanel({
         <div>
           <h2 className="text-base font-black">탈퇴 자동 참여자 휴면 원장</h2>
           <p className="mt-1 max-w-3xl text-xs font-bold leading-5 text-stock-subtle">
-            탈퇴 처리 후에도 계좌에 남아 있는 현금, 보유주식, 예약 자산, 전략 설정과 마지막 주문·체결을 읽기 전용으로 조회합니다.
+            탈퇴 시 반환한 주식·회수한 현금과 종료 계좌, 보존된 전략·주문·체결 이력을 읽기 전용으로 조회합니다.
           </p>
           <p className="mt-1 max-w-3xl text-[11px] font-bold leading-5 text-admin-quiet">
-            예약 매수금에는 미체결 주문뿐 아니라 진행 중인 기업 이벤트 청약금이 포함될 수 있어, 미체결 주문 건수와 분리해 판단합니다.
+            신규 탈퇴는 잔여 자산과 예약이 0이고 계좌가 CLOSED여야 정상입니다. 기존 소프트 탈퇴 데이터처럼 값이 남아 있으면 점검 대상으로 표시합니다.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs font-black">
@@ -105,10 +105,10 @@ export function AdminDormantAssetsPanel({
 
       <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
         <ProfileMiniMetric label="휴면 참여자" value={formatCount(summary.participantCount, "명")} tone="blue" />
-        <ProfileMiniMetric label="자산 보유 계좌" value={formatCount(summary.assetAccountCount, "개")} tone="blue" />
-        <ProfileMiniMetric label="추정 총자산" value={formatWon(summary.estimatedTotalAsset)} tone="blue" />
-        <ProfileMiniMetric label="가용 현금" value={formatWon(summary.availableCash)} tone="muted" />
-        <ProfileMiniMetric label="주식 평가액" value={formatWon(summary.holdingMarketValue)} tone="muted" />
+        <ProfileMiniMetric label="잔여 자산 계좌" value={formatCount(summary.assetAccountCount, "개")} tone={summary.assetAccountCount > 0 ? "red" : "green"} />
+        <ProfileMiniMetric label="잔여 총자산" value={formatWon(summary.estimatedTotalAsset)} tone={summary.estimatedTotalAsset > 0 ? "red" : "green"} />
+        <ProfileMiniMetric label="잔여 현금" value={formatWon(summary.availableCash)} tone="muted" />
+        <ProfileMiniMetric label="잔여 주식 평가액" value={formatWon(summary.holdingMarketValue)} tone="muted" />
         <ProfileMiniMetric label="점검 필요" value={formatCount(summary.reviewCount, "명")} tone={summary.reviewCount > 0 ? "red" : "green"} />
       </div>
 
@@ -213,7 +213,7 @@ function DormantParticipantCard({ row }: { row: DormantParticipantRow }) {
                 점검 {formatCount(reviewReasons.length, "건")}
               </span>
             ) : (
-              <span className="rounded-md bg-admin-success-surface px-2 py-1 text-[10px] font-black text-admin-success">정상 보존</span>
+              <span className="rounded-md bg-admin-success-surface px-2 py-1 text-[10px] font-black text-admin-success">정산 완료</span>
             )}
           </div>
           <p className="mt-1 break-all text-xs font-bold text-stock-subtle">{participant.userKey}</p>
@@ -235,6 +235,12 @@ function DormantParticipantCard({ row }: { row: DormantParticipantRow }) {
           </ul>
         </div>
       ) : null}
+
+      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+        <DormantHeaderMetric label="탈퇴 시 회수 현금" value={formatWon(participant.withdrawalReturnedCashAmount)} />
+        <DormantHeaderMetric label="탈퇴 시 반납 주식" value={`${formatNumber(participant.withdrawalReturnedShareQuantity)}주 · ${formatCount(participant.withdrawalReturnedSymbolCount, "종목")}`} />
+        <DormantHeaderMetric label="계좌 종료" value={participant.accountClosedOnWithdrawal ? "CLOSED 완료" : "감사 원장 없음"} />
+      </div>
 
       <details className="group mt-3 rounded-md border border-white/10 bg-white/[0.025]">
         <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 text-xs font-black text-admin-accent-soft marker:hidden">
@@ -379,6 +385,12 @@ function resolveDormantReviewReasons(
   if (participant.enabled) {
     reasons.push("탈퇴 참여자의 자동매매 활성 플래그가 남아 있습니다.");
   }
+  if (participant.accountId != null && participant.accountStatus !== "CLOSED") {
+    reasons.push(`탈퇴 계좌 상태가 CLOSED가 아닙니다: ${participant.accountStatus ?? "상태 없음"}`);
+  }
+  if (participant.accountId != null && !participant.accountClosedOnWithdrawal) {
+    reasons.push("자산 반환·계좌 종료 감사 원장이 없습니다.");
+  }
   if (participant.activeFundingBudgetCount > 0) {
     reasons.push(`활성 전용 자금 예산 ${formatCount(participant.activeFundingBudgetCount, "건")}이 남아 있습니다.`);
   }
@@ -393,6 +405,13 @@ function resolveDormantReviewReasons(
   }
   if (overview?.reservedSellQuantity) {
     reasons.push(`매도 예약수량 ${formatNumber(overview.reservedSellQuantity)}주가 남아 있습니다.`);
+  }
+  const remainingCash = overview?.availableCash ?? participant.cashBalance ?? 0;
+  if (remainingCash > 0) {
+    reasons.push(`탈퇴 계좌 현금 ${formatWon(remainingCash)}이 남아 있습니다.`);
+  }
+  if ((overview?.totalHoldingQuantity ?? 0) > 0) {
+    reasons.push(`탈퇴 계좌 보유주식 ${formatNumber(overview?.totalHoldingQuantity ?? 0)}주가 남아 있습니다.`);
   }
   return reasons;
 }

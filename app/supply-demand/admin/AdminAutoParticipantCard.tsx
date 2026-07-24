@@ -1,6 +1,9 @@
-import { memo } from "react";
+"use client";
+
+import { memo, useState } from "react";
 
 import { AdminAutoParticipantEditPanel } from "@/app/supply-demand/admin/AdminAutoParticipantEditPanel";
+import { AdminAutoParticipantWithdrawalDialog } from "@/app/supply-demand/admin/AdminAutoParticipantWithdrawalDialog";
 import {
   AutoParticipantActivitySection,
   AutoParticipantAssetSection,
@@ -49,39 +52,56 @@ export const AdminAutoParticipantCard = memo(function AdminAutoParticipantCard({
   onResetDraft,
   onAdjustCash,
 }: AdminAutoParticipantCardProps) {
+  const [withdrawalDialogOpen, setWithdrawalDialogOpen] = useState(false);
+
   return (
-    <article className={["min-w-0 overflow-hidden rounded-lg border p-3", editing ? "border-stock-accent/60 bg-[#10233a]/35" : "border-white/10 bg-black/20"].join(" ")}>
-      <AutoParticipantCardHeader
-        participant={participant}
-        toggling={toggling}
-        withdrawing={withdrawing}
-        onToggleParticipant={onToggleParticipant}
-        onSelectParticipant={onSelectParticipant}
-        onWithdrawParticipant={onWithdrawParticipant}
-      />
+    <>
+      <article className={["min-w-0 overflow-hidden rounded-lg border p-3", editing ? "border-stock-accent/60 bg-[#10233a]/35" : "border-white/10 bg-black/20"].join(" ")}>
+        <AutoParticipantCardHeader
+          participant={participant}
+          toggling={toggling}
+          withdrawing={withdrawing}
+          onToggleParticipant={onToggleParticipant}
+          onSelectParticipant={onSelectParticipant}
+          onRequestWithdrawal={() => setWithdrawalDialogOpen(true)}
+        />
 
-      <div className="mt-3 grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-[1.15fr_1.25fr_1.1fr_1.1fr]">
-        <AutoParticipantProfileSection participant={participant} />
-        <AutoParticipantAssetSection participant={participant} overview={overview} overviewLoading={overviewLoading} />
-        <AutoParticipantHoldingSection participant={participant} overview={overview} overviewLoading={overviewLoading} />
-        <AutoParticipantActivitySection overview={overview} overviewLoading={overviewLoading} />
-      </div>
+        <div className="mt-3 grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-[1.15fr_1.25fr_1.1fr_1.1fr]">
+          <AutoParticipantProfileSection participant={participant} />
+          <AutoParticipantAssetSection participant={participant} overview={overview} overviewLoading={overviewLoading} />
+          <AutoParticipantHoldingSection participant={participant} overview={overview} overviewLoading={overviewLoading} />
+          <AutoParticipantActivitySection overview={overview} overviewLoading={overviewLoading} />
+        </div>
 
-      {editing && draft !== null && draftSetters !== null ? (
-        <AdminAutoParticipantEditPanel
-          adjustingCashType={adjustingCashType}
-          draft={draft}
-          draftSetters={draftSetters}
+        {editing && draft !== null && draftSetters !== null ? (
+          <AdminAutoParticipantEditPanel
+            adjustingCashType={adjustingCashType}
+            draft={draft}
+            draftSetters={draftSetters}
+            overview={overview}
+            overviewLoading={overviewLoading}
+            participant={participant}
+            saving={saving}
+            onAdjustCash={onAdjustCash}
+            onResetDraft={onResetDraft}
+            onSubmitParticipant={onSubmitParticipant}
+          />
+        ) : null}
+      </article>
+
+      {withdrawalDialogOpen ? (
+        <AdminAutoParticipantWithdrawalDialog
+          participant={participant}
           overview={overview}
           overviewLoading={overviewLoading}
-          participant={participant}
-          saving={saving}
-          onAdjustCash={onAdjustCash}
-          onResetDraft={onResetDraft}
-          onSubmitParticipant={onSubmitParticipant}
+          onClose={() => setWithdrawalDialogOpen(false)}
+          onConfirm={() => {
+            setWithdrawalDialogOpen(false);
+            onWithdrawParticipant(participant);
+          }}
         />
       ) : null}
-    </article>
+    </>
   );
 });
 
@@ -91,14 +111,14 @@ function AutoParticipantCardHeader({
   withdrawing,
   onToggleParticipant,
   onSelectParticipant,
-  onWithdrawParticipant,
+  onRequestWithdrawal,
 }: {
   participant: AutoParticipant;
   toggling: boolean;
   withdrawing: boolean;
   onToggleParticipant: (participant: AutoParticipant) => void;
   onSelectParticipant: (participant: AutoParticipant) => void;
-  onWithdrawParticipant: (participant: AutoParticipant) => void;
+  onRequestWithdrawal: () => void;
 }) {
   return (
     <div className="flex flex-wrap items-start justify-between gap-3">
@@ -113,7 +133,7 @@ function AutoParticipantCardHeader({
         </button>
         <button
           type="button"
-          onClick={() => onWithdrawParticipant(participant)}
+          onClick={onRequestWithdrawal}
           disabled={withdrawing}
           className="min-h-9 rounded-md bg-admin-danger-surface px-3 py-1.5 text-xs font-black text-admin-danger disabled:cursor-wait disabled:opacity-55"
         >
