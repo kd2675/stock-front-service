@@ -3,6 +3,7 @@ import type { ComponentProps } from "react";
 import { AdminAccountsSection } from "@/app/supply-demand/admin/AdminAccountsSection";
 import { AdminAutomationSection } from "@/app/supply-demand/admin/AdminAutomationSection";
 import { AdminAutoParticipantManagementPanel } from "@/app/supply-demand/admin/AdminAutoParticipantManagementPanel";
+import { AdminDormantAssetsPanel } from "@/app/supply-demand/admin/AdminDormantAssetsPanel";
 import { AdminEventsSection } from "@/app/supply-demand/admin/AdminEventsSection";
 import { AdminEodSection } from "@/app/supply-demand/admin/AdminEodSection";
 import { AdminMarketSection } from "@/app/supply-demand/admin/AdminMarketSection";
@@ -14,6 +15,7 @@ export type AdminPageContentProps = {
   activeAdminSection: AdminSection;
   activeAdminTab: AdminTab;
   automationProps: ComponentProps<typeof AdminAutomationSection> | null;
+  dormantAssetsProps: ComponentProps<typeof AdminDormantAssetsPanel> | null;
   eventsProps: ComponentProps<typeof AdminEventsSection> | null;
   eodProps: ComponentProps<typeof AdminEodSection> | null;
   marketProps: ComponentProps<typeof AdminMarketSection> | null;
@@ -26,6 +28,7 @@ export function AdminPageContent({
   activeAdminSection,
   activeAdminTab,
   automationProps,
+  dormantAssetsProps,
   eventsProps,
   eodProps,
   marketProps,
@@ -51,6 +54,8 @@ export function AdminPageContent({
       {activeAdminSection === "participants-list" && participantsProps ? (
         <AdminAutoParticipantManagementPanel {...participantsProps} />
       ) : null}
+
+      {dormantAssetsProps ? <AdminDormantAssetsPanel {...dormantAssetsProps} /> : null}
 
       {activeAdminTab === "corporate" && eventsProps ? (
         <AdminEventsSection {...eventsProps} />

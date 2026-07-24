@@ -8,8 +8,10 @@ import {
   adminInvestorFlowSummaryQueryOptions,
   adminUserFundFlowQueryOptions,
   autoParticipantsQueryOptions,
+  autoParticipantOverviewsQueryOptions,
   autoParticipantPerformanceSummaryQueryOptions,
   autoParticipantProfileOverviewsQueryOptions,
+  autoParticipantSymbolConfigsQueryOptions,
   batchJobRuntimeControlsQueryOptions,
   eodOperationsOverviewQueryOptions,
   latestManualCashFlowRunQueryOptions,
@@ -97,6 +99,23 @@ export function useAdminPageQueries({
   ));
   const autoParticipantsQuery = useQuery(autoParticipantsQueryOptions(accessToken, {
     enabled: queryFlags.shouldUseAutoParticipants,
+  }));
+  const dormantAutoParticipantsQuery = useQuery(autoParticipantsQueryOptions(accessToken, {
+    enabled: queryFlags.shouldUseDormantAutoParticipants,
+    lifecycleScope: "WITHDRAWN",
+    refetchIntervalMs: false,
+  }));
+  const dormantAutoParticipantOverviewsQuery = useQuery(autoParticipantOverviewsQueryOptions(accessToken, {
+    activityScope: "ALL",
+    enabled: queryFlags.shouldUseDormantAutoParticipants,
+    includeHoldings: true,
+    lifecycleScope: "WITHDRAWN",
+    refetchIntervalMs: false,
+  }));
+  const dormantAutoParticipantSymbolConfigsQuery = useQuery(autoParticipantSymbolConfigsQueryOptions(accessToken, {
+    enabled: queryFlags.shouldUseDormantAutoParticipants,
+    lifecycleScope: "WITHDRAWN",
+    refetchIntervalMs: false,
   }));
   const orderBookInstrumentsQuery = useQuery(orderBookInstrumentsQueryOptions({
     enabled: queryFlags.shouldUseInstrumentDetails,
@@ -221,6 +240,9 @@ export function useAdminPageQueries({
     latestManualCashFlowRunQuery,
     eodOperationsOverviewQuery,
     corporateActionsQuery,
+    dormantAutoParticipantOverviewsQuery,
+    dormantAutoParticipantsQuery,
+    dormantAutoParticipantSymbolConfigsQuery,
     shouldLoadInstrumentDetails: queryFlags.shouldLoadInstrumentDetails,
     simulationClockQuery,
     userFundFlowQuery,

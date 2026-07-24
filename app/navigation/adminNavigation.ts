@@ -11,6 +11,7 @@ export type AdminSection =
   | "funds-payroll"
   | "participants-overview"
   | "participants-list"
+  | "participants-dormant"
   | "participants-profiles"
   | "corporate-instruments"
   | "corporate-actions"
@@ -65,6 +66,7 @@ export const ADMIN_NAVIGATION_GROUPS: readonly AdminNavigationGroup[] = [
     items: [
       { section: "participants-overview", href: "/admin/participants/overview", label: "프로필별 현황", description: "프로필별 계좌·자산·보유·주문·체결 성과를 요약합니다." },
       { section: "participants-list", href: "/admin/participants/list", label: "참여자 관리", description: "자동 참여자 계정을 조회·등록·대량 생성하고 개별 종목 전략을 관리합니다." },
+      { section: "participants-dormant", href: "/admin/participants/dormant", label: "휴면 자산", description: "탈퇴한 자동 참여자의 계좌·현금·보유주식·예약·전략과 마지막 활동 원장을 조회합니다." },
       { section: "participants-profiles", href: "/admin/participants/profiles", label: "프로필 정책", description: "프로필별 주문 행동과 가격 반응, 보유·자금 정책을 설정합니다." },
     ],
   },

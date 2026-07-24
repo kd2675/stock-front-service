@@ -85,13 +85,21 @@ export const stockKeys = {
     options?.includeSalaryEligibility ?? false,
   ] as const,
   autoParticipantOverviewsRoot: () => [...stockKeys.autoMarketStatus(), "participants", "overviews"] as const,
-  autoParticipantOverviews: (options?: { activityScope?: string; includeHoldings?: boolean; userKeys?: string[] }) => [
+  autoParticipantOverviews: (options?: { activityScope?: string; includeHoldings?: boolean; lifecycleScope?: string; userKeys?: string[] }) => [
     ...stockKeys.autoParticipantOverviewsRoot(),
     options?.activityScope ?? "RECENT_SIMULATION_DAY",
     options?.includeHoldings ?? true,
+    options?.lifecycleScope ?? "CURRENT",
     [...(options?.userKeys ?? [])].sort(),
   ] as const,
-  autoParticipants: () => [...stockKeys.autoMarketStatus(), "participants", "list"] as const,
+  autoParticipantsRoot: () => [...stockKeys.autoMarketStatus(), "participants", "list"] as const,
+  autoParticipants: (lifecycleScope = "CURRENT") => [...stockKeys.autoParticipantsRoot(), lifecycleScope] as const,
+  autoParticipantSymbolConfigsRoot: () => [...stockKeys.autoMarketStatus(), "participants", "symbol-configs"] as const,
+  autoParticipantSymbolConfigs: (options?: { lifecycleScope?: string; userKeys?: string[] }) => [
+    ...stockKeys.autoParticipantSymbolConfigsRoot(),
+    options?.lifecycleScope ?? "CURRENT",
+    [...(options?.userKeys ?? [])].sort(),
+  ] as const,
   autoParticipantProfileOverviews: (options?: { activityScope?: string; profileTypes?: string[] }) => [
     ...stockKeys.autoMarketStatus(),
     "participants",

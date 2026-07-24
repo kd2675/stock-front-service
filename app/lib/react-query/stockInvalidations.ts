@@ -147,8 +147,9 @@ async function invalidateAutoParticipantStateQueries(
   await invalidateQueryGroup(queryClient, [
     stockKeys.autoMarketStatusDetailsRoot(),
     ...(options.includeSummary ? [stockKeys.autoMarketSummaryStatusRoot()] : []),
-    ...(options.includeParticipants ? [stockKeys.autoParticipants()] : []),
+    ...(options.includeParticipants ? [stockKeys.autoParticipantsRoot()] : []),
     stockKeys.autoParticipantOverviewsRoot(),
+    stockKeys.autoParticipantSymbolConfigsRoot(),
     stockKeys.autoParticipantProfileOverviews(),
   ]);
 }

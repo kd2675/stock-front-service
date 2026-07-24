@@ -13,6 +13,7 @@ export function buildAdminPageContentProps(context: AdminPageContentBuilderConte
     || context.activeAdminSection === "market-auto-market"
     || context.activeAdminSection === "participants-profiles"
     || context.activeAdminSection === "system-jobs";
+  const isDormantAssetsContent = context.activeAdminSection === "participants-dormant";
   const isEventsContent = context.activeAdminTab === "corporate";
   const isMarketContent = context.activeAdminSection === "dashboard"
     || context.activeAdminSection === "market-instruments"
@@ -24,6 +25,24 @@ export function buildAdminPageContentProps(context: AdminPageContentBuilderConte
     activeAdminTab: context.activeAdminTab,
     accountsProps: isAccountsContent ? buildAdminAccountsContentProps(context) : null,
     automationProps: isAutomationContent ? buildAdminAutomationContentProps(context) : null,
+    dormantAssetsProps: isDormantAssetsContent ? {
+      participants: context.queries.dormantAutoParticipantsQuery.data ?? [],
+      overviews: context.queries.dormantAutoParticipantOverviewsQuery.data ?? [],
+      symbolConfigs: context.queries.dormantAutoParticipantSymbolConfigsQuery.data ?? [],
+      loading: context.queries.dormantAutoParticipantsQuery.isFetching
+        || context.queries.dormantAutoParticipantOverviewsQuery.isFetching
+        || context.queries.dormantAutoParticipantSymbolConfigsQuery.isFetching,
+      error: context.queries.dormantAutoParticipantsQuery.isError
+        || context.queries.dormantAutoParticipantOverviewsQuery.isError
+        || context.queries.dormantAutoParticipantSymbolConfigsQuery.isError,
+      onRefresh: () => {
+        void Promise.all([
+          context.queries.dormantAutoParticipantsQuery.refetch(),
+          context.queries.dormantAutoParticipantOverviewsQuery.refetch(),
+          context.queries.dormantAutoParticipantSymbolConfigsQuery.refetch(),
+        ]);
+      },
+    } : null,
     eventsProps: isEventsContent ? buildAdminEventsContentProps(context) : null,
     eodProps: context.activeAdminSection === "system-eod" ? buildAdminEodContentProps(context) : null,
     marketProps: isMarketContent ? buildAdminMarketContentProps(context) : null,

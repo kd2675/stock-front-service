@@ -32,8 +32,8 @@ assert.deepEqual(
 );
 assert.deepEqual(
   adminGroupSections.participants,
-  ["participants-overview", "participants-list", "participants-profiles"],
-  "자동 참여자 메뉴에는 계정·프로필 업무만 있어야 합니다.",
+  ["participants-overview", "participants-list", "participants-dormant", "participants-profiles"],
+  "자동 참여자 메뉴의 현황·계정·휴면·프로필 순서가 계약과 다릅니다.",
 );
 for (const item of adminItems) {
   assert.equal(resolveAdminSectionFromPath(item.href), item.section, `${item.href} section 해석이 잘못됐습니다.`);
@@ -83,6 +83,10 @@ assert.deepEqual(
 assert.deepEqual(
   pickEnabled(flagsFor("system-jobs", "system")),
   ["shouldUseBatchRuntimeControls"],
+);
+assert.deepEqual(
+  pickEnabled(flagsFor("participants-dormant", "participants")),
+  ["shouldUseDormantAutoParticipants"],
 );
 
 console.log(`navigation contract verified: public=${PUBLIC_NAVIGATION_ITEMS.length}, admin=${adminItems.length}`);

@@ -128,6 +128,7 @@ export type AutoParticipantProfileType =
 
 export type RecurringCashIntervalUnit = "SECOND" | "MINUTE" | "HOUR" | "DAY" | "MONTH" | "YEAR";
 export type AutoParticipantBehaviorModelVersion = "V1" | "V2";
+export type AutoParticipantLifecycleScope = "CURRENT" | "WITHDRAWN";
 export type AutoParticipantProfilePricingMode = "DIRECTIONAL" | "MARKET_MAKING";
 export type AutoParticipantProfileExitMode = "SIGNAL_DRIVEN" | "TAKE_PROFIT_FIRST" | "HOLD_LOSSES";
 export type AutoParticipantProfileInventoryMode = "SIGNAL_DRIVEN" | "TARGET_ALLOCATION";

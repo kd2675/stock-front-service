@@ -6,7 +6,7 @@ import {
   authenticatedPostJson,
   toQuery,
 } from "@/app/lib/stock-api/core";
-import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowBreakdown, AdminFundFlowScope, AdminInvestorFlowHistory, AdminInvestorFlowSummary, AdminParticipantScope, AdminSymbolFlowList, AdminTotalAssetHistoryPage, AutoMarketDistributionBias, AutoMarketRegimeCountWeights, AutoMarketRegimeHistoryRange, AutoMarketStatus, AutoParticipant, AutoParticipantBehaviorModelVersion, AutoParticipantCashAdjustment, AutoParticipantOverview, AutoParticipantPerformanceBasis, AutoParticipantPerformanceSummary, AutoParticipantProfileExitMode, AutoParticipantProfileInventoryMode, AutoParticipantProfileOverview, AutoParticipantProfilePricingMode, AutoParticipantProfileType, BatchJobRuntimeStatus, EodOperationsOverview, EodPhaseRetryResult, ListingAutoOperationMode, ListingAutoPosition, ListingAutoStrategyProfile, RecurringCashIntervalUnit, StockBatchJobRun } from "@/app/types/stock";
+import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowBreakdown, AdminFundFlowScope, AdminInvestorFlowHistory, AdminInvestorFlowSummary, AdminParticipantScope, AdminSymbolFlowList, AdminTotalAssetHistoryPage, AutoMarketDistributionBias, AutoMarketRegimeCountWeights, AutoMarketRegimeHistoryRange, AutoMarketStatus, AutoParticipant, AutoParticipantBehaviorModelVersion, AutoParticipantCashAdjustment, AutoParticipantLifecycleScope, AutoParticipantOverview, AutoParticipantPerformanceBasis, AutoParticipantPerformanceSummary, AutoParticipantProfileExitMode, AutoParticipantProfileInventoryMode, AutoParticipantProfileOverview, AutoParticipantProfilePricingMode, AutoParticipantProfileType, AutoParticipantSymbolConfig, BatchJobRuntimeStatus, EodOperationsOverview, EodPhaseRetryResult, ListingAutoOperationMode, ListingAutoPosition, ListingAutoStrategyProfile, RecurringCashIntervalUnit, StockBatchJobRun } from "@/app/types/stock";
 
 export type { AdminFundFlowScope } from "@/app/types/stock";
 
@@ -156,18 +156,35 @@ export function getAdminCashFlows(token: string, page: number, size: number) {
   );
 }
 
-export function getAutoParticipantOverviews(token: string, options?: { activityScope?: AutoParticipantActivityScope; includeHoldings?: boolean; userKeys?: string[] }) {
+export function getAutoParticipantOverviews(token: string, options?: { activityScope?: AutoParticipantActivityScope; includeHoldings?: boolean; lifecycleScope?: AutoParticipantLifecycleScope; userKeys?: string[] }) {
   const normalizedUserKeys = normalizeStringList(options?.userKeys);
   const query = toQuery({
     activityScope: options?.activityScope,
     includeHoldings: options?.includeHoldings,
+    lifecycleScope: options?.lifecycleScope,
     userKeys: normalizedUserKeys,
   });
   return authenticatedGetJson<AutoParticipantOverview[]>(token, `/api/stock/v1/markets/auto-market/participants/overviews${query}`);
 }
 
-export function getAutoParticipants(token: string) {
-  return authenticatedGetJson<AutoParticipant[]>(token, "/api/stock/v1/markets/auto-market/participants");
+export function getAutoParticipants(token: string, options?: { lifecycleScope?: AutoParticipantLifecycleScope }) {
+  const query = toQuery({ lifecycleScope: options?.lifecycleScope });
+  return authenticatedGetJson<AutoParticipant[]>(token, `/api/stock/v1/markets/auto-market/participants${query}`);
+}
+
+export function getAutoParticipantSymbolConfigs(
+  token: string,
+  options?: { lifecycleScope?: AutoParticipantLifecycleScope; userKeys?: string[] },
+) {
+  const normalizedUserKeys = normalizeStringList(options?.userKeys);
+  const query = toQuery({
+    lifecycleScope: options?.lifecycleScope,
+    userKeys: normalizedUserKeys,
+  });
+  return authenticatedGetJson<AutoParticipantSymbolConfig[]>(
+    token,
+    `/api/stock/v1/markets/auto-market/participants/symbol-configs${query}`,
+  );
 }
 
 export function getAutoParticipantProfileOverviews(token: string, options?: { activityScope?: AutoParticipantActivityScope; profileTypes?: string[] }) {

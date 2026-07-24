@@ -16,11 +16,12 @@ import {
   getAutoParticipantOverviews,
   getAutoParticipantPerformanceSummary,
   getAutoParticipantProfileOverviews,
+  getAutoParticipantSymbolConfigs,
   getBatchJobRuntimeControls,
   getEodOperationsOverview,
   getLatestAutoParticipantCashFlowRun,
 } from "@/app/lib/stock";
-import type { AutoParticipantPerformanceBasis } from "@/app/types/stock";
+import type { AutoParticipantLifecycleScope, AutoParticipantPerformanceBasis } from "@/app/types/stock";
 import { stockKeys } from "@/app/lib/react-query/stockKeys";
 import {
   ADMIN_LEDGER_STALE_MS,
@@ -273,14 +274,41 @@ export function autoParticipantsQueryOptions(
   token: string | null,
   options: {
     enabled?: boolean;
+    lifecycleScope?: AutoParticipantLifecycleScope;
     refetchIntervalMs?: number | false;
     staleTimeMs?: number;
   } = {},
 ) {
+  const lifecycleScope = options.lifecycleScope ?? "CURRENT";
   return adminSnapshotQueryOptions(token, {
-    queryKey: stockKeys.autoParticipants(),
-    request: getAutoParticipants,
+    queryKey: stockKeys.autoParticipants(lifecycleScope),
+    request: (nextToken) => getAutoParticipants(nextToken, { lifecycleScope }),
     fallbackMessage: "자동 참여자 목록을 조회하지 못했습니다.",
+    enabled: options.enabled,
+    refetchInterval: options.refetchIntervalMs ?? false,
+    staleTime: options.staleTimeMs ?? ADMIN_SNAPSHOT_STALE_MS,
+  });
+}
+
+export function autoParticipantSymbolConfigsQueryOptions(
+  token: string | null,
+  options: {
+    enabled?: boolean;
+    lifecycleScope?: AutoParticipantLifecycleScope;
+    refetchIntervalMs?: number | false;
+    staleTimeMs?: number;
+    userKeys?: string[];
+  } = {},
+) {
+  const lifecycleScope = options.lifecycleScope ?? "CURRENT";
+  const normalizedUserKeys = normalizeStringList(options.userKeys, { sort: true });
+  return adminSnapshotQueryOptions(token, {
+    queryKey: stockKeys.autoParticipantSymbolConfigs({ lifecycleScope, userKeys: normalizedUserKeys }),
+    request: (nextToken) => getAutoParticipantSymbolConfigs(nextToken, {
+      lifecycleScope,
+      userKeys: normalizedUserKeys,
+    }),
+    fallbackMessage: "자동 참여자 종목별 전략을 조회하지 못했습니다.",
     enabled: options.enabled,
     refetchInterval: options.refetchIntervalMs ?? false,
     staleTime: options.staleTimeMs ?? ADMIN_SNAPSHOT_STALE_MS,
@@ -293,6 +321,7 @@ export function autoParticipantOverviewsQueryOptions(
     enabled?: boolean;
     activityScope?: AutoParticipantActivityScope;
     includeHoldings?: boolean;
+    lifecycleScope?: AutoParticipantLifecycleScope;
     refetchIntervalMs?: number | false;
     staleTimeMs?: number;
     userKeys?: string[];
@@ -300,10 +329,16 @@ export function autoParticipantOverviewsQueryOptions(
 ) {
   const includeHoldings = options.includeHoldings ?? true;
   const activityScope = options.activityScope ?? "RECENT_SIMULATION_DAY";
+  const lifecycleScope = options.lifecycleScope ?? "CURRENT";
   const normalizedUserKeys = normalizeStringList(options.userKeys, { sort: true });
   return adminSnapshotQueryOptions(token, {
-    queryKey: stockKeys.autoParticipantOverviews({ activityScope, includeHoldings, userKeys: normalizedUserKeys }),
-    request: (nextToken) => getAutoParticipantOverviews(nextToken, { activityScope, includeHoldings, userKeys: normalizedUserKeys }),
+    queryKey: stockKeys.autoParticipantOverviews({ activityScope, includeHoldings, lifecycleScope, userKeys: normalizedUserKeys }),
+    request: (nextToken) => getAutoParticipantOverviews(nextToken, {
+      activityScope,
+      includeHoldings,
+      lifecycleScope,
+      userKeys: normalizedUserKeys,
+    }),
     fallbackMessage: "자동 참여자 현황을 조회하지 못했습니다.",
     enabled: options.enabled,
     refetchInterval: options.refetchIntervalMs ?? USER_ACTIVITY_REFETCH_MS,
