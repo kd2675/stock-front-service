@@ -7,7 +7,7 @@ import DataTableViewport from "@/app/components/DataTableViewport";
 import { upsertLiquidityProviderMandateQueryData } from "@/app/lib/react-query/stockCacheUpdates";
 import {
   adminActivateLiquidityProviderMutationOptions,
-  adminProvisionScaledLiquidityShadowMutationOptions,
+  adminProvisionLiquidityShadowMutationOptions,
 } from "@/app/lib/react-query/stockMutations";
 import { getAdminActionData } from "@/app/supply-demand/admin/AdminActionResultHelpers";
 import {
@@ -22,23 +22,26 @@ import { ProfileMiniMetric } from "@/app/supply-demand/admin/AdminMetricCards";
 import type {
   LiquidityProviderDailyState,
   LiquidityProviderMandate,
+  LiquidityProviderRecommendation,
 } from "@/app/types/stock";
 
 export function AdminLiquidityProviderPanel({
   accessToken,
   mandates,
+  recommendation,
   loading,
   error,
   onRefresh,
 }: {
   accessToken: string | null;
   mandates: LiquidityProviderMandate[];
+  recommendation: LiquidityProviderRecommendation | null;
   loading: boolean;
   error: boolean;
   onRefresh: () => void;
 }) {
   const queryClient = useQueryClient();
-  const provisionMutation = useMutation(adminProvisionScaledLiquidityShadowMutationOptions());
+  const provisionMutation = useMutation(adminProvisionLiquidityShadowMutationOptions());
   const activationMutation = useMutation(adminActivateLiquidityProviderMutationOptions());
   const [symbol, setSymbol] = useState("");
   const [referenceVolumePercent, setReferenceVolumePercent] = useState("3.0");
@@ -53,12 +56,16 @@ export function AdminLiquidityProviderPanel({
   const referenceVolumeRate = Number(referenceVolumePercent) / 100;
   const seedInventoryRate = Number(seedInventoryPercent) / 100;
   const normalizedCashMultiplier = Number(cashMultiplier);
+  const selectedRecommendation = recommendation?.symbols.find(
+    (item) => item.symbol === normalizedSymbol,
+  );
   const canProvision = Boolean(accessToken)
     && !loading
     && !error
     && confirmed
     && /^[A-Z0-9]{2,20}$/.test(normalizedSymbol)
     && !mandates.some((mandate) => mandate.symbol === normalizedSymbol)
+    && selectedRecommendation?.creationEligible === true
     && Number.isFinite(referenceVolumeRate)
     && referenceVolumeRate >= 0.005
     && referenceVolumeRate <= 0.08
@@ -98,6 +105,7 @@ export function AdminLiquidityProviderPanel({
       tone: "success",
       message: `${provisioned.data.symbol} 전용 LP를 SHADOW_READY로 준비했습니다. 레거시 호가는 아직 중지되지 않았고 실제 LP 주문도 생성되지 않습니다.`,
     });
+    onRefresh();
   };
 
   const activateMandate = async (mandate: LiquidityProviderMandate) => {
@@ -212,6 +220,7 @@ export function AdminLiquidityProviderPanel({
       ) : null}
 
       <LiquidityProvisioningForm
+        recommendation={recommendation}
         symbol={symbol}
         referenceVolumePercent={referenceVolumePercent}
         seedInventoryPercent={seedInventoryPercent}
@@ -226,6 +235,17 @@ export function AdminLiquidityProviderPanel({
         onCashMultiplierChange={setCashMultiplier}
         onChangeReasonChange={setChangeReason}
         onConfirmedChange={setConfirmed}
+        onApplyRecommendation={() => {
+          setReferenceVolumePercent(String(
+            (recommendation?.recommendedReferenceDailyVolumeRate ?? 0.03) * 100,
+          ));
+          setSeedInventoryPercent(String(
+            (recommendation?.recommendedSeedInventoryRate ?? 0.005) * 100,
+          ));
+          setCashMultiplier(String(
+            recommendation?.recommendedInitialCashMultiplier ?? 1,
+          ));
+        }}
         onProvision={() => void provisionShadow()}
       />
 
@@ -245,12 +265,6 @@ export function AdminLiquidityProviderPanel({
         ))}
       </div>
 
-      <div className="mt-5 border-t border-white/10 pt-4">
-        <p className="text-xs font-black text-admin-danger">전환 전 레거시 상장주관사 자동계정</p>
-        <p className="mt-1 text-[11px] font-bold leading-5 text-admin-quiet">
-          아래 설정은 발행·재고회수·유동성 공급이 섞인 기존 구조입니다. 종목별 LP 전환이 끝날 때까지만 유지하며, 같은 종목의 전용 LP LIVE와 동시에 가동할 수 없습니다.
-        </p>
-      </div>
     </section>
   );
 }
@@ -261,6 +275,7 @@ type Feedback = {
 };
 
 function LiquidityProvisioningForm({
+  recommendation,
   symbol,
   referenceVolumePercent,
   seedInventoryPercent,
@@ -275,8 +290,10 @@ function LiquidityProvisioningForm({
   onCashMultiplierChange,
   onChangeReasonChange,
   onConfirmedChange,
+  onApplyRecommendation,
   onProvision,
 }: {
+  recommendation: LiquidityProviderRecommendation | null;
   symbol: string;
   referenceVolumePercent: string;
   seedInventoryPercent: string;
@@ -291,8 +308,13 @@ function LiquidityProvisioningForm({
   onCashMultiplierChange: (value: string) => void;
   onChangeReasonChange: (value: string) => void;
   onConfirmedChange: (value: boolean) => void;
+  onApplyRecommendation: () => void;
   onProvision: () => void;
 }) {
+  const selectedRecommendation = recommendation?.symbols.find(
+    (item) => item.symbol === symbol.trim().toUpperCase(),
+  );
+
   return (
     <div className="mt-4 rounded-md border border-admin-accent/25 bg-admin-accent-surface/20 p-3">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -302,19 +324,78 @@ function LiquidityProvisioningForm({
             유통주식의 일부만 시드 재고로 인수·상장주관 계정에서 옮기고, 같은 평가액 수준의 운영 현금을 명시적 OPENING_GRANT로 기록합니다. 법적 LP 기관은 하나지만 계정과 계약은 종목별로 분리됩니다.
           </p>
         </div>
-        <span className="rounded-md bg-black/25 px-2 py-1 text-[10px] font-black text-admin-accent-soft">
-          일시정지 · 장전 전용
-        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-md bg-black/25 px-2 py-1 text-[10px] font-black text-admin-accent-soft">
+            권장 {recommendation ? `${recommendation.currentProviderCount}/${recommendation.recommendedProviderCount}개` : "조회 대기"}
+          </span>
+          <button
+            type="button"
+            onClick={onApplyRecommendation}
+            disabled={!recommendation}
+            className="min-h-8 rounded-md bg-white/10 px-3 text-[10px] font-black text-white disabled:opacity-40"
+          >
+            권장 비율 적용
+          </button>
+        </div>
       </div>
+      {recommendation ? (
+        <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          <MandateMetric label="권장 LP 수" value={`${formatInteger(recommendation.recommendedProviderCount)}개`} />
+          <MandateMetric label="추가 권장" value={`${formatInteger(recommendation.recommendedRemainingCount)}개`} />
+          <MandateMetric label="권장 기준 거래량" value={formatPercent(recommendation.recommendedReferenceDailyVolumeRate)} />
+          <MandateMetric label="권장 시드 재고" value={formatPercent(recommendation.recommendedSeedInventoryRate)} />
+        </div>
+      ) : null}
+      {recommendation?.symbols.length ? (
+        <div className="mt-3">
+          <p className="mb-1 text-[10px] font-black text-admin-quiet">종목별 LP 권장 실수량</p>
+          <DataTableViewport label="종목별 LP 권장 실수량" tone="dark">
+            <table className="min-w-[820px] w-full text-left text-xs">
+              <thead className="bg-white/[0.045] text-[10px] font-black text-admin-quiet">
+                <tr>
+                  <th className="px-3 py-2">종목</th>
+                  <th className="px-3 py-2 text-right">유통주식</th>
+                  <th className="px-3 py-2 text-right">기준 거래량</th>
+                  <th className="px-3 py-2 text-right">시드 재고</th>
+                  <th className="px-3 py-2 text-right">초기 현금</th>
+                  <th className="px-3 py-2">생성 상태</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/10">
+                {recommendation.symbols.map((item) => (
+                  <tr key={item.symbol}>
+                    <td className="px-3 py-2 font-black text-white">{item.symbol}</td>
+                    <td className="px-3 py-2 text-right">{formatNumber(item.tradableShares)}주</td>
+                    <td className="px-3 py-2 text-right font-black text-admin-accent-soft">
+                      {formatNumber(item.recommendedReferenceDailyVolume)}주
+                    </td>
+                    <td className="px-3 py-2 text-right">{formatNumber(item.recommendedSeedInventoryQuantity)}주</td>
+                    <td className="px-3 py-2 text-right">{formatWon(item.recommendedInitialCash)}</td>
+                    <td className={item.creationEligible ? "px-3 py-2 text-admin-success" : "px-3 py-2 text-admin-warning"}>
+                      {item.creationEligible ? "생성 가능" : item.eligibilityReason}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </DataTableViewport>
+        </div>
+      ) : null}
       <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
         <label className="grid gap-1 text-[10px] font-black text-admin-quiet">
           종목 코드
-          <input
+          <select
             value={symbol}
             onChange={(event) => onSymbolChange(event.target.value.toUpperCase())}
-            placeholder="DEMO001"
             className="min-h-10 rounded-md border border-white/10 bg-black/25 px-3 text-xs font-black uppercase text-white outline-none focus:border-admin-accent/60"
-          />
+          >
+            <option value="">종목 선택</option>
+            {(recommendation?.symbols ?? []).map((item) => (
+              <option key={item.symbol} value={item.symbol} disabled={!item.creationEligible}>
+                {item.symbol} · {item.creationEligible ? "생성 가능" : item.eligibilityReason}
+              </option>
+            ))}
+          </select>
         </label>
         <label className="grid gap-1 text-[10px] font-black text-admin-quiet">
           기준 거래량 / 유통주식
@@ -371,6 +452,17 @@ function LiquidityProvisioningForm({
           />
         </label>
       </div>
+      {selectedRecommendation ? (
+        <div className="mt-3 rounded-md border border-white/10 bg-black/20 px-3 py-2 text-xs font-bold text-stock-subtle">
+          <span className="font-black text-white">{selectedRecommendation.symbol} 권장 실수량</span>
+          <span className="ml-3">기준 거래량 {formatNumber(selectedRecommendation.recommendedReferenceDailyVolume)}주</span>
+          <span className="ml-3">시드 {formatNumber(selectedRecommendation.recommendedSeedInventoryQuantity)}주</span>
+          <span className="ml-3">초기 현금 {formatWon(selectedRecommendation.recommendedInitialCash)}</span>
+          {!selectedRecommendation.creationEligible ? (
+            <span className="ml-3 text-admin-danger">{selectedRecommendation.eligibilityReason}</span>
+          ) : null}
+        </div>
+      ) : null}
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
         <label className="flex max-w-4xl items-start gap-2 text-xs font-bold leading-5 text-stock-subtle">
           <input

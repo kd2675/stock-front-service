@@ -88,7 +88,7 @@ export function AdminInitialIssueFormPanel({
                     ? `유통 ${tradableShares.toLocaleString()}주 · 보관 ${lockedShares.toLocaleString()}주`
                     : "유통비율 입력값을 확인해 주세요."}
                 </p>
-                <p className="mt-1">유통분은 종목별 인수계정에 배정하며 LP LIVE 전까지 시장을 열지 않습니다.</p>
+                <p className="mt-1">유통분과 잠금분은 각각 비거래 보관계정에 적재하며 인수계약과 LP가 준비될 때까지 시장을 열지 않습니다.</p>
               </div>
             </>
           ) : (
@@ -178,11 +178,11 @@ export function AdminInitialIssueFormPanel({
       <div className="flex flex-col gap-2 border-t border-white/10 pt-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-[11px] font-bold leading-5 text-admin-placeholder">
           {initialIssueMode === "SCALED_ROLE_SEPARATED"
-            ? "종목·인수계약·불변 배정원장을 만들고 CLOSED로 대기합니다. 별도 LP 계약의 LIVE 전환이 다음 장 거래 준비를 완료합니다."
+            ? "종목과 유통 대기·잠금 배정원장만 만들고 CLOSED로 대기합니다. 인수계약 생성과 LP 전환은 역할별 탭에서 각각 진행합니다."
             : "종목과 기존 상장주관사 자동계정을 함께 만드는 호환 경로입니다."}
         </p>
         <button type="submit" disabled={creatingInitialIssue} className="min-h-11 shrink-0 rounded-md bg-white px-5 py-3 text-sm font-black text-admin-canvas transition hover:bg-admin-accent-label disabled:cursor-wait disabled:opacity-50">
-          {creatingInitialIssue ? "적용 중" : "신규 상장 적용"}
+          {creatingInitialIssue ? "발행 중" : "신규 발행 생성"}
         </button>
       </div>
     </form>

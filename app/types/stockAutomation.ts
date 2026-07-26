@@ -306,6 +306,37 @@ export type InstitutionPortfolio = {
   mandates: InstitutionSymbolMandate[];
 };
 
+export type InstitutionPortfolioRecommendation = {
+  activeSymbolCount: number;
+  currentPortfolioCount: number;
+  recommendedPortfolioCount: number;
+  recommendedRemainingCount: number;
+  totalMarketCapitalization: number;
+  recommendedAumRateOfMarketCap: number;
+  minAumRateOfMarketCap: number;
+  maxAumRateOfMarketCap: number;
+  recommendedAumAmountPerPortfolio: number;
+  styles: {
+    investmentStyle: string;
+    label: string;
+    baseStockAllocationRate: number;
+    minStockAllocationRate: number;
+    maxStockAllocationRate: number;
+    primaryRegimeWeight: number;
+    dailyTurnoverLimitRate: number;
+    maxDecisionTurnoverRate: number;
+    decisionIntervalMinutes: number;
+    dailyParticipationRate: number;
+  }[];
+  symbols: {
+    symbol: string;
+    tradableShares: number;
+    currentPrice: number;
+    marketWeight: number;
+    recommendedReferenceDailyVolume: number;
+  }[];
+};
+
 export type LiquidityProviderExecutionMode = "SHADOW" | "PILOT" | "LIVE";
 
 export type LiquidityProviderAccount = {
@@ -440,6 +471,34 @@ export type LiquidityProviderMandate = {
   } | null;
 };
 
+export type LiquidityProviderRecommendation = {
+  recommendedProviderCount: number;
+  currentProviderCount: number;
+  recommendedRemainingCount: number;
+  recommendedReferenceDailyVolumeRate: number;
+  minReferenceDailyVolumeRate: number;
+  maxReferenceDailyVolumeRate: number;
+  recommendedSeedInventoryRate: number;
+  minSeedInventoryRate: number;
+  maxSeedInventoryRate: number;
+  recommendedInitialCashMultiplier: number;
+  symbols: {
+    symbol: string;
+    tradableShares: number;
+    currentPrice: number;
+    marketEnabled: boolean;
+    marketStatus: string;
+    existingMandate: boolean;
+    recommendedSourceAccountId: number | null;
+    sourceAvailableQuantity: number;
+    recommendedReferenceDailyVolume: number;
+    recommendedSeedInventoryQuantity: number;
+    recommendedInitialCash: number;
+    creationEligible: boolean;
+    eligibilityReason: string;
+  }[];
+};
+
 export type SecurityAllocation = {
   allocationId: number;
   idempotencyKey: string;
@@ -555,6 +614,57 @@ export type UnderwritingContract = {
   allocations: SecurityAllocation[];
   createdAt: string;
   updatedAt: string;
+};
+
+export type UnderwritingContractRecommendation = {
+  recommendedUnderwriterOrganizationCount: number;
+  currentUnderwriterOrganizationCount: number;
+  recommendedAccountCountPerSymbol: number;
+  currentContractCount: number;
+  recommendedRemainingContractCount: number;
+  recommendedSupplyRate: number;
+  recommendedSupplyDurationDays: number;
+  symbols: {
+    symbol: string;
+    instrumentName: string;
+    issuedShares: number;
+    tradableShares: number;
+    lockedShares: number;
+    issuePrice: number;
+    corporateActionId: number | null;
+    floatCustodyAccountId: number | null;
+    floatCustodyAvailableQuantity: number;
+    existingContract: boolean;
+    creationEligible: boolean;
+    eligibilityReason: string;
+  }[];
+};
+
+export type SystemCustodyOverview = {
+  recommendedWithdrawalCustodyAccountCount: number;
+  currentWithdrawalCustodyAccountCount: number;
+  recommendedIssuanceCustodyAccountsPerSymbol: number;
+  roleSeparatedIssueSymbolCount: number;
+  recommendedIssuanceCustodyAccountCount: number;
+  currentIssuanceCustodyAccountCount: number;
+  accounts: {
+    accountId: number;
+    accountCode: string | null;
+    userKey: string | null;
+    accountStatus: string;
+    selfTradeGroupId: string | null;
+    deskCode: string;
+    mappingStatus: string;
+    cashBalance: number;
+    holdings: {
+      symbol: string;
+      quantity: number;
+      reservedQuantity: number;
+      averagePrice: number;
+      currentPrice: number;
+      marketValue: number;
+    }[];
+  }[];
 };
 
 export type AutoParticipantHolding = {

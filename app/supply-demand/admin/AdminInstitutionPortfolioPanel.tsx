@@ -4,10 +4,13 @@ import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import DataTableViewport from "@/app/components/DataTableViewport";
-import { setInstitutionPortfoliosQueryData } from "@/app/lib/react-query/stockCacheUpdates";
+import {
+  setInstitutionPortfoliosQueryData,
+  upsertInstitutionPortfolioQueryData,
+} from "@/app/lib/react-query/stockCacheUpdates";
 import {
   adminActivateInstitutionPilotMutationOptions,
-  adminCreateScaledInstitutionDefaultsMutationOptions,
+  adminCreateInstitutionPortfolioMutationOptions,
   adminSuspendInstitutionPilotMutationOptions,
 } from "@/app/lib/react-query/stockMutations";
 import { getAdminActionData } from "@/app/supply-demand/admin/AdminActionResultHelpers";
@@ -22,6 +25,7 @@ import { ProfileMiniMetric } from "@/app/supply-demand/admin/AdminMetricCards";
 import type {
   InstitutionDecisionAction,
   InstitutionPortfolio,
+  InstitutionPortfolioRecommendation,
   InstitutionSymbolMandate,
 } from "@/app/types/stock";
 
@@ -33,56 +37,74 @@ type Feedback = {
 export function AdminInstitutionPortfolioPanel({
   accessToken,
   portfolios,
+  recommendation,
   loading,
   error,
   onRefresh,
 }: {
   accessToken: string | null;
   portfolios: InstitutionPortfolio[];
+  recommendation: InstitutionPortfolioRecommendation | null;
   loading: boolean;
   error: boolean;
   onRefresh: () => void;
 }) {
   const queryClient = useQueryClient();
-  const createPresetMutation = useMutation(adminCreateScaledInstitutionDefaultsMutationOptions());
+  const createPortfolioMutation = useMutation(adminCreateInstitutionPortfolioMutationOptions());
+  const [portfolioCode, setPortfolioCode] = useState("INSTITUTION_1");
+  const [displayName, setDisplayName] = useState("기관 투자자 1");
+  const [investmentStyle, setInvestmentStyle] = useState("BALANCED_LONG_TERM");
   const [aumPercent, setAumPercent] = useState("1.0");
-  const [changeReason, setChangeReason] = useState("축소 시장용 4개 기관 shadow 기준선 생성");
+  const [symbolsText, setSymbolsText] = useState("");
+  const [changeReason, setChangeReason] = useState("축소 시장용 기관 포트폴리오 단건 생성");
   const [confirmed, setConfirmed] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const summary = useMemo(() => summarizePortfolios(portfolios), [portfolios]);
   const normalizedAumPercent = Number(aumPercent);
-  const canCreate = portfolios.length === 0
-    && Boolean(accessToken)
+  const normalizedPortfolioCode = portfolioCode.trim().toUpperCase();
+  const normalizedDisplayName = displayName.trim();
+  const normalizedSymbols = normalizeSymbols(symbolsText);
+  const canCreate = Boolean(accessToken)
     && !loading
     && !error
     && confirmed
+    && /^[A-Z0-9_]{3,24}$/.test(normalizedPortfolioCode)
+    && normalizedDisplayName.length > 0
+    && normalizedDisplayName.length <= 120
+    && Boolean(investmentStyle)
     && Number.isFinite(normalizedAumPercent)
     && normalizedAumPercent >= 0.1
     && normalizedAumPercent <= 2;
 
-  const createScaledPreset = async () => {
-    if (!canCreate || !accessToken || createPresetMutation.isPending) {
+  const createPortfolio = async () => {
+    if (!canCreate || !accessToken || createPortfolioMutation.isPending) {
       return;
     }
     setFeedback(null);
-    const result = await createPresetMutation.mutateAsync({
+    const result = await createPortfolioMutation.mutateAsync({
       token: accessToken,
+      portfolioCode: normalizedPortfolioCode,
+      displayName: normalizedDisplayName,
+      investmentStyle,
       institutionAumRateOfMarketCap: normalizedAumPercent / 100,
+      symbols: normalizedSymbols.length > 0 ? normalizedSymbols : undefined,
       changeReason: changeReason.trim() || undefined,
     });
     const created = getAdminActionData(
       result,
-      "축소 기관 포트폴리오 기준선 생성에 실패했습니다.",
+      "기관 포트폴리오를 생성하지 못했습니다.",
     );
     if (!created.ok) {
       setFeedback({ tone: "error", message: created.message });
       return;
     }
-    setInstitutionPortfoliosQueryData(queryClient, created.data);
+    upsertInstitutionPortfolioQueryData(queryClient, created.data);
+    setConfirmed(false);
     setFeedback({
       tone: "success",
-      message: `${formatCount(created.data.length, "개")} 기관 포트폴리오를 SHADOW 모드로 준비했습니다. 실제 주문은 생성되지 않습니다.`,
+      message: `${created.data.displayName}을 SHADOW 모드로 생성했습니다. 다른 기관은 필요할 때 별도로 추가할 수 있습니다.`,
     });
+    onRefresh();
   };
 
   return (
@@ -140,17 +162,41 @@ export function AdminInstitutionPortfolioPanel({
         </p>
       ) : null}
 
-      {!loading && !error && portfolios.length === 0 ? (
-        <InstitutionPresetProvisioning
+      {!loading && !error ? (
+        <InstitutionPortfolioProvisioning
+          recommendation={recommendation}
+          portfolioCode={portfolioCode}
+          displayName={displayName}
+          investmentStyle={investmentStyle}
           aumPercent={aumPercent}
+          symbolsText={symbolsText}
           changeReason={changeReason}
           confirmed={confirmed}
-          pending={createPresetMutation.isPending}
+          pending={createPortfolioMutation.isPending}
           canCreate={canCreate}
+          onPortfolioCodeChange={setPortfolioCode}
+          onDisplayNameChange={setDisplayName}
+          onInvestmentStyleChange={setInvestmentStyle}
           onAumPercentChange={setAumPercent}
+          onSymbolsTextChange={setSymbolsText}
           onChangeReasonChange={setChangeReason}
           onConfirmedChange={setConfirmed}
-          onCreate={() => void createScaledPreset()}
+          onApplyRecommendation={() => {
+            const nextIndex = portfolios.length + 1;
+            setPortfolioCode(`INSTITUTION_${nextIndex}`);
+            setDisplayName(`기관 투자자 ${nextIndex}`);
+            setInvestmentStyle(
+              recommendation?.styles[(nextIndex - 1) % Math.max(1, recommendation.styles.length)]
+                ?.investmentStyle
+                ?? recommendation?.styles[0]?.investmentStyle
+                ?? "BALANCED_LONG_TERM",
+            );
+            setAumPercent(String(
+              (recommendation?.recommendedAumRateOfMarketCap ?? 0.01) * 100,
+            ));
+            setSymbolsText(recommendation?.symbols.map((item) => item.symbol).join(", ") ?? "");
+          }}
+          onCreate={() => void createPortfolio()}
         />
       ) : null}
 
@@ -167,41 +213,113 @@ export function AdminInstitutionPortfolioPanel({
   );
 }
 
-function InstitutionPresetProvisioning({
+function InstitutionPortfolioProvisioning({
+  recommendation,
+  portfolioCode,
+  displayName,
+  investmentStyle,
   aumPercent,
+  symbolsText,
   changeReason,
   confirmed,
   pending,
   canCreate,
+  onPortfolioCodeChange,
+  onDisplayNameChange,
+  onInvestmentStyleChange,
   onAumPercentChange,
+  onSymbolsTextChange,
   onChangeReasonChange,
   onConfirmedChange,
+  onApplyRecommendation,
   onCreate,
 }: {
+  recommendation: InstitutionPortfolioRecommendation | null;
+  portfolioCode: string;
+  displayName: string;
+  investmentStyle: string;
   aumPercent: string;
+  symbolsText: string;
   changeReason: string;
   confirmed: boolean;
   pending: boolean;
   canCreate: boolean;
+  onPortfolioCodeChange: (value: string) => void;
+  onDisplayNameChange: (value: string) => void;
+  onInvestmentStyleChange: (value: string) => void;
   onAumPercentChange: (value: string) => void;
+  onSymbolsTextChange: (value: string) => void;
   onChangeReasonChange: (value: string) => void;
   onConfirmedChange: (value: boolean) => void;
+  onApplyRecommendation: () => void;
   onCreate: () => void;
 }) {
   return (
     <div className="mt-4 rounded-md border border-admin-accent/25 bg-admin-accent-surface/25 p-3">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="text-sm font-black text-white">축소형 4개 기관 기준선</h3>
+          <h3 className="text-sm font-black text-white">기관 투자자 개별 생성</h3>
           <p className="mt-1 max-w-3xl text-xs font-bold leading-5 text-stock-subtle">
-            연기금·가치 역추세·모멘텀·단기 적극운용 4개를 생성합니다. 각 기관은 동일한 시장 시가총액 비율의 현금 AUM을 받고, 종목별 기준 거래량은 유통주식의 3%로 시작합니다.
+            한 번에 한 기관만 생성합니다. 권장 개수와 AUM은 현재 종목 수에 맞춘 참고값이며, 버튼을 눌러도 입력란만 채워지고 다른 역할이나 기관이 함께 생성되지는 않습니다.
           </p>
         </div>
-        <span className="rounded-md bg-black/25 px-2 py-1 text-[10px] font-black text-admin-accent-soft">
-          일시정지 · 장전 · SHADOW
-        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-md bg-black/25 px-2 py-1 text-[10px] font-black text-admin-accent-soft">
+            권장 {recommendation ? `${recommendation.currentPortfolioCount}/${recommendation.recommendedPortfolioCount}개` : "조회 대기"}
+          </span>
+          <button
+            type="button"
+            onClick={onApplyRecommendation}
+            disabled={!recommendation}
+            className="min-h-8 rounded-md bg-white/10 px-3 text-[10px] font-black text-white disabled:opacity-40"
+          >
+            권장값 적용
+          </button>
+        </div>
       </div>
-      <div className="mt-3 grid gap-3 md:grid-cols-[180px_minmax(0,1fr)]">
+      {recommendation ? (
+        <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          <PortfolioMetric label="권장 총 개수" value={`${formatInteger(recommendation.recommendedPortfolioCount)}개`} />
+          <PortfolioMetric label="추가 권장" value={`${formatInteger(recommendation.recommendedRemainingCount)}개`} />
+          <PortfolioMetric label="기관당 권장 AUM" value={formatCompactWon(recommendation.recommendedAumAmountPerPortfolio)} />
+          <PortfolioMetric label="권장 AUM 비율" value={formatRate(recommendation.recommendedAumRateOfMarketCap)} />
+        </div>
+      ) : null}
+      <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <label className="grid gap-1 text-xs font-black text-admin-muted">
+          포트폴리오 코드
+          <input
+            value={portfolioCode}
+            maxLength={24}
+            onChange={(event) => onPortfolioCodeChange(event.target.value.toUpperCase())}
+            className="admin-control w-full px-3 text-sm font-bold"
+          />
+          <span className="text-[10px] font-bold text-admin-quiet">영문 대문자·숫자·밑줄 3~24자</span>
+        </label>
+        <label className="grid gap-1 text-xs font-black text-admin-muted">
+          표시명
+          <input
+            value={displayName}
+            maxLength={120}
+            onChange={(event) => onDisplayNameChange(event.target.value)}
+            className="admin-control w-full px-3 text-sm font-bold"
+          />
+        </label>
+        <label className="grid gap-1 text-xs font-black text-admin-muted">
+          운용 유형
+          <select
+            value={investmentStyle}
+            onChange={(event) => onInvestmentStyleChange(event.target.value)}
+            className="admin-control w-full px-3 text-sm font-bold"
+          >
+            {(recommendation?.styles ?? []).map((style) => (
+              <option key={style.investmentStyle} value={style.investmentStyle}>
+                {style.label}
+              </option>
+            ))}
+            {!recommendation ? <option value="BALANCED_LONG_TERM">연기금·저회전 균형형</option> : null}
+          </select>
+        </label>
         <label className="grid gap-1 text-xs font-black text-admin-muted">
           기관별 시가총액 대비 AUM
           <span className="relative">
@@ -218,6 +336,16 @@ function InstitutionPresetProvisioning({
           </span>
           <span className="text-[10px] font-bold text-admin-quiet">허용 0.1~2.0%, 기본 1.0%</span>
         </label>
+        <label className="grid gap-1 text-xs font-black text-admin-muted md:col-span-2">
+          운용 종목
+          <input
+            value={symbolsText}
+            onChange={(event) => onSymbolsTextChange(event.target.value)}
+            placeholder="비우면 현재 활성 종목 전체 · 예: DEMO001, DEMO002"
+            className="admin-control w-full px-3 text-sm font-bold"
+          />
+          <span className="text-[10px] font-bold text-admin-quiet">쉼표로 구분하며 기관별로 독립 선택합니다.</span>
+        </label>
         <label className="grid gap-1 text-xs font-black text-admin-muted">
           변경 사유
           <input
@@ -226,9 +354,68 @@ function InstitutionPresetProvisioning({
             onChange={(event) => onChangeReasonChange(event.target.value)}
             className="admin-control w-full px-3 text-sm font-bold"
           />
-          <span className="text-[10px] font-bold text-admin-quiet">다음 거래일부터 효력이 생기는 정책 버전 감사에 저장됩니다.</span>
+          <span className="text-[10px] font-bold text-admin-quiet">생성 정책 감사에 저장됩니다.</span>
         </label>
       </div>
+      {recommendation?.styles.length ? (
+        <DataTableViewport label="운용 유형별 권장 수치" tone="dark" className="mt-3">
+          <table className="min-w-[760px] w-full text-left text-xs">
+            <thead className="bg-white/[0.045] text-[10px] font-black text-admin-quiet">
+              <tr>
+                <th className="px-3 py-2">유형</th>
+                <th className="px-3 py-2 text-right">기준 주식</th>
+                <th className="px-3 py-2 text-right">허용 주식</th>
+                <th className="px-3 py-2 text-right">일일 회전</th>
+                <th className="px-3 py-2 text-right">결정당</th>
+                <th className="px-3 py-2 text-right">결정 주기</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/10">
+              {recommendation.styles.map((style) => (
+                <tr key={style.investmentStyle}>
+                  <td className="px-3 py-2 font-black text-white">{style.label}</td>
+                  <td className="px-3 py-2 text-right">{formatRate(style.baseStockAllocationRate)}</td>
+                  <td className="px-3 py-2 text-right">{formatRate(style.minStockAllocationRate)}~{formatRate(style.maxStockAllocationRate)}</td>
+                  <td className="px-3 py-2 text-right">{formatRate(style.dailyTurnoverLimitRate)}</td>
+                  <td className="px-3 py-2 text-right">{formatRate(style.maxDecisionTurnoverRate)}</td>
+                  <td className="px-3 py-2 text-right">{formatInteger(style.decisionIntervalMinutes)}분</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </DataTableViewport>
+      ) : null}
+      {recommendation?.symbols.length ? (
+        <div className="mt-3">
+          <p className="mb-1 text-[10px] font-black text-admin-quiet">종목별 권장 기준량</p>
+          <DataTableViewport label="종목별 권장 기준량" tone="dark">
+            <table className="min-w-[680px] w-full text-left text-xs">
+              <thead className="bg-white/[0.045] text-[10px] font-black text-admin-quiet">
+                <tr>
+                  <th className="px-3 py-2">종목</th>
+                  <th className="px-3 py-2 text-right">유통주식</th>
+                  <th className="px-3 py-2 text-right">현재가</th>
+                  <th className="px-3 py-2 text-right">시장 비중</th>
+                  <th className="px-3 py-2 text-right">권장 기준 거래량</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/10">
+                {recommendation.symbols.map((symbol) => (
+                  <tr key={symbol.symbol}>
+                    <td className="px-3 py-2 font-black text-white">{symbol.symbol}</td>
+                    <td className="px-3 py-2 text-right">{formatNumber(symbol.tradableShares)}주</td>
+                    <td className="px-3 py-2 text-right">{formatNumber(symbol.currentPrice)}원</td>
+                    <td className="px-3 py-2 text-right">{formatRate(symbol.marketWeight)}</td>
+                    <td className="px-3 py-2 text-right font-black text-admin-accent-soft">
+                      {formatNumber(symbol.recommendedReferenceDailyVolume)}주
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </DataTableViewport>
+        </div>
+      ) : null}
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-3">
         <label className="flex max-w-3xl items-start gap-2 text-xs font-bold leading-5 text-stock-subtle">
           <input
@@ -237,7 +424,7 @@ function InstitutionPresetProvisioning({
             onChange={(event) => onConfirmedChange(event.target.checked)}
             className="mt-1 size-4 shrink-0 accent-[var(--admin-accent)]"
           />
-          현재 시뮬레이션이 일시정지된 장전이며, 4개 기관·계좌와 개장 현금 원장을 생성하지만 실제 주문은 만들지 않는다는 점을 확인했습니다.
+          현재 시뮬레이션이 일시정지된 장전이며, 이 기관과 전용 계좌·개장 현금 원장만 생성하고 실제 주문은 만들지 않는다는 점을 확인했습니다.
         </label>
         <button
           type="button"
@@ -245,11 +432,20 @@ function InstitutionPresetProvisioning({
           disabled={!canCreate || pending}
           className="min-h-9 rounded-md bg-admin-accent px-3 py-1.5 text-xs font-black text-admin-canvas disabled:cursor-not-allowed disabled:opacity-45"
         >
-          {pending ? "기준선 생성 중" : "4개 shadow 기관 생성"}
+          {pending ? "기관 생성 중" : "기관 1개 생성"}
         </button>
       </div>
     </div>
   );
+}
+
+function normalizeSymbols(value: string) {
+  return [...new Set(
+    value
+      .split(",")
+      .map((symbol) => symbol.trim().toUpperCase())
+      .filter(Boolean),
+  )];
 }
 
 function InstitutionPortfolioCard({

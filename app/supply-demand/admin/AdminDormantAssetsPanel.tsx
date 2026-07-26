@@ -23,6 +23,7 @@ import type {
   AutoParticipantOverview,
   AutoParticipantSymbolConfig,
   AutoParticipantWithdrawalAudit,
+  SystemCustodyOverview,
 } from "@/app/types/stock";
 
 const DORMANT_PAGE_SIZE = 8;
@@ -42,6 +43,7 @@ export function AdminDormantAssetsPanel({
   overviews,
   symbolConfigs,
   withdrawalAudits,
+  custodyOverview,
   loading,
   error,
   onRefresh,
@@ -50,6 +52,7 @@ export function AdminDormantAssetsPanel({
   overviews: AutoParticipantOverview[];
   symbolConfigs: AutoParticipantSymbolConfig[];
   withdrawalAudits: AutoParticipantWithdrawalAudit[];
+  custodyOverview: SystemCustodyOverview | null;
   loading: boolean;
   error: boolean;
   onRefresh: () => void;
@@ -86,9 +89,9 @@ export function AdminDormantAssetsPanel({
     <section className="admin-panel mt-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-base font-black">탈퇴 자동 참여자 휴면 원장</h2>
+          <h2 className="text-base font-black">시스템 보관·휴면 자산</h2>
           <p className="mt-1 max-w-3xl text-xs font-bold leading-5 text-stock-subtle">
-            탈퇴 시 시스템 보관계정으로 이전한 주식·회수한 현금과 종료 계좌, 보존된 전략·주문·체결 이력을 읽기 전용으로 조회합니다.
+            발행 대기·잠금 물량과 탈퇴 시 이전된 주식을 비거래 시스템 보관계정 단위로 대사하고, 종료 계좌의 보존된 전략·주문·체결 이력까지 읽기 전용으로 조회합니다.
           </p>
           <p className="mt-1 max-w-3xl text-[11px] font-bold leading-5 text-admin-quiet">
             신규 탈퇴는 잔여 자산과 예약이 0이고 계좌가 CLOSED여야 정상입니다. 기존 소프트 탈퇴 데이터처럼 값이 남아 있으면 점검 대상으로 표시합니다.
@@ -106,6 +109,15 @@ export function AdminDormantAssetsPanel({
             {loading ? "조회 중" : "새로고침"}
           </button>
         </div>
+      </div>
+
+      <SystemCustodySummary overview={custodyOverview} />
+
+      <div className="mt-5 border-t border-white/10 pt-4">
+        <h3 className="text-sm font-black text-white">탈퇴 자동 참여자 휴면 원장</h3>
+        <p className="mt-1 text-[11px] font-bold leading-5 text-admin-quiet">
+          아래 값은 탈퇴한 원계좌에 자산이나 예약이 남았는지 확인하는 감사 목록입니다. 실제 이전된 주식은 위 시스템 보관계정에서 확인합니다.
+        </p>
       </div>
 
       <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
@@ -199,6 +211,112 @@ export function AdminDormantAssetsPanel({
         </div>
       ) : null}
     </section>
+  );
+}
+
+function SystemCustodySummary({
+  overview,
+}: {
+  overview: SystemCustodyOverview | null;
+}) {
+  const totals = overview?.accounts.reduce(
+    (result, account) => ({
+      cash: result.cash + account.cashBalance,
+      quantity: result.quantity + account.holdings.reduce(
+        (sum, holding) => sum + holding.quantity,
+        0,
+      ),
+      marketValue: result.marketValue + account.holdings.reduce(
+        (sum, holding) => sum + holding.marketValue,
+        0,
+      ),
+    }),
+    { cash: 0, quantity: 0, marketValue: 0 },
+  ) ?? { cash: 0, quantity: 0, marketValue: 0 };
+
+  return (
+    <div className="mt-4 rounded-md border border-admin-accent/20 bg-admin-accent-surface/10 p-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-black text-white">비거래 시스템 보관계정</h3>
+          <p className="mt-1 max-w-4xl text-[11px] font-bold leading-5 text-stock-subtle">
+            보관계정은 주문을 생성하지 않습니다. 탈퇴 보관은 시장 전체 1개, 역할 분리형 신규 발행은 종목당 유통 대기 1개와 잠금 1개를 권장합니다.
+          </p>
+        </div>
+        <span className="rounded-md bg-black/25 px-2 py-1 text-[10px] font-black text-admin-accent-soft">
+          권장값만 표시 · 이 화면은 생성 없음
+        </span>
+      </div>
+      <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
+        <ProfileMiniMetric
+          label="탈퇴 보관계정"
+          value={overview
+            ? `${overview.currentWithdrawalCustodyAccountCount}/${overview.recommendedWithdrawalCustodyAccountCount}개`
+            : "—"}
+          tone="blue"
+        />
+        <ProfileMiniMetric
+          label="발행 보관계정"
+          value={overview
+            ? `${overview.currentIssuanceCustodyAccountCount}/${overview.recommendedIssuanceCustodyAccountCount}개`
+            : "—"}
+          tone="blue"
+        />
+        <ProfileMiniMetric
+          label="발행 종목당 권장"
+          value={overview ? `${overview.recommendedIssuanceCustodyAccountsPerSymbol}개` : "—"}
+          tone="muted"
+        />
+        <ProfileMiniMetric label="보관 수량" value={formatCount(totals.quantity, "주")} tone="muted" />
+        <ProfileMiniMetric label="보관 평가액" value={formatWon(totals.marketValue)} tone="muted" />
+        <ProfileMiniMetric label="보관 현금" value={formatWon(totals.cash)} tone="muted" />
+      </div>
+      {overview?.accounts.length ? (
+        <DataTableViewport label="시스템 보관계정·종목별 잔고" tone="dark" className="mt-3">
+          <table className="min-w-[920px] w-full text-left text-xs">
+            <thead className="bg-white/[0.045] text-[10px] font-black text-admin-quiet">
+              <tr>
+                <th className="px-3 py-2">보관 역할</th>
+                <th className="px-3 py-2">계정</th>
+                <th className="px-3 py-2">상태·STP</th>
+                <th className="px-3 py-2">종목</th>
+                <th className="px-3 py-2 text-right">수량·예약</th>
+                <th className="px-3 py-2 text-right">평가액</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/10">
+              {overview.accounts.flatMap((account) => (
+                account.holdings.length > 0
+                  ? account.holdings.map((holding) => (
+                    <tr key={`${account.accountId}:${holding.symbol}`}>
+                      <td className="px-3 py-2 font-black text-white">{account.deskCode}</td>
+                      <td className="px-3 py-2">{account.accountCode ?? `#${account.accountId}`}</td>
+                      <td className="px-3 py-2">{account.accountStatus} · {account.mappingStatus}</td>
+                      <td className="px-3 py-2 font-black text-white">{holding.symbol}</td>
+                      <td className="px-3 py-2 text-right tabular-nums">{formatNumber(holding.quantity)}주 · 예약 {formatNumber(holding.reservedQuantity)}주</td>
+                      <td className="px-3 py-2 text-right tabular-nums">{formatWon(holding.marketValue)}</td>
+                    </tr>
+                  ))
+                  : [(
+                    <tr key={`${account.accountId}:empty`}>
+                      <td className="px-3 py-2 font-black text-white">{account.deskCode}</td>
+                      <td className="px-3 py-2">{account.accountCode ?? `#${account.accountId}`}</td>
+                      <td className="px-3 py-2">{account.accountStatus} · {account.mappingStatus}</td>
+                      <td className="px-3 py-2 text-admin-quiet">보유 없음</td>
+                      <td className="px-3 py-2 text-right">0주</td>
+                      <td className="px-3 py-2 text-right">{formatWon(0)}</td>
+                    </tr>
+                  )]
+              ))}
+            </tbody>
+          </table>
+        </DataTableViewport>
+      ) : (
+        <p className="mt-3 rounded-md border border-dashed border-white/15 px-3 py-4 text-xs font-bold text-stock-subtle">
+          조회된 시스템 보관계정이 없습니다. 기본 탈퇴 보관계정 또는 역할 분리형 신규 발행이 아직 생성되지 않았는지 확인하세요.
+        </p>
+      )}
+    </div>
   );
 }
 

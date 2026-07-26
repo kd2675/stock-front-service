@@ -12,6 +12,7 @@ import type {
   BatchJobRuntimeStatus,
   ListingAutoAccount,
   LiquidityProviderMandate,
+  LiquidityProviderRecommendation,
   StockBatchJobRun,
 } from "@/app/types/stock";
 
@@ -40,6 +41,7 @@ type AdminAutomationSectionProps = {
   onSelectListingAutoDraft: (account: ListingAutoAccount) => void;
   onSubmitListingAutoConfig: () => void;
   liquidityProviderMandates: LiquidityProviderMandate[];
+  liquidityProviderRecommendation: LiquidityProviderRecommendation | null;
   loadingLiquidityProviderMandates: boolean;
   liquidityProviderMandatesError: boolean;
   onRefreshLiquidityProviderMandates: () => void;
@@ -88,6 +90,7 @@ export function AdminAutomationSection({
   onSelectListingAutoDraft,
   onSubmitListingAutoConfig,
   liquidityProviderMandates,
+  liquidityProviderRecommendation,
   loadingLiquidityProviderMandates,
   liquidityProviderMandatesError,
   onRefreshLiquidityProviderMandates,
@@ -147,27 +150,31 @@ export function AdminAutomationSection({
     );
   }
 
-  if (activeSection === "market-liquidity") {
+  if (activeSection === "market-liquidity-providers") {
     return (
-      <>
-        <AdminLiquidityProviderPanel
-          accessToken={accessToken}
-          mandates={liquidityProviderMandates}
-          loading={loadingLiquidityProviderMandates}
-          error={liquidityProviderMandatesError}
-          onRefresh={onRefreshLiquidityProviderMandates}
-        />
-        <AdminListingAutoAccountPanel
-          accounts={listingAutoAccounts}
-          selectedAccount={selectedListingAutoAccount}
-          draft={listingAutoDraft}
-          draftSetters={listingAutoDraftSetters}
-          editingSymbol={editingListingAutoSymbol}
-          updating={updatingListingAutoAccount}
-          onSelectDraft={onSelectListingAutoDraft}
-          onSubmit={onSubmitListingAutoConfig}
-        />
-      </>
+      <AdminLiquidityProviderPanel
+        accessToken={accessToken}
+        mandates={liquidityProviderMandates}
+        recommendation={liquidityProviderRecommendation}
+        loading={loadingLiquidityProviderMandates}
+        error={liquidityProviderMandatesError}
+        onRefresh={onRefreshLiquidityProviderMandates}
+      />
+    );
+  }
+
+  if (activeSection === "market-legacy-liquidity") {
+    return (
+      <AdminListingAutoAccountPanel
+        accounts={listingAutoAccounts}
+        selectedAccount={selectedListingAutoAccount}
+        draft={listingAutoDraft}
+        draftSetters={listingAutoDraftSetters}
+        editingSymbol={editingListingAutoSymbol}
+        updating={updatingListingAutoAccount}
+        onSelectDraft={onSelectListingAutoDraft}
+        onSubmit={onSubmitListingAutoConfig}
+      />
     );
   }
 

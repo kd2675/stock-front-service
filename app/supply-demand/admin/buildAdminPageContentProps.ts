@@ -9,11 +9,12 @@ import { buildAdminParticipantsContentProps } from "@/app/supply-demand/admin/bu
 
 export function buildAdminPageContentProps(context: AdminPageContentBuilderContext): AdminPageContentProps {
   const isAccountsContent = context.activeAdminTab === "funds" || context.activeAdminSection === "participants-overview";
-  const isAutomationContent = context.activeAdminSection === "market-liquidity"
+  const isAutomationContent = context.activeAdminSection === "market-liquidity-providers"
+    || context.activeAdminSection === "market-legacy-liquidity"
     || context.activeAdminSection === "market-auto-market"
     || context.activeAdminSection === "participants-profiles"
     || context.activeAdminSection === "system-jobs";
-  const isDormantAssetsContent = context.activeAdminSection === "participants-dormant";
+  const isDormantAssetsContent = context.activeAdminSection === "funds-custody";
   const isUnderwritingContent = context.activeAdminSection === "corporate-underwriting";
   const isEventsContent = context.activeAdminTab === "corporate" && !isUnderwritingContent;
   const isInstitutionContent = context.activeAdminSection === "participants-institutions";
@@ -32,20 +33,24 @@ export function buildAdminPageContentProps(context: AdminPageContentBuilderConte
       overviews: context.queries.dormantAutoParticipantOverviewsQuery.data ?? [],
       symbolConfigs: context.queries.dormantAutoParticipantSymbolConfigsQuery.data ?? [],
       withdrawalAudits: context.queries.dormantAutoParticipantWithdrawalAuditsQuery.data ?? [],
+      custodyOverview: context.queries.systemCustodyOverviewQuery.data ?? null,
       loading: context.queries.dormantAutoParticipantsQuery.isFetching
         || context.queries.dormantAutoParticipantOverviewsQuery.isFetching
         || context.queries.dormantAutoParticipantSymbolConfigsQuery.isFetching
-        || context.queries.dormantAutoParticipantWithdrawalAuditsQuery.isFetching,
+        || context.queries.dormantAutoParticipantWithdrawalAuditsQuery.isFetching
+        || context.queries.systemCustodyOverviewQuery.isFetching,
       error: context.queries.dormantAutoParticipantsQuery.isError
         || context.queries.dormantAutoParticipantOverviewsQuery.isError
         || context.queries.dormantAutoParticipantSymbolConfigsQuery.isError
-        || context.queries.dormantAutoParticipantWithdrawalAuditsQuery.isError,
+        || context.queries.dormantAutoParticipantWithdrawalAuditsQuery.isError
+        || context.queries.systemCustodyOverviewQuery.isError,
       onRefresh: () => {
         void Promise.all([
           context.queries.dormantAutoParticipantsQuery.refetch(),
           context.queries.dormantAutoParticipantOverviewsQuery.refetch(),
           context.queries.dormantAutoParticipantSymbolConfigsQuery.refetch(),
           context.queries.dormantAutoParticipantWithdrawalAuditsQuery.refetch(),
+          context.queries.systemCustodyOverviewQuery.refetch(),
         ]);
       },
     } : null,
@@ -54,10 +59,16 @@ export function buildAdminPageContentProps(context: AdminPageContentBuilderConte
     institutionProps: isInstitutionContent ? {
       accessToken: context.queries.accessToken,
       portfolios: context.queries.institutionPortfoliosQuery.data ?? [],
-      loading: context.queries.institutionPortfoliosQuery.isFetching,
-      error: context.queries.institutionPortfoliosQuery.isError,
+      recommendation: context.queries.institutionPortfolioRecommendationQuery.data ?? null,
+      loading: context.queries.institutionPortfoliosQuery.isFetching
+        || context.queries.institutionPortfolioRecommendationQuery.isFetching,
+      error: context.queries.institutionPortfoliosQuery.isError
+        || context.queries.institutionPortfolioRecommendationQuery.isError,
       onRefresh: () => {
-        void context.queries.institutionPortfoliosQuery.refetch();
+        void Promise.all([
+          context.queries.institutionPortfoliosQuery.refetch(),
+          context.queries.institutionPortfolioRecommendationQuery.refetch(),
+        ]);
       },
     } : null,
     marketProps: isMarketContent ? buildAdminMarketContentProps(context) : null,
@@ -66,10 +77,16 @@ export function buildAdminPageContentProps(context: AdminPageContentBuilderConte
     underwritingProps: isUnderwritingContent ? {
       accessToken: context.queries.accessToken,
       contracts: context.queries.underwritingContractsQuery.data ?? [],
-      loading: context.queries.underwritingContractsQuery.isFetching,
-      error: context.queries.underwritingContractsQuery.isError,
+      recommendation: context.queries.underwritingContractRecommendationQuery.data ?? null,
+      loading: context.queries.underwritingContractsQuery.isFetching
+        || context.queries.underwritingContractRecommendationQuery.isFetching,
+      error: context.queries.underwritingContractsQuery.isError
+        || context.queries.underwritingContractRecommendationQuery.isError,
       onRefresh: () => {
-        void context.queries.underwritingContractsQuery.refetch();
+        void Promise.all([
+          context.queries.underwritingContractsQuery.refetch(),
+          context.queries.underwritingContractRecommendationQuery.refetch(),
+        ]);
       },
     } : null,
   };

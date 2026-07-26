@@ -15,9 +15,13 @@ import {
   autoParticipantSymbolConfigsQueryOptions,
   batchJobRuntimeControlsQueryOptions,
   eodOperationsOverviewQueryOptions,
+  institutionPortfolioRecommendationQueryOptions,
   institutionPortfoliosQueryOptions,
+  liquidityProviderRecommendationQueryOptions,
   liquidityProviderMandatesQueryOptions,
   latestManualCashFlowRunQueryOptions,
+  systemCustodyOverviewQueryOptions,
+  underwritingContractRecommendationQueryOptions,
   underwritingContractsQueryOptions,
 } from "@/app/lib/react-query/stockAdminQueries";
 import {
@@ -193,11 +197,29 @@ export function useAdminPageQueries({
   const institutionPortfoliosQuery = useQuery(institutionPortfoliosQueryOptions(accessToken, {
     enabled: queryFlags.shouldUseInstitutionPortfolios,
   }));
+  const institutionPortfolioRecommendationQuery = useQuery(
+    institutionPortfolioRecommendationQueryOptions(accessToken, {
+      enabled: queryFlags.shouldUseInstitutionRecommendation,
+    }),
+  );
   const liquidityProviderMandatesQuery = useQuery(liquidityProviderMandatesQueryOptions(accessToken, {
     enabled: queryFlags.shouldUseLiquidityProviderMandates,
   }));
+  const liquidityProviderRecommendationQuery = useQuery(
+    liquidityProviderRecommendationQueryOptions(accessToken, {
+      enabled: queryFlags.shouldUseLiquidityProviderRecommendation,
+    }),
+  );
   const underwritingContractsQuery = useQuery(underwritingContractsQueryOptions(accessToken, {
     enabled: queryFlags.shouldUseUnderwritingContracts,
+  }));
+  const underwritingContractRecommendationQuery = useQuery(
+    underwritingContractRecommendationQueryOptions(accessToken, {
+      enabled: queryFlags.shouldUseUnderwritingRecommendation,
+    }),
+  );
+  const systemCustodyOverviewQuery = useQuery(systemCustodyOverviewQueryOptions(accessToken, {
+    enabled: queryFlags.shouldUseSystemCustodyOverview,
   }));
   const autoMarketSummaryQuery = useQuery(autoMarketSummaryStatusQueryOptions({
     enabled: queryFlags.shouldUseAutoMarketSummary,
@@ -257,8 +279,12 @@ export function useAdminPageQueries({
     batchJobRuntimeControlsQuery,
     latestManualCashFlowRunQuery,
     eodOperationsOverviewQuery,
+    institutionPortfolioRecommendationQuery,
     institutionPortfoliosQuery,
+    liquidityProviderRecommendationQuery,
     liquidityProviderMandatesQuery,
+    systemCustodyOverviewQuery,
+    underwritingContractRecommendationQuery,
     underwritingContractsQuery,
     corporateActionsQuery,
     dormantAutoParticipantOverviewsQuery,

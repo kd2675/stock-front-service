@@ -20,9 +20,13 @@ import {
   getAutoParticipantSymbolConfigs,
   getBatchJobRuntimeControls,
   getEodOperationsOverview,
+  getInstitutionPortfolioRecommendation,
   getInstitutionPortfolios,
+  getLiquidityProviderRecommendation,
   getLiquidityProviderMandates,
   getLatestAutoParticipantCashFlowRun,
+  getSystemCustodyOverview,
+  getUnderwritingContractRecommendation,
   getUnderwritingContracts,
 } from "@/app/lib/stock";
 import type { AutoParticipantLifecycleScope, AutoParticipantPerformanceBasis } from "@/app/types/stock";
@@ -138,6 +142,22 @@ export function institutionPortfoliosQueryOptions(
   });
 }
 
+export function institutionPortfolioRecommendationQueryOptions(
+  token: string | null,
+  options: {
+    enabled?: boolean;
+  } = {},
+) {
+  return adminAuthenticatedQueryOptions(token, {
+    queryKey: stockKeys.institutionPortfolioRecommendation(),
+    request: getInstitutionPortfolioRecommendation,
+    fallbackMessage: "기관 권장 개수와 운용 수치를 조회하지 못했습니다.",
+    enabled: options.enabled,
+    refetchInterval: false,
+    staleTime: ADMIN_SNAPSHOT_STALE_MS,
+  });
+}
+
 export function liquidityProviderMandatesQueryOptions(
   token: string | null,
   options: {
@@ -154,6 +174,22 @@ export function liquidityProviderMandatesQueryOptions(
   });
 }
 
+export function liquidityProviderRecommendationQueryOptions(
+  token: string | null,
+  options: {
+    enabled?: boolean;
+  } = {},
+) {
+  return adminAuthenticatedQueryOptions(token, {
+    queryKey: stockKeys.liquidityProviderRecommendation(),
+    request: getLiquidityProviderRecommendation,
+    fallbackMessage: "LP 권장 개수와 종목별 시드 수치를 조회하지 못했습니다.",
+    enabled: options.enabled,
+    refetchInterval: false,
+    staleTime: ADMIN_SNAPSHOT_STALE_MS,
+  });
+}
+
 export function underwritingContractsQueryOptions(
   token: string | null,
   options: {
@@ -164,6 +200,38 @@ export function underwritingContractsQueryOptions(
     queryKey: stockKeys.underwritingContracts(),
     request: getUnderwritingContracts,
     fallbackMessage: "인수계약과 최초 배정원장을 조회하지 못했습니다.",
+    enabled: options.enabled,
+    refetchInterval: false,
+    staleTime: ADMIN_SNAPSHOT_STALE_MS,
+  });
+}
+
+export function underwritingContractRecommendationQueryOptions(
+  token: string | null,
+  options: {
+    enabled?: boolean;
+  } = {},
+) {
+  return adminAuthenticatedQueryOptions(token, {
+    queryKey: stockKeys.underwritingContractRecommendation(),
+    request: getUnderwritingContractRecommendation,
+    fallbackMessage: "인수기관 권장 개수와 대기 발행 수량을 조회하지 못했습니다.",
+    enabled: options.enabled,
+    refetchInterval: false,
+    staleTime: ADMIN_SNAPSHOT_STALE_MS,
+  });
+}
+
+export function systemCustodyOverviewQueryOptions(
+  token: string | null,
+  options: {
+    enabled?: boolean;
+  } = {},
+) {
+  return adminAuthenticatedQueryOptions(token, {
+    queryKey: stockKeys.systemCustodyOverview(),
+    request: getSystemCustodyOverview,
+    fallbackMessage: "시스템 보관계정과 보유 원장을 조회하지 못했습니다.",
     enabled: options.enabled,
     refetchInterval: false,
     staleTime: ADMIN_SNAPSHOT_STALE_MS,

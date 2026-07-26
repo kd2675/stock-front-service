@@ -34,9 +34,13 @@ export type AdminPageQueryFlags = {
   shouldUseAutoParticipantProfileOverviews: boolean;
   shouldUseInstrumentDetails: boolean;
   shouldUseInstitutionPortfolios: boolean;
+  shouldUseInstitutionRecommendation: boolean;
   shouldUseLiquidityProviderMandates: boolean;
+  shouldUseLiquidityProviderRecommendation: boolean;
   shouldUseMarketSummary: boolean;
+  shouldUseSystemCustodyOverview: boolean;
   shouldUseUnderwritingContracts: boolean;
+  shouldUseUnderwritingRecommendation: boolean;
 };
 
 export function resolveAdminPageQueryFlags({
@@ -66,7 +70,7 @@ export function resolveAdminPageQueryFlags({
   const includeConfigs = activeAdminSection === "market-auto-market" || includeParticipantStrategyDetails;
   const includeParticipantSymbolConfigs = includeParticipantStrategyDetails;
   const includeParticipantProfileConfigs = activeAdminSection === "funds-payroll" || activeAdminSection === "participants-profiles";
-  const includeListingAutoAccounts = activeAdminSection === "market-liquidity";
+  const includeListingAutoAccounts = activeAdminSection === "market-legacy-liquidity";
   const shouldLoadAutoMarketDetails = includeParticipants
     || includeConfigs
     || includeParticipantSymbolConfigs
@@ -93,7 +97,7 @@ export function resolveAdminPageQueryFlags({
       || activeAdminSection === "corporate-actions"
     ),
     shouldUseBatchRuntimeControls: isAdminAllowed && shouldLoadBatchRuntimeControls,
-    shouldUseDormantAutoParticipants: isAdminAllowed && activeAdminSection === "participants-dormant",
+    shouldUseDormantAutoParticipants: isAdminAllowed && activeAdminSection === "funds-custody",
     shouldUseEodOverview: isAdminAllowed && activeAdminSection === "system-eod",
     shouldLoadAdminFlowOverview: activeAdminSection === "market-flows",
     shouldLoadAutoMarketDetails,
@@ -109,8 +113,12 @@ export function resolveAdminPageQueryFlags({
     shouldUseAutoParticipantProfileOverviews: isAdminAllowed && activeAdminSection === "participants-overview",
     shouldUseInstrumentDetails: isAdminAllowed && (activeAdminSection === "market-instruments" || activeAdminTab === "corporate"),
     shouldUseInstitutionPortfolios: isAdminAllowed && activeAdminSection === "participants-institutions",
-    shouldUseLiquidityProviderMandates: isAdminAllowed && activeAdminSection === "market-liquidity",
+    shouldUseInstitutionRecommendation: isAdminAllowed && activeAdminSection === "participants-institutions",
+    shouldUseLiquidityProviderMandates: isAdminAllowed && activeAdminSection === "market-liquidity-providers",
+    shouldUseLiquidityProviderRecommendation: isAdminAllowed && activeAdminSection === "market-liquidity-providers",
     shouldUseMarketSummary: isAdminAllowed && (activeAdminSection === "dashboard" || activeAdminSection === "market-instruments"),
+    shouldUseSystemCustodyOverview: isAdminAllowed && activeAdminSection === "funds-custody",
     shouldUseUnderwritingContracts: isAdminAllowed && activeAdminSection === "corporate-underwriting",
+    shouldUseUnderwritingRecommendation: isAdminAllowed && activeAdminSection === "corporate-underwriting",
   };
 }

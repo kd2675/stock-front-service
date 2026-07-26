@@ -42,6 +42,19 @@ export function setInstitutionPortfoliosQueryData(
   );
 }
 
+export function upsertInstitutionPortfolioQueryData(
+  queryClient: QueryClient,
+  nextPortfolio: InstitutionPortfolio,
+) {
+  queryClient.setQueryData<InstitutionPortfolio[]>(
+    stockKeys.institutionPortfolios(),
+    (current = []) => [
+      ...current.filter((portfolio) => portfolio.portfolioId !== nextPortfolio.portfolioId),
+      nextPortfolio,
+    ].sort((left, right) => left.portfolioCode.localeCompare(right.portfolioCode)),
+  );
+}
+
 export function upsertLiquidityProviderMandateQueryData(
   queryClient: QueryClient,
   nextMandate: LiquidityProviderMandate,

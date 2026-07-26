@@ -72,19 +72,25 @@ export function buildAdminAutomationContentProps({
     editingListingAutoSymbol,
     lastCashFlowRun,
     liquidityProviderMandates: queries.liquidityProviderMandatesQuery.data ?? [],
-    liquidityProviderMandatesError: queries.liquidityProviderMandatesQuery.isError,
+    liquidityProviderMandatesError: queries.liquidityProviderMandatesQuery.isError
+      || queries.liquidityProviderRecommendationQuery.isError,
+    liquidityProviderRecommendation: queries.liquidityProviderRecommendationQuery.data ?? null,
     listingAutoAccounts,
     listingAutoDraft: listingAutoAccountDraft,
     listingAutoDraftSetters: listingAutoAccountDraftSetters,
     loadingBatchRuntimeControls: batchJobRuntimeControlsQuery.isFetching,
-    loadingLiquidityProviderMandates: queries.liquidityProviderMandatesQuery.isFetching,
+    loadingLiquidityProviderMandates: queries.liquidityProviderMandatesQuery.isFetching
+      || queries.liquidityProviderRecommendationQuery.isFetching,
     onRefreshBatchRuntimeControls: () => void batchJobRuntimeControlsQuery.refetch().then((result) => {
       if (result.isError) {
         setMessage(getAdminUnknownErrorMessage(result.error, "배치 자동 실행 상태를 조회하지 못했습니다."));
       }
     }),
     onRefreshLiquidityProviderMandates: () => {
-      void queries.liquidityProviderMandatesQuery.refetch();
+      void Promise.all([
+        queries.liquidityProviderMandatesQuery.refetch(),
+        queries.liquidityProviderRecommendationQuery.refetch(),
+      ]);
     },
     onClearProfileSelection: () => setEditingProfileType(null),
     onRunCashFlow: () => void runAutoParticipantCashFlowNow(),

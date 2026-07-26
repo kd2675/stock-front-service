@@ -27,7 +27,13 @@ assert.equal(new Set(adminItems.map((item) => item.section)).size, adminItems.le
 assert.equal(new Set(adminItems.map((item) => item.href)).size, adminItems.length, "관리자 href가 중복됩니다.");
 assert.deepEqual(
   adminGroupSections.market,
-  ["market-instruments", "market-auto-market", "market-liquidity", "market-flows"],
+  [
+    "market-instruments",
+    "market-auto-market",
+    "market-liquidity-providers",
+    "market-legacy-liquidity",
+    "market-flows",
+  ],
   "시장 운영 메뉴의 업무 순서가 계약과 다릅니다.",
 );
 assert.deepEqual(
@@ -47,10 +53,14 @@ assert.deepEqual(
     "participants-overview",
     "participants-list",
     "participants-institutions",
-    "participants-dormant",
     "participants-profiles",
   ],
-  "참여자 메뉴의 현황·계정·기관·휴면·프로필 순서가 계약과 다릅니다.",
+  "참여자 메뉴의 현황·계정·기관·프로필 순서가 계약과 다릅니다.",
+);
+assert.deepEqual(
+  adminGroupSections.funds,
+  ["funds-accounts", "funds-ledger", "funds-payroll", "funds-custody"],
+  "계좌·자금 메뉴의 계좌·원장·정기자금·보관 순서가 계약과 다릅니다.",
 );
 for (const item of adminItems) {
   assert.equal(resolveAdminSectionFromPath(item.href), item.section, `${item.href} section 해석이 잘못됐습니다.`);
@@ -64,6 +74,11 @@ assert.equal(resolveAdminTabFromPath("/admin/corporate/reports"), "corporate");
 assert.equal(typeof nextConfig.redirects, "function", "Next.js redirect 설정이 없습니다.");
 const redirects = await nextConfig.redirects();
 const redirectsBySource = new Map(redirects.map((redirect) => [redirect.source, redirect.destination]));
+assert.equal(
+  redirectsBySource.get("/supply-demand/admin/automation/listing-auto"),
+  "/admin/market/legacy-liquidity",
+  "이전 상장주관사 설정 경로는 레거시 유동성 탭으로 이동해야 합니다.",
+);
 assert.equal(redirectsBySource.has("/admin/participants/symbols"), false, "이전 자동 참여자 경로에 호환 리다이렉트를 두면 안 됩니다.");
 assert.equal(redirectsBySource.has("/supply-demand/admin/automation/symbols"), false, "이전 자동장 경로에 호환 리다이렉트를 두면 안 됩니다.");
 
@@ -87,13 +102,15 @@ assert.deepEqual(
   ["includeConfigs", "shouldLoadAutoMarketDetails", "shouldUseAutoMarketDetails"],
 );
 assert.deepEqual(
-  pickEnabled(flagsFor("market-liquidity", "market")),
+  pickEnabled(flagsFor("market-liquidity-providers", "market")),
   [
-    "includeListingAutoAccounts",
-    "shouldLoadAutoMarketDetails",
-    "shouldUseAutoMarketDetails",
     "shouldUseLiquidityProviderMandates",
+    "shouldUseLiquidityProviderRecommendation",
   ],
+);
+assert.deepEqual(
+  pickEnabled(flagsFor("market-legacy-liquidity", "market")),
+  ["includeListingAutoAccounts", "shouldLoadAutoMarketDetails", "shouldUseAutoMarketDetails"],
 );
 assert.deepEqual(
   pickEnabled(flagsFor("corporate-history", "corporate")),
@@ -105,19 +122,24 @@ assert.deepEqual(
 );
 assert.deepEqual(
   pickEnabled(flagsFor("corporate-underwriting", "corporate")),
-  ["shouldLoadInstrumentDetails", "shouldUseInstrumentDetails", "shouldUseUnderwritingContracts"],
+  [
+    "shouldLoadInstrumentDetails",
+    "shouldUseInstrumentDetails",
+    "shouldUseUnderwritingContracts",
+    "shouldUseUnderwritingRecommendation",
+  ],
 );
 assert.deepEqual(
   pickEnabled(flagsFor("system-jobs", "system")),
   ["shouldUseBatchRuntimeControls"],
 );
 assert.deepEqual(
-  pickEnabled(flagsFor("participants-dormant", "participants")),
-  ["shouldUseDormantAutoParticipants"],
+  pickEnabled(flagsFor("funds-custody", "funds")),
+  ["shouldUseDormantAutoParticipants", "shouldUseSystemCustodyOverview"],
 );
 assert.deepEqual(
   pickEnabled(flagsFor("participants-institutions", "participants")),
-  ["shouldUseInstitutionPortfolios"],
+  ["shouldUseInstitutionPortfolios", "shouldUseInstitutionRecommendation"],
 );
 
 console.log(`navigation contract verified: public=${PUBLIC_NAVIGATION_ITEMS.length}, admin=${adminItems.length}`);

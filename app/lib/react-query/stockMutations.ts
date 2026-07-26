@@ -11,13 +11,14 @@ import {
   adjustUserAccountCash,
   cancelOrder,
   cancelOrderPartially,
-  createScaledInstitutionDefaults,
+  createInstitutionPortfolio,
+  createUnderwritingContract,
   createOrderBookInstrument,
   deleteInstrumentReport,
   jumpSimulationClock,
   openStockAccount,
   placeOrder,
-  provisionScaledLiquidityShadow,
+  provisionLiquidityShadow,
   publishInstrumentReport,
   reconnectStockAccount,
   regenerateAutoMarketDailyRegime,
@@ -48,11 +49,12 @@ import type {
   StockBatchJobRuntimeControlPayload,
   StockCorporateActionPayload,
   StockCorporateActionSubscriptionPayload,
-  InstitutionScaledPresetPayload,
+  InstitutionPortfolioCreatePayload,
   InstitutionPilotActivationPayload,
   InstitutionPilotSuspensionPayload,
   LiquidityProviderActivationPayload,
-  LiquidityProviderScaledProvisionPayload,
+  LiquidityProviderProvisionPayload,
+  UnderwritingContractCreatePayload,
   UnderwritingSupplyActivationPayload,
   UnderwritingSupplySuspensionPayload,
   StockInstrumentReportPayload,
@@ -297,10 +299,10 @@ export function adminRunAutoParticipantCashFlowMutationOptions() {
   return adminNoVariablesMutationOptions(runAutoParticipantCashFlow);
 }
 
-export function adminCreateScaledInstitutionDefaultsMutationOptions() {
+export function adminCreateInstitutionPortfolioMutationOptions() {
   return adminMutationOptions(
-    (token, payload: InstitutionScaledPresetPayload) =>
-      createScaledInstitutionDefaults(token, payload),
+    (token, payload: InstitutionPortfolioCreatePayload) =>
+      createInstitutionPortfolio(token, payload),
   );
 }
 
@@ -322,12 +324,21 @@ export function adminSuspendInstitutionPilotMutationOptions() {
   );
 }
 
-export function adminProvisionScaledLiquidityShadowMutationOptions() {
+export function adminProvisionLiquidityShadowMutationOptions() {
   return adminMutationOptions(
     (token, variables: {
       symbol: string;
-      payload: LiquidityProviderScaledProvisionPayload;
-    }) => provisionScaledLiquidityShadow(token, variables.symbol, variables.payload),
+      payload: LiquidityProviderProvisionPayload;
+    }) => provisionLiquidityShadow(token, variables.symbol, variables.payload),
+  );
+}
+
+export function adminCreateUnderwritingContractMutationOptions() {
+  return adminMutationOptions(
+    (token, variables: {
+      symbol: string;
+      payload: UnderwritingContractCreatePayload;
+    }) => createUnderwritingContract(token, variables.symbol, variables.payload),
   );
 }
 

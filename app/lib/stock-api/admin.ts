@@ -6,7 +6,7 @@ import {
   authenticatedPostJson,
   toQuery,
 } from "@/app/lib/stock-api/core";
-import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowBreakdown, AdminFundFlowScope, AdminInvestorFlowHistory, AdminInvestorFlowSummary, AdminParticipantScope, AdminSymbolFlowList, AdminTotalAssetHistoryPage, AutoMarketDistributionBias, AutoMarketRegimeCountWeights, AutoMarketRegimeHistoryRange, AutoMarketStatus, AutoParticipant, AutoParticipantBehaviorModelVersion, AutoParticipantCashAdjustment, AutoParticipantLifecycleScope, AutoParticipantOverview, AutoParticipantPerformanceBasis, AutoParticipantPerformanceSummary, AutoParticipantProfileExitMode, AutoParticipantProfileInventoryMode, AutoParticipantProfileOverview, AutoParticipantProfilePricingMode, AutoParticipantProfileType, AutoParticipantSymbolConfig, AutoParticipantWithdrawalAudit, BatchJobRuntimeStatus, EodOperationsOverview, EodPhaseRetryResult, InstitutionPortfolio, LiquidityProviderMandate, ListingAutoOperationMode, ListingAutoPosition, ListingAutoStrategyProfile, RecurringCashIntervalUnit, StockBatchJobRun, UnderwritingContract } from "@/app/types/stock";
+import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowBreakdown, AdminFundFlowScope, AdminInvestorFlowHistory, AdminInvestorFlowSummary, AdminParticipantScope, AdminSymbolFlowList, AdminTotalAssetHistoryPage, AutoMarketDistributionBias, AutoMarketRegimeCountWeights, AutoMarketRegimeHistoryRange, AutoMarketStatus, AutoParticipant, AutoParticipantBehaviorModelVersion, AutoParticipantCashAdjustment, AutoParticipantLifecycleScope, AutoParticipantOverview, AutoParticipantPerformanceBasis, AutoParticipantPerformanceSummary, AutoParticipantProfileExitMode, AutoParticipantProfileInventoryMode, AutoParticipantProfileOverview, AutoParticipantProfilePricingMode, AutoParticipantProfileType, AutoParticipantSymbolConfig, AutoParticipantWithdrawalAudit, BatchJobRuntimeStatus, EodOperationsOverview, EodPhaseRetryResult, InstitutionPortfolio, InstitutionPortfolioRecommendation, LiquidityProviderMandate, LiquidityProviderRecommendation, ListingAutoOperationMode, ListingAutoPosition, ListingAutoStrategyProfile, RecurringCashIntervalUnit, StockBatchJobRun, SystemCustodyOverview, UnderwritingContract, UnderwritingContractRecommendation } from "@/app/types/stock";
 
 export type { AdminFundFlowScope } from "@/app/types/stock";
 
@@ -97,8 +97,12 @@ export type StockAutoParticipantCashAdjustmentPayload = {
   amount: number;
 };
 
-export type InstitutionScaledPresetPayload = {
+export type InstitutionPortfolioCreatePayload = {
+  portfolioCode: string;
+  displayName: string;
+  investmentStyle: string;
   institutionAumRateOfMarketCap?: number;
+  symbols?: string[];
   changeReason?: string;
 };
 
@@ -111,7 +115,7 @@ export type InstitutionPilotSuspensionPayload = {
   changeReason?: string;
 };
 
-export type LiquidityProviderScaledProvisionPayload = {
+export type LiquidityProviderProvisionPayload = {
   sourceAccountId?: number;
   referenceDailyVolumeRate?: number;
   seedInventoryRate?: number;
@@ -133,12 +137,35 @@ export type UnderwritingSupplySuspensionPayload = {
   changeReason?: string;
 };
 
+export type UnderwritingContractCreatePayload = {
+  underwritingType?: "FIRM_COMMITMENT";
+  changeReason?: string;
+};
+
 export type AutoParticipantActivityScope = "RECENT_SIMULATION_DAY" | "ALL";
 
 export function getInstitutionPortfolios(token: string) {
   return authenticatedGetJson<InstitutionPortfolio[]>(
     token,
     "/api/stock/v1/markets/institution-portfolios",
+  );
+}
+
+export function getInstitutionPortfolioRecommendation(token: string) {
+  return authenticatedGetJson<InstitutionPortfolioRecommendation>(
+    token,
+    "/api/stock/v1/markets/institution-portfolios/recommendations",
+  );
+}
+
+export function createInstitutionPortfolio(
+  token: string,
+  payload: InstitutionPortfolioCreatePayload,
+) {
+  return authenticatedPostJson<InstitutionPortfolio>(
+    token,
+    "/api/stock/v1/markets/institution-portfolios",
+    payload,
   );
 }
 
@@ -149,14 +176,21 @@ export function getLiquidityProviderMandates(token: string) {
   );
 }
 
-export function provisionScaledLiquidityShadow(
+export function getLiquidityProviderRecommendation(token: string) {
+  return authenticatedGetJson<LiquidityProviderRecommendation>(
+    token,
+    "/api/stock/v1/markets/liquidity-mandates/recommendations",
+  );
+}
+
+export function provisionLiquidityShadow(
   token: string,
   symbol: string,
-  payload: LiquidityProviderScaledProvisionPayload,
+  payload: LiquidityProviderProvisionPayload,
 ) {
   return authenticatedPostJson<LiquidityProviderMandate>(
     token,
-    `/api/stock/v1/markets/liquidity-mandates/${encodeURIComponent(symbol)}/scaled-shadow`,
+    `/api/stock/v1/markets/liquidity-mandates/${encodeURIComponent(symbol)}`,
     payload,
   );
 }
@@ -180,6 +214,25 @@ export function getUnderwritingContracts(token: string) {
   );
 }
 
+export function getUnderwritingContractRecommendation(token: string) {
+  return authenticatedGetJson<UnderwritingContractRecommendation>(
+    token,
+    "/api/stock/v1/markets/underwriting-contracts/recommendations",
+  );
+}
+
+export function createUnderwritingContract(
+  token: string,
+  symbol: string,
+  payload: UnderwritingContractCreatePayload,
+) {
+  return authenticatedPostJson<UnderwritingContract>(
+    token,
+    `/api/stock/v1/markets/underwriting-contracts/${encodeURIComponent(symbol)}`,
+    payload,
+  );
+}
+
 export function activateUnderwritingSupply(
   token: string,
   contractId: number,
@@ -187,7 +240,7 @@ export function activateUnderwritingSupply(
 ) {
   return authenticatedPostJson<UnderwritingContract>(
     token,
-    `/api/stock/v1/markets/underwriting-contracts/${contractId}/scaled-supply/activate`,
+    `/api/stock/v1/markets/underwriting-contracts/${contractId}/supply/activate`,
     payload,
   );
 }
@@ -199,18 +252,7 @@ export function suspendUnderwritingSupply(
 ) {
   return authenticatedPostJson<UnderwritingContract>(
     token,
-    `/api/stock/v1/markets/underwriting-contracts/${contractId}/scaled-supply/suspend`,
-    payload,
-  );
-}
-
-export function createScaledInstitutionDefaults(
-  token: string,
-  payload: InstitutionScaledPresetPayload,
-) {
-  return authenticatedPostJson<InstitutionPortfolio[]>(
-    token,
-    "/api/stock/v1/markets/institution-portfolios/scaled-defaults",
+    `/api/stock/v1/markets/underwriting-contracts/${contractId}/supply/suspend`,
     payload,
   );
 }
@@ -236,6 +278,13 @@ export function suspendInstitutionPilot(
     token,
     `/api/stock/v1/markets/institution-portfolios/${portfolioId}/suspend`,
     payload,
+  );
+}
+
+export function getSystemCustodyOverview(token: string) {
+  return authenticatedGetJson<SystemCustodyOverview>(
+    token,
+    "/api/stock/v1/markets/system-custody",
   );
 }
 

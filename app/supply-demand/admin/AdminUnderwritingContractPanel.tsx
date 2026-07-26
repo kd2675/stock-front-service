@@ -7,6 +7,7 @@ import DataTableViewport from "@/app/components/DataTableViewport";
 import { upsertUnderwritingContractQueryData } from "@/app/lib/react-query/stockCacheUpdates";
 import {
   adminActivateUnderwritingSupplyMutationOptions,
+  adminCreateUnderwritingContractMutationOptions,
   adminSuspendUnderwritingSupplyMutationOptions,
 } from "@/app/lib/react-query/stockMutations";
 import { getAdminActionData } from "@/app/supply-demand/admin/AdminActionResultHelpers";
@@ -18,22 +19,31 @@ import {
   formatWon,
 } from "@/app/supply-demand/admin/AdminFormatters";
 import { ProfileMiniMetric } from "@/app/supply-demand/admin/AdminMetricCards";
-import type { SecurityAllocation, UnderwritingContract } from "@/app/types/stock";
+import type {
+  SecurityAllocation,
+  UnderwritingContract,
+  UnderwritingContractRecommendation,
+} from "@/app/types/stock";
 
 export function AdminUnderwritingContractPanel({
   accessToken,
   contracts,
+  recommendation,
   loading,
   error,
   onRefresh,
 }: {
   accessToken: string | null;
   contracts: UnderwritingContract[];
+  recommendation: UnderwritingContractRecommendation | null;
   loading: boolean;
   error: boolean;
   onRefresh: () => void;
 }) {
   const queryClient = useQueryClient();
+  const createContractMutation = useMutation(
+    adminCreateUnderwritingContractMutationOptions(),
+  );
   const activationMutation = useMutation(
     adminActivateUnderwritingSupplyMutationOptions(),
   );
@@ -42,7 +52,12 @@ export function AdminUnderwritingContractPanel({
   );
   const [supplyPercent, setSupplyPercent] = useState("10");
   const [durationDays, setDurationDays] = useState("20");
-  const [changeReason, setChangeReason] = useState(
+  const [contractSymbol, setContractSymbol] = useState("");
+  const [contractReason, setContractReason] = useState(
+    "발행 대기 유통분의 종목별 인수계정·계약 생성",
+  );
+  const [contractConfirmed, setContractConfirmed] = useState(false);
+  const [supplyChangeReason, setSupplyChangeReason] = useState(
     "축소 시장 초기 수급용 유한 수동 매도 공급",
   );
   const [confirmed, setConfirmed] = useState(false);
@@ -57,6 +72,46 @@ export function AdminUnderwritingContractPanel({
     && Number.isInteger(normalizedDurationDays)
     && normalizedDurationDays >= 1
     && normalizedDurationDays <= 60;
+  const normalizedContractSymbol = contractSymbol.trim().toUpperCase();
+  const contractCandidate = recommendation?.symbols.find(
+    (item) => item.symbol === normalizedContractSymbol,
+  );
+  const canCreateContract = Boolean(accessToken)
+    && !loading
+    && !error
+    && contractConfirmed
+    && contractCandidate?.creationEligible === true
+    && !contracts.some((contract) => contract.symbol === normalizedContractSymbol);
+
+  const createContract = async () => {
+    if (!accessToken || !canCreateContract || createContractMutation.isPending) {
+      return;
+    }
+    setFeedback(null);
+    const result = await createContractMutation.mutateAsync({
+      token: accessToken,
+      symbol: normalizedContractSymbol,
+      payload: {
+        underwritingType: "FIRM_COMMITMENT",
+        changeReason: contractReason.trim() || undefined,
+      },
+    });
+    const created = getAdminActionData(
+      result,
+      "인수계정과 계약을 생성하지 못했습니다.",
+    );
+    if (!created.ok) {
+      setFeedback({ tone: "error", message: created.message });
+      return;
+    }
+    upsertUnderwritingContractQueryData(queryClient, created.data);
+    setContractConfirmed(false);
+    setFeedback({
+      tone: "success",
+      message: `${created.data.symbol} 인수계정과 계약 1건을 생성했습니다. LP와 유한 공급은 별도 작업입니다.`,
+    });
+    onRefresh();
+  };
 
   const activateSupply = async (contract: UnderwritingContract) => {
     if (!accessToken
@@ -84,7 +139,7 @@ export function AdminUnderwritingContractPanel({
         payload: {
           supplyRate,
           durationDays: normalizedDurationDays,
-          changeReason: changeReason.trim() || undefined,
+          changeReason: supplyChangeReason.trim() || undefined,
         },
       });
       const activated = getAdminActionData(
@@ -159,7 +214,7 @@ export function AdminUnderwritingContractPanel({
             </span>
           </div>
           <p className="mt-1 max-w-4xl text-xs font-bold leading-5 text-stock-subtle">
-            발행주식 전부를 유통시키지 않고, 유통분은 종목별 인수계정에, 비유통분은 시스템 보관계정에 분리한 최초 배정원장입니다.
+            신규 발행은 먼저 유통 대기·잠금 보관계정에 적재되고, 이 화면에서 선택한 한 종목의 유통분만 별도 인수계정과 계약으로 이전합니다.
           </p>
           <p className="mt-1 max-w-4xl text-[11px] font-bold leading-5 text-admin-quiet">
             인수계정 보유량은 이후 매매로 달라질 수 있으므로 현재 잔고와 최초 배정량의 차이 자체는 오류가 아닙니다. 불변 배정원장의 합계는 최초 계약 수량과 일치해야 하고, 현재 발행·유통주식은 이후 기업행사로 늘어날 수 있어 최초 계약량 이상인지만 별도로 대사합니다.
@@ -190,6 +245,117 @@ export function AdminUnderwritingContractPanel({
         <ProfileMiniMetric label="대사 실패" value={formatCount(summary.mismatchCount, "건")} tone={summary.mismatchCount > 0 ? "red" : "green"} />
       </div>
 
+      <div className="mt-4 rounded-md border border-admin-accent/25 bg-admin-accent-surface/20 p-3">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-black text-white">상장 인수계약 개별 생성</h3>
+            <p className="mt-1 max-w-4xl text-xs font-bold leading-5 text-stock-subtle">
+              한 번에 한 종목의 인수계정과 계약만 생성합니다. 인수기관 법인은 전체 시장에 1곳을 권장하지만 거래계정은 종목별 1개를 유지합니다.
+            </p>
+          </div>
+          <span className="rounded-md bg-black/25 px-2 py-1 text-[10px] font-black text-admin-accent-soft">
+            권장 계약 {recommendation ? `${recommendation.currentContractCount}/${recommendation.currentContractCount + recommendation.recommendedRemainingContractCount}건` : "조회 대기"}
+          </span>
+        </div>
+        {recommendation ? (
+          <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            <ContractMetric label="권장 법인" value={`${formatNumber(recommendation.recommendedUnderwriterOrganizationCount)}곳`} />
+            <ContractMetric label="종목당 권장 계정" value={`${formatNumber(recommendation.recommendedAccountCountPerSymbol)}개`} />
+            <ContractMetric label="추가 권장 계약" value={`${formatNumber(recommendation.recommendedRemainingContractCount)}건`} />
+            <ContractMetric label="권장 공급" value={`${formatRate(recommendation.recommendedSupplyRate)} · ${recommendation.recommendedSupplyDurationDays}일`} />
+          </div>
+        ) : null}
+        {recommendation?.symbols.length ? (
+          <div className="mt-3">
+            <p className="mb-1 text-[10px] font-black text-admin-quiet">발행 대기 종목별 권장 인수 수량</p>
+            <DataTableViewport label="발행 대기 종목별 권장 인수 수량" tone="dark">
+              <table className="min-w-[860px] w-full text-left text-xs">
+                <thead className="bg-white/[0.045] text-[10px] font-black text-admin-quiet">
+                  <tr>
+                    <th className="px-3 py-2">종목</th>
+                    <th className="px-3 py-2 text-right">총 발행량</th>
+                    <th className="px-3 py-2 text-right">유통 대기</th>
+                    <th className="px-3 py-2 text-right">잠금 수량</th>
+                    <th className="px-3 py-2 text-right">발행가</th>
+                    <th className="px-3 py-2">생성 상태</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/10">
+                  {recommendation.symbols.map((item) => (
+                    <tr key={item.symbol}>
+                      <td className="px-3 py-2 font-black text-white">{item.symbol}</td>
+                      <td className="px-3 py-2 text-right">{formatNumber(item.issuedShares)}주</td>
+                      <td className="px-3 py-2 text-right font-black text-admin-accent-soft">
+                        {formatNumber(item.floatCustodyAvailableQuantity)}주
+                      </td>
+                      <td className="px-3 py-2 text-right">{formatNumber(item.lockedShares)}주</td>
+                      <td className="px-3 py-2 text-right">{formatWon(item.issuePrice)}</td>
+                      <td className={item.creationEligible ? "px-3 py-2 text-admin-success" : "px-3 py-2 text-admin-warning"}>
+                        {item.creationEligible ? "생성 가능" : item.eligibilityReason}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </DataTableViewport>
+          </div>
+        ) : null}
+        <div className="mt-3 grid gap-3 md:grid-cols-3">
+          <label className="text-xs font-black text-stock-subtle">
+            발행 대기 종목
+            <select
+              value={contractSymbol}
+              onChange={(event) => setContractSymbol(event.target.value)}
+              className="mt-1 min-h-10 w-full rounded-md border border-white/10 bg-black/25 px-3 text-sm font-black text-white"
+            >
+              <option value="">종목 선택</option>
+              {(recommendation?.symbols ?? []).map((item) => (
+                <option key={item.symbol} value={item.symbol} disabled={!item.creationEligible}>
+                  {item.symbol} · {item.creationEligible ? `${formatNumber(item.floatCustodyAvailableQuantity)}주 인수 가능` : item.eligibilityReason}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-xs font-black text-stock-subtle md:col-span-2">
+            생성 사유
+            <input
+              value={contractReason}
+              onChange={(event) => setContractReason(event.target.value)}
+              maxLength={500}
+              className="mt-1 min-h-10 w-full rounded-md border border-white/10 bg-black/25 px-3 text-sm font-black text-white"
+            />
+          </label>
+        </div>
+        {contractCandidate ? (
+          <p className="mt-3 rounded-md border border-white/10 bg-black/20 px-3 py-2 text-xs font-bold text-stock-subtle">
+            <strong className="text-white">{contractCandidate.symbol}</strong>
+            {" · "}발행 {formatNumber(contractCandidate.issuedShares)}주
+            {" · "}유통 대기 {formatNumber(contractCandidate.floatCustodyAvailableQuantity)}주
+            {" · "}잠금 {formatNumber(contractCandidate.lockedShares)}주
+            {" · "}발행가 {formatWon(contractCandidate.issuePrice)}
+          </p>
+        ) : null}
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+          <label className="flex max-w-4xl items-start gap-2 text-xs font-bold leading-5 text-stock-subtle">
+            <input
+              type="checkbox"
+              checked={contractConfirmed}
+              onChange={(event) => setContractConfirmed(event.target.checked)}
+              className="mt-1"
+            />
+            선택 종목의 유통 대기 물량 전부를 종목 전용 인수계정으로 이전하며, LP 계약과 공급 활성화는 함께 생성되지 않는다는 점을 확인했습니다.
+          </label>
+          <button
+            type="button"
+            onClick={() => void createContract()}
+            disabled={!canCreateContract || createContractMutation.isPending}
+            className="min-h-10 rounded-md bg-admin-accent px-4 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {createContractMutation.isPending ? "계약 생성 중" : "인수계정·계약 1건 생성"}
+          </button>
+        </div>
+      </div>
+
       {feedback ? (
         <p
           role="status"
@@ -214,7 +380,7 @@ export function AdminUnderwritingContractPanel({
         <div className="mt-4 rounded-md border border-white/10 bg-black/20 px-4 py-5">
           <p className="text-sm font-black text-white">역할 분리형 인수계약이 아직 없습니다.</p>
           <p className="mt-2 max-w-4xl text-xs font-bold leading-5 text-stock-subtle">
-            기존 종목은 100% 유통 구조를 그대로 보존합니다. 신규 상장에서 역할 분리형을 선택한 종목부터 이 화면에 계약과 배정원장이 생성됩니다.
+            기존 종목은 100% 유통 구조를 그대로 보존합니다. 신규 발행 탭에서 역할 분리형 종목을 만든 뒤 위에서 인수계약을 별도로 생성하세요.
           </p>
         </div>
       ) : null}
@@ -261,8 +427,8 @@ export function AdminUnderwritingContractPanel({
           <label className="text-xs font-black text-stock-subtle">
             변경 사유
             <input
-              value={changeReason}
-              onChange={(event) => setChangeReason(event.target.value)}
+              value={supplyChangeReason}
+              onChange={(event) => setSupplyChangeReason(event.target.value)}
               className="mt-1 min-h-10 w-full rounded-md border border-white/10 bg-black/25 px-3 text-sm font-black text-white"
             />
           </label>
