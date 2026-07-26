@@ -2,17 +2,14 @@ import { useEffect, useRef } from "react";
 
 import {
   resolveAutoMarketConfigDraft,
-  resolveListingAutoAccountConfigDraft,
 } from "@/app/supply-demand/admin/AdminDraftHelpers";
 import type { AutoMarketStatus, OrderBookInstrument } from "@/app/types/stock";
 
 type AdminDefaultDraftSelectionsOptions = {
   applyAutoMarketConfigDraft: (draft: ReturnType<typeof resolveAutoMarketConfigDraft>) => void;
-  applyListingAutoAccountConfigDraft: (draft: ReturnType<typeof resolveListingAutoAccountConfigDraft>) => void;
   autoConfigSymbol: string;
   historySymbol: string;
   instruments: OrderBookInstrument[];
-  listingAutoSymbol: string;
   reportSymbol: string;
   setHistorySymbol: (symbol: string) => void;
   setReportSymbol: (symbol: string) => void;
@@ -23,11 +20,9 @@ type AdminDefaultDraftSelectionsOptions = {
 export function useAdminDefaultDraftSelections(options: AdminDefaultDraftSelectionsOptions) {
   const {
     applyAutoMarketConfigDraft,
-    applyListingAutoAccountConfigDraft,
     autoConfigSymbol,
     historySymbol,
     instruments,
-    listingAutoSymbol,
     reportSymbol,
     setHistorySymbol,
     setReportSymbol,
@@ -36,16 +31,11 @@ export function useAdminDefaultDraftSelections(options: AdminDefaultDraftSelecti
   } = options;
   const autoConfigSymbolRef = useRef("");
   const historySymbolRef = useRef("");
-  const listingAutoSymbolRef = useRef("");
   const reportSymbolRef = useRef("");
 
   useEffect(() => {
     autoConfigSymbolRef.current = autoConfigSymbol;
   }, [autoConfigSymbol]);
-
-  useEffect(() => {
-    listingAutoSymbolRef.current = listingAutoSymbol;
-  }, [listingAutoSymbol]);
 
   useEffect(() => {
     historySymbolRef.current = historySymbol;
@@ -91,12 +81,7 @@ export function useAdminDefaultDraftSelections(options: AdminDefaultDraftSelecti
       autoConfigSymbolRef.current = draft.symbol;
       applyAutoMarketConfigDraft(draft);
     }
-    if (!listingAutoSymbolRef.current && status.listingAutoAccounts.length > 0) {
-      const draft = resolveListingAutoAccountConfigDraft(status.listingAutoAccounts[0]);
-      listingAutoSymbolRef.current = draft.symbol;
-      applyListingAutoAccountConfigDraft(draft);
-    }
-  }, [applyAutoMarketConfigDraft, applyListingAutoAccountConfigDraft, status]);
+  }, [applyAutoMarketConfigDraft, status]);
 
   return {
     historySymbolRef,

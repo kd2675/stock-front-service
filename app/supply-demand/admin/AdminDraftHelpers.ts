@@ -1,7 +1,4 @@
-import type {
-  AutoMarketConfigDraftInput,
-  ListingAutoAccountConfigDraftInput,
-} from "@/app/supply-demand/admin/AdminMarketPayloadHelpers";
+import type { AutoMarketConfigDraftInput } from "@/app/supply-demand/admin/AdminMarketPayloadHelpers";
 import type { ProfileConfigDraftWithType } from "@/app/supply-demand/admin/AdminProfileConfigTypes";
 import type {
   AutoMarketConfig,
@@ -9,7 +6,6 @@ import type {
   AutoParticipantProfileConfig,
   AutoParticipantProfileType,
   AutoParticipantSymbolConfig,
-  ListingAutoAccount,
   RecurringCashIntervalUnit,
 } from "@/app/types/stock";
 
@@ -60,29 +56,6 @@ export function resolveAutoMarketConfigDraft(config: AutoMarketConfig): AutoMark
     },
     primaryDistributionBias: mapDistributionBiasToDraft(config.primaryDistributionBias),
     secondaryDistributionBias: mapDistributionBiasToDraft(config.secondaryDistributionBias),
-  };
-}
-
-export function resolveListingAutoAccountConfigDraft(config: ListingAutoAccount): ListingAutoAccountConfigDraftInput {
-  return {
-    symbol: config.symbol,
-    displayName: config.displayName,
-    enabled: config.enabled,
-    positionSide: config.positionSide,
-    operationMode: config.operationMode,
-    strategyProfile: config.strategyProfile,
-    maxOrderQuantity: String(config.maxOrderQuantity),
-    orderTtlSeconds: String(config.orderTtlSeconds),
-    priceOffsetTicks: String(config.priceOffsetTicks),
-    targetSpreadTicks: String(config.targetSpreadTicks),
-    inventorySkewTicks: String(config.inventorySkewTicks),
-    minimumProfitRate: String(config.minimumProfitRate),
-    aggressiveUnwindThreshold: String(config.aggressiveUnwindThreshold),
-    aggressiveOrderRatio: String(config.aggressiveOrderRatio),
-    targetBuyQuantity: String(config.targetBuyQuantity),
-    targetSellQuantity: String(config.targetSellQuantity),
-    targetHoldingQuantity: String(config.targetHoldingQuantity),
-    inventoryBandQuantity: String(config.inventoryBandQuantity),
   };
 }
 

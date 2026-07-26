@@ -8,7 +8,6 @@ import { useAdminCorporateActionActions } from "@/app/supply-demand/admin/useAdm
 import { useAdminDefaultDraftSelections } from "@/app/supply-demand/admin/useAdminDefaultDraftSelections";
 import { useAdminInitialIssueActions } from "@/app/supply-demand/admin/useAdminInitialIssueActions";
 import { useAdminInstrumentReportActions } from "@/app/supply-demand/admin/useAdminInstrumentReportActions";
-import { useAdminListingAutoAccountActions } from "@/app/supply-demand/admin/useAdminListingAutoAccountActions";
 import { useAdminMarketStatusActions } from "@/app/supply-demand/admin/useAdminMarketStatusActions";
 import { useAdminOrderBookInstrumentActions } from "@/app/supply-demand/admin/useAdminOrderBookInstrumentActions";
 import type { AdminActionMessageSetter } from "@/app/supply-demand/admin/AdminActionTypes";
@@ -72,10 +71,6 @@ export function useAdminPageActions({
     symbol: autoConfigSymbol,
   } = drafts.autoMarketConfig;
   const {
-    draft: listingAutoAccountDraft,
-    symbol: listingAutoSymbol,
-  } = drafts.listingAutoAccount;
-  const {
     autoParticipantEditDraftSetters,
     autoParticipantUserKey,
     cashAdjustmentAmount,
@@ -118,11 +113,9 @@ export function useAdminPageActions({
 
   const { reportSymbolRef } = useAdminDefaultDraftSelections({
     applyAutoMarketConfigDraft: drafts.autoMarketConfig.applyAutoMarketConfigDraft,
-    applyListingAutoAccountConfigDraft: drafts.listingAutoAccount.applyListingAutoAccountConfigDraft,
     autoConfigSymbol,
     historySymbol,
     instruments,
-    listingAutoSymbol,
     reportSymbol,
     setHistorySymbol,
     setReportSymbol,
@@ -169,13 +162,6 @@ export function useAdminPageActions({
     requireAdminToken,
     setAutoConfigEnabled,
     setEditingAutoConfigSymbol,
-    setMessage,
-  });
-  const listingAutoAccountActions = useAdminListingAutoAccountActions({
-    draft: listingAutoAccountDraft,
-    reloadAutoMarketDetailsState,
-    requireAdminToken,
-    setEditingListingAutoSymbol: drafts.listingAutoAccount.setEditingSymbol,
     setMessage,
   });
   const profileConfigActions = useAdminProfileConfigActions({
@@ -269,7 +255,6 @@ export function useAdminPageActions({
     ...orderBookInstrumentActions,
     ...simulationClockActions,
     ...autoMarketConfigActions,
-    ...listingAutoAccountActions,
     ...profileConfigActions,
     ...autoParticipantActions,
     ...autoParticipantStrategyActions,

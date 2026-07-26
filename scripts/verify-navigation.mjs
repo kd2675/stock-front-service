@@ -31,7 +31,6 @@ assert.deepEqual(
     "market-instruments",
     "market-auto-market",
     "market-liquidity-providers",
-    "market-legacy-liquidity",
     "market-flows",
   ],
   "시장 운영 메뉴의 업무 순서가 계약과 다릅니다.",
@@ -76,8 +75,8 @@ const redirects = await nextConfig.redirects();
 const redirectsBySource = new Map(redirects.map((redirect) => [redirect.source, redirect.destination]));
 assert.equal(
   redirectsBySource.get("/supply-demand/admin/automation/listing-auto"),
-  "/admin/market/legacy-liquidity",
-  "이전 상장주관사 설정 경로는 레거시 유동성 탭으로 이동해야 합니다.",
+  "/admin/market/liquidity-providers",
+  "이전 상장주관사 설정 경로는 신규 유동성 공급자 탭으로 이동해야 합니다.",
 );
 assert.equal(redirectsBySource.has("/admin/participants/symbols"), false, "이전 자동 참여자 경로에 호환 리다이렉트를 두면 안 됩니다.");
 assert.equal(redirectsBySource.has("/supply-demand/admin/automation/symbols"), false, "이전 자동장 경로에 호환 리다이렉트를 두면 안 됩니다.");
@@ -107,10 +106,6 @@ assert.deepEqual(
     "shouldUseLiquidityProviderMandates",
     "shouldUseLiquidityProviderRecommendation",
   ],
-);
-assert.deepEqual(
-  pickEnabled(flagsFor("market-legacy-liquidity", "market")),
-  ["includeListingAutoAccounts", "shouldLoadAutoMarketDetails", "shouldUseAutoMarketDetails"],
 );
 assert.deepEqual(
   pickEnabled(flagsFor("corporate-history", "corporate")),

@@ -17,7 +17,6 @@ import {
 } from "@/app/supply-demand/admin/AdminConstants";
 import { getAdminUnknownErrorMessage } from "@/app/supply-demand/admin/AdminActionResultHelpers";
 import type { AdminActionMessageSetter } from "@/app/supply-demand/admin/AdminActionTypes";
-import { optionalText } from "@/app/supply-demand/admin/AdminPayloadTextHelpers";
 
 export function useAdminInitialIssueActions({
   queryClient,
@@ -41,16 +40,14 @@ export function useAdminInitialIssueActions({
 
   const createInstrumentMutation = useMutation({
     ...createOrderBookInstrumentMutationOptions(),
-    onSuccess: async (instrument, submitted) => {
+    onSuccess: async (instrument) => {
       createInstrumentForm.reset(DEFAULT_CREATE_INSTRUMENT_FORM_VALUES);
       setActionSymbol(instrument.symbol);
       setHistorySymbol(instrument.symbol);
       reportSymbolRef.current = instrument.symbol;
       setReportSymbol(instrument.symbol);
       setMessage(
-        submitted.initialIssueAllocation?.mode === "SCALED_ROLE_SEPARATED"
-          ? "신규 상장을 준비했습니다. 유통분은 종목별 인수계정, 비유통분은 시스템 보관계정에 분리 배정했습니다. 시장은 CLOSED로 유지되며 종목 전용 LP의 LIVE 전환 전에는 거래되지 않습니다."
-          : "신규 상장을 적용했습니다. 100% 유통과 기존 상장주관사 자동계정을 생성했습니다.",
+        "신규 상장을 준비했습니다. 유통분과 비유통분을 시스템 보관계정에 분리 배정했습니다. 시장은 CLOSED로 유지되며 인수계약과 종목 전용 LP를 별도로 준비해야 합니다.",
       );
       await invalidateAdminInitialIssueQueries(queryClient, instrument.symbol);
     },
@@ -61,8 +58,7 @@ export function useAdminInitialIssueActions({
 
   const submitInstrument = createInstrumentForm.handleSubmit(
     (values) => {
-      if (values.initialIssueMode === "SCALED_ROLE_SEPARATED"
-          && values.tradableShareRatePercent === undefined) {
+      if (values.tradableShareRatePercent === undefined) {
         setMessage("초기 유통비율을 입력해 주세요.");
         return;
       }
@@ -74,32 +70,9 @@ export function useAdminInitialIssueActions({
         issuedShares: values.issuedShares,
         priceLimitRate: values.priceLimitRate,
         initialIssueAllocation: {
-          mode: values.initialIssueMode,
-          ...(values.initialIssueMode === "SCALED_ROLE_SEPARATED"
-            ? { tradableShareRate: values.tradableShareRatePercent! / 100 }
-            : {}),
+          mode: "SCALED_ROLE_SEPARATED",
+          tradableShareRate: values.tradableShareRatePercent / 100,
         },
-        listingAutoAccount: values.initialIssueMode === "LEGACY_FULL_FLOAT"
-          ? {
-              displayName: optionalText(values.listingAutoDisplayName ?? "") ?? undefined,
-              enabled: values.listingAutoEnabled === "true",
-              positionSide: values.listingAutoPositionSide,
-              operationMode: values.listingAutoOperationMode,
-              strategyProfile: values.listingAutoStrategyProfile,
-              maxOrderQuantity: values.listingAutoMaxOrderQuantity,
-              orderTtlSeconds: values.listingAutoOrderTtlSeconds,
-              priceOffsetTicks: values.listingAutoPriceOffsetTicks,
-              targetSpreadTicks: values.listingAutoTargetSpreadTicks,
-              inventorySkewTicks: values.listingAutoInventorySkewTicks,
-              minimumProfitRate: values.listingAutoMinimumProfitRate,
-              aggressiveUnwindThreshold: values.listingAutoAggressiveUnwindThreshold,
-              aggressiveOrderRatio: values.listingAutoAggressiveOrderRatio,
-              targetBuyQuantity: values.listingAutoTargetBuyQuantity,
-              targetSellQuantity: values.listingAutoTargetSellQuantity,
-              targetHoldingQuantity: values.listingAutoTargetHoldingQuantity,
-              inventoryBandQuantity: values.listingAutoInventoryBandQuantity,
-            }
-          : undefined,
       });
     },
     (errors) => {

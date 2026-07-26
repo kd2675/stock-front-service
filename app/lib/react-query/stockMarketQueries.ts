@@ -62,7 +62,6 @@ type AutoMarketStatusIncludeOptions = {
   includeParticipants?: boolean;
   includeParticipantSymbolConfigs?: boolean;
   includeParticipantProfileConfigs?: boolean;
-  includeListingAutoAccounts?: boolean;
   includeRuntimeMetrics?: boolean;
   includeSalaryEligibility?: boolean;
 };
@@ -73,7 +72,6 @@ function resolveAutoMarketStatusIncludeOptions(options: AutoMarketStatusIncludeO
     includeParticipants: options.includeParticipants ?? false,
     includeParticipantSymbolConfigs: options.includeParticipantSymbolConfigs ?? false,
     includeParticipantProfileConfigs: options.includeParticipantProfileConfigs ?? false,
-    includeListingAutoAccounts: options.includeListingAutoAccounts ?? false,
     includeRuntimeMetrics: options.includeRuntimeMetrics ?? true,
     includeSalaryEligibility: options.includeSalaryEligibility ?? false,
   };
@@ -249,7 +247,6 @@ export function autoMarketSummaryStatusQueryOptions(options: {
     includeParticipants: false,
     includeParticipantSymbolConfigs: false,
     includeParticipantProfileConfigs: false,
-    includeListingAutoAccounts: false,
     includeRuntimeMetrics: options.includeRuntimeMetrics,
     includeSalaryEligibility: options.includeSalaryEligibility,
   });

@@ -1,6 +1,5 @@
 import { AdminAutoMarketConfigPanel, type AutoMarketConfigDraft, type AutoMarketConfigDraftSetters } from "@/app/supply-demand/admin/AdminAutoMarketConfigPanel";
 import { AdminBatchRuntimeControlPanel } from "@/app/supply-demand/admin/AdminBatchRuntimeControls";
-import { AdminListingAutoAccountPanel, type ListingAutoAccountDraft, type ListingAutoAccountDraftSetters } from "@/app/supply-demand/admin/AdminListingAutoAccountPanel";
 import { AdminLiquidityProviderPanel } from "@/app/supply-demand/admin/AdminLiquidityProviderPanel";
 import type { AdminSection } from "@/app/supply-demand/admin/AdminNavigationConfig";
 import { AdminProfilesSection } from "@/app/supply-demand/admin/AdminProfilesSection";
@@ -10,7 +9,6 @@ import type {
   AutoParticipantProfileConfig,
   AutoParticipantProfileType,
   BatchJobRuntimeStatus,
-  ListingAutoAccount,
   LiquidityProviderMandate,
   LiquidityProviderRecommendation,
   StockBatchJobRun,
@@ -32,14 +30,6 @@ type AdminAutomationSectionProps = {
   onToggleAutoMarketEnabled: (config: AutoMarketConfig) => void;
   onRegenerateDailyRegime: (config: AutoMarketConfig) => void;
   onRegenerateRegimeModifier: (config: AutoMarketConfig) => void;
-  listingAutoAccounts: ListingAutoAccount[];
-  selectedListingAutoAccount: ListingAutoAccount | null;
-  listingAutoDraft: ListingAutoAccountDraft;
-  listingAutoDraftSetters: ListingAutoAccountDraftSetters;
-  editingListingAutoSymbol: string | null;
-  updatingListingAutoAccount: boolean;
-  onSelectListingAutoDraft: (account: ListingAutoAccount) => void;
-  onSubmitListingAutoConfig: () => void;
   liquidityProviderMandates: LiquidityProviderMandate[];
   liquidityProviderRecommendation: LiquidityProviderRecommendation | null;
   loadingLiquidityProviderMandates: boolean;
@@ -81,14 +71,6 @@ export function AdminAutomationSection({
   onToggleAutoMarketEnabled,
   onRegenerateDailyRegime,
   onRegenerateRegimeModifier,
-  listingAutoAccounts,
-  selectedListingAutoAccount,
-  listingAutoDraft,
-  listingAutoDraftSetters,
-  editingListingAutoSymbol,
-  updatingListingAutoAccount,
-  onSelectListingAutoDraft,
-  onSubmitListingAutoConfig,
   liquidityProviderMandates,
   liquidityProviderRecommendation,
   loadingLiquidityProviderMandates,
@@ -159,21 +141,6 @@ export function AdminAutomationSection({
         loading={loadingLiquidityProviderMandates}
         error={liquidityProviderMandatesError}
         onRefresh={onRefreshLiquidityProviderMandates}
-      />
-    );
-  }
-
-  if (activeSection === "market-legacy-liquidity") {
-    return (
-      <AdminListingAutoAccountPanel
-        accounts={listingAutoAccounts}
-        selectedAccount={selectedListingAutoAccount}
-        draft={listingAutoDraft}
-        draftSetters={listingAutoDraftSetters}
-        editingSymbol={editingListingAutoSymbol}
-        updating={updatingListingAutoAccount}
-        onSelectDraft={onSelectListingAutoDraft}
-        onSubmit={onSubmitListingAutoConfig}
       />
     );
   }

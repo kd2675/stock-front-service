@@ -76,8 +76,6 @@ export function useSupplyDemandAdminPageModel() {
     autoParticipants: queries.autoParticipants,
     editingAutoParticipantUserKey: drafts.autoParticipant.editingAutoParticipantUserKey,
     editingProfileType: drafts.profileConfig.editingProfileType,
-    listingAutoAccounts: queries.listingAutoAccounts,
-    listingAutoSymbol: drafts.listingAutoAccount.symbol,
     orderBookConfigs: queries.orderBookConfigs,
     profileConfigs: queries.profileConfigs,
     status: queries.status,

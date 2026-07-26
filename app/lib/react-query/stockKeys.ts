@@ -70,7 +70,6 @@ export const stockKeys = {
     includeParticipants?: boolean;
     includeParticipantSymbolConfigs?: boolean;
     includeParticipantProfileConfigs?: boolean;
-    includeListingAutoAccounts?: boolean;
     includeRuntimeMetrics?: boolean;
     includeSalaryEligibility?: boolean;
     participantSymbolConfigUserKey?: string;
@@ -80,7 +79,6 @@ export const stockKeys = {
     options?.includeParticipants ?? false,
     options?.includeParticipantSymbolConfigs ?? false,
     options?.includeParticipantProfileConfigs ?? false,
-    options?.includeListingAutoAccounts ?? false,
     options?.includeRuntimeMetrics ?? true,
     options?.includeSalaryEligibility ?? false,
     options?.participantSymbolConfigUserKey ?? "",

@@ -6,7 +6,6 @@ import {
   EMPTY_BATCH_JOB_RUNTIME_CONTROLS,
   EMPTY_CORPORATE_ACTIONS,
   EMPTY_INSTRUMENT_REPORTS,
-  EMPTY_LISTING_AUTO_ACCOUNTS,
   EMPTY_ORDER_BOOK_CONFIGS,
   EMPTY_ORDER_BOOK_INSTRUMENTS,
 } from "@/app/supply-demand/admin/AdminConstants";
@@ -28,7 +27,6 @@ import type {
   CorporateAction,
   FundFlow,
   InstrumentReport,
-  ListingAutoAccount,
   OrderBookInstrument,
   OrderBookMarketStatus,
 } from "@/app/types/stock";
@@ -65,7 +63,6 @@ export type AdminPageQueryResultData = {
   corporateActions: CorporateAction[];
   instrumentReports: InstrumentReport[];
   instruments: OrderBookInstrument[];
-  listingAutoAccounts: ListingAutoAccount[];
   openOrderBookConfigCount: number;
   orderBookConfigs: OrderBookMarketStatus["configs"];
   orderBookInstrumentCount: number;
@@ -95,7 +92,6 @@ export function normalizeAdminPageQueryResults(input: AdminPageQueryResultInput)
     corporateActions: input.corporateActions ?? EMPTY_CORPORATE_ACTIONS,
     instrumentReports: input.instrumentReports ?? EMPTY_INSTRUMENT_REPORTS,
     instruments,
-    listingAutoAccounts: status?.listingAutoAccounts ?? EMPTY_LISTING_AUTO_ACCOUNTS,
     openOrderBookConfigCount: resolveOpenOrderBookConfigCount({
       summary: orderBookMarketSummary,
       fallback: orderBookMarketConfig,

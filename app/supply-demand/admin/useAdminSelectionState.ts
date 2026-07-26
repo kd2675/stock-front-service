@@ -6,14 +6,12 @@ import {
   resolveParticipantStrategyKey,
   resolveSelectedAutoParticipant,
   resolveSelectedAutoParticipantSymbolConfigs,
-  resolveSelectedListingAutoAccount,
   resolveSelectedProfileConfig,
 } from "@/app/supply-demand/admin/AdminSelectionHelpers";
 import type {
   AutoParticipant,
   AutoParticipantProfileConfig,
   AutoParticipantSymbolConfig,
-  ListingAutoAccount,
   OrderBookMarketStatus,
 } from "@/app/types/stock";
 
@@ -22,8 +20,6 @@ export function useAdminSelectionState({
   autoParticipants,
   editingAutoParticipantUserKey,
   editingProfileType,
-  listingAutoAccounts,
-  listingAutoSymbol,
   orderBookConfigs,
   profileConfigs,
   strategySymbol,
@@ -32,8 +28,6 @@ export function useAdminSelectionState({
   autoParticipants: AutoParticipant[];
   editingAutoParticipantUserKey: string | null;
   editingProfileType: string | null;
-  listingAutoAccounts: ListingAutoAccount[];
-  listingAutoSymbol: string;
   orderBookConfigs: OrderBookMarketStatus["configs"];
   profileConfigs: AutoParticipantProfileConfig[];
   strategySymbol: string;
@@ -41,11 +35,6 @@ export function useAdminSelectionState({
   const orderBookConfigBySymbol = useMemo<Map<string, OrderBookMarketStatus["configs"][number]>>(
     () => buildSymbolMap(orderBookConfigs),
     [orderBookConfigs],
-  );
-
-  const selectedListingAutoAccount = useMemo(
-    () => resolveSelectedListingAutoAccount(listingAutoAccounts, listingAutoSymbol),
-    [listingAutoAccounts, listingAutoSymbol],
   );
 
   const profileConfigByType = useMemo(
@@ -73,7 +62,6 @@ export function useAdminSelectionState({
     profileConfigByType,
     selectedAutoParticipant,
     selectedAutoParticipantSymbolConfigs,
-    selectedListingAutoAccount,
     selectedParticipantStrategyKey: resolveParticipantStrategyKey(selectedAutoParticipant, strategySymbol),
     selectedProfileConfig,
   };

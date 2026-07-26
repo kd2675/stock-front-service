@@ -17,12 +17,6 @@ export function buildAdminAutomationContentProps({
     selectAutoMarketConfigDraft,
   } = drafts.autoMarketConfig;
   const {
-    draft: listingAutoAccountDraft,
-    draftSetters: listingAutoAccountDraftSetters,
-    editingSymbol: editingListingAutoSymbol,
-    selectListingAutoAccountDraft,
-  } = drafts.listingAutoAccount;
-  const {
     draft: profileConfigDraft,
     draftSetters: profileConfigDraftSetters,
     editingProfileType,
@@ -32,12 +26,10 @@ export function buildAdminAutomationContentProps({
     autoMarketConfigs,
     batchJobRuntimeControls,
     batchJobRuntimeControlsQuery,
-    listingAutoAccounts,
     profileConfigs,
   } = queries;
   const {
     selectProfileConfigByType,
-    selectedListingAutoAccount,
     selectedProfileConfig,
   } = derived;
   const {
@@ -48,7 +40,6 @@ export function buildAdminAutomationContentProps({
     setBatchJobRuntime,
     submitAutoConfig,
     submitProfileConfig,
-    submitListingAutoAccountConfig,
     regenerateDailyRegime,
     regeneratingDailyRegimeSymbol,
     regenerateRegimeModifier,
@@ -57,7 +48,6 @@ export function buildAdminAutomationContentProps({
     togglingAutoConfigSymbol,
     updatingAutoConfig,
     updatingBatchJobName,
-    updatingListingAutoAccount,
   } = actions;
 
   return {
@@ -69,15 +59,11 @@ export function buildAdminAutomationContentProps({
     batchJobRuntimeControls,
     batchRuntimeControlsError: batchJobRuntimeControlsQuery.isError,
     editingAutoConfigSymbol,
-    editingListingAutoSymbol,
     lastCashFlowRun,
     liquidityProviderMandates: queries.liquidityProviderMandatesQuery.data ?? [],
     liquidityProviderMandatesError: queries.liquidityProviderMandatesQuery.isError
       || queries.liquidityProviderRecommendationQuery.isError,
     liquidityProviderRecommendation: queries.liquidityProviderRecommendationQuery.data ?? null,
-    listingAutoAccounts,
-    listingAutoDraft: listingAutoAccountDraft,
-    listingAutoDraftSetters: listingAutoAccountDraftSetters,
     loadingBatchRuntimeControls: batchJobRuntimeControlsQuery.isFetching,
     loadingLiquidityProviderMandates: queries.liquidityProviderMandatesQuery.isFetching
       || queries.liquidityProviderRecommendationQuery.isFetching,
@@ -95,11 +81,9 @@ export function buildAdminAutomationContentProps({
     onClearProfileSelection: () => setEditingProfileType(null),
     onRunCashFlow: () => void runAutoParticipantCashFlowNow(),
     onSelectAutoMarketDraft: selectAutoMarketConfigDraft,
-    onSelectListingAutoDraft: selectListingAutoAccountDraft,
     onSelectProfile: selectProfileConfigByType,
     onSetBatchRuntime: (jobName, runtimeEnabled) => void setBatchJobRuntime(jobName, runtimeEnabled),
     onSubmitAutoMarketConfig: () => void submitAutoConfig(),
-    onSubmitListingAutoConfig: () => void submitListingAutoAccountConfig(),
     onSubmitProfileConfig: () => void submitProfileConfig(),
     onRegenerateDailyRegime: (config) => void regenerateDailyRegime(config),
     onRegenerateRegimeModifier: (config) => void regenerateRegimeModifier(config),
@@ -110,13 +94,11 @@ export function buildAdminAutomationContentProps({
     profileDraftSetters: profileConfigDraftSetters,
     runningCashFlow,
     savingProfileConfig,
-    selectedListingAutoAccount,
     selectedProfileConfig,
     regeneratingDailyRegimeSymbol,
     regeneratingRegimeModifierSymbol,
     togglingAutoConfigSymbol,
     updatingAutoConfig,
     updatingBatchJobName,
-    updatingListingAutoAccount,
   };
 }

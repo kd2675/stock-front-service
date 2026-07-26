@@ -6,32 +6,12 @@ import {
   authenticatedPostJson,
   toQuery,
 } from "@/app/lib/stock-api/core";
-import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowBreakdown, AdminFundFlowScope, AdminInvestorFlowHistory, AdminInvestorFlowSummary, AdminParticipantScope, AdminSymbolFlowList, AdminTotalAssetHistoryPage, AutoMarketDistributionBias, AutoMarketRegimeCountWeights, AutoMarketRegimeHistoryRange, AutoMarketStatus, AutoParticipant, AutoParticipantBehaviorModelVersion, AutoParticipantCashAdjustment, AutoParticipantLifecycleScope, AutoParticipantOverview, AutoParticipantPerformanceBasis, AutoParticipantPerformanceSummary, AutoParticipantProfileExitMode, AutoParticipantProfileInventoryMode, AutoParticipantProfileOverview, AutoParticipantProfilePricingMode, AutoParticipantProfileType, AutoParticipantSymbolConfig, AutoParticipantWithdrawalAudit, BatchJobRuntimeStatus, EodOperationsOverview, EodPhaseRetryResult, InstitutionPortfolio, InstitutionPortfolioRecommendation, LiquidityProviderMandate, LiquidityProviderRecommendation, ListingAutoOperationMode, ListingAutoPosition, ListingAutoStrategyProfile, RecurringCashIntervalUnit, StockBatchJobRun, SystemCustodyOverview, UnderwritingContract, UnderwritingContractRecommendation } from "@/app/types/stock";
+import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowBreakdown, AdminFundFlowScope, AdminInvestorFlowHistory, AdminInvestorFlowSummary, AdminParticipantScope, AdminSymbolFlowList, AdminTotalAssetHistoryPage, AutoMarketDistributionBias, AutoMarketRegimeCountWeights, AutoMarketRegimeHistoryRange, AutoMarketStatus, AutoParticipant, AutoParticipantBehaviorModelVersion, AutoParticipantCashAdjustment, AutoParticipantLifecycleScope, AutoParticipantOverview, AutoParticipantPerformanceBasis, AutoParticipantPerformanceSummary, AutoParticipantProfileExitMode, AutoParticipantProfileInventoryMode, AutoParticipantProfileOverview, AutoParticipantProfilePricingMode, AutoParticipantProfileType, AutoParticipantSymbolConfig, AutoParticipantWithdrawalAudit, BatchJobRuntimeStatus, EodOperationsOverview, EodPhaseRetryResult, InstitutionPortfolio, InstitutionPortfolioRecommendation, LiquidityProviderMandate, LiquidityProviderPolicyUpdatePayload, LiquidityProviderRecommendation, LiquidityProviderStatusChangePayload, RecurringCashIntervalUnit, StockBatchJobRun, SystemCustodyOverview, UnderwritingContract, UnderwritingContractRecommendation } from "@/app/types/stock";
 
 export type { AdminFundFlowScope } from "@/app/types/stock";
 
 export type StockBatchJobRuntimeControlPayload = {
   runtimeEnabled: boolean;
-};
-
-export type StockListingAutoAccountConfigPayload = {
-  displayName?: string;
-  enabled?: boolean;
-  positionSide?: ListingAutoPosition;
-  operationMode?: ListingAutoOperationMode;
-  strategyProfile?: ListingAutoStrategyProfile;
-  maxOrderQuantity?: number;
-  orderTtlSeconds?: number;
-  priceOffsetTicks?: number;
-  targetSpreadTicks?: number;
-  inventorySkewTicks?: number;
-  minimumProfitRate?: number;
-  aggressiveUnwindThreshold?: number;
-  aggressiveOrderRatio?: number;
-  targetBuyQuantity?: number;
-  targetSellQuantity?: number;
-  targetHoldingQuantity?: number;
-  inventoryBandQuantity?: number;
 };
 
 export type StockAutoMarketConfigPayload = {
@@ -182,6 +162,42 @@ export function createLiquidityProviderLive(
   return authenticatedPostJson<LiquidityProviderMandate>(
     token,
     `/api/stock/v1/markets/liquidity-mandates/${encodeURIComponent(symbol)}`,
+    payload,
+  );
+}
+
+export function updateLiquidityProviderPolicy(
+  token: string,
+  symbol: string,
+  payload: LiquidityProviderPolicyUpdatePayload,
+) {
+  return authenticatedPatchJson<LiquidityProviderMandate>(
+    token,
+    `/api/stock/v1/markets/liquidity-mandates/${encodeURIComponent(symbol)}/policy`,
+    payload,
+  );
+}
+
+export function suspendLiquidityProvider(
+  token: string,
+  symbol: string,
+  payload: LiquidityProviderStatusChangePayload,
+) {
+  return authenticatedPostJson<LiquidityProviderMandate>(
+    token,
+    `/api/stock/v1/markets/liquidity-mandates/${encodeURIComponent(symbol)}/suspend`,
+    payload,
+  );
+}
+
+export function resumeLiquidityProvider(
+  token: string,
+  symbol: string,
+  payload: LiquidityProviderStatusChangePayload,
+) {
+  return authenticatedPostJson<LiquidityProviderMandate>(
+    token,
+    `/api/stock/v1/markets/liquidity-mandates/${encodeURIComponent(symbol)}/resume`,
     payload,
   );
 }
@@ -403,18 +419,6 @@ export function updateBatchJobRuntimeControl(token: string, jobName: string, pay
   return authenticatedPatchJson<BatchJobRuntimeStatus>(
     token,
     `/api/stock/v1/markets/batch-jobs/runtime-controls/${encodeURIComponent(jobName)}`,
-    payload,
-  );
-}
-
-export function updateListingAutoAccountConfig(
-  token: string,
-  symbol: string,
-  payload: StockListingAutoAccountConfigPayload,
-) {
-  return authenticatedPatchJson<AutoMarketStatus["listingAutoAccounts"][number]>(
-    token,
-    `/api/stock/v1/markets/auto-market/listing-accounts/${encodeURIComponent(symbol)}`,
     payload,
   );
 }

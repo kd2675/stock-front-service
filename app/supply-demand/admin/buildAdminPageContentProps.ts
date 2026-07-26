@@ -10,7 +10,6 @@ import { buildAdminParticipantsContentProps } from "@/app/supply-demand/admin/bu
 export function buildAdminPageContentProps(context: AdminPageContentBuilderContext): AdminPageContentProps {
   const isAccountsContent = context.activeAdminTab === "funds" || context.activeAdminSection === "participants-overview";
   const isAutomationContent = context.activeAdminSection === "market-liquidity-providers"
-    || context.activeAdminSection === "market-legacy-liquidity"
     || context.activeAdminSection === "market-auto-market"
     || context.activeAdminSection === "participants-profiles"
     || context.activeAdminSection === "system-jobs";

@@ -1,16 +1,11 @@
 import { z } from "zod";
 
 import {
-  integerRange,
-  nonNegativeInteger,
-  numberRange,
-  optionalTrimmedStringAsUndefined,
   positiveInteger,
   positiveNumber,
   requiredTrimmedString,
   requiredUppercaseString,
 } from "@/app/lib/validation/zodFormSchemas";
-import { MAX_LISTING_AUTO_NEW_ORDERS_PER_SIDE_PER_RUN } from "@/app/supply-demand/admin/AdminConstants";
 
 export const createInstrumentSchema = z.object({
   symbol: requiredUppercaseString("종목 코드를 입력해 주세요."),
@@ -20,7 +15,7 @@ export const createInstrumentSchema = z.object({
   issuedShares: positiveInteger("초기 발행주식수는 1주 이상 정수로 입력해 주세요.")
     .max(Number.MAX_SAFE_INTEGER, "초기 발행주식수는 안전하게 계산 가능한 정수 범위여야 합니다."),
   priceLimitRate: positiveNumber("가격제한폭은 0보다 큰 숫자로 입력해 주세요.").max(100, "가격제한폭은 100 이하로 입력해 주세요."),
-  initialIssueMode: z.enum(["SCALED_ROLE_SEPARATED", "LEGACY_FULL_FLOAT"]).default("SCALED_ROLE_SEPARATED"),
+  initialIssueMode: z.literal("SCALED_ROLE_SEPARATED").default("SCALED_ROLE_SEPARATED"),
   tradableShareRatePercent: z.preprocess(
     (value) => typeof value === "string" && value.trim() === "" ? undefined : value,
     z.coerce.number()
@@ -29,84 +24,20 @@ export const createInstrumentSchema = z.object({
       .max(85, "초기 유통비율은 85% 이하여야 합니다.")
       .optional(),
   ),
-  listingAutoDisplayName: optionalTrimmedStringAsUndefined(),
-  listingAutoEnabled: z.enum(["true", "false"]).default("true"),
-  listingAutoPositionSide: z.enum(["SELL_ONLY", "BUY_ONLY", "TWO_SIDED"]).default("SELL_ONLY"),
-  listingAutoOperationMode: z.enum(["UNDERWRITER_RETURN", "LIQUIDITY_PROVIDER", "HYBRID"]).default("UNDERWRITER_RETURN"),
-  listingAutoStrategyProfile: z.enum(["LIQUIDITY_FIRST", "BALANCED", "RETURN_FIRST"]).default("RETURN_FIRST"),
-  listingAutoMaxOrderQuantity: positiveInteger("상장주관사 최대 주문 수량은 1주 이상 정수로 입력해 주세요."),
-  listingAutoOrderTtlSeconds: positiveInteger("상장주관사 호가 TTL은 1초 이상 정수로 입력해 주세요."),
-  listingAutoPriceOffsetTicks: nonNegativeInteger("상장주관사 가격 분산 틱은 0 이상 정수로 입력해 주세요."),
-  listingAutoTargetSpreadTicks: integerRange(1, 50),
-  listingAutoInventorySkewTicks: integerRange(0, 50),
-  listingAutoMinimumProfitRate: numberRange(0, 100),
-  listingAutoAggressiveUnwindThreshold: numberRange(0, 1),
-  listingAutoAggressiveOrderRatio: numberRange(0, 1),
-  listingAutoTargetBuyQuantity: nonNegativeInteger("상장주관사 목표 매수 잔량은 0 이상 정수로 입력해 주세요."),
-  listingAutoTargetSellQuantity: nonNegativeInteger("상장주관사 목표 매도 잔량은 0 이상 정수로 입력해 주세요."),
-  listingAutoTargetHoldingQuantity: nonNegativeInteger("상장주관사 목표 보유 수량은 0 이상 정수로 입력해 주세요."),
-  listingAutoInventoryBandQuantity: nonNegativeInteger("상장주관사 보유 허용 밴드는 0 이상 정수로 입력해 주세요."),
 }).superRefine((value, context) => {
-  if (value.initialIssueMode === "SCALED_ROLE_SEPARATED") {
-    if (value.tradableShareRatePercent === undefined) {
-      context.addIssue({
-        code: "custom",
-        path: ["tradableShareRatePercent"],
-        message: "초기 유통비율을 입력해 주세요.",
-      });
-    }
-    if (value.issuedShares < 2) {
-      context.addIssue({
-        code: "custom",
-        path: ["issuedShares"],
-        message: "역할 분리 발행은 유통·잠금 물량을 나누기 위해 2주 이상이어야 합니다.",
-      });
-    }
-    return;
+  if (value.tradableShareRatePercent === undefined) {
+    context.addIssue({
+      code: "custom",
+      path: ["tradableShareRatePercent"],
+      message: "초기 유통비율을 입력해 주세요.",
+    });
   }
-  if ((value.listingAutoOperationMode === "LIQUIDITY_PROVIDER" || value.listingAutoOperationMode === "HYBRID")
-      && value.listingAutoPositionSide !== "TWO_SIDED") {
-    context.addIssue({ code: "custom", path: ["listingAutoPositionSide"], message: "유동성공급형과 혼합형은 양방향 포지션이 필요합니다." });
-  }
-  if ((value.listingAutoPositionSide === "BUY_ONLY" || value.listingAutoPositionSide === "TWO_SIDED")
-      && value.listingAutoTargetBuyQuantity <= 0) {
-    context.addIssue({ code: "custom", path: ["listingAutoTargetBuyQuantity"], message: "활성 매수 목표는 1주 이상이어야 합니다." });
-  }
-  if ((value.listingAutoPositionSide === "SELL_ONLY" || value.listingAutoPositionSide === "TWO_SIDED")
-      && value.listingAutoTargetSellQuantity <= 0) {
-    context.addIssue({ code: "custom", path: ["listingAutoTargetSellQuantity"], message: "활성 매도 목표는 1주 이상이어야 합니다." });
-  }
-  if (value.listingAutoPositionSide === "BUY_ONLY" && value.listingAutoTargetHoldingQuantity <= 0) {
-    context.addIssue({ code: "custom", path: ["listingAutoTargetHoldingQuantity"], message: "매수 전용 목표 보유 수량은 1주 이상이어야 합니다." });
-  }
-  if (value.listingAutoTargetHoldingQuantity > value.issuedShares) {
-    context.addIssue({ code: "custom", path: ["listingAutoTargetHoldingQuantity"], message: "목표 보유 수량은 발행주식수를 넘을 수 없습니다." });
-  }
-  const oneRunCapacity = value.listingAutoMaxOrderQuantity * MAX_LISTING_AUTO_NEW_ORDERS_PER_SIDE_PER_RUN;
-  if ((value.listingAutoPositionSide === "BUY_ONLY" || value.listingAutoPositionSide === "TWO_SIDED")
-      && value.listingAutoTargetBuyQuantity > oneRunCapacity) {
-    context.addIssue({ code: "custom", path: ["listingAutoTargetBuyQuantity"], message: "목표 매수 잔량은 최대 수량의 10배를 넘을 수 없습니다." });
-  }
-  if ((value.listingAutoPositionSide === "SELL_ONLY" || value.listingAutoPositionSide === "TWO_SIDED")
-      && value.listingAutoTargetSellQuantity > oneRunCapacity) {
-    context.addIssue({ code: "custom", path: ["listingAutoTargetSellQuantity"], message: "목표 매도 잔량은 최대 수량의 10배를 넘을 수 없습니다." });
-  }
-  if (value.listingAutoPositionSide === "TWO_SIDED") {
-    if (value.listingAutoInventoryBandQuantity <= 0) {
-      context.addIssue({ code: "custom", path: ["listingAutoInventoryBandQuantity"], message: "양방향 운용의 보유 허용 밴드는 1주 이상이어야 합니다." });
-    }
-    if (value.listingAutoInventoryBandQuantity > value.listingAutoTargetHoldingQuantity) {
-      context.addIssue({ code: "custom", path: ["listingAutoInventoryBandQuantity"], message: "보유 허용 밴드는 목표 보유 수량을 넘을 수 없습니다." });
-    }
-    if (value.listingAutoTargetHoldingQuantity + value.listingAutoInventoryBandQuantity > value.issuedShares) {
-      context.addIssue({ code: "custom", path: ["listingAutoInventoryBandQuantity"], message: "목표 보유 수량과 밴드의 합은 발행주식수를 넘을 수 없습니다." });
-    }
-    if (value.listingAutoTargetBuyQuantity > value.listingAutoInventoryBandQuantity) {
-      context.addIssue({ code: "custom", path: ["listingAutoTargetBuyQuantity"], message: "목표 매수 호가 잔량은 보유 허용 밴드를 넘을 수 없습니다." });
-    }
-    if (value.listingAutoTargetSellQuantity > value.listingAutoInventoryBandQuantity) {
-      context.addIssue({ code: "custom", path: ["listingAutoTargetSellQuantity"], message: "목표 매도 호가 잔량은 보유 허용 밴드를 넘을 수 없습니다." });
-    }
+  if (value.issuedShares < 2) {
+    context.addIssue({
+      code: "custom",
+      path: ["issuedShares"],
+      message: "역할 분리 발행은 유통·잠금 물량을 나누기 위해 2주 이상이어야 합니다.",
+    });
   }
 });
 

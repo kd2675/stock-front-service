@@ -6,7 +6,7 @@ import {
   authenticatedPostJson,
   toQuery,
 } from "@/app/lib/stock-api/core";
-import type { AutoMarketStatus, CapitalIncreaseOfferingType, CashDividendGuidance, CorporateAction, CorporateActionEntitlement, CorporateActionType, Instrument, InstrumentMarketReport, InstrumentReport, ListingAutoOperationMode, ListingAutoPosition, ListingAutoStrategyProfile, MarketSessionStatus, MarketType, OrderBook, OrderBookCandle, OrderBookCandleInterval, OrderBookInstrument, OrderBookMarketStatus, OrderBookRecentExecution, OrderBookTradeSummary, Price, PriceTick, Ranking, SimulationClock, SimulationClockJumpAction, SymbolMarketConfig } from "@/app/types/stock";
+import type { AutoMarketStatus, CapitalIncreaseOfferingType, CashDividendGuidance, CorporateAction, CorporateActionEntitlement, CorporateActionType, Instrument, InstrumentMarketReport, InstrumentReport, MarketSessionStatus, MarketType, OrderBook, OrderBookCandle, OrderBookCandleInterval, OrderBookInstrument, OrderBookMarketStatus, OrderBookRecentExecution, OrderBookTradeSummary, Price, PriceTick, Ranking, SimulationClock, SimulationClockJumpAction, SymbolMarketConfig } from "@/app/types/stock";
 
 export type StockOrderBookInstrumentCreatePayload = {
   symbol: string;
@@ -16,27 +16,8 @@ export type StockOrderBookInstrumentCreatePayload = {
   issuedShares: number;
   priceLimitRate?: number;
   initialIssueAllocation?: {
-    mode: "SCALED_ROLE_SEPARATED" | "LEGACY_FULL_FLOAT";
+    mode: "SCALED_ROLE_SEPARATED";
     tradableShareRate?: number;
-  };
-  listingAutoAccount?: {
-    displayName?: string;
-    enabled?: boolean;
-    positionSide?: ListingAutoPosition;
-    operationMode?: ListingAutoOperationMode;
-    strategyProfile?: ListingAutoStrategyProfile;
-    maxOrderQuantity?: number;
-    orderTtlSeconds?: number;
-    priceOffsetTicks?: number;
-    targetSpreadTicks?: number;
-    inventorySkewTicks?: number;
-    minimumProfitRate?: number;
-    aggressiveUnwindThreshold?: number;
-    aggressiveOrderRatio?: number;
-    targetBuyQuantity?: number;
-    targetSellQuantity?: number;
-    targetHoldingQuantity?: number;
-    inventoryBandQuantity?: number;
   };
 };
 
@@ -267,7 +248,6 @@ export function getAutoMarketStatus(options?: {
   includeParticipants?: boolean;
   includeParticipantSymbolConfigs?: boolean;
   includeParticipantProfileConfigs?: boolean;
-  includeListingAutoAccounts?: boolean;
   includeRuntimeMetrics?: boolean;
   includeSalaryEligibility?: boolean;
   participantSymbolConfigUserKey?: string;
@@ -277,7 +257,6 @@ export function getAutoMarketStatus(options?: {
     includeParticipants: options?.includeParticipants,
     includeParticipantSymbolConfigs: options?.includeParticipantSymbolConfigs,
     includeParticipantProfileConfigs: options?.includeParticipantProfileConfigs,
-    includeListingAutoAccounts: options?.includeListingAutoAccounts,
     includeRuntimeMetrics: options?.includeRuntimeMetrics,
     includeSalaryEligibility: options?.includeSalaryEligibility,
     participantSymbolConfigUserKey: options?.participantSymbolConfigUserKey,

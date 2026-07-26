@@ -12,18 +12,20 @@ import {
   createInstitutionPortfolio,
   createUnderwritingContract,
   createOrderBookInstrument,
+  createLiquidityProviderLive,
   deleteInstrumentReport,
   jumpSimulationClock,
   openStockAccount,
   placeOrder,
-  createLiquidityProviderLive,
   publishInstrumentReport,
   reconnectStockAccount,
   regenerateAutoMarketDailyRegime,
   regenerateAutoMarketRegimeModifier,
   retryFailedEodPhase,
   runAutoParticipantCashFlow,
+  resumeLiquidityProvider,
   suspendInstitution,
+  suspendLiquidityProvider,
   suspendUnderwritingSupply,
   subscribeCorporateAction,
   updateAutoMarketConfig,
@@ -31,8 +33,8 @@ import {
   updateAutoParticipantSymbolConfig,
   updateBatchJobRuntimeControl,
   updateInstrumentReport,
+  updateLiquidityProviderPolicy,
   updateOrderBookInstrumentTradingRules,
-  updateListingAutoAccountConfig,
   updateMarketStatus,
   upsertAutoParticipant,
   withdrawAutoParticipant,
@@ -54,7 +56,6 @@ import type {
   UnderwritingSupplyActivationPayload,
   UnderwritingSupplySuspensionPayload,
   StockInstrumentReportPayload,
-  StockListingAutoAccountConfigPayload,
   StockMarketStatusPayload,
   StockOrderAmendPayload,
   StockOrderBookInstrumentCreatePayload,
@@ -64,7 +65,12 @@ import type {
   StockSimulationClockJumpPayload,
 } from "@/app/lib/stock";
 import { unwrapAuthenticatedStockRequest } from "@/app/lib/react-query/stockResult";
-import type { AutoParticipantProfileType, MarketType } from "@/app/types/stock";
+import type {
+  AutoParticipantProfileType,
+  LiquidityProviderPolicyUpdatePayload,
+  LiquidityProviderStatusChangePayload,
+  MarketType,
+} from "@/app/types/stock";
 
 type PlaceOrderVariables = StockOrderPlacePayload;
 
@@ -199,15 +205,6 @@ export function adminRegenerateAutoMarketRegimeModifierMutationOptions() {
   );
 }
 
-export function adminUpdateListingAutoAccountConfigMutationOptions() {
-  return adminMutationOptions(
-    (token, variables: {
-      symbol: string;
-      payload: StockListingAutoAccountConfigPayload;
-    }) => updateListingAutoAccountConfig(token, variables.symbol, variables.payload),
-  );
-}
-
 export function adminAdjustUserAccountCashMutationOptions() {
   return adminMutationOptions(
     (token, variables: {
@@ -317,6 +314,33 @@ export function adminCreateLiquidityProviderLiveMutationOptions() {
       symbol: string;
       payload: LiquidityProviderProvisionPayload;
     }) => createLiquidityProviderLive(token, variables.symbol, variables.payload),
+  );
+}
+
+export function adminUpdateLiquidityProviderPolicyMutationOptions() {
+  return adminMutationOptions(
+    (token, variables: {
+      symbol: string;
+      payload: LiquidityProviderPolicyUpdatePayload;
+    }) => updateLiquidityProviderPolicy(token, variables.symbol, variables.payload),
+  );
+}
+
+export function adminSuspendLiquidityProviderMutationOptions() {
+  return adminMutationOptions(
+    (token, variables: {
+      symbol: string;
+      payload: LiquidityProviderStatusChangePayload;
+    }) => suspendLiquidityProvider(token, variables.symbol, variables.payload),
+  );
+}
+
+export function adminResumeLiquidityProviderMutationOptions() {
+  return adminMutationOptions(
+    (token, variables: {
+      symbol: string;
+      payload: LiquidityProviderStatusChangePayload;
+    }) => resumeLiquidityProvider(token, variables.symbol, variables.payload),
   );
 }
 

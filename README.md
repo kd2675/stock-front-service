@@ -13,8 +13,7 @@
 - `/research` - 종목 분석
 - `/corporate-actions`
 - `/admin/**` - 관리자 운영 화면
-- `/admin/market/liquidity-providers` - 권장 LP 개수·기준 거래량·시드 수량을 확인하고 기존 자동 유동성 종료와 종목별 LP LIVE 생성을 한 번에 실행
-- `/admin/market/legacy-liquidity` - 전환 전 상장주관사 자동호가 설정만 분리 관리
+- `/admin/market/liquidity-providers` - 종목별 LP 권장값·재고 밴드·호가·일일한도를 확인하고 LP를 개별 생성·중단·수정·재개
 - `/admin/funds/custody` - 탈퇴·유통 대기·잠금 시스템 보관계정과 휴면 자동 참여자 원장
 - `/admin/participants/institutions` - 권장 기관 개수·AUM·운용 유형 수치를 확인하고 기관을 하나씩 제한된 다종목 LIVE로 생성한 뒤 결정·주문 감사
 - `/admin/corporate/instruments` - 종목과 유통 대기·잠금 보관원장만 생성하고 인수계약과 LP 준비 전까지 CLOSED로 대기

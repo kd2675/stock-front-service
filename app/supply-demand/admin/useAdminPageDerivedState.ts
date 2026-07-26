@@ -17,7 +17,6 @@ import type {
   AutoParticipant,
   AutoParticipantProfileConfig,
   AutoParticipantSymbolConfig,
-  ListingAutoAccount,
   OrderBookMarketStatus,
 } from "@/app/types/stock";
 
@@ -30,8 +29,6 @@ type AdminPageDerivedStateOptions = {
   autoParticipantSymbolConfigs: AutoParticipantSymbolConfig[];
   editingAutoParticipantUserKey: string | null;
   editingProfileType: AutoParticipantProfileConfig["profileType"] | null;
-  listingAutoAccounts: ListingAutoAccount[];
-  listingAutoSymbol: string;
   orderBookConfigs: OrderBookMarketStatus["configs"];
   profileConfigs: AutoParticipantProfileConfig[];
   status: AutoMarketStatus | null | undefined;
@@ -61,8 +58,6 @@ export function useAdminPageDerivedState(options: AdminPageDerivedStateOptions) 
     autoParticipantSymbolConfigs,
     editingAutoParticipantUserKey,
     editingProfileType,
-    listingAutoAccounts,
-    listingAutoSymbol,
     orderBookConfigs,
     profileConfigs,
     status,
@@ -79,7 +74,6 @@ export function useAdminPageDerivedState(options: AdminPageDerivedStateOptions) 
     profileConfigByType,
     selectedAutoParticipant,
     selectedAutoParticipantSymbolConfigs,
-    selectedListingAutoAccount,
     selectedParticipantStrategyKey,
     selectedProfileConfig,
   } = useAdminSelectionState({
@@ -87,8 +81,6 @@ export function useAdminPageDerivedState(options: AdminPageDerivedStateOptions) 
     autoParticipants,
     editingAutoParticipantUserKey,
     editingProfileType,
-    listingAutoAccounts,
-    listingAutoSymbol,
     orderBookConfigs,
     profileConfigs,
     strategySymbol,
@@ -180,7 +172,6 @@ export function useAdminPageDerivedState(options: AdminPageDerivedStateOptions) 
     selectProfileConfigByType,
     selectedAutoParticipant,
     selectedAutoParticipantSymbolConfigs,
-    selectedListingAutoAccount,
     selectedParticipantStrategyKey,
     selectedProfileConfig,
   };

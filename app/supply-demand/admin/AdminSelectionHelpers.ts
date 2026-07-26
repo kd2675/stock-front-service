@@ -4,7 +4,6 @@ import type {
   AutoParticipantProfileConfig,
   AutoParticipantProfileType,
   AutoParticipantSymbolConfig,
-  ListingAutoAccount,
   OrderBookInstrument,
   OrderBookMarketStatus,
 } from "@/app/types/stock";
@@ -33,10 +32,6 @@ export function resolveSelectedProfileConfig(configs: AutoParticipantProfileConf
 
 export function buildAutoParticipantOverviewMap(overviews: AutoParticipantOverview[]) {
   return new Map(overviews.map((overview) => [overview.userKey, overview]));
-}
-
-export function resolveSelectedListingAutoAccount(accounts: ListingAutoAccount[], symbol: string) {
-  return accounts.find((account) => account.symbol === symbol) ?? null;
 }
 
 export function resolveSelectedAutoParticipant(participants: AutoParticipant[], userKey: string | null) {

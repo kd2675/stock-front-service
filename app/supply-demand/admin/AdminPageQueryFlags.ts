@@ -4,7 +4,6 @@ type AdminAccessStatus = "checking" | "allowed" | "denied";
 
 export type AdminPageQueryFlags = {
   includeConfigs: boolean;
-  includeListingAutoAccounts: boolean;
   includeParticipantProfileConfigs: boolean;
   includeParticipants: boolean;
   includeParticipantSymbolConfigs: boolean;
@@ -70,16 +69,13 @@ export function resolveAdminPageQueryFlags({
   const includeConfigs = activeAdminSection === "market-auto-market" || includeParticipantStrategyDetails;
   const includeParticipantSymbolConfigs = includeParticipantStrategyDetails;
   const includeParticipantProfileConfigs = activeAdminSection === "funds-payroll" || activeAdminSection === "participants-profiles";
-  const includeListingAutoAccounts = activeAdminSection === "market-legacy-liquidity";
   const shouldLoadAutoMarketDetails = includeParticipants
     || includeConfigs
     || includeParticipantSymbolConfigs
-    || includeParticipantProfileConfigs
-    || includeListingAutoAccounts;
+    || includeParticipantProfileConfigs;
 
   return {
     includeConfigs,
-    includeListingAutoAccounts,
     includeParticipantProfileConfigs,
     includeParticipants,
     includeParticipantSymbolConfigs,

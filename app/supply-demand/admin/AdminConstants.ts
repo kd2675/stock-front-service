@@ -7,9 +7,6 @@ import type {
   CorporateAction,
   CorporateActionType,
   InstrumentReport,
-  ListingAutoOperationMode,
-  ListingAutoPosition,
-  ListingAutoStrategyProfile,
   OrderBookInstrument,
   OrderBookMarketStatus,
   RecurringCashIntervalUnit,
@@ -48,9 +45,17 @@ export const BATCH_JOB_RUNTIME_LABELS: Record<string, { label: string; descripti
     label: "자동장 주문 만료",
     description: "자동장이 낸 오래된 미체결 주문을 정리하고 예약 자산을 해제합니다.",
   },
-  "listing-auto-market": {
-    label: "상장주관사 주문 공급",
-    description: "상장주관사 자동계정이 초기 유동성 공급 주문을 냅니다.",
+  "liquidity-provider-market": {
+    label: "LP 양방향 호가",
+    description: "종목별 LP 계약의 재고 밴드와 일일 한도 안에서 수동 양방향 호가를 관리합니다.",
+  },
+  "issue-underwriter-market": {
+    label: "인수기관 제한 공급",
+    description: "인수 계약의 기간·수량·금액 한도 안에서 미매각 재고를 제한적으로 공급합니다.",
+  },
+  "institution-market": {
+    label: "기관투자자 주문",
+    description: "기관 포트폴리오의 목표 비중과 종목별 참여 한도 안에서 주문을 생성합니다.",
   },
   "auto-participant-cash-flow": {
     label: "정기 자금 지급",
@@ -66,7 +71,9 @@ export const SUPPLY_DEMAND_BATCH_JOB_NAMES = new Set([
   "order-book-execution",
   "auto-market",
   "auto-market-order-expiry",
-  "listing-auto-market",
+  "liquidity-provider-market",
+  "issue-underwriter-market",
+  "institution-market",
   "auto-participant-cash-flow",
   "corporate-actions",
   "portfolio-settlement",
@@ -90,23 +97,6 @@ export const DEFAULT_CREATE_INSTRUMENT_FORM_VALUES: CreateInstrumentFormValues =
   priceLimitRate: "30",
   initialIssueMode: "SCALED_ROLE_SEPARATED",
   tradableShareRatePercent: "50",
-  listingAutoDisplayName: "",
-  listingAutoEnabled: "true",
-  listingAutoPositionSide: "SELL_ONLY",
-  listingAutoOperationMode: "UNDERWRITER_RETURN",
-  listingAutoStrategyProfile: "RETURN_FIRST",
-  listingAutoMaxOrderQuantity: "100",
-  listingAutoOrderTtlSeconds: "90",
-  listingAutoPriceOffsetTicks: "3",
-  listingAutoTargetSpreadTicks: "8",
-  listingAutoInventorySkewTicks: "3",
-  listingAutoMinimumProfitRate: "1",
-  listingAutoAggressiveUnwindThreshold: "1",
-  listingAutoAggressiveOrderRatio: "0",
-  listingAutoTargetBuyQuantity: "0",
-  listingAutoTargetSellQuantity: "100",
-  listingAutoTargetHoldingQuantity: "0",
-  listingAutoInventoryBandQuantity: "0",
 };
 
 export const DEFAULT_STOCK_EVENT_ACTION_TYPE: CorporateActionType = "INITIAL_ISSUE";
@@ -116,22 +106,6 @@ export const DEFAULT_REPORT_SCORE = "5";
 export const DEFAULT_AUTO_MARKET_INTENSITY = "5";
 export const DEFAULT_AUTO_MARKET_MAX_ORDER_QUANTITY = "4";
 export const DEFAULT_AUTO_MARKET_ORDER_TTL_SECONDS = "15";
-export const DEFAULT_LISTING_AUTO_POSITION_SIDE: ListingAutoPosition = "SELL_ONLY";
-export const DEFAULT_LISTING_AUTO_OPERATION_MODE: ListingAutoOperationMode = "UNDERWRITER_RETURN";
-export const DEFAULT_LISTING_AUTO_STRATEGY_PROFILE: ListingAutoStrategyProfile = "RETURN_FIRST";
-export const DEFAULT_LISTING_AUTO_MAX_ORDER_QUANTITY = "100";
-export const DEFAULT_LISTING_AUTO_ORDER_TTL_SECONDS = "90";
-export const DEFAULT_LISTING_AUTO_PRICE_OFFSET_TICKS = "3";
-export const DEFAULT_LISTING_AUTO_TARGET_SPREAD_TICKS = "8";
-export const DEFAULT_LISTING_AUTO_INVENTORY_SKEW_TICKS = "3";
-export const DEFAULT_LISTING_AUTO_MINIMUM_PROFIT_RATE = "1";
-export const DEFAULT_LISTING_AUTO_AGGRESSIVE_UNWIND_THRESHOLD = "1";
-export const DEFAULT_LISTING_AUTO_AGGRESSIVE_ORDER_RATIO = "0";
-export const DEFAULT_LISTING_AUTO_TARGET_BUY_QUANTITY = "0";
-export const DEFAULT_LISTING_AUTO_TARGET_SELL_QUANTITY = "100";
-export const DEFAULT_LISTING_AUTO_TARGET_HOLDING_QUANTITY = "0";
-export const DEFAULT_LISTING_AUTO_INVENTORY_BAND_QUANTITY = "0";
-export const MAX_LISTING_AUTO_NEW_ORDERS_PER_SIDE_PER_RUN = 10;
 export const DEFAULT_AUTO_PARTICIPANT_PROFILE_TYPE: AutoParticipantProfileType = "NOISE_TRADER";
 export const DEFAULT_RECURRING_CASH_INTERVAL_UNIT: RecurringCashIntervalUnit = "DAY";
 export const DEFAULT_AUTO_GENERATE_COUNT = "5";
@@ -148,7 +122,6 @@ export const EMPTY_AUTO_MARKET_CONFIGS: AutoMarketStatus["configs"] = [];
 export const EMPTY_AUTO_PARTICIPANTS: AutoMarketStatus["participants"] = [];
 export const EMPTY_AUTO_PARTICIPANT_SYMBOL_CONFIGS: AutoMarketStatus["participantSymbolConfigs"] = [];
 export const EMPTY_AUTO_PARTICIPANT_PROFILE_CONFIGS: AutoMarketStatus["participantProfileConfigs"] = [];
-export const EMPTY_LISTING_AUTO_ACCOUNTS: AutoMarketStatus["listingAutoAccounts"] = [];
 export const EMPTY_AUTO_PARTICIPANT_OVERVIEWS: AutoParticipantOverview[] = [];
 export const EMPTY_AUTO_PARTICIPANT_PROFILE_OVERVIEWS: AutoParticipantProfileOverview[] = [];
 export const EMPTY_ORDER_BOOK_INSTRUMENTS: OrderBookInstrument[] = [];

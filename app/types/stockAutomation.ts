@@ -1,7 +1,3 @@
-export type ListingAutoPosition = "SELL_ONLY" | "BUY_ONLY" | "TWO_SIDED";
-export type ListingAutoOperationMode = "UNDERWRITER_RETURN" | "LIQUIDITY_PROVIDER" | "HYBRID";
-export type ListingAutoStrategyProfile = "LIQUIDITY_FIRST" | "BALANCED" | "RETURN_FIRST";
-
 export type AutoMarketRegimePhase = "SLOT_0600" | "SLOT_0900" | "SLOT_1200" | "SLOT_1500";
 
 export type AutoMarketDistributionBias = {
@@ -445,7 +441,6 @@ export type LiquidityProviderMandate = {
   contractEndDate: string | null;
   nextQuoteAt: string | null;
   policyVersion: number;
-  legacyListingLiquidityEnabled: boolean;
   roleEligible: boolean;
   roleEligibilityIssue: string | null;
   account: LiquidityProviderAccount;
@@ -460,8 +455,11 @@ export type LiquidityProviderMandate = {
     referenceDailyVolume: number;
     seedInventoryQuantity: number;
     seedCashAmount: number;
+    transferredInventoryQuantity: number;
+    transferredCashAmount: number;
     effectiveBusinessDate: string;
     legacyDisabledAt: string | null;
+    legacyRetiredAt: string | null;
     activatedAt: string | null;
     requestedBy: string;
     changeReason: string;
@@ -469,6 +467,17 @@ export type LiquidityProviderMandate = {
     createdAt: string;
     updatedAt: string;
   } | null;
+};
+
+export type LiquidityProviderPolicyUpdatePayload = Omit<
+  LiquidityProviderPolicy,
+  "primaryRegimeWeight" | "liquiditySizeSensitivity" | "passiveOnly"
+> & {
+  changeReason: string;
+};
+
+export type LiquidityProviderStatusChangePayload = {
+  changeReason?: string;
 };
 
 export type LiquidityProviderRecommendation = {
@@ -986,54 +995,11 @@ export type AutoParticipantProfileConfig = {
   updatedAt?: string | null;
 };
 
-export type ListingAutoAccount = {
-  symbol: string;
-  userKey: string;
-  displayName: string;
-  enabled: boolean;
-  positionSide: ListingAutoPosition;
-  operationMode: ListingAutoOperationMode;
-  strategyProfile: ListingAutoStrategyProfile;
-  issuedShares: number;
-  initialInventoryQuantity: number;
-  initialIssuePrice: number;
-  initialInventoryCost: number;
-  accountId: number | null;
-  cashBalance: number;
-  holdingQuantity: number;
-  reservedQuantity: number;
-  availableQuantity: number;
-  averagePrice: number;
-  currentPrice: number;
-  marketValue: number;
-  reservedBuyCash: number;
-  totalEquity: number;
-  netProfit: number;
-  returnRate: number;
-  maxOrderQuantity: number;
-  orderTtlSeconds: number;
-  priceOffsetTicks: number;
-  targetSpreadTicks: number;
-  inventorySkewTicks: number;
-  minimumProfitRate: number;
-  aggressiveUnwindThreshold: number;
-  aggressiveOrderRatio: number;
-  targetBuyQuantity: number;
-  targetSellQuantity: number;
-  targetHoldingQuantity: number;
-  inventoryBandQuantity: number;
-  openBuyQuantity: number;
-  openSellQuantity: number;
-  createdAt: string;
-  updatedAt: string;
-};
-
 export type AutoMarketStatus = {
   enabled: boolean;
   configCount: number;
   participantCount: number;
   participantProfileConfigCount: number;
-  listingAutoAccountCount: number;
   enabledParticipantCount: number;
   salaryEligibleParticipantCount: number;
   openAutoOrderCount: number;
@@ -1042,5 +1008,4 @@ export type AutoMarketStatus = {
   participants: AutoParticipant[];
   participantSymbolConfigs: AutoParticipantSymbolConfig[];
   participantProfileConfigs: AutoParticipantProfileConfig[];
-  listingAutoAccounts: ListingAutoAccount[];
 };

@@ -149,7 +149,6 @@ export function useAdminPageQueries({
     includeParticipants: queryFlags.includeParticipants,
     includeParticipantSymbolConfigs: queryFlags.includeParticipantSymbolConfigs,
     includeParticipantProfileConfigs: queryFlags.includeParticipantProfileConfigs,
-    includeListingAutoAccounts: queryFlags.includeListingAutoAccounts,
     includeRuntimeMetrics: false,
     includeSalaryEligibility: false,
     participantSymbolConfigUserKey: queryFlags.includeParticipantSymbolConfigs ? editingAutoParticipantUserKey ?? undefined : undefined,
