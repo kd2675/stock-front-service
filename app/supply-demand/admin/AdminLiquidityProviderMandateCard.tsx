@@ -23,6 +23,7 @@ import type {
   LiquidityProviderDailyState,
   LiquidityProviderMandate,
   LiquidityProviderPolicy,
+  LiquidityProviderPolicyPreset,
   LiquidityProviderPolicyUpdatePayload,
 } from "@/app/types/stock";
 
@@ -76,11 +77,29 @@ const LIMIT_FIELDS: PolicyField[] = [
 ];
 
 const TIMING_FIELDS: PolicyField[] = [
-  { key: "minimumQuoteLifetimeSeconds", label: "최소 호가 유지", min: 10, max: 1800, step: 1, suffix: "초" },
+  { key: "minimumQuoteLifetimeSeconds", label: "최소 호가 유지", min: 10, max: 1800, step: 1, suffix: "시뮬 초" },
   { key: "repriceThresholdTicks", label: "재호가 임계값", min: 1, max: 20, step: 1, suffix: "틱" },
-  { key: "orderTtlSeconds", label: "주문 TTL", min: 10, max: 7200, step: 1, suffix: "초" },
-  { key: "quoteIntervalSeconds", label: "판단 간격", min: 10, max: 600, step: 1, suffix: "초" },
+  { key: "orderTtlSeconds", label: "주문 TTL", min: 10, max: 7200, step: 1, suffix: "시뮬 초" },
+  { key: "quoteIntervalSeconds", label: "판단 간격", min: 10, max: 600, step: 1, suffix: "시뮬 초" },
 ];
+
+const POLICY_PRESET_LABELS: Readonly<Record<
+  LiquidityProviderPolicyPreset["presetCode"],
+  { label: string; description: string }
+>> = {
+  STABLE: {
+    label: "안정형",
+    description: "호가 수명을 길게 유지하고 체결 상한을 낮춰 주문 교체와 재고 변동을 최소화합니다.",
+  },
+  BALANCED: {
+    label: "균형형",
+    description: "축소 시장의 기본값입니다. 작은 양방향 호가를 유지하면서 하루 제출 여력을 확보합니다.",
+  },
+  ACTIVE: {
+    label: "적극형",
+    description: "표시량과 체결 참여율을 높이되 유통주식·재고·손실 비율 한도 안에서만 운용합니다.",
+  },
+};
 
 export function AdminLiquidityProviderMandateCard({
   accessToken,
@@ -359,8 +378,16 @@ export function AdminLiquidityProviderMandateCard({
       {editing ? (
         <PolicyEditor
           draft={draft}
+          presets={mandate.policyPresets ?? []}
           pending={updateMutation.isPending}
           onChange={(key, value) => setDraft((current) => ({ ...current, [key]: value }))}
+          onApplyPreset={(preset) => {
+            const presetLabel = POLICY_PRESET_LABELS[preset.presetCode].label;
+            setDraft(toPolicyDraft(
+              preset.policy,
+              `${presetLabel} 비율 프리셋 적용`,
+            ));
+          }}
           onCancel={() => {
             setDraft(toPolicyDraft(
               mandate.scheduledPolicy?.policy ?? mandate.policy,
@@ -487,14 +514,18 @@ function InventoryBandProgress({ mandate }: { mandate: LiquidityProviderMandate 
 
 function PolicyEditor({
   draft,
+  presets,
   pending,
   onChange,
+  onApplyPreset,
   onCancel,
   onSave,
 }: {
   draft: PolicyDraft;
+  presets: LiquidityProviderPolicyPreset[];
   pending: boolean;
   onChange: (key: keyof PolicyDraft, value: string) => void;
+  onApplyPreset: (preset: LiquidityProviderPolicyPreset) => void;
   onCancel: () => void;
   onSave: () => void;
 }) {
@@ -509,6 +540,11 @@ function PolicyEditor({
         </div>
         <span className="rounded-md bg-white/10 px-2 py-1 text-[10px] font-black text-stock-subtle">수동 지정가 전용</span>
       </div>
+      <PolicyPresetSelector
+        presets={presets}
+        disabled={pending}
+        onApply={onApplyPreset}
+      />
       <PolicyFieldGroup title="호가 크기·시장 깊이" fields={QUOTE_FIELDS} draft={draft} onChange={onChange} />
       <PolicyFieldGroup title="재고 목표·레짐 보정" fields={INVENTORY_FIELDS} draft={draft} onChange={onChange} />
       <PolicyFieldGroup title="일일 한도" fields={LIMIT_FIELDS} draft={draft} onChange={onChange} />
@@ -531,6 +567,69 @@ function PolicyEditor({
         </button>
       </div>
     </section>
+  );
+}
+
+function PolicyPresetSelector({
+  presets,
+  disabled,
+  onApply,
+}: {
+  presets: LiquidityProviderPolicyPreset[];
+  disabled: boolean;
+  onApply: (preset: LiquidityProviderPolicyPreset) => void;
+}) {
+  if (presets.length === 0) {
+    return (
+      <p className="mt-3 rounded-md border border-admin-warning/20 bg-admin-warning-surface px-3 py-2 text-[10px] font-bold leading-5 text-admin-warning">
+        현재 종목 규모로 계산된 비율 프리셋이 없습니다. 수동 입력값을 검토해 저장해 주세요.
+      </p>
+    );
+  }
+  return (
+    <fieldset className="mt-3 rounded-md border border-admin-accent/25 p-3">
+      <legend className="px-1 text-[11px] font-black text-white">유통주식·순자산 비율 프리셋</legend>
+      <p className="text-[10px] font-bold leading-5 text-stock-subtle">
+        프리셋은 현재 유통주식, 목표 재고, LP 순자산으로 수량과 금액을 다시 계산합니다. 선택하면 아래 편집값만 채워지며, 저장 후 다음 거래일부터 적용됩니다.
+      </p>
+      <div className="mt-2 grid gap-2 lg:grid-cols-3">
+        {presets.map((preset) => {
+          const meta = POLICY_PRESET_LABELS[preset.presetCode];
+          return (
+            <button
+              key={preset.presetCode}
+              type="button"
+              onClick={() => onApply(preset)}
+              disabled={disabled}
+              className="rounded-md border border-white/10 bg-black/20 p-3 text-left transition-colors hover:border-admin-accent/50 hover:bg-admin-accent-surface/20 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <span className="flex flex-wrap items-center gap-2">
+                <strong className="text-xs font-black text-white">{meta.label}</strong>
+                {preset.recommended ? (
+                  <span className="rounded-md bg-admin-accent/15 px-2 py-0.5 text-[9px] font-black text-admin-accent-label">
+                    기본 권장
+                  </span>
+                ) : null}
+              </span>
+              <span className="mt-1 block text-[10px] font-bold leading-4 text-stock-subtle">
+                {meta.description}
+              </span>
+              <span className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[9px] font-bold text-admin-quiet">
+                <span>기준량/유통 {formatDetailedPercent(preset.referenceDailyVolumeFloatRate)}</span>
+                <span>한쪽 호가/유통 {formatDetailedPercent(preset.oneSideQuoteFloatRate)}</span>
+                <span>체결 상한/유통 {formatDetailedPercent(preset.dailyExecutionFloatRate)}</span>
+                <span>제출 상한/유통 {formatDetailedPercent(preset.dailySubmissionFloatRate)}</span>
+                <span>재고 밴드/유통 {formatDetailedPercent(preset.inventoryBandFloatRate)}</span>
+                <span>손실 중단/NAV {formatDetailedPercent(preset.dailyLossNetAssetRate)}</span>
+              </span>
+              <span className="mt-2 block text-[9px] font-bold text-admin-muted">
+                한쪽 {formatInteger(preset.policy.maxOrderQuantity)}주 · TTL {preset.policy.orderTtlSeconds} 시뮬 초 · 최소 유지 {preset.policy.minimumQuoteLifetimeSeconds} 시뮬 초
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </fieldset>
   );
 }
 
@@ -807,6 +906,13 @@ function safeRate(value: number, limit: number) {
 
 function formatPercent(value: number) {
   return `${formatNumber(value * 100)}%`;
+}
+
+function formatDetailedPercent(value: number) {
+  return `${(value * 100).toLocaleString("ko-KR", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 4,
+  })}%`;
 }
 
 function formatPressure(value: number | null | undefined) {

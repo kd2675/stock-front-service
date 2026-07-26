@@ -388,6 +388,18 @@ export type LiquidityProviderPolicy = {
   dailyLossLimitAmount: number;
 };
 
+export type LiquidityProviderPolicyPreset = {
+  presetCode: "STABLE" | "BALANCED" | "ACTIVE";
+  recommended: boolean;
+  referenceDailyVolumeFloatRate: number;
+  oneSideQuoteFloatRate: number;
+  dailyExecutionFloatRate: number;
+  dailySubmissionFloatRate: number;
+  inventoryBandFloatRate: number;
+  dailyLossNetAssetRate: number;
+  policy: LiquidityProviderPolicy;
+};
+
 export type LiquidityProviderDailyState = {
   simulationTradeDate: string;
   referenceDailyVolume: number;
@@ -445,6 +457,7 @@ export type LiquidityProviderMandate = {
   roleEligibilityIssue: string | null;
   account: LiquidityProviderAccount;
   policy: LiquidityProviderPolicy;
+  policyPresets: LiquidityProviderPolicyPreset[];
   scheduledPolicy: {
     policyVersion: number;
     effectiveBusinessDate: string;

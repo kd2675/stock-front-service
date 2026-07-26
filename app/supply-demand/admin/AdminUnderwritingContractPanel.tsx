@@ -260,7 +260,10 @@ export function AdminUnderwritingContractPanel({
         </div>
         {recommendation ? (
           <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            <ContractMetric label="권장 법인" value={`${formatNumber(recommendation.recommendedUnderwriterOrganizationCount)}곳`} />
+            <ContractMetric
+              label="현재/권장 법인"
+              value={`${formatNumber(recommendation.currentUnderwriterOrganizationCount)}/${formatNumber(recommendation.recommendedUnderwriterOrganizationCount)}곳`}
+            />
             <ContractMetric label="종목당 권장 계정" value={`${formatNumber(recommendation.recommendedAccountCountPerSymbol)}개`} />
             <ContractMetric label="추가 권장 계약" value={`${formatNumber(recommendation.recommendedRemainingContractCount)}건`} />
             <ContractMetric label="권장 공급" value={`${formatRate(recommendation.recommendedSupplyRate)} · ${recommendation.recommendedSupplyDurationDays}일`} />
