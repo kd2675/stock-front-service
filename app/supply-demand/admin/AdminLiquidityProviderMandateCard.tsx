@@ -18,6 +18,7 @@ import {
   formatNumber,
   formatWon,
 } from "@/app/supply-demand/admin/AdminFormatters";
+import { formatMarketRoleCode } from "@/app/supply-demand/admin/adminMarketRoleFormatters";
 import type {
   LiquidityProviderDailyState,
   LiquidityProviderMandate,
@@ -184,7 +185,7 @@ export function AdminLiquidityProviderMandateCard({
       if (applyResult(
         result,
         "LP를 재개하지 못했습니다.",
-        `${mandate.symbol} LP를 LIVE로 재개했습니다.`,
+        `${mandate.symbol} LP를 실운영 상태로 재개했습니다.`,
       )) {
         setEditing(false);
       }
@@ -207,15 +208,17 @@ export function AdminLiquidityProviderMandateCard({
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="text-sm font-black text-white">{mandate.symbol}</h3>
             <span className="rounded-md bg-admin-danger-surface px-2 py-1 text-[10px] font-black text-admin-danger">
-              {mandate.executionMode}
+              {formatMarketRoleCode(mandate.executionMode)}
             </span>
             <span className={mandate.status === "ACTIVE"
               ? "rounded-md bg-admin-success-surface px-2 py-1 text-[10px] font-black text-admin-success"
               : "rounded-md bg-admin-warning-surface px-2 py-1 text-[10px] font-black text-admin-warning"}
             >
-              {mandate.status}
+              {formatMarketRoleCode(mandate.status)}
             </span>
-            <span className={stateClassName(state)}>{state?.stateStatus ?? "미실행"}</span>
+            <span className={stateClassName(state)}>
+              {formatMarketRoleCode(state?.stateStatus, "미실행")}
+            </span>
           </div>
           <p className="mt-1 break-all text-xs font-bold text-stock-subtle">
             {mandate.mandateCode} · 계약 #{mandate.mandateId} · 정책 v{mandate.policyVersion}
@@ -265,7 +268,7 @@ export function AdminLiquidityProviderMandateCard({
                 disabled={!accessToken || pending || editing}
                 className="min-h-9 rounded-md bg-admin-success px-3 text-xs font-black text-white disabled:opacity-40"
               >
-                {resumeMutation.isPending ? "재개 중" : "LIVE 재개"}
+                {resumeMutation.isPending ? "재개 중" : "실운영 재개"}
               </button>
             </>
           ) : null}
@@ -288,7 +291,7 @@ export function AdminLiquidityProviderMandateCard({
 
       {mandate.transition ? (
         <div className="mt-3 grid gap-2 rounded-md border border-white/10 bg-white/[0.025] px-3 py-2 text-[10px] font-bold text-stock-subtle md:grid-cols-5">
-          <TransitionMetric label="전환 상태" value={`${mandate.transition.stage} · v${mandate.transition.policyVersion}`} />
+          <TransitionMetric label="전환 상태" value={`${formatMarketRoleCode(mandate.transition.stage)} · v${mandate.transition.policyVersion}`} />
           <TransitionMetric label="출발 → LP" value={`#${mandate.transition.sourceAccountId} → #${mandate.account.accountId}`} />
           <TransitionMetric label="최초 LP 시드" value={`${formatInteger(mandate.transition.seedInventoryQuantity)}주 · ${formatCompactWon(mandate.transition.seedCashAmount)}`} />
           <TransitionMetric label="기존 계좌 전량 이전" value={`${formatInteger(mandate.transition.transferredInventoryQuantity)}주 · ${formatCompactWon(mandate.transition.transferredCashAmount)}`} />
@@ -426,7 +429,7 @@ function PolicyEditor({
             중단 상태·시뮬레이션 일시정지·장전에서만 저장됩니다. 비율은 0.01이 1%이며 LP는 항상 수동 지정가만 사용합니다.
           </p>
         </div>
-        <span className="rounded-md bg-white/10 px-2 py-1 text-[10px] font-black text-stock-subtle">passive only</span>
+        <span className="rounded-md bg-white/10 px-2 py-1 text-[10px] font-black text-stock-subtle">수동 지정가 전용</span>
       </div>
       <PolicyFieldGroup title="호가 크기·시장 깊이" fields={QUOTE_FIELDS} draft={draft} onChange={onChange} />
       <PolicyFieldGroup title="재고 목표·레짐 보정" fields={INVENTORY_FIELDS} draft={draft} onChange={onChange} />
@@ -509,8 +512,10 @@ function PolicyAuditTable({ mandate }: { mandate: LiquidityProviderMandate }) {
         <tbody>
           <tr className="align-top text-admin-muted">
             <td className="px-3 py-3">
-              <p className="font-black text-white">{state?.gateReason ?? "NOT_RUN"}</p>
-              <p className="mt-1 text-[10px] text-admin-quiet">run {formatInteger(state?.quoteRunCount ?? 0)} · state v{formatInteger(state?.version ?? 0)}</p>
+              <p className="font-black text-white">
+                {formatMarketRoleCode(state?.gateReason, "아직 실행 전")}
+              </p>
+              <p className="mt-1 text-[10px] text-admin-quiet">실행 {formatInteger(state?.quoteRunCount ?? 0)}회 · 상태 v{formatInteger(state?.version ?? 0)}</p>
             </td>
             <td className="px-3 py-3 tabular-nums">
               <p className="font-black text-white">{formatNumber(state?.submittedBuyQuantity ?? 0)} / {formatNumber(state?.submittedSellQuantity ?? 0)}주</p>
@@ -650,19 +655,29 @@ function mandateReviewReasons(mandate: LiquidityProviderMandate) {
     reasons.push("종목 단위 생성·이전 감사 기록이 없습니다.");
   }
   if (!mandate.roleEligible) {
-    reasons.push(`전용 계정 역할 검증 실패: ${mandate.roleEligibilityIssue ?? "UNKNOWN"}`);
+    reasons.push(
+      `전용 계정 역할 검증 실패: ${formatMarketRoleCode(
+        mandate.roleEligibilityIssue,
+        "원인 확인 필요",
+      )}`,
+    );
   }
   if (!mandate.policy.passiveOnly) {
     reasons.push("공격 주문 정책은 현재 LP 엔진에서 허용하지 않습니다.");
   }
   if (mandate.status !== "ACTIVE" && mandate.status !== "SUSPENDED") {
-    reasons.push(`계약 상태가 ${mandate.status}입니다.`);
+    reasons.push(`계약 상태가 ${formatMarketRoleCode(mandate.status)}입니다.`);
   }
   if (!mandate.dailyState) {
     reasons.push("현재 거래일 LP 판단 기록이 아직 없습니다.");
   } else {
     if (mandate.dailyState.limitBreached) {
-      reasons.push(`일일 위험 게이트가 중단되었습니다: ${mandate.dailyState.gateReason}`);
+      reasons.push(
+        `일일 위험 게이트가 중단되었습니다: ${formatMarketRoleCode(
+          mandate.dailyState.gateReason,
+          "원인 확인 필요",
+        )}`,
+      );
     }
     if (mandate.dailyState.stateStatus === "ERROR") {
       reasons.push("최근 LP 판단이 오류로 종료되었습니다.");

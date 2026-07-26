@@ -18,6 +18,7 @@ import {
   ProfileMiniMetric,
 } from "@/app/supply-demand/admin/AdminMetricCards";
 import { formatParticipantRecurringCash } from "@/app/supply-demand/admin/AdminParticipantPolicyHelpers";
+import { formatMarketRoleCode } from "@/app/supply-demand/admin/adminMarketRoleFormatters";
 import type {
   AutoParticipant,
   AutoParticipantOverview,
@@ -291,7 +292,11 @@ function SystemCustodySummary({
                     <tr key={`${account.accountId}:${holding.symbol}`}>
                       <td className="px-3 py-2 font-black text-white">{account.deskCode}</td>
                       <td className="px-3 py-2">{account.accountCode ?? `#${account.accountId}`}</td>
-                      <td className="px-3 py-2">{account.accountStatus} · {account.mappingStatus}</td>
+                      <td className="px-3 py-2">
+                        {formatMarketRoleCode(account.accountStatus)}
+                        {" · "}
+                        {formatMarketRoleCode(account.mappingStatus)}
+                      </td>
                       <td className="px-3 py-2 font-black text-white">{holding.symbol}</td>
                       <td className="px-3 py-2 text-right tabular-nums">{formatNumber(holding.quantity)}주 · 예약 {formatNumber(holding.reservedQuantity)}주</td>
                       <td className="px-3 py-2 text-right tabular-nums">{formatWon(holding.marketValue)}</td>
@@ -301,7 +306,11 @@ function SystemCustodySummary({
                     <tr key={`${account.accountId}:empty`}>
                       <td className="px-3 py-2 font-black text-white">{account.deskCode}</td>
                       <td className="px-3 py-2">{account.accountCode ?? `#${account.accountId}`}</td>
-                      <td className="px-3 py-2">{account.accountStatus} · {account.mappingStatus}</td>
+                      <td className="px-3 py-2">
+                        {formatMarketRoleCode(account.accountStatus)}
+                        {" · "}
+                        {formatMarketRoleCode(account.mappingStatus)}
+                      </td>
                       <td className="px-3 py-2 text-admin-quiet">보유 없음</td>
                       <td className="px-3 py-2 text-right">0주</td>
                       <td className="px-3 py-2 text-right">{formatWon(0)}</td>
@@ -397,7 +406,10 @@ function DormantParticipantCard({ row }: { row: DormantParticipantRow }) {
               <p className="mt-1 text-xs font-bold text-stock-subtle">사용 {formatWon(participant.fundingSpentAmount)} · 활성 {formatCount(participant.activeFundingBudgetCount, "건")}</p>
             </ParticipantInfoItem>
             <ParticipantInfoItem label="계좌·상태 추적">
-              <p className="font-black text-white">계좌 {participant.accountStatus ?? "없음"} · ID {participant.accountId ?? "—"}</p>
+              <p className="font-black text-white">
+                계좌 {formatMarketRoleCode(participant.accountStatus, "없음")}
+                {" · "}ID {participant.accountId ?? "—"}
+              </p>
               <p className="mt-1 text-xs font-bold text-stock-subtle">추적 종목 {formatCount(participant.trackedPositionCount, "개")}</p>
               <p className="mt-1 text-xs font-bold text-stock-subtle">평균 보유 {formatNumber(participant.averageHoldingTradingDays)} 거래일</p>
               <p className="mt-1 text-xs font-bold text-stock-subtle">누적 물타기 {formatCount(participant.averageDownRoundCount, "회")}</p>
@@ -524,7 +536,12 @@ function resolveDormantReviewReasons(
     reasons.push("탈퇴 참여자의 자동매매 활성 플래그가 남아 있습니다.");
   }
   if (participant.accountId != null && participant.accountStatus !== "CLOSED") {
-    reasons.push(`탈퇴 계좌 상태가 CLOSED가 아닙니다: ${participant.accountStatus ?? "상태 없음"}`);
+    reasons.push(
+      `탈퇴 계좌가 종료 상태가 아닙니다: ${formatMarketRoleCode(
+        participant.accountStatus,
+        "상태 없음",
+      )}`,
+    );
   }
   if (participant.accountId != null && !participant.accountClosedOnWithdrawal) {
     reasons.push("자산 반환·계좌 종료 감사 원장이 없습니다.");

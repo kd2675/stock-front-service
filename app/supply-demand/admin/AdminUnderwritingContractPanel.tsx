@@ -19,6 +19,7 @@ import {
   formatWon,
 } from "@/app/supply-demand/admin/AdminFormatters";
 import { ProfileMiniMetric } from "@/app/supply-demand/admin/AdminMetricCards";
+import { formatMarketRoleCode } from "@/app/supply-demand/admin/adminMarketRoleFormatters";
 import type {
   SecurityAllocation,
   UnderwritingContract,
@@ -196,7 +197,7 @@ export function AdminUnderwritingContractPanel({
       upsertUnderwritingContractQueryData(queryClient, suspended.data);
       setFeedback({
         tone: "success",
-        message: `${suspended.data.symbol} 인수기관 공급을 중단하고 ALLOCATED 상태로 되돌렸습니다.`,
+        message: `${suspended.data.symbol} 인수기관 공급을 중단하고 인수 배정 완료 상태로 되돌렸습니다.`,
       });
     } finally {
       setWorkingContractId(null);
@@ -291,7 +292,9 @@ export function AdminUnderwritingContractPanel({
                       <td className="px-3 py-2 text-right">{formatNumber(item.lockedShares)}주</td>
                       <td className="px-3 py-2 text-right">{formatWon(item.issuePrice)}</td>
                       <td className={item.creationEligible ? "px-3 py-2 text-admin-success" : "px-3 py-2 text-admin-warning"}>
-                        {item.creationEligible ? "생성 가능" : item.eligibilityReason}
+                        {item.creationEligible
+                          ? "생성 가능"
+                          : formatMarketRoleCode(item.eligibilityReason, "생성 조건 확인 필요")}
                       </td>
                     </tr>
                   ))}
@@ -311,7 +314,9 @@ export function AdminUnderwritingContractPanel({
               <option value="">종목 선택</option>
               {(recommendation?.symbols ?? []).map((item) => (
                 <option key={item.symbol} value={item.symbol} disabled={!item.creationEligible}>
-                  {item.symbol} · {item.creationEligible ? `${formatNumber(item.floatCustodyAvailableQuantity)}주 인수 가능` : item.eligibilityReason}
+                  {item.symbol} · {item.creationEligible
+                    ? `${formatNumber(item.floatCustodyAvailableQuantity)}주 인수 가능`
+                    : formatMarketRoleCode(item.eligibilityReason, "생성 조건 확인 필요")}
                 </option>
               ))}
             </select>
@@ -393,10 +398,10 @@ export function AdminUnderwritingContractPanel({
               전체 인수재고를 시장에 내놓지 않습니다. 계약 총 제출량, 거래일별 제출량, 일일 주문 횟수, 주문 1건, 외부 매수 5호가 깊이 중 가장 작은 한도만 매도하며 취소된 주문도 예산과 주문 횟수를 소비합니다.
             </p>
             <p className="mt-1 max-w-4xl text-[10px] font-bold leading-5 text-admin-quiet">
-              역할 분리형 신규 종목은 먼저 전용 LP를 LIVE로 전환해 주문장 시장을 활성화하고, 종목 자동시장·기준 거래량 위험 설정이 켜져 있어야 합니다.
+              역할 분리형 신규 종목은 먼저 전용 LP를 실운영으로 전환해 주문장 시장을 활성화하고, 종목 자동시장·기준 거래량 위험 설정이 켜져 있어야 합니다.
             </p>
             <p className="mt-1 max-w-4xl text-[10px] font-bold leading-5 text-admin-warning">
-              공급 기간이나 총 상한이 끝난 뒤 남은 인수재고는 자동 분산되지 않습니다. 현재 초기 참여자 배정·락업 해제 workflow가 없으므로 신규 종목의 실제 활동 유통량을 별도로 검토한 뒤 공급률을 확정하세요.
+              공급 기간이나 총 상한이 끝난 뒤 남은 인수재고는 자동 분산되지 않습니다. 현재 초기 참여자 배정·락업 해제 처리 흐름이 없으므로 신규 종목의 실제 활동 유통량을 별도로 검토한 뒤 공급률을 확정하세요.
             </p>
           </div>
           <span className="rounded-md bg-admin-warning-surface px-2 py-1 text-[10px] font-black text-admin-warning">
@@ -507,9 +512,11 @@ function UnderwritingContractCard({
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="text-sm font-black text-white">{contract.symbol} · {contract.instrumentName}</h3>
-            <span className={statusClassName(contract.status)}>{contract.status}</span>
+            <span className={statusClassName(contract.status)}>
+              {formatMarketRoleCode(contract.status)}
+            </span>
             <span className="rounded-md bg-white/10 px-2 py-1 text-[10px] font-black text-stock-subtle">
-              {contract.underwritingType}
+              {formatMarketRoleCode(contract.underwritingType)}
             </span>
           </div>
           <p className="mt-1 break-all text-xs font-bold text-stock-subtle">
@@ -574,7 +581,7 @@ function UnderwritingContractCard({
         <ContractMetric
           label="최근 일일 게이트"
           value={contract.supply.latestDailyState
-            ? `${contract.supply.latestDailyState.stateStatus} · ${contract.supply.latestDailyState.gateReason}`
+            ? `${formatMarketRoleCode(contract.supply.latestDailyState.stateStatus)} · ${formatMarketRoleCode(contract.supply.latestDailyState.gateReason)}`
             : "실행 이력 없음"}
         />
       </div>
@@ -587,7 +594,7 @@ function UnderwritingContractCard({
         />
         <ContractInfo
           label="전용 계정"
-          primary={`${contract.account.accountRole ?? "역할 없음"} · ${contract.account.accountStatus}`}
+          primary={`${formatMarketRoleCode(contract.account.accountRole, "역할 없음")} · ${formatMarketRoleCode(contract.account.accountStatus)}`}
           secondary={`가용 ${formatNumber(contract.account.availableSellQuantity)}주 · 예약 ${formatNumber(contract.account.reservedSellQuantity)}주 · 타종목 ${formatNumber(contract.account.unmanagedHoldingCount)}개`}
         />
         <ContractInfo
@@ -646,7 +653,9 @@ function AllocationRow({ allocation }: { allocation: SecurityAllocation }) {
   return (
     <tr className="align-top text-admin-muted">
       <td className="px-3 py-3">
-        <p className="font-black text-white">#{allocation.allocationId} · {allocation.eventType}</p>
+        <p className="font-black text-white">
+          #{allocation.allocationId} · {formatMarketRoleCode(allocation.eventType)}
+        </p>
         <p className="mt-1 text-[10px] text-admin-quiet">기업행사 #{allocation.corporateActionId ?? "—"}</p>
       </td>
       <td className="px-3 py-3">
@@ -654,13 +663,17 @@ function AllocationRow({ allocation }: { allocation: SecurityAllocation }) {
           ? "rounded-md bg-admin-success-surface px-2 py-1 text-[10px] font-black text-admin-success"
           : "rounded-md bg-white/10 px-2 py-1 text-[10px] font-black text-stock-subtle"}
         >
-          {allocation.tradabilityStatus}
+          {formatMarketRoleCode(allocation.tradabilityStatus)}
         </span>
       </td>
-      <td className="px-3 py-3 font-black text-white">{allocation.allocationReason}</td>
+      <td className="px-3 py-3 font-black text-white">
+        {formatMarketRoleCode(allocation.allocationReason)}
+      </td>
       <td className="px-3 py-3">
         <p className="font-black text-white">{allocation.destinationAccountCode ?? `#${allocation.destinationAccountId}`}</p>
-        <p className="mt-1 text-[10px] text-admin-quiet">{allocation.destinationParticipantCategory}</p>
+        <p className="mt-1 text-[10px] text-admin-quiet">
+          {formatMarketRoleCode(allocation.destinationParticipantCategory)}
+        </p>
       </td>
       <td className="px-3 py-3 text-right font-black tabular-nums text-white">{formatNumber(allocation.quantity)}주</td>
       <td className="px-3 py-3 text-right tabular-nums">
@@ -782,5 +795,5 @@ function formatReconciliationIssue(issue: string) {
     HOLDING_SUPPLY_MISMATCH: "현재 전체 계좌 보유수량 합계가 종목 발행주식과 일치하지 않습니다.",
     HOLDING_RESERVATION_INVALID: "보유수량 또는 예약수량에 음수·초과 값이 있습니다.",
   };
-  return labels[issue] ?? issue;
+  return labels[issue] ?? "알 수 없는 대사 오류입니다. API 원본 사유를 확인해 주세요.";
 }

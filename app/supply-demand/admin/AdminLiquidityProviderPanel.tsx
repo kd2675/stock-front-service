@@ -16,6 +16,7 @@ import {
   formatWon,
 } from "@/app/supply-demand/admin/AdminFormatters";
 import { ProfileMiniMetric } from "@/app/supply-demand/admin/AdminMetricCards";
+import { formatMarketRoleCode } from "@/app/supply-demand/admin/adminMarketRoleFormatters";
 import type { LiquidityProviderMandate, LiquidityProviderRecommendation } from "@/app/types/stock";
 
 export function AdminLiquidityProviderPanel({
@@ -39,7 +40,7 @@ export function AdminLiquidityProviderPanel({
   const [referenceVolumePercent, setReferenceVolumePercent] = useState("3.0");
   const [seedInventoryPercent, setSeedInventoryPercent] = useState("0.5");
   const [cashMultiplier, setCashMultiplier] = useState("1.0");
-  const [changeReason, setChangeReason] = useState("축소 시장용 종목 전용 LP LIVE 전환");
+  const [changeReason, setChangeReason] = useState("축소 시장용 종목 전용 LP 실운영 전환");
   const [confirmed, setConfirmed] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const summary = useMemo(() => summarizeMandates(mandates), [mandates]);
@@ -85,7 +86,7 @@ export function AdminLiquidityProviderPanel({
       });
       const provisioned = getAdminActionData(
         result,
-        "LP LIVE 생성을 완료하지 못했습니다.",
+        "LP 실운영 생성을 완료하지 못했습니다.",
       );
       if (!provisioned.ok) {
         setFeedback({ tone: "error", message: provisioned.message });
@@ -95,7 +96,7 @@ export function AdminLiquidityProviderPanel({
       setConfirmed(false);
       setFeedback({
         tone: "success",
-        message: `${provisioned.data.symbol} 전용 LP 계정과 계약을 LIVE로 생성했습니다.`,
+        message: `${provisioned.data.symbol} 전용 LP 계정과 계약을 실운영 상태로 생성했습니다.`,
       });
       onRefresh();
     } catch (error) {
@@ -103,7 +104,7 @@ export function AdminLiquidityProviderPanel({
         tone: "error",
         message: error instanceof Error && error.message.trim()
           ? error.message
-          : "LP LIVE 생성을 완료하지 못했습니다.",
+          : "LP 실운영 생성을 완료하지 못했습니다.",
       });
     }
   };
@@ -141,7 +142,7 @@ export function AdminLiquidityProviderPanel({
 
       <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
         <ProfileMiniMetric label="LP 계약" value={formatCount(mandates.length, "개")} tone="blue" />
-        <ProfileMiniMetric label="LIVE" value={formatCount(summary.liveCount, "개")} tone={summary.liveCount > 0 ? "blue" : "muted"} />
+        <ProfileMiniMetric label="실운영 중" value={formatCount(summary.activeLiveCount, "개")} tone={summary.activeLiveCount > 0 ? "blue" : "muted"} />
         <ProfileMiniMetric label="현재 LP NAV" value={formatCompactWon(summary.currentNetAssetValue)} tone="muted" />
         <ProfileMiniMetric label="오늘 체결" value={formatCount(summary.executedQuantity, "주")} tone="muted" />
         <ProfileMiniMetric label="오늘 제출" value={formatCount(summary.submittedQuantity, "주")} tone="muted" />
@@ -172,7 +173,7 @@ export function AdminLiquidityProviderPanel({
         <div className="mt-4 rounded-md border border-white/10 bg-black/20 px-4 py-5">
           <p className="text-sm font-black text-white">아직 전용 LP 계약이 없습니다.</p>
           <p className="mt-2 max-w-4xl text-xs font-bold leading-5 text-stock-subtle">
-            아래에서 종목을 하나씩 LIVE로 생성할 수 있습니다. 별도의 SHADOW 단계는 없으며 실패하면 계정·계약·시드 이전을 함께 롤백합니다.
+            아래에서 종목을 하나씩 곧바로 실운영 상태로 생성할 수 있습니다. 별도의 사전 관찰 단계는 없으며 실패하면 계정·계약·시드 이전을 함께 롤백합니다.
           </p>
         </div>
       ) : null}
@@ -272,9 +273,9 @@ function LiquidityProvisioningForm({
     <div className="mt-4 rounded-md border border-admin-accent/25 bg-admin-accent-surface/20 p-3">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="text-sm font-black text-white">종목별 LP LIVE 생성</h3>
+          <h3 className="text-sm font-black text-white">종목별 LP 실운영 생성</h3>
           <p className="mt-1 max-w-4xl text-xs font-bold leading-5 text-stock-subtle">
-            유통 대기·인수 계정에서 권장 시드 재고를 옮기고 같은 평가액 수준의 운영 현금을 명시적 OPENING_GRANT로 기록합니다. 과거 자동 유동성 계좌는 운영 이전에서 종목별 LP로 현금·주식을 전량 이관하고 0잔고 CLOSED 감사 계좌로 보존합니다.
+            유통 대기·인수 계정에서 권장 시드 재고를 옮기고 같은 평가액 수준의 운영 현금을 초기 자금 지급 원장으로 기록합니다. 과거 자동 유동성 계좌는 운영 이전에서 종목별 LP로 현금·주식을 전량 이관하고 0잔고 종료 감사 계좌로 보존합니다.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -325,7 +326,9 @@ function LiquidityProvisioningForm({
                     <td className="px-3 py-2 text-right">{formatNumber(item.recommendedSeedInventoryQuantity)}주</td>
                     <td className="px-3 py-2 text-right">{formatWon(item.recommendedInitialCash)}</td>
                     <td className={item.creationEligible ? "px-3 py-2 text-admin-success" : "px-3 py-2 text-admin-warning"}>
-                      {item.creationEligible ? "생성 가능" : item.eligibilityReason}
+                      {item.creationEligible
+                        ? "생성 가능"
+                        : formatMarketRoleCode(item.eligibilityReason, "생성 조건 확인 필요")}
                     </td>
                   </tr>
                 ))}
@@ -345,7 +348,9 @@ function LiquidityProvisioningForm({
             <option value="">종목 선택</option>
             {(recommendation?.symbols ?? []).map((item) => (
               <option key={item.symbol} value={item.symbol} disabled={!item.creationEligible}>
-                {item.symbol} · {item.creationEligible ? "생성 가능" : item.eligibilityReason}
+                {item.symbol} · {item.creationEligible
+                  ? "생성 가능"
+                  : formatMarketRoleCode(item.eligibilityReason, "생성 조건 확인 필요")}
               </option>
             ))}
           </select>
@@ -412,7 +417,12 @@ function LiquidityProvisioningForm({
           <span className="ml-3">시드 {formatNumber(selectedRecommendation.recommendedSeedInventoryQuantity)}주</span>
           <span className="ml-3">초기 현금 {formatWon(selectedRecommendation.recommendedInitialCash)}</span>
           {!selectedRecommendation.creationEligible ? (
-            <span className="ml-3 text-admin-danger">{selectedRecommendation.eligibilityReason}</span>
+            <span className="ml-3 text-admin-danger">
+              {formatMarketRoleCode(
+                selectedRecommendation.eligibilityReason,
+                "생성 조건 확인 필요",
+              )}
+            </span>
           ) : null}
         </div>
       ) : null}
@@ -432,7 +442,7 @@ function LiquidityProvisioningForm({
           disabled={!canProvision || pending}
           className="min-h-10 rounded-md bg-admin-accent px-4 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {pending ? "생성 중" : "LP LIVE 생성"}
+          {pending ? "생성 중" : "LP 실운영 생성"}
         </button>
       </div>
     </div>
@@ -450,7 +460,9 @@ function MandateMetric({ label, value }: { label: string; value: string }) {
 
 function summarizeMandates(mandates: LiquidityProviderMandate[]) {
   return {
-    liveCount: mandates.filter((mandate) => mandate.executionMode === "LIVE").length,
+    activeLiveCount: mandates.filter(
+      (mandate) => mandate.executionMode === "LIVE" && mandate.status === "ACTIVE",
+    ).length,
     currentNetAssetValue: mandates.reduce(
       (sum, mandate) => sum + (mandate.dailyState?.currentNetAssetValue ?? 0),
       0,

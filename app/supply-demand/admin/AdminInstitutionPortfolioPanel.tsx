@@ -21,6 +21,7 @@ import {
   formatNumber,
 } from "@/app/supply-demand/admin/AdminFormatters";
 import { ProfileMiniMetric } from "@/app/supply-demand/admin/AdminMetricCards";
+import { formatMarketRoleCode } from "@/app/supply-demand/admin/adminMarketRoleFormatters";
 import type {
   InstitutionDecisionAction,
   InstitutionPortfolio,
@@ -101,7 +102,7 @@ export function AdminInstitutionPortfolioPanel({
     setConfirmed(false);
     setFeedback({
       tone: "success",
-      message: `${created.data.displayName}을 제한된 LIVE 모드로 생성했습니다. 다른 기관은 필요할 때 별도로 추가할 수 있습니다.`,
+      message: `${created.data.displayName}을 제한된 실운영 상태로 생성했습니다. 다른 기관은 필요할 때 별도로 추가할 수 있습니다.`,
     });
     onRefresh();
   };
@@ -112,10 +113,10 @@ export function AdminInstitutionPortfolioPanel({
         <div>
           <h2 className="text-base font-black">기관 포트폴리오·주문 감사</h2>
           <p className="mt-1 max-w-4xl text-xs font-bold leading-5 text-stock-subtle">
-            150명 안팎 자동 참여자와 소수 유저로 구성된 축소 시장 기준입니다. 주·보조 압력은 직접 BUY/SELL을 강제하지 않고 제한된 목표 비중 변화로만 반영합니다.
+            150명 안팎 자동 참여자와 소수 유저로 구성된 축소 시장 기준입니다. 주·보조 압력은 직접 매수·매도를 강제하지 않고 제한된 목표 비중 변화로만 반영합니다.
           </p>
           <p className="mt-1 max-w-4xl text-[11px] font-bold leading-5 text-admin-quiet">
-            생성한 기관은 다음 개장부터 바로 LIVE로 동작합니다. 목표 도달 후 HOLD, 미체결 포함 예상 포지션, 일일 참여율, 주문 출처와 자기체결 방지를 함께 적용합니다.
+            생성한 기관은 다음 개장부터 바로 실운영으로 동작합니다. 목표 도달 후 보유 유지, 미체결 포함 예상 포지션, 일일 참여율, 주문 출처와 자기체결 방지를 함께 적용합니다.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs font-black">
@@ -137,7 +138,7 @@ export function AdminInstitutionPortfolioPanel({
         <ProfileMiniMetric label="합산 AUM" value={formatCompactWon(summary.totalAsset)} tone="blue" />
         <ProfileMiniMetric label="주식 비중" value={formatRate(summary.stockAllocationRate)} tone="muted" />
         <ProfileMiniMetric label="오늘 계획 총매매" value={formatCompactWon(summary.dailyPlannedGrossAmount)} tone="muted" />
-        <ProfileMiniMetric label="최근 HOLD" value={formatCount(summary.holdCount, "종목")} tone="green" />
+        <ProfileMiniMetric label="최근 보유 유지" value={formatCount(summary.holdCount, "종목")} tone="green" />
         <ProfileMiniMetric label="점검 신호" value={formatCount(summary.reviewCount, "건")} tone={summary.reviewCount > 0 ? "red" : "green"} />
       </div>
 
@@ -464,16 +465,20 @@ function InstitutionPortfolioCard({
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="break-words text-sm font-black text-white">{portfolio.displayName}</h3>
             <span className="rounded-md bg-admin-accent-surface px-2 py-1 text-[10px] font-black text-admin-accent-soft">
-              {portfolio.executionMode}
+              {formatMarketRoleCode(portfolio.executionMode)}
             </span>
             <span className={portfolio.status === "ACTIVE"
               ? "rounded-md bg-admin-success-surface px-2 py-1 text-[10px] font-black text-admin-success"
               : "rounded-md bg-admin-danger-surface px-2 py-1 text-[10px] font-black text-admin-danger"}
             >
-              {portfolio.status}
+              {formatMarketRoleCode(portfolio.status)}
             </span>
             <span className="rounded-md bg-white/10 px-2 py-1 text-[10px] font-black text-stock-subtle">
-              {portfolio.investmentStyle}
+              {formatMarketRoleCode(
+                portfolio.investmentStyle,
+                "투자 유형 미설정",
+                "투자 유형 확인 필요",
+              )}
             </span>
             {reviewReasons.length > 0 ? (
               <span className="rounded-md bg-admin-danger-surface px-2 py-1 text-[10px] font-black text-admin-danger">
@@ -493,9 +498,9 @@ function InstitutionPortfolioCard({
           </p>
         </div>
         <div className="flex flex-wrap gap-2 text-[10px] font-black">
-          <span className="rounded-md bg-admin-success-surface px-2 py-1 text-admin-success">HOLD {actionCounts.HOLD}</span>
-          <span className="rounded-md bg-admin-accent-surface px-2 py-1 text-admin-accent-soft">BUY {actionCounts.BUY}</span>
-          <span className="rounded-md bg-admin-danger-surface px-2 py-1 text-admin-danger">SELL {actionCounts.SELL}</span>
+          <span className="rounded-md bg-admin-success-surface px-2 py-1 text-admin-success">보유 유지 {actionCounts.HOLD}</span>
+          <span className="rounded-md bg-admin-accent-surface px-2 py-1 text-admin-accent-soft">매수 {actionCounts.BUY}</span>
+          <span className="rounded-md bg-admin-danger-surface px-2 py-1 text-admin-danger">매도 {actionCounts.SELL}</span>
         </div>
       </div>
 
@@ -519,10 +524,10 @@ function InstitutionPortfolioCard({
       <div className="mt-3 grid gap-2 md:grid-cols-3">
         <PortfolioInfo
           label="최근 결정"
-          primary={portfolio.latestDecisionStatus ?? "아직 실행 전"}
+          primary={formatMarketRoleCode(portfolio.latestDecisionStatus, "아직 실행 전")}
           secondary={[
             portfolio.latestDecisionSlot
-              ? `${formatDateTime(portfolio.latestDecisionSlot)} · run #${portfolio.latestDecisionRunId}`
+              ? `${formatDateTime(portfolio.latestDecisionSlot)} · 실행 #${portfolio.latestDecisionRunId}`
               : `다음 ${formatDateTime(portfolio.nextDecisionAt)}`,
             `완료 ${formatInteger(portfolio.completedDecisionTradingDays)}일`,
             `최근 실패 ${formatInteger(portfolio.recentDecisionFailureCount)}건`,
@@ -593,7 +598,7 @@ function InstitutionEmergencyStopControls({
 }) {
   const queryClient = useQueryClient();
   const mutation = useMutation(adminSuspendInstitutionMutationOptions());
-  const [changeReason, setChangeReason] = useState("LIVE 위험 한도 또는 시장 품질 이상 즉시 중단");
+  const [changeReason, setChangeReason] = useState("실운영 위험 한도 또는 시장 품질 이상 즉시 중단");
   const [feedback, setFeedback] = useState<Feedback | null>(null);
 
   const suspendInstitution = async () => {
@@ -616,7 +621,7 @@ function InstitutionEmergencyStopControls({
     });
     const suspended = getAdminActionData(
       result,
-      "기관 LIVE 비상 중단에 실패했습니다.",
+      "기관 실운영 비상 중단에 실패했습니다.",
     );
     if (!suspended.ok) {
       setFeedback({ tone: "error", message: suspended.message });
@@ -633,7 +638,7 @@ function InstitutionEmergencyStopControls({
     <div className="mt-3 rounded-md border border-admin-danger/25 bg-admin-danger-surface/35 p-3">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <label className="grid min-w-0 flex-1 gap-1 text-xs font-black text-admin-danger">
-          LIVE 비상 중단 사유
+          실운영 비상 중단 사유
           <input
             value={changeReason}
             maxLength={500}
@@ -641,7 +646,7 @@ function InstitutionEmergencyStopControls({
             className="admin-control w-full px-3 text-sm font-bold"
           />
           <span className="text-[10px] font-bold leading-5 text-stock-subtle">
-            포트폴리오를 먼저 SUSPENDED로 확정한 뒤 대기 주문 의도를 거절하고 전용 계좌의 주문 예약을 반환합니다.
+            포트폴리오를 먼저 중단 상태로 확정한 뒤 대기 주문 의도를 거절하고 전용 계좌의 주문 예약을 반환합니다.
           </span>
         </label>
         <button
@@ -650,7 +655,7 @@ function InstitutionEmergencyStopControls({
           disabled={!accessToken || mutation.isPending}
           className="min-h-9 rounded-md bg-admin-danger px-3 py-1.5 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-45"
         >
-          {mutation.isPending ? "중단 처리 중" : "LIVE 즉시 중단"}
+          {mutation.isPending ? "중단 처리 중" : "실운영 즉시 중단"}
         </button>
       </div>
       {feedback ? (
@@ -695,11 +700,17 @@ function InstitutionMandateRow({ mandate }: { mandate: InstitutionSymbolMandate 
         </p>
       </td>
       <td className="px-3 py-3">
-        <span className={actionClassName(mandate.action)}>{mandate.action ?? "미결정"}</span>
+        <span className={actionClassName(mandate.action)}>
+          {formatMarketRoleCode(mandate.action, "미결정")}
+        </span>
       </td>
       <td className="px-3 py-3">
-        <p className="font-black text-white">{mandate.decisionReason ?? "첫 결정 대기"}</p>
-        <p className="mt-1 break-words text-[10px] text-admin-quiet">{mandate.gateReason ?? "—"}</p>
+        <p className="font-black text-white">
+          {formatMarketRoleCode(mandate.decisionReason, "첫 결정 대기")}
+        </p>
+        <p className="mt-1 break-words text-[10px] text-admin-quiet">
+          {formatMarketRoleCode(mandate.gateReason, "—")}
+        </p>
       </td>
       <td className="px-3 py-3 text-right tabular-nums">
         <p className="font-black text-white">{formatNumber(mandate.gatedQuantity)}주</p>
@@ -709,7 +720,11 @@ function InstitutionMandateRow({ mandate }: { mandate: InstitutionSymbolMandate 
         </p>
         {mandate.orderSubmissionReason ? (
           <p className="mt-1 max-w-56 break-words text-[10px] text-admin-quiet">
-            {mandate.orderSubmissionReason}
+            {formatMarketRoleCode(
+              mandate.orderSubmissionReason,
+              "주문 처리 사유 없음",
+              "주문 처리 사유 확인 필요",
+            )}
           </p>
         ) : null}
       </td>
@@ -797,7 +812,7 @@ function portfolioReviewReasons(portfolio: InstitutionPortfolio) {
     reasons.push("기관과 계좌의 자기체결 방지 그룹이 일치하지 않습니다.");
   }
   if (portfolio.participantStatus !== "ACTIVE" || portfolio.accountStatus !== "ACTIVE") {
-    reasons.push("기관 또는 계좌가 ACTIVE 상태가 아닙니다.");
+    reasons.push("기관 또는 계좌가 운영 중 상태가 아닙니다.");
   }
   if (portfolio.institutionalOpenOrderCount > 0 && portfolio.status !== "ACTIVE") {
     reasons.push("중단된 기관 계좌에 미체결 주문이 남아 있습니다.");
@@ -865,5 +880,5 @@ function formatOrderIntent(mandate: InstitutionSymbolMandate) {
   if (mandate.orderIntentStatus === "SUBMITTED") {
     return `제출 #${mandate.submittedOrderId ?? "?"} · ${formatNumber(mandate.submittedQuantity)}주 @ ${formatInteger(mandate.submittedPrice ?? 0)}원`;
   }
-  return `${mandate.orderIntentStatus} · 요청 ${formatNumber(mandate.orderIntentRequestedQuantity)}주 · 시도 ${formatInteger(mandate.orderIntentAttemptCount)}회`;
+  return `${formatMarketRoleCode(mandate.orderIntentStatus)} · 요청 ${formatNumber(mandate.orderIntentRequestedQuantity)}주 · 시도 ${formatInteger(mandate.orderIntentAttemptCount)}회`;
 }
