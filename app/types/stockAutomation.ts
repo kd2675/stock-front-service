@@ -445,6 +445,14 @@ export type LiquidityProviderMandate = {
   roleEligibilityIssue: string | null;
   account: LiquidityProviderAccount;
   policy: LiquidityProviderPolicy;
+  scheduledPolicy: {
+    policyVersion: number;
+    effectiveBusinessDate: string;
+    policy: LiquidityProviderPolicy;
+    changeReason: string;
+    changedBy: string;
+    updatedAt: string;
+  } | null;
   dailyState: LiquidityProviderDailyState | null;
   transition: {
     transitionId: number;

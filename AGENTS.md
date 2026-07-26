@@ -19,7 +19,7 @@
 - `/corporate-actions`
 - `/admin/**`
 - `/admin/funds/custody` (탈퇴·유통 대기·잠금 시스템 보관계정과 휴면 자동 참여자 원장)
-- `/admin/market/liquidity-providers` (종목별 권장 LP 수치, LP 단건 LIVE 생성·중단·정책 수정·재개와 재고 밴드·일일 한도 감사)
+- `/admin/market/liquidity-providers` (종목별 권장 LP 수치, LP 단건 LIVE 생성·중단·다음 거래일 정책 예약·재개와 현재/예약 정책·재고 밴드·일일 한도 감사)
 - `/admin/participants/institutions` (권장 기관 개수·AUM·운용 유형 수치, 기관 단건 LIVE 생성·결정·주문 감사)
 - `/admin/corporate/underwriting` (발행 대기 종목별 인수계정·계약 단건 생성, 권장 공급 수치와 유한 공급 감사)
 
