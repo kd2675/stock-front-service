@@ -9,9 +9,8 @@ import {
   upsertInstitutionPortfolioQueryData,
 } from "@/app/lib/react-query/stockCacheUpdates";
 import {
-  adminActivateInstitutionPilotMutationOptions,
   adminCreateInstitutionPortfolioMutationOptions,
-  adminSuspendInstitutionPilotMutationOptions,
+  adminSuspendInstitutionMutationOptions,
 } from "@/app/lib/react-query/stockMutations";
 import { getAdminActionData } from "@/app/supply-demand/admin/AdminActionResultHelpers";
 import {
@@ -102,7 +101,7 @@ export function AdminInstitutionPortfolioPanel({
     setConfirmed(false);
     setFeedback({
       tone: "success",
-      message: `${created.data.displayName}을 SHADOW 모드로 생성했습니다. 다른 기관은 필요할 때 별도로 추가할 수 있습니다.`,
+      message: `${created.data.displayName}을 제한된 LIVE 모드로 생성했습니다. 다른 기관은 필요할 때 별도로 추가할 수 있습니다.`,
     });
     onRefresh();
   };
@@ -116,7 +115,7 @@ export function AdminInstitutionPortfolioPanel({
             150명 안팎 자동 참여자와 소수 유저로 구성된 축소 시장 기준입니다. 주·보조 압력은 직접 BUY/SELL을 강제하지 않고 제한된 목표 비중 변화로만 반영합니다.
           </p>
           <p className="mt-1 max-w-4xl text-[11px] font-bold leading-5 text-admin-quiet">
-            SHADOW는 의사결정·예산만 저장하고, PILOT은 한 기관·한 종목의 제한 주문만 허용합니다. 목표 도달 후 HOLD, 미체결 포함 예상 포지션, 주문 출처와 자기체결 방지를 함께 검증합니다.
+            생성한 기관은 다음 개장부터 바로 LIVE로 동작합니다. 목표 도달 후 HOLD, 미체결 포함 예상 포지션, 일일 참여율, 주문 출처와 자기체결 방지를 함께 적용합니다.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs font-black">
@@ -521,7 +520,13 @@ function InstitutionPortfolioCard({
         <PortfolioInfo
           label="최근 결정"
           primary={portfolio.latestDecisionStatus ?? "아직 실행 전"}
-          secondary={portfolio.latestDecisionSlot ? `${formatDateTime(portfolio.latestDecisionSlot)} · run #${portfolio.latestDecisionRunId}` : `다음 ${formatDateTime(portfolio.nextDecisionAt)}`}
+          secondary={[
+            portfolio.latestDecisionSlot
+              ? `${formatDateTime(portfolio.latestDecisionSlot)} · run #${portfolio.latestDecisionRunId}`
+              : `다음 ${formatDateTime(portfolio.nextDecisionAt)}`,
+            `완료 ${formatInteger(portfolio.completedDecisionTradingDays)}일`,
+            `최근 실패 ${formatInteger(portfolio.recentDecisionFailureCount)}건`,
+          ].join(" · ")}
         />
         <PortfolioInfo
           label={`일일 계획 예산 · ${portfolio.budgetTradeDate}`}
@@ -541,15 +546,8 @@ function InstitutionPortfolioCard({
         </p>
       ) : null}
 
-      {portfolio.executionMode === "SHADOW" ? (
-        <InstitutionPilotActivationControls
-          accessToken={accessToken}
-          portfolio={portfolio}
-        />
-      ) : null}
-
-      {portfolio.executionMode === "PILOT" && portfolio.status === "ACTIVE" ? (
-        <InstitutionPilotEmergencyStopControls
+      {portfolio.executionMode === "LIVE" && portfolio.status === "ACTIVE" ? (
+        <InstitutionEmergencyStopControls
           accessToken={accessToken}
           portfolio={portfolio}
         />
@@ -586,7 +584,7 @@ function InstitutionPortfolioCard({
   );
 }
 
-function InstitutionPilotEmergencyStopControls({
+function InstitutionEmergencyStopControls({
   accessToken,
   portfolio,
 }: {
@@ -594,11 +592,11 @@ function InstitutionPilotEmergencyStopControls({
   portfolio: InstitutionPortfolio;
 }) {
   const queryClient = useQueryClient();
-  const mutation = useMutation(adminSuspendInstitutionPilotMutationOptions());
-  const [changeReason, setChangeReason] = useState("PILOT 위험 한도 또는 시장 품질 이상 즉시 중단");
+  const mutation = useMutation(adminSuspendInstitutionMutationOptions());
+  const [changeReason, setChangeReason] = useState("LIVE 위험 한도 또는 시장 품질 이상 즉시 중단");
   const [feedback, setFeedback] = useState<Feedback | null>(null);
 
-  const suspendPilot = async () => {
+  const suspendInstitution = async () => {
     if (!accessToken || mutation.isPending) {
       return;
     }
@@ -618,7 +616,7 @@ function InstitutionPilotEmergencyStopControls({
     });
     const suspended = getAdminActionData(
       result,
-      "기관 PILOT 비상 중단에 실패했습니다.",
+      "기관 LIVE 비상 중단에 실패했습니다.",
     );
     if (!suspended.ok) {
       setFeedback({ tone: "error", message: suspended.message });
@@ -635,7 +633,7 @@ function InstitutionPilotEmergencyStopControls({
     <div className="mt-3 rounded-md border border-admin-danger/25 bg-admin-danger-surface/35 p-3">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <label className="grid min-w-0 flex-1 gap-1 text-xs font-black text-admin-danger">
-          PILOT 비상 중단 사유
+          LIVE 비상 중단 사유
           <input
             value={changeReason}
             maxLength={500}
@@ -648,11 +646,11 @@ function InstitutionPilotEmergencyStopControls({
         </label>
         <button
           type="button"
-          onClick={() => void suspendPilot()}
+          onClick={() => void suspendInstitution()}
           disabled={!accessToken || mutation.isPending}
           className="min-h-9 rounded-md bg-admin-danger px-3 py-1.5 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-45"
         >
-          {mutation.isPending ? "중단 처리 중" : "PILOT 즉시 중단"}
+          {mutation.isPending ? "중단 처리 중" : "LIVE 즉시 중단"}
         </button>
       </div>
       {feedback ? (
@@ -668,173 +666,6 @@ function InstitutionPilotEmergencyStopControls({
           {feedback.message}
         </p>
       ) : null}
-    </div>
-  );
-}
-
-function InstitutionPilotActivationControls({
-  accessToken,
-  portfolio,
-}: {
-  accessToken: string | null;
-  portfolio: InstitutionPortfolio;
-}) {
-  const queryClient = useQueryClient();
-  const mutation = useMutation(adminActivateInstitutionPilotMutationOptions());
-  const enabledMandates = portfolio.mandates.filter((mandate) => mandate.enabled);
-  const [symbol, setSymbol] = useState(enabledMandates[0]?.symbol ?? "");
-  const [changeReason, setChangeReason] = useState(
-    `${portfolio.displayName} 20거래일 SHADOW 검토 후 단일 종목 PILOT`,
-  );
-  const [confirmed, setConfirmed] = useState(false);
-  const [feedback, setFeedback] = useState<Feedback | null>(null);
-  const evidenceReady = portfolio.completedShadowTradingDays >= 20
-    && portfolio.recentShadowFailureCount === 0;
-  const structureReady = portfolio.status === "ACTIVE"
-    && portfolio.participantStatus === "ACTIVE"
-    && portfolio.accountStatus === "ACTIVE"
-    && portfolio.participantSelfTradeGroupId === portfolio.accountSelfTradeGroupId
-    && portfolio.institutionalOpenOrderCount === 0;
-  const selectedMandateExists = enabledMandates.some(
-    (mandate) => mandate.symbol === symbol,
-  );
-  const canActivate = Boolean(accessToken)
-    && confirmed
-    && evidenceReady
-    && structureReady
-    && selectedMandateExists
-    && !mutation.isPending;
-
-  const activatePilot = async () => {
-    if (!canActivate || !accessToken) {
-      return;
-    }
-    setFeedback(null);
-    const result = await mutation.mutateAsync({
-      token: accessToken,
-      portfolioId: portfolio.portfolioId,
-      payload: {
-        symbol,
-        changeReason: changeReason.trim() || undefined,
-      },
-    });
-    const activated = getAdminActionData(
-      result,
-      "기관 PILOT 전환에 실패했습니다.",
-    );
-    if (!activated.ok) {
-      setFeedback({ tone: "error", message: activated.message });
-      return;
-    }
-    setInstitutionPortfoliosQueryData(queryClient, activated.data);
-    setFeedback({
-      tone: "success",
-      message: `${portfolio.displayName}을 ${symbol} 단일 종목 PILOT으로 전환했습니다. 다음 개장 결정부터 제한 주문이 허용됩니다.`,
-    });
-  };
-
-  return (
-    <div className="mt-3 rounded-md border border-admin-accent/25 bg-admin-accent-surface/20 p-3">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h4 className="text-xs font-black text-white">SHADOW → 단일 종목 PILOT</h4>
-          <p className="mt-1 max-w-3xl text-[11px] font-bold leading-5 text-stock-subtle">
-            실주문 범위를 한 종목으로 줄여 단계적으로 검증합니다. 서버는 일시정지 장전, 20거래일 완료, 최근 실패 0건, 깨끗한 당일 예산·주문 상태를 다시 잠금 검증합니다.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2 text-[10px] font-black">
-          <span className={portfolio.completedShadowTradingDays >= 20
-            ? "rounded-md bg-admin-success-surface px-2 py-1 text-admin-success"
-            : "rounded-md bg-white/10 px-2 py-1 text-stock-subtle"}
-          >
-            완료 {formatInteger(portfolio.completedShadowTradingDays)}/20일
-          </span>
-          <span className={portfolio.recentShadowFailureCount === 0
-            ? "rounded-md bg-admin-success-surface px-2 py-1 text-admin-success"
-            : "rounded-md bg-admin-danger-surface px-2 py-1 text-admin-danger"}
-          >
-            최근 실패 {formatCount(portfolio.recentShadowFailureCount, "건")}
-          </span>
-        </div>
-      </div>
-
-      <div className="mt-3 grid gap-3 md:grid-cols-[180px_minmax(0,1fr)]">
-        <label className="grid gap-1 text-xs font-black text-admin-muted">
-          PILOT 지정 종목
-          <select
-            value={symbol}
-            onChange={(event) => {
-              setSymbol(event.target.value);
-              setConfirmed(false);
-              setFeedback(null);
-            }}
-            className="admin-control w-full px-3 text-sm font-bold"
-          >
-            {enabledMandates.map((mandate) => (
-              <option key={mandate.mandateId} value={mandate.symbol}>
-                {mandate.symbol}
-              </option>
-            ))}
-          </select>
-          <span className="text-[10px] font-bold text-admin-quiet">
-            나머지 종목 위임은 원자적으로 비활성화됩니다.
-          </span>
-        </label>
-        <label className="grid gap-1 text-xs font-black text-admin-muted">
-          전환 사유
-          <input
-            value={changeReason}
-            maxLength={500}
-            onChange={(event) => setChangeReason(event.target.value)}
-            className="admin-control w-full px-3 text-sm font-bold"
-          />
-          <span className="text-[10px] font-bold text-admin-quiet">
-            정책 버전과 효력 거래일 감사에 저장됩니다.
-          </span>
-        </label>
-      </div>
-
-      {!evidenceReady || !structureReady ? (
-        <p className="mt-3 rounded-md border border-white/10 bg-black/20 px-3 py-2 text-[11px] font-bold leading-5 text-stock-subtle">
-          {!evidenceReady
-            ? "20개 완료 SHADOW 거래일과 최근 20일 실패 0건을 충족해야 합니다."
-            : "기관·계좌·자기체결 그룹이 정상이고 기관 origin 미체결 주문이 없어야 합니다."}
-        </p>
-      ) : null}
-
-      {feedback ? (
-        <p
-          role="status"
-          className={[
-            "mt-3 rounded-md border px-3 py-2 text-[11px] font-bold leading-5",
-            feedback.tone === "success"
-              ? "border-admin-success/25 bg-admin-success-surface text-admin-success"
-              : "border-admin-danger/25 bg-admin-danger-surface text-admin-danger",
-          ].join(" ")}
-        >
-          {feedback.message}
-        </p>
-      ) : null}
-
-      <div className="mt-3 flex flex-wrap items-start justify-between gap-3 border-t border-white/10 pt-3">
-        <label className="flex max-w-3xl items-start gap-2 text-[11px] font-bold leading-5 text-stock-subtle">
-          <input
-            type="checkbox"
-            checked={confirmed}
-            onChange={(event) => setConfirmed(event.target.checked)}
-            className="mt-1 size-4 shrink-0 accent-[var(--admin-accent)]"
-          />
-          시뮬레이션을 일시정지한 장전 상태이며, {symbol || "선택 종목"}만 실제 주문 대상으로 전환되고 자동 롤백은 신규 주문 중지·미체결 취소 방식으로 수행해야 함을 확인했습니다.
-        </label>
-        <button
-          type="button"
-          onClick={() => void activatePilot()}
-          disabled={!canActivate}
-          className="min-h-9 rounded-md bg-admin-accent px-3 py-1.5 text-xs font-black text-admin-canvas disabled:cursor-not-allowed disabled:opacity-45"
-        >
-          {mutation.isPending ? "PILOT 전환 중" : `${symbol || "종목"} PILOT 전환`}
-        </button>
-      </div>
     </div>
   );
 }
@@ -859,7 +690,7 @@ function InstitutionMandateRow({ mandate }: { mandate: InstitutionSymbolMandate 
             ? ` · 대기 +${formatNumber(mandate.openBuyQuantity)} / -${formatNumber(mandate.openSellQuantity)}`
             : ""}
           {mandate.dailyPlannedBuyQuantity > 0 || mandate.dailyPlannedSellQuantity > 0
-            ? ` · shadow +${formatNumber(mandate.dailyPlannedBuyQuantity)} / -${formatNumber(mandate.dailyPlannedSellQuantity)}`
+            ? ` · 계획 +${formatNumber(mandate.dailyPlannedBuyQuantity)} / -${formatNumber(mandate.dailyPlannedSellQuantity)}`
             : ""}
         </p>
       </td>
@@ -959,14 +790,8 @@ function summarizePortfolios(portfolios: InstitutionPortfolio[]) {
 
 function portfolioReviewReasons(portfolio: InstitutionPortfolio) {
   const reasons: string[] = [];
-  if (portfolio.executionMode === "LIVE") {
-    reasons.push("전체 LIVE 모드는 아직 안전 게이트 대상이 아닙니다.");
-  }
-  if (
-    portfolio.executionMode === "PILOT"
-    && portfolio.mandates.filter((mandate) => mandate.enabled).length !== 1
-  ) {
-    reasons.push("PILOT은 활성 종목 위임이 정확히 1개여야 합니다.");
+  if (portfolio.mandates.every((mandate) => !mandate.enabled)) {
+    reasons.push("활성 종목 위임이 없습니다.");
   }
   if (portfolio.participantSelfTradeGroupId !== portfolio.accountSelfTradeGroupId) {
     reasons.push("기관과 계좌의 자기체결 방지 그룹이 일치하지 않습니다.");
@@ -974,11 +799,14 @@ function portfolioReviewReasons(portfolio: InstitutionPortfolio) {
   if (portfolio.participantStatus !== "ACTIVE" || portfolio.accountStatus !== "ACTIVE") {
     reasons.push("기관 또는 계좌가 ACTIVE 상태가 아닙니다.");
   }
-  if (portfolio.institutionalOpenOrderCount > 0 && portfolio.executionMode === "SHADOW") {
-    reasons.push("SHADOW 계좌에 기관 origin 미체결 주문이 존재합니다.");
+  if (portfolio.institutionalOpenOrderCount > 0 && portfolio.status !== "ACTIVE") {
+    reasons.push("중단된 기관 계좌에 미체결 주문이 남아 있습니다.");
   }
   if (portfolio.latestDecisionStatus === "FAILED") {
     reasons.push("최근 기관 결정이 실패했습니다.");
+  }
+  if (portfolio.recentDecisionFailureCount > 0) {
+    reasons.push(`최근 기관 결정 실패 ${portfolio.recentDecisionFailureCount}건을 확인해야 합니다.`);
   }
   if (portfolio.mandates.some((mandate) =>
     mandate.orderIntentStatus === "FAILED" || mandate.orderIntentStatus === "REJECTED"

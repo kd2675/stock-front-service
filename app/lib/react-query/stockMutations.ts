@@ -4,8 +4,6 @@ import type { ApiResult } from "@/app/lib/api";
 import {
   amendOrder,
   activateUnderwritingSupply,
-  activateInstitutionPilot,
-  activateLiquidityProvider,
   applyCorporateAction,
   adjustAutoParticipantCash,
   adjustUserAccountCash,
@@ -18,14 +16,14 @@ import {
   jumpSimulationClock,
   openStockAccount,
   placeOrder,
-  provisionLiquidityShadow,
+  createLiquidityProviderLive,
   publishInstrumentReport,
   reconnectStockAccount,
   regenerateAutoMarketDailyRegime,
   regenerateAutoMarketRegimeModifier,
   retryFailedEodPhase,
   runAutoParticipantCashFlow,
-  suspendInstitutionPilot,
+  suspendInstitution,
   suspendUnderwritingSupply,
   subscribeCorporateAction,
   updateAutoMarketConfig,
@@ -50,9 +48,7 @@ import type {
   StockCorporateActionPayload,
   StockCorporateActionSubscriptionPayload,
   InstitutionPortfolioCreatePayload,
-  InstitutionPilotActivationPayload,
-  InstitutionPilotSuspensionPayload,
-  LiquidityProviderActivationPayload,
+  InstitutionSuspensionPayload,
   LiquidityProviderProvisionPayload,
   UnderwritingContractCreatePayload,
   UnderwritingSupplyActivationPayload,
@@ -306,30 +302,21 @@ export function adminCreateInstitutionPortfolioMutationOptions() {
   );
 }
 
-export function adminActivateInstitutionPilotMutationOptions() {
+export function adminSuspendInstitutionMutationOptions() {
   return adminMutationOptions(
     (token, variables: {
       portfolioId: number;
-      payload: InstitutionPilotActivationPayload;
-    }) => activateInstitutionPilot(token, variables.portfolioId, variables.payload),
+      payload: InstitutionSuspensionPayload;
+    }) => suspendInstitution(token, variables.portfolioId, variables.payload),
   );
 }
 
-export function adminSuspendInstitutionPilotMutationOptions() {
-  return adminMutationOptions(
-    (token, variables: {
-      portfolioId: number;
-      payload: InstitutionPilotSuspensionPayload;
-    }) => suspendInstitutionPilot(token, variables.portfolioId, variables.payload),
-  );
-}
-
-export function adminProvisionLiquidityShadowMutationOptions() {
+export function adminCreateLiquidityProviderLiveMutationOptions() {
   return adminMutationOptions(
     (token, variables: {
       symbol: string;
       payload: LiquidityProviderProvisionPayload;
-    }) => provisionLiquidityShadow(token, variables.symbol, variables.payload),
+    }) => createLiquidityProviderLive(token, variables.symbol, variables.payload),
   );
 }
 
@@ -339,15 +326,6 @@ export function adminCreateUnderwritingContractMutationOptions() {
       symbol: string;
       payload: UnderwritingContractCreatePayload;
     }) => createUnderwritingContract(token, variables.symbol, variables.payload),
-  );
-}
-
-export function adminActivateLiquidityProviderMutationOptions() {
-  return adminMutationOptions(
-    (token, variables: {
-      symbol: string;
-      payload: LiquidityProviderActivationPayload;
-    }) => activateLiquidityProvider(token, variables.symbol, variables.payload),
   );
 }
 

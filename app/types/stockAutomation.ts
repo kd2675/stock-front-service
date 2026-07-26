@@ -260,7 +260,7 @@ export type InstitutionPortfolio = {
   portfolioCode: string;
   displayName: string;
   investmentStyle: string;
-  executionMode: "SHADOW" | "PILOT" | "LIVE";
+  executionMode: "LIVE";
   status: string;
   policyVersion: number;
   participantId: number;
@@ -301,8 +301,8 @@ export type InstitutionPortfolio = {
   dailySubmittedBuyAmount: number;
   dailySubmittedSellAmount: number;
   institutionalOpenOrderCount: number;
-  completedShadowTradingDays: number;
-  recentShadowFailureCount: number;
+  completedDecisionTradingDays: number;
+  recentDecisionFailureCount: number;
   mandates: InstitutionSymbolMandate[];
 };
 
@@ -337,7 +337,7 @@ export type InstitutionPortfolioRecommendation = {
   }[];
 };
 
-export type LiquidityProviderExecutionMode = "SHADOW" | "PILOT" | "LIVE";
+export type LiquidityProviderExecutionMode = "LIVE";
 
 export type LiquidityProviderAccount = {
   participantId: number;
@@ -425,7 +425,7 @@ export type LiquidityProviderDailyState = {
   blendedPricePressure: number;
   blendedVolatilityPressure: number;
   blendedLiquidityPressure: number;
-  stateStatus: "SHADOW" | "QUOTING" | "EXEMPT" | "HALTED" | "ERROR";
+  stateStatus: "QUOTING" | "EXEMPT" | "HALTED" | "ERROR";
   gateReason: string;
   quoteRunCount: number;
   limitBreached: boolean;
@@ -454,7 +454,7 @@ export type LiquidityProviderMandate = {
   transition: {
     transitionId: number;
     transitionKey: string;
-    stage: "SHADOW_READY" | "LIVE_ACTIVE" | "SUSPENDED";
+    stage: "LIVE_ACTIVE" | "SUSPENDED";
     sourceAccountId: number;
     legacyAccountId: number | null;
     referenceDailyVolume: number;

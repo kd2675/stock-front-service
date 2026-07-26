@@ -135,7 +135,7 @@ export function institutionPortfoliosQueryOptions(
   return adminAuthenticatedQueryOptions(token, {
     queryKey: stockKeys.institutionPortfolios(),
     request: getInstitutionPortfolios,
-    fallbackMessage: "기관 포트폴리오와 최근 shadow 결정을 조회하지 못했습니다.",
+    fallbackMessage: "기관 포트폴리오와 최근 LIVE 결정을 조회하지 못했습니다.",
     enabled: options.enabled,
     refetchInterval: false,
     staleTime: ADMIN_SNAPSHOT_STALE_MS,

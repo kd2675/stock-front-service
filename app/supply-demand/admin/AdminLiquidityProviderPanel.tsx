@@ -5,10 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import DataTableViewport from "@/app/components/DataTableViewport";
 import { upsertLiquidityProviderMandateQueryData } from "@/app/lib/react-query/stockCacheUpdates";
-import {
-  adminActivateLiquidityProviderMutationOptions,
-  adminProvisionLiquidityShadowMutationOptions,
-} from "@/app/lib/react-query/stockMutations";
+import { adminCreateLiquidityProviderLiveMutationOptions } from "@/app/lib/react-query/stockMutations";
 import { getAdminActionData } from "@/app/supply-demand/admin/AdminActionResultHelpers";
 import {
   formatCompactWon,
@@ -41,15 +38,13 @@ export function AdminLiquidityProviderPanel({
   onRefresh: () => void;
 }) {
   const queryClient = useQueryClient();
-  const provisionMutation = useMutation(adminProvisionLiquidityShadowMutationOptions());
-  const activationMutation = useMutation(adminActivateLiquidityProviderMutationOptions());
+  const provisionMutation = useMutation(adminCreateLiquidityProviderLiveMutationOptions());
   const [symbol, setSymbol] = useState("");
   const [referenceVolumePercent, setReferenceVolumePercent] = useState("3.0");
   const [seedInventoryPercent, setSeedInventoryPercent] = useState("0.5");
   const [cashMultiplier, setCashMultiplier] = useState("1.0");
-  const [changeReason, setChangeReason] = useState("축소 시장용 종목 전용 LP shadow 준비");
+  const [changeReason, setChangeReason] = useState("축소 시장용 종목 전용 LP LIVE 전환");
   const [confirmed, setConfirmed] = useState(false);
-  const [activatingSymbol, setActivatingSymbol] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const summary = useMemo(() => summarizeMandates(mandates), [mandates]);
   const normalizedSymbol = symbol.trim().toUpperCase();
@@ -76,7 +71,7 @@ export function AdminLiquidityProviderPanel({
     && normalizedCashMultiplier >= 0.5
     && normalizedCashMultiplier <= 2;
 
-  const provisionShadow = async () => {
+  const createLive = async () => {
     if (!canProvision || !accessToken || provisionMutation.isPending) {
       return;
     }
@@ -93,7 +88,7 @@ export function AdminLiquidityProviderPanel({
     });
     const provisioned = getAdminActionData(
       result,
-      "LP shadow 계정과 시드 자산을 준비하지 못했습니다.",
+      "기존 자동 유동성 종료와 LP LIVE 생성을 완료하지 못했습니다.",
     );
     if (!provisioned.ok) {
       setFeedback({ tone: "error", message: provisioned.message });
@@ -103,51 +98,9 @@ export function AdminLiquidityProviderPanel({
     setConfirmed(false);
     setFeedback({
       tone: "success",
-      message: `${provisioned.data.symbol} 전용 LP를 SHADOW_READY로 준비했습니다. 레거시 호가는 아직 중지되지 않았고 실제 LP 주문도 생성되지 않습니다.`,
+      message: `${provisioned.data.symbol}의 기존 자동 유동성 주문을 정리하고 설정을 비활성화한 뒤 전용 LP를 LIVE로 생성했습니다.`,
     });
     onRefresh();
-  };
-
-  const activateMandate = async (mandate: LiquidityProviderMandate) => {
-    if (!accessToken
-      || loading
-      || error
-      || activationMutation.isPending
-      || mandate.transition?.stage !== "SHADOW_READY") {
-      return;
-    }
-    const approved = window.confirm(
-      `${mandate.symbol}의 전용 LP를 LIVE로 전환합니다. 기존 상장주관사 경로가 있으면 미체결 주문을 취소하고 자동호가를 끄며, 역할 분리형 신규 상장이 CLOSED 대기 중이면 다음 장 개장 대상으로 활성화합니다.\n\n시뮬레이션이 일시정지된 장전 상태인지 확인했습니까?`,
-    );
-    if (!approved) {
-      return;
-    }
-    setActivatingSymbol(mandate.symbol);
-    setFeedback(null);
-    try {
-      const result = await activationMutation.mutateAsync({
-        token: accessToken,
-        symbol: mandate.symbol,
-        payload: {
-          changeReason: "관리자 검토 완료 후 종목 단위 LP LIVE 전환",
-        },
-      });
-      const activated = getAdminActionData(
-        result,
-        "레거시 호가 종료와 LP 활성화를 완료하지 못했습니다.",
-      );
-      if (!activated.ok) {
-        setFeedback({ tone: "error", message: activated.message });
-        return;
-      }
-      upsertLiquidityProviderMandateQueryData(queryClient, activated.data);
-      setFeedback({
-        tone: "success",
-        message: `${activated.data.symbol}의 전용 LP를 LIVE로 전환했습니다. 레거시 호가는 종료됐으며 역할 분리형 신규 상장이 CLOSED 대기 중이었다면 다음 장 개장 대상으로 활성화됐습니다.`,
-      });
-    } finally {
-      setActivatingSymbol(null);
-    }
   };
 
   return (
@@ -164,7 +117,7 @@ export function AdminLiquidityProviderPanel({
             LP는 발행·인수나 방향성 투자 없이 지정 종목의 제한된 양방향 호가만 담당합니다. 기준 거래량, 외부 5호가 깊이, 재고 밴드, 일일 제출·체결·손실 한도를 동시에 적용합니다.
           </p>
           <p className="mt-1 max-w-4xl text-[11px] font-bold leading-5 text-admin-quiet">
-            SHADOW와 PILOT은 현재 감사 계획만 저장하고 실제 주문을 만들지 않습니다. LIVE는 같은 종목의 기존 상장주관사 자동계정이 켜져 있으면 자동 중단됩니다.
+            생성은 일시정지된 장전 상태에서만 가능합니다. 기존 자동 유동성 주문 취소·설정 비활성화·시드 자산 이전·전용 LP LIVE 생성이 한 트랜잭션으로 처리됩니다.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs font-black">
@@ -214,7 +167,7 @@ export function AdminLiquidityProviderPanel({
         <div className="mt-4 rounded-md border border-white/10 bg-black/20 px-4 py-5">
           <p className="text-sm font-black text-white">아직 전용 LP 계약이 없습니다.</p>
           <p className="mt-2 max-w-4xl text-xs font-bold leading-5 text-stock-subtle">
-            아래에서 종목을 하나씩 SHADOW로 준비할 수 있습니다. 준비 단계에서는 시드 자산만 감사 원장으로 분리하며 기존 호가를 끄거나 실제 LP 주문을 만들지 않습니다.
+            아래에서 종목을 하나씩 LIVE로 전환할 수 있습니다. 별도의 SHADOW·활성화 단계는 없으며 실패하면 기존 설정과 자산 이전을 함께 롤백합니다.
           </p>
         </div>
       ) : null}
@@ -246,7 +199,7 @@ export function AdminLiquidityProviderPanel({
             recommendation?.recommendedInitialCashMultiplier ?? 1,
           ));
         }}
-        onProvision={() => void provisionShadow()}
+        onProvision={() => void createLive()}
       />
 
       <div className="mt-4 grid gap-3">
@@ -254,13 +207,6 @@ export function AdminLiquidityProviderPanel({
           <LiquidityMandateCard
             key={mandate.mandateId}
             mandate={mandate}
-            activating={activatingSymbol === mandate.symbol}
-            canActivate={Boolean(accessToken)
-              && !loading
-              && !error
-              && mandate.transition?.stage === "SHADOW_READY"
-              && mandate.roleEligible}
-            onActivate={() => void activateMandate(mandate)}
           />
         ))}
       </div>
@@ -319,7 +265,7 @@ function LiquidityProvisioningForm({
     <div className="mt-4 rounded-md border border-admin-accent/25 bg-admin-accent-surface/20 p-3">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="text-sm font-black text-white">종목별 LP SHADOW 준비</h3>
+          <h3 className="text-sm font-black text-white">종목별 LP LIVE 생성·이관</h3>
           <p className="mt-1 max-w-4xl text-xs font-bold leading-5 text-stock-subtle">
             유통주식의 일부만 시드 재고로 인수·상장주관 계정에서 옮기고, 같은 평가액 수준의 운영 현금을 명시적 OPENING_GRANT로 기록합니다. 법적 LP 기관은 하나지만 계정과 계약은 종목별로 분리됩니다.
           </p>
@@ -471,7 +417,7 @@ function LiquidityProvisioningForm({
             onChange={(event) => onConfirmedChange(event.target.checked)}
             className="mt-1"
           />
-          현재 시뮬레이션이 일시정지된 장전이며, 시드 주식 이전과 시드 현금 유입이 전체 자산 규모를 바꾸는 감사 대상 작업임을 확인했습니다.
+          현재 시뮬레이션이 일시정지된 장전이며, 기존 미체결 주문 취소·레거시 설정 비활성화·시드 주식 이전·시드 현금 유입·LP LIVE 생성이 한 번에 처리되는 감사 대상 작업임을 확인했습니다.
         </label>
         <button
           type="button"
@@ -479,7 +425,7 @@ function LiquidityProvisioningForm({
           disabled={!canProvision || pending}
           className="min-h-10 rounded-md bg-admin-accent px-4 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {pending ? "준비 중" : "SHADOW 준비"}
+          {pending ? "전환 중" : "LIVE 생성·이관"}
         </button>
       </div>
     </div>
@@ -488,14 +434,8 @@ function LiquidityProvisioningForm({
 
 function LiquidityMandateCard({
   mandate,
-  activating,
-  canActivate,
-  onActivate,
 }: {
   mandate: LiquidityProviderMandate;
-  activating: boolean;
-  canActivate: boolean;
-  onActivate: () => void;
 }) {
   const state = mandate.dailyState;
   const reviewReasons = mandateReviewReasons(mandate);
@@ -530,16 +470,6 @@ function LiquidityMandateCard({
         <div className="text-right text-[10px] font-bold text-admin-quiet">
           <p>계약 {mandate.contractStartDate} ~ {mandate.contractEndDate ?? "종료일 미정"}</p>
           <p className="mt-1">다음 판단 {formatDateTime(mandate.nextQuoteAt)}</p>
-          {mandate.transition?.stage === "SHADOW_READY" ? (
-            <button
-              type="button"
-              onClick={onActivate}
-              disabled={!canActivate || activating}
-              className="mt-2 min-h-9 rounded-md bg-admin-warning px-3 text-[11px] font-black text-black disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              {activating ? "전환 중" : "LP LIVE 전환"}
-            </button>
-          ) : null}
         </div>
       </div>
 
@@ -728,12 +658,9 @@ function mandateReviewReasons(mandate: LiquidityProviderMandate) {
 }
 
 function modeClassName(mode: LiquidityProviderMandate["executionMode"]) {
-  const tone = mode === "LIVE"
-    ? "bg-admin-danger-surface text-admin-danger"
-    : mode === "PILOT"
-      ? "bg-admin-warning-surface text-admin-warning"
-      : "bg-admin-accent-surface text-admin-accent-soft";
-  return `rounded-md px-2 py-1 text-[10px] font-black ${tone}`;
+  return `rounded-md bg-admin-danger-surface px-2 py-1 text-[10px] font-black text-admin-danger ${
+    mode === "LIVE" ? "" : "opacity-80"
+  }`;
 }
 
 function stateClassName(state: LiquidityProviderDailyState | null) {
@@ -746,7 +673,7 @@ function stateClassName(state: LiquidityProviderDailyState | null) {
 }
 
 function formatMode(mode: LiquidityProviderMandate["executionMode"]) {
-  return mode === "PILOT" ? "PILOT · 감사" : mode;
+  return mode;
 }
 
 function safeRate(value: number, limit: number) {

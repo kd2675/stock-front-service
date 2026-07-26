@@ -106,12 +106,7 @@ export type InstitutionPortfolioCreatePayload = {
   changeReason?: string;
 };
 
-export type InstitutionPilotActivationPayload = {
-  symbol: string;
-  changeReason?: string;
-};
-
-export type InstitutionPilotSuspensionPayload = {
+export type InstitutionSuspensionPayload = {
   changeReason?: string;
 };
 
@@ -120,10 +115,6 @@ export type LiquidityProviderProvisionPayload = {
   referenceDailyVolumeRate?: number;
   seedInventoryRate?: number;
   initialCashToInventoryValue?: number;
-  changeReason?: string;
-};
-
-export type LiquidityProviderActivationPayload = {
   changeReason?: string;
 };
 
@@ -183,7 +174,7 @@ export function getLiquidityProviderRecommendation(token: string) {
   );
 }
 
-export function provisionLiquidityShadow(
+export function createLiquidityProviderLive(
   token: string,
   symbol: string,
   payload: LiquidityProviderProvisionPayload,
@@ -191,18 +182,6 @@ export function provisionLiquidityShadow(
   return authenticatedPostJson<LiquidityProviderMandate>(
     token,
     `/api/stock/v1/markets/liquidity-mandates/${encodeURIComponent(symbol)}`,
-    payload,
-  );
-}
-
-export function activateLiquidityProvider(
-  token: string,
-  symbol: string,
-  payload: LiquidityProviderActivationPayload,
-) {
-  return authenticatedPostJson<LiquidityProviderMandate>(
-    token,
-    `/api/stock/v1/markets/liquidity-mandates/${encodeURIComponent(symbol)}/activate`,
     payload,
   );
 }
@@ -257,22 +236,10 @@ export function suspendUnderwritingSupply(
   );
 }
 
-export function activateInstitutionPilot(
+export function suspendInstitution(
   token: string,
   portfolioId: number,
-  payload: InstitutionPilotActivationPayload,
-) {
-  return authenticatedPostJson<InstitutionPortfolio[]>(
-    token,
-    `/api/stock/v1/markets/institution-portfolios/${portfolioId}/pilot`,
-    payload,
-  );
-}
-
-export function suspendInstitutionPilot(
-  token: string,
-  portfolioId: number,
-  payload: InstitutionPilotSuspensionPayload,
+  payload: InstitutionSuspensionPayload,
 ) {
   return authenticatedPostJson<InstitutionPortfolio[]>(
     token,
