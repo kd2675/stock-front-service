@@ -14,7 +14,9 @@ export function buildAdminPageContentProps(context: AdminPageContentBuilderConte
     || context.activeAdminSection === "participants-profiles"
     || context.activeAdminSection === "system-jobs";
   const isDormantAssetsContent = context.activeAdminSection === "participants-dormant";
-  const isEventsContent = context.activeAdminTab === "corporate";
+  const isUnderwritingContent = context.activeAdminSection === "corporate-underwriting";
+  const isEventsContent = context.activeAdminTab === "corporate" && !isUnderwritingContent;
+  const isInstitutionContent = context.activeAdminSection === "participants-institutions";
   const isMarketContent = context.activeAdminSection === "dashboard"
     || context.activeAdminSection === "market-instruments"
     || context.activeAdminSection === "market-flows";
@@ -29,24 +31,46 @@ export function buildAdminPageContentProps(context: AdminPageContentBuilderConte
       participants: context.queries.dormantAutoParticipantsQuery.data ?? [],
       overviews: context.queries.dormantAutoParticipantOverviewsQuery.data ?? [],
       symbolConfigs: context.queries.dormantAutoParticipantSymbolConfigsQuery.data ?? [],
+      withdrawalAudits: context.queries.dormantAutoParticipantWithdrawalAuditsQuery.data ?? [],
       loading: context.queries.dormantAutoParticipantsQuery.isFetching
         || context.queries.dormantAutoParticipantOverviewsQuery.isFetching
-        || context.queries.dormantAutoParticipantSymbolConfigsQuery.isFetching,
+        || context.queries.dormantAutoParticipantSymbolConfigsQuery.isFetching
+        || context.queries.dormantAutoParticipantWithdrawalAuditsQuery.isFetching,
       error: context.queries.dormantAutoParticipantsQuery.isError
         || context.queries.dormantAutoParticipantOverviewsQuery.isError
-        || context.queries.dormantAutoParticipantSymbolConfigsQuery.isError,
+        || context.queries.dormantAutoParticipantSymbolConfigsQuery.isError
+        || context.queries.dormantAutoParticipantWithdrawalAuditsQuery.isError,
       onRefresh: () => {
         void Promise.all([
           context.queries.dormantAutoParticipantsQuery.refetch(),
           context.queries.dormantAutoParticipantOverviewsQuery.refetch(),
           context.queries.dormantAutoParticipantSymbolConfigsQuery.refetch(),
+          context.queries.dormantAutoParticipantWithdrawalAuditsQuery.refetch(),
         ]);
       },
     } : null,
     eventsProps: isEventsContent ? buildAdminEventsContentProps(context) : null,
     eodProps: context.activeAdminSection === "system-eod" ? buildAdminEodContentProps(context) : null,
+    institutionProps: isInstitutionContent ? {
+      accessToken: context.queries.accessToken,
+      portfolios: context.queries.institutionPortfoliosQuery.data ?? [],
+      loading: context.queries.institutionPortfoliosQuery.isFetching,
+      error: context.queries.institutionPortfoliosQuery.isError,
+      onRefresh: () => {
+        void context.queries.institutionPortfoliosQuery.refetch();
+      },
+    } : null,
     marketProps: isMarketContent ? buildAdminMarketContentProps(context) : null,
     message: context.message,
     participantsProps: isParticipantsContent ? buildAdminParticipantsContentProps(context) : null,
+    underwritingProps: isUnderwritingContent ? {
+      accessToken: context.queries.accessToken,
+      contracts: context.queries.underwritingContractsQuery.data ?? [],
+      loading: context.queries.underwritingContractsQuery.isFetching,
+      error: context.queries.underwritingContractsQuery.isError,
+      onRefresh: () => {
+        void context.queries.underwritingContractsQuery.refetch();
+      },
+    } : null,
   };
 }

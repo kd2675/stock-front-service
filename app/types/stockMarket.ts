@@ -284,7 +284,14 @@ export type InstrumentTradingActivityAnalytics = {
 };
 
 export type InstrumentInvestorCategoryFlow = {
-  category: "MANUAL_PARTICIPANT" | "AUTO_PARTICIPANT" | "LISTING_UNDERWRITER";
+  category:
+    | "MANUAL_PARTICIPANT"
+    | "AUTO_PARTICIPANT"
+    | "LISTING_UNDERWRITER"
+    | "INSTITUTIONAL_INVESTOR"
+    | "LIQUIDITY_PROVIDER"
+    | "ISSUE_UNDERWRITER"
+    | "SYSTEM_CUSTODY";
   buyQuantity: number;
   sellQuantity: number;
   netQuantity: number;

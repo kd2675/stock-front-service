@@ -31,15 +31,33 @@ assert.deepEqual(
   "시장 운영 메뉴의 업무 순서가 계약과 다릅니다.",
 );
 assert.deepEqual(
+  adminGroupSections.corporate,
+  [
+    "corporate-instruments",
+    "corporate-underwriting",
+    "corporate-actions",
+    "corporate-history",
+    "corporate-reports",
+  ],
+  "기업 관리 메뉴의 상장·인수·이벤트·이력·보고서 순서가 계약과 다릅니다.",
+);
+assert.deepEqual(
   adminGroupSections.participants,
-  ["participants-overview", "participants-list", "participants-dormant", "participants-profiles"],
-  "자동 참여자 메뉴의 현황·계정·휴면·프로필 순서가 계약과 다릅니다.",
+  [
+    "participants-overview",
+    "participants-list",
+    "participants-institutions",
+    "participants-dormant",
+    "participants-profiles",
+  ],
+  "참여자 메뉴의 현황·계정·기관·휴면·프로필 순서가 계약과 다릅니다.",
 );
 for (const item of adminItems) {
   assert.equal(resolveAdminSectionFromPath(item.href), item.section, `${item.href} section 해석이 잘못됐습니다.`);
 }
 assert.equal(resolveAdminTabFromPath("/admin/market/liquidity"), "market");
 assert.equal(resolveAdminTabFromPath("/admin/market/auto-market"), "market");
+assert.equal(resolveAdminTabFromPath("/admin/participants/institutions"), "participants");
 assert.equal(resolveAdminTabFromPath("/admin/participants/profiles"), "participants");
 assert.equal(resolveAdminTabFromPath("/admin/corporate/reports"), "corporate");
 
@@ -70,7 +88,12 @@ assert.deepEqual(
 );
 assert.deepEqual(
   pickEnabled(flagsFor("market-liquidity", "market")),
-  ["includeListingAutoAccounts", "shouldLoadAutoMarketDetails", "shouldUseAutoMarketDetails"],
+  [
+    "includeListingAutoAccounts",
+    "shouldLoadAutoMarketDetails",
+    "shouldUseAutoMarketDetails",
+    "shouldUseLiquidityProviderMandates",
+  ],
 );
 assert.deepEqual(
   pickEnabled(flagsFor("corporate-history", "corporate")),
@@ -81,12 +104,20 @@ assert.deepEqual(
   ["shouldLoadInstrumentDetails", "shouldUseInstrumentDetails", "shouldUseInstrumentReports"],
 );
 assert.deepEqual(
+  pickEnabled(flagsFor("corporate-underwriting", "corporate")),
+  ["shouldLoadInstrumentDetails", "shouldUseInstrumentDetails", "shouldUseUnderwritingContracts"],
+);
+assert.deepEqual(
   pickEnabled(flagsFor("system-jobs", "system")),
   ["shouldUseBatchRuntimeControls"],
 );
 assert.deepEqual(
   pickEnabled(flagsFor("participants-dormant", "participants")),
   ["shouldUseDormantAutoParticipants"],
+);
+assert.deepEqual(
+  pickEnabled(flagsFor("participants-institutions", "participants")),
+  ["shouldUseInstitutionPortfolios"],
 );
 
 console.log(`navigation contract verified: public=${PUBLIC_NAVIGATION_ITEMS.length}, admin=${adminItems.length}`);

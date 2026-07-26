@@ -6,9 +6,11 @@ import { AdminAutoParticipantManagementPanel } from "@/app/supply-demand/admin/A
 import { AdminDormantAssetsPanel } from "@/app/supply-demand/admin/AdminDormantAssetsPanel";
 import { AdminEventsSection } from "@/app/supply-demand/admin/AdminEventsSection";
 import { AdminEodSection } from "@/app/supply-demand/admin/AdminEodSection";
+import { AdminInstitutionPortfolioPanel } from "@/app/supply-demand/admin/AdminInstitutionPortfolioPanel";
 import { AdminMarketSection } from "@/app/supply-demand/admin/AdminMarketSection";
 import type { AdminSection, AdminTab } from "@/app/supply-demand/admin/AdminNavigationConfig";
 import { AdminPageShell } from "@/app/supply-demand/admin/AdminPageShell";
+import { AdminUnderwritingContractPanel } from "@/app/supply-demand/admin/AdminUnderwritingContractPanel";
 
 export type AdminPageContentProps = {
   accountsProps: ComponentProps<typeof AdminAccountsSection> | null;
@@ -18,9 +20,11 @@ export type AdminPageContentProps = {
   dormantAssetsProps: ComponentProps<typeof AdminDormantAssetsPanel> | null;
   eventsProps: ComponentProps<typeof AdminEventsSection> | null;
   eodProps: ComponentProps<typeof AdminEodSection> | null;
+  institutionProps: ComponentProps<typeof AdminInstitutionPortfolioPanel> | null;
   marketProps: ComponentProps<typeof AdminMarketSection> | null;
   message: string | null;
   participantsProps: ComponentProps<typeof AdminAutoParticipantManagementPanel> | null;
+  underwritingProps: ComponentProps<typeof AdminUnderwritingContractPanel> | null;
 };
 
 export function AdminPageContent({
@@ -31,9 +35,11 @@ export function AdminPageContent({
   dormantAssetsProps,
   eventsProps,
   eodProps,
+  institutionProps,
   marketProps,
   message,
   participantsProps,
+  underwritingProps,
 }: AdminPageContentProps) {
   return (
     <AdminPageShell activeAdminSection={activeAdminSection} activeAdminTab={activeAdminTab} message={message}>
@@ -56,6 +62,10 @@ export function AdminPageContent({
       ) : null}
 
       {dormantAssetsProps ? <AdminDormantAssetsPanel {...dormantAssetsProps} /> : null}
+
+      {institutionProps ? <AdminInstitutionPortfolioPanel {...institutionProps} /> : null}
+
+      {underwritingProps ? <AdminUnderwritingContractPanel {...underwritingProps} /> : null}
 
       {activeAdminTab === "corporate" && eventsProps ? (
         <AdminEventsSection {...eventsProps} />

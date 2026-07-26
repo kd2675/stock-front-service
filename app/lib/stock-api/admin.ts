@@ -6,7 +6,7 @@ import {
   authenticatedPostJson,
   toQuery,
 } from "@/app/lib/stock-api/core";
-import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowBreakdown, AdminFundFlowScope, AdminInvestorFlowHistory, AdminInvestorFlowSummary, AdminParticipantScope, AdminSymbolFlowList, AdminTotalAssetHistoryPage, AutoMarketDistributionBias, AutoMarketRegimeCountWeights, AutoMarketRegimeHistoryRange, AutoMarketStatus, AutoParticipant, AutoParticipantBehaviorModelVersion, AutoParticipantCashAdjustment, AutoParticipantLifecycleScope, AutoParticipantOverview, AutoParticipantPerformanceBasis, AutoParticipantPerformanceSummary, AutoParticipantProfileExitMode, AutoParticipantProfileInventoryMode, AutoParticipantProfileOverview, AutoParticipantProfilePricingMode, AutoParticipantProfileType, AutoParticipantSymbolConfig, BatchJobRuntimeStatus, EodOperationsOverview, EodPhaseRetryResult, ListingAutoOperationMode, ListingAutoPosition, ListingAutoStrategyProfile, RecurringCashIntervalUnit, StockBatchJobRun } from "@/app/types/stock";
+import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowBreakdown, AdminFundFlowScope, AdminInvestorFlowHistory, AdminInvestorFlowSummary, AdminParticipantScope, AdminSymbolFlowList, AdminTotalAssetHistoryPage, AutoMarketDistributionBias, AutoMarketRegimeCountWeights, AutoMarketRegimeHistoryRange, AutoMarketStatus, AutoParticipant, AutoParticipantBehaviorModelVersion, AutoParticipantCashAdjustment, AutoParticipantLifecycleScope, AutoParticipantOverview, AutoParticipantPerformanceBasis, AutoParticipantPerformanceSummary, AutoParticipantProfileExitMode, AutoParticipantProfileInventoryMode, AutoParticipantProfileOverview, AutoParticipantProfilePricingMode, AutoParticipantProfileType, AutoParticipantSymbolConfig, AutoParticipantWithdrawalAudit, BatchJobRuntimeStatus, EodOperationsOverview, EodPhaseRetryResult, InstitutionPortfolio, LiquidityProviderMandate, ListingAutoOperationMode, ListingAutoPosition, ListingAutoStrategyProfile, RecurringCashIntervalUnit, StockBatchJobRun, UnderwritingContract } from "@/app/types/stock";
 
 export type { AdminFundFlowScope } from "@/app/types/stock";
 
@@ -97,7 +97,147 @@ export type StockAutoParticipantCashAdjustmentPayload = {
   amount: number;
 };
 
+export type InstitutionScaledPresetPayload = {
+  institutionAumRateOfMarketCap?: number;
+  changeReason?: string;
+};
+
+export type InstitutionPilotActivationPayload = {
+  symbol: string;
+  changeReason?: string;
+};
+
+export type InstitutionPilotSuspensionPayload = {
+  changeReason?: string;
+};
+
+export type LiquidityProviderScaledProvisionPayload = {
+  sourceAccountId?: number;
+  referenceDailyVolumeRate?: number;
+  seedInventoryRate?: number;
+  initialCashToInventoryValue?: number;
+  changeReason?: string;
+};
+
+export type LiquidityProviderActivationPayload = {
+  changeReason?: string;
+};
+
+export type UnderwritingSupplyActivationPayload = {
+  supplyRate?: number;
+  durationDays?: number;
+  changeReason?: string;
+};
+
+export type UnderwritingSupplySuspensionPayload = {
+  changeReason?: string;
+};
+
 export type AutoParticipantActivityScope = "RECENT_SIMULATION_DAY" | "ALL";
+
+export function getInstitutionPortfolios(token: string) {
+  return authenticatedGetJson<InstitutionPortfolio[]>(
+    token,
+    "/api/stock/v1/markets/institution-portfolios",
+  );
+}
+
+export function getLiquidityProviderMandates(token: string) {
+  return authenticatedGetJson<LiquidityProviderMandate[]>(
+    token,
+    "/api/stock/v1/markets/liquidity-mandates",
+  );
+}
+
+export function provisionScaledLiquidityShadow(
+  token: string,
+  symbol: string,
+  payload: LiquidityProviderScaledProvisionPayload,
+) {
+  return authenticatedPostJson<LiquidityProviderMandate>(
+    token,
+    `/api/stock/v1/markets/liquidity-mandates/${encodeURIComponent(symbol)}/scaled-shadow`,
+    payload,
+  );
+}
+
+export function activateLiquidityProvider(
+  token: string,
+  symbol: string,
+  payload: LiquidityProviderActivationPayload,
+) {
+  return authenticatedPostJson<LiquidityProviderMandate>(
+    token,
+    `/api/stock/v1/markets/liquidity-mandates/${encodeURIComponent(symbol)}/activate`,
+    payload,
+  );
+}
+
+export function getUnderwritingContracts(token: string) {
+  return authenticatedGetJson<UnderwritingContract[]>(
+    token,
+    "/api/stock/v1/markets/underwriting-contracts",
+  );
+}
+
+export function activateUnderwritingSupply(
+  token: string,
+  contractId: number,
+  payload: UnderwritingSupplyActivationPayload,
+) {
+  return authenticatedPostJson<UnderwritingContract>(
+    token,
+    `/api/stock/v1/markets/underwriting-contracts/${contractId}/scaled-supply/activate`,
+    payload,
+  );
+}
+
+export function suspendUnderwritingSupply(
+  token: string,
+  contractId: number,
+  payload: UnderwritingSupplySuspensionPayload,
+) {
+  return authenticatedPostJson<UnderwritingContract>(
+    token,
+    `/api/stock/v1/markets/underwriting-contracts/${contractId}/scaled-supply/suspend`,
+    payload,
+  );
+}
+
+export function createScaledInstitutionDefaults(
+  token: string,
+  payload: InstitutionScaledPresetPayload,
+) {
+  return authenticatedPostJson<InstitutionPortfolio[]>(
+    token,
+    "/api/stock/v1/markets/institution-portfolios/scaled-defaults",
+    payload,
+  );
+}
+
+export function activateInstitutionPilot(
+  token: string,
+  portfolioId: number,
+  payload: InstitutionPilotActivationPayload,
+) {
+  return authenticatedPostJson<InstitutionPortfolio[]>(
+    token,
+    `/api/stock/v1/markets/institution-portfolios/${portfolioId}/pilot`,
+    payload,
+  );
+}
+
+export function suspendInstitutionPilot(
+  token: string,
+  portfolioId: number,
+  payload: InstitutionPilotSuspensionPayload,
+) {
+  return authenticatedPostJson<InstitutionPortfolio[]>(
+    token,
+    `/api/stock/v1/markets/institution-portfolios/${portfolioId}/suspend`,
+    payload,
+  );
+}
 
 export function getAdminFlowOverview(token: string, options?: { symbolFlowLimit?: number; includeFundFlow?: boolean; includeSymbolFlows?: boolean; fundFlowScope?: AdminFundFlowScope; symbolFlowScope?: AdminFundFlowScope }) {
   const query = toQuery({
@@ -170,6 +310,18 @@ export function getAutoParticipantOverviews(token: string, options?: { activityS
 export function getAutoParticipants(token: string, options?: { lifecycleScope?: AutoParticipantLifecycleScope }) {
   const query = toQuery({ lifecycleScope: options?.lifecycleScope });
   return authenticatedGetJson<AutoParticipant[]>(token, `/api/stock/v1/markets/auto-market/participants${query}`);
+}
+
+export function getAutoParticipantWithdrawalAudits(
+  token: string,
+  options?: { userKeys?: string[] },
+) {
+  const normalizedUserKeys = normalizeStringList(options?.userKeys);
+  const query = toQuery({ userKeys: normalizedUserKeys });
+  return authenticatedGetJson<AutoParticipantWithdrawalAudit[]>(
+    token,
+    `/api/stock/v1/markets/auto-market/participants/withdrawal-audits${query}`,
+  );
 }
 
 export function getAutoParticipantSymbolConfigs(

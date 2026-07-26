@@ -2,7 +2,16 @@ import type { QueryClient } from "@tanstack/react-query";
 
 import { calculateChangeRate } from "@/app/lib/priceMath";
 import { stockKeys } from "@/app/lib/react-query/stockKeys";
-import type { BatchJobRuntimeStatus, Price, PriceStreamEvent, PriceTick, StockBatchJobRun } from "@/app/types/stock";
+import type {
+  BatchJobRuntimeStatus,
+  InstitutionPortfolio,
+  LiquidityProviderMandate,
+  Price,
+  PriceStreamEvent,
+  PriceTick,
+  StockBatchJobRun,
+  UnderwritingContract,
+} from "@/app/types/stock";
 
 export function setBatchRuntimeControlQueryData(
   queryClient: QueryClient,
@@ -21,6 +30,42 @@ export function setLatestManualCashFlowRunQueryData(
   latestRun: StockBatchJobRun,
 ) {
   queryClient.setQueryData<StockBatchJobRun>(stockKeys.latestManualCashFlowRun(), latestRun);
+}
+
+export function setInstitutionPortfoliosQueryData(
+  queryClient: QueryClient,
+  portfolios: InstitutionPortfolio[],
+) {
+  queryClient.setQueryData<InstitutionPortfolio[]>(
+    stockKeys.institutionPortfolios(),
+    portfolios,
+  );
+}
+
+export function upsertLiquidityProviderMandateQueryData(
+  queryClient: QueryClient,
+  nextMandate: LiquidityProviderMandate,
+) {
+  queryClient.setQueryData<LiquidityProviderMandate[]>(
+    stockKeys.liquidityProviderMandates(),
+    (current = []) => [
+      ...current.filter((mandate) => mandate.mandateId !== nextMandate.mandateId),
+      nextMandate,
+    ].sort((left, right) => left.symbol.localeCompare(right.symbol)),
+  );
+}
+
+export function upsertUnderwritingContractQueryData(
+  queryClient: QueryClient,
+  nextContract: UnderwritingContract,
+) {
+  queryClient.setQueryData<UnderwritingContract[]>(
+    stockKeys.underwritingContracts(),
+    (current = []) => [
+      ...current.filter((contract) => contract.contractId !== nextContract.contractId),
+      nextContract,
+    ].sort((left, right) => left.symbol.localeCompare(right.symbol)),
+  );
 }
 
 export function applyPriceStreamEventQueryData(

@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import DataTableViewport from "@/app/components/DataTableViewport";
 import { formatAutoParticipantProfile } from "@/app/lib/autoParticipantProfiles";
 import { AutoParticipantOverviewDetail } from "@/app/supply-demand/admin/AdminAutoParticipantOverviewDetail";
+import { AdminDormantWithdrawalAudit } from "@/app/supply-demand/admin/AdminDormantWithdrawalAudit";
 import {
   formatCount,
   formatDateTime,
@@ -21,6 +22,7 @@ import type {
   AutoParticipant,
   AutoParticipantOverview,
   AutoParticipantSymbolConfig,
+  AutoParticipantWithdrawalAudit,
 } from "@/app/types/stock";
 
 const DORMANT_PAGE_SIZE = 8;
@@ -31,6 +33,7 @@ type DormantParticipantRow = {
   participant: AutoParticipant;
   overview: AutoParticipantOverview | null;
   symbolConfigs: AutoParticipantSymbolConfig[];
+  withdrawalAudit: AutoParticipantWithdrawalAudit | null;
   reviewReasons: string[];
 };
 
@@ -38,6 +41,7 @@ export function AdminDormantAssetsPanel({
   participants,
   overviews,
   symbolConfigs,
+  withdrawalAudits,
   loading,
   error,
   onRefresh,
@@ -45,6 +49,7 @@ export function AdminDormantAssetsPanel({
   participants: AutoParticipant[];
   overviews: AutoParticipantOverview[];
   symbolConfigs: AutoParticipantSymbolConfig[];
+  withdrawalAudits: AutoParticipantWithdrawalAudit[];
   loading: boolean;
   error: boolean;
   onRefresh: () => void;
@@ -53,8 +58,8 @@ export function AdminDormantAssetsPanel({
   const [assetFilter, setAssetFilter] = useState<DormantAssetFilter>("ALL");
   const [page, setPage] = useState(0);
   const rows = useMemo(
-    () => buildDormantParticipantRows(participants, overviews, symbolConfigs),
-    [overviews, participants, symbolConfigs],
+    () => buildDormantParticipantRows(participants, overviews, symbolConfigs, withdrawalAudits),
+    [overviews, participants, symbolConfigs, withdrawalAudits],
   );
   const summary = useMemo(() => summarizeDormantRows(rows), [rows]);
   const normalizedSearchTerm = searchTerm.trim().toLowerCase();
@@ -83,7 +88,7 @@ export function AdminDormantAssetsPanel({
         <div>
           <h2 className="text-base font-black">탈퇴 자동 참여자 휴면 원장</h2>
           <p className="mt-1 max-w-3xl text-xs font-bold leading-5 text-stock-subtle">
-            탈퇴 시 반환한 주식·회수한 현금과 종료 계좌, 보존된 전략·주문·체결 이력을 읽기 전용으로 조회합니다.
+            탈퇴 시 시스템 보관계정으로 이전한 주식·회수한 현금과 종료 계좌, 보존된 전략·주문·체결 이력을 읽기 전용으로 조회합니다.
           </p>
           <p className="mt-1 max-w-3xl text-[11px] font-bold leading-5 text-admin-quiet">
             신규 탈퇴는 잔여 자산과 예약이 0이고 계좌가 CLOSED여야 정상입니다. 기존 소프트 탈퇴 데이터처럼 값이 남아 있으면 점검 대상으로 표시합니다.
@@ -198,7 +203,13 @@ export function AdminDormantAssetsPanel({
 }
 
 function DormantParticipantCard({ row }: { row: DormantParticipantRow }) {
-  const { participant, overview, reviewReasons, symbolConfigs } = row;
+  const {
+    participant,
+    overview,
+    reviewReasons,
+    symbolConfigs,
+    withdrawalAudit,
+  } = row;
   const enabledSymbolConfigCount = symbolConfigs.filter((config) => config.enabled).length;
 
   return (
@@ -238,7 +249,7 @@ function DormantParticipantCard({ row }: { row: DormantParticipantRow }) {
 
       <div className="mt-3 grid gap-2 sm:grid-cols-3">
         <DormantHeaderMetric label="탈퇴 시 회수 현금" value={formatWon(participant.withdrawalReturnedCashAmount)} />
-        <DormantHeaderMetric label="탈퇴 시 반납 주식" value={`${formatNumber(participant.withdrawalReturnedShareQuantity)}주 · ${formatCount(participant.withdrawalReturnedSymbolCount, "종목")}`} />
+        <DormantHeaderMetric label="탈퇴 시 보관 이전" value={`${formatNumber(participant.withdrawalReturnedShareQuantity)}주 · ${formatCount(participant.withdrawalReturnedSymbolCount, "종목")}`} />
         <DormantHeaderMetric label="계좌 종료" value={participant.accountClosedOnWithdrawal ? "CLOSED 완료" : "감사 원장 없음"} />
       </div>
 
@@ -282,6 +293,8 @@ function DormantParticipantCard({ row }: { row: DormantParticipantRow }) {
               연결된 계좌·자산 요약이 없습니다. 계좌 미개설 참여자이거나 조회 결과가 누락되었는지 확인해 주세요.
             </div>
           )}
+
+          <AdminDormantWithdrawalAudit audit={withdrawalAudit} />
 
           <div className="mt-3 rounded-md border border-white/10 bg-black/20 p-3">
             <div className="flex flex-wrap items-start justify-between gap-2">
@@ -346,8 +359,12 @@ function buildDormantParticipantRows(
   participants: AutoParticipant[],
   overviews: AutoParticipantOverview[],
   symbolConfigs: AutoParticipantSymbolConfig[],
+  withdrawalAudits: AutoParticipantWithdrawalAudit[],
 ): DormantParticipantRow[] {
   const overviewByUserKey = new Map(overviews.map((overview) => [overview.userKey, overview]));
+  const withdrawalAuditByUserKey = new Map(
+    withdrawalAudits.map((audit) => [audit.participantUserKey, audit]),
+  );
   const symbolConfigsByUserKey = new Map<string, AutoParticipantSymbolConfig[]>();
   symbolConfigs.forEach((config) => {
     const participantConfigs = symbolConfigsByUserKey.get(config.userKey) ?? [];
@@ -357,11 +374,13 @@ function buildDormantParticipantRows(
   return participants
     .map((participant) => {
       const overview = overviewByUserKey.get(participant.userKey) ?? null;
+      const withdrawalAudit = withdrawalAuditByUserKey.get(participant.userKey) ?? null;
       return {
         participant,
         overview,
         symbolConfigs: symbolConfigsByUserKey.get(participant.userKey) ?? [],
-        reviewReasons: resolveDormantReviewReasons(participant, overview),
+        withdrawalAudit,
+        reviewReasons: resolveDormantReviewReasons(participant, overview, withdrawalAudit),
       };
     })
     .sort((left, right) => {
@@ -377,6 +396,7 @@ function buildDormantParticipantRows(
 function resolveDormantReviewReasons(
   participant: AutoParticipant,
   overview: AutoParticipantOverview | null,
+  withdrawalAudit: AutoParticipantWithdrawalAudit | null,
 ) {
   const reasons: string[] = [];
   if (!participant.withdrawnAt) {
@@ -412,6 +432,26 @@ function resolveDormantReviewReasons(
   }
   if ((overview?.totalHoldingQuantity ?? 0) > 0) {
     reasons.push(`탈퇴 계좌 보유주식 ${formatNumber(overview?.totalHoldingQuantity ?? 0)}주가 남아 있습니다.`);
+  }
+  if (withdrawalAudit?.pendingCorporateActionRightCount) {
+    reasons.push(`미완료 기업행사 권리 ${formatCount(withdrawalAudit.pendingCorporateActionRightCount, "건")}이 남아 있습니다.`);
+  }
+  if (withdrawalAudit) {
+    const transferredQuantity = withdrawalAudit.shareTransfers.reduce(
+      (quantity, transfer) => quantity + transfer.quantity,
+      0,
+    );
+    if (transferredQuantity !== withdrawalAudit.returnedShareQuantity) {
+      reasons.push(
+        `이전 상세 합계 ${formatNumber(transferredQuantity)}주와 정산 합계 ${formatNumber(withdrawalAudit.returnedShareQuantity)}주가 다릅니다.`,
+      );
+    }
+    if (withdrawalAudit.shareTransfers.length !== withdrawalAudit.returnedSymbolCount) {
+      reasons.push("이전 상세 종목 수와 정산 종목 수가 다릅니다.");
+    }
+    if (withdrawalAudit.shareTransfers.some((transfer) => transfer.receiverReservedQuantity > 0)) {
+      reasons.push("비거래 보관계정에 예약 주식이 존재합니다.");
+    }
   }
   return reasons;
 }
@@ -453,6 +493,12 @@ function matchesDormantSearch(row: DormantParticipantRow, normalizedSearchTerm: 
     row.participant.accountId?.toString() ?? "",
     ...(row.overview?.holdings.map((holding) => holding.symbol) ?? []),
     ...row.symbolConfigs.map((config) => config.symbol),
+    ...(row.withdrawalAudit?.shareTransfers.flatMap((transfer) => [
+      transfer.symbol,
+      transfer.receiverUserKey,
+      transfer.receiverRole,
+      transfer.transferReason,
+    ]) ?? []),
   ].some((value) => value.toLowerCase().includes(normalizedSearchTerm));
 }
 

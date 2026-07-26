@@ -11,9 +11,11 @@ export type AdminSection =
   | "funds-payroll"
   | "participants-overview"
   | "participants-list"
+  | "participants-institutions"
   | "participants-dormant"
   | "participants-profiles"
   | "corporate-instruments"
+  | "corporate-underwriting"
   | "corporate-actions"
   | "corporate-history"
   | "corporate-reports"
@@ -47,7 +49,7 @@ export const ADMIN_NAVIGATION_GROUPS: readonly AdminNavigationGroup[] = [
     items: [
       { section: "market-instruments", href: "/admin/market/instruments", label: "종목·장 상태", description: "종목별 거래 상태와 가격 제한을 확인하고 제어합니다." },
       { section: "market-auto-market", href: "/admin/market/auto-market", label: "종목별 자동장", description: "종목별 자동 주문 생성, 주문 상한, TTL과 시장 압력 분포를 관리합니다." },
-      { section: "market-liquidity", href: "/admin/market/liquidity", label: "유동성 공급", description: "상장주관사 자동계정의 재고 목표와 호가 공급 정책을 관리합니다." },
+      { section: "market-liquidity", href: "/admin/market/liquidity", label: "유동성 공급", description: "전용 LP 계약·재고·일일 한도와 전환 전 상장주관사 레거시 정책을 분리해 점검합니다." },
       { section: "market-flows", href: "/admin/market/flows", label: "시장 흐름", description: "전체 계좌 자산과 참여자별 체결, 종목별 거래·현금 흐름을 확인합니다." },
     ],
   },
@@ -62,10 +64,11 @@ export const ADMIN_NAVIGATION_GROUPS: readonly AdminNavigationGroup[] = [
   },
   {
     tab: "participants",
-    label: "자동 참여자",
+    label: "시장 참여자",
     items: [
       { section: "participants-overview", href: "/admin/participants/overview", label: "프로필별 현황", description: "프로필별 계좌·자산·보유·주문·체결 성과를 요약합니다." },
       { section: "participants-list", href: "/admin/participants/list", label: "참여자 관리", description: "자동 참여자 계정을 조회·등록·대량 생성하고 개별 종목 전략을 관리합니다." },
+      { section: "participants-institutions", href: "/admin/participants/institutions", label: "기관 포트폴리오", description: "축소 시장용 기관의 AUM·목표 비중·shadow 결정과 위험 예산을 검증합니다." },
       { section: "participants-dormant", href: "/admin/participants/dormant", label: "휴면 자산", description: "탈퇴한 자동 참여자의 계좌·현금·보유주식·예약·전략과 마지막 활동 원장을 조회합니다." },
       { section: "participants-profiles", href: "/admin/participants/profiles", label: "프로필 정책", description: "프로필별 주문 행동과 가격 반응, 보유·자금 정책을 설정합니다." },
     ],
@@ -74,7 +77,8 @@ export const ADMIN_NAVIGATION_GROUPS: readonly AdminNavigationGroup[] = [
     tab: "corporate",
     label: "기업 관리",
     items: [
-      { section: "corporate-instruments", href: "/admin/corporate/instruments", label: "신규 상장", description: "신규 종목과 상장주관사 자동계정을 함께 생성합니다." },
+      { section: "corporate-instruments", href: "/admin/corporate/instruments", label: "신규 상장", description: "신규 종목의 발행량과 축소시장 유통·잠금 배정을 생성합니다." },
+      { section: "corporate-underwriting", href: "/admin/corporate/underwriting", label: "인수 계약", description: "종목별 인수기관 계정, 유통·잠금 배정원장과 수량 대사를 확인합니다." },
       { section: "corporate-actions", href: "/admin/corporate/actions", label: "기업 이벤트 등록", description: "증자·배당·분할·상장폐지의 일정과 처리 조건을 등록합니다." },
       { section: "corporate-history", href: "/admin/corporate/history", label: "이벤트 처리 이력", description: "종목별 기업 이벤트의 진행 상태와 처리 결과를 조회합니다." },
       { section: "corporate-reports", href: "/admin/corporate/reports", label: "종목 보고서", description: "투자자에게 공개하고 자동장 신호에 반영할 종목 보고서를 관리합니다." },

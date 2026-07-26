@@ -110,6 +110,14 @@ export function formatFlowCategory(category: InstrumentInvestorCategoryFlow["cat
     case "AUTO_PARTICIPANT":
       return "자동 참여자";
     case "LISTING_UNDERWRITER":
-      return "상장주관사";
+      return "기존 상장주관사";
+    case "INSTITUTIONAL_INVESTOR":
+      return "기관투자자";
+    case "LIQUIDITY_PROVIDER":
+      return "유동성 공급자";
+    case "ISSUE_UNDERWRITER":
+      return "발행 인수기관";
+    case "SYSTEM_CUSTODY":
+      return "시스템 보관";
   }
 }

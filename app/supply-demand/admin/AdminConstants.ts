@@ -88,6 +88,8 @@ export const DEFAULT_CREATE_INSTRUMENT_FORM_VALUES: CreateInstrumentFormValues =
   initialPrice: "",
   issuedShares: "",
   priceLimitRate: "30",
+  initialIssueMode: "SCALED_ROLE_SEPARATED",
+  tradableShareRatePercent: "50",
   listingAutoDisplayName: "",
   listingAutoEnabled: "true",
   listingAutoPositionSide: "SELL_ONLY",

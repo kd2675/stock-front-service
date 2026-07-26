@@ -71,15 +71,21 @@ export function buildAdminAutomationContentProps({
     editingAutoConfigSymbol,
     editingListingAutoSymbol,
     lastCashFlowRun,
+    liquidityProviderMandates: queries.liquidityProviderMandatesQuery.data ?? [],
+    liquidityProviderMandatesError: queries.liquidityProviderMandatesQuery.isError,
     listingAutoAccounts,
     listingAutoDraft: listingAutoAccountDraft,
     listingAutoDraftSetters: listingAutoAccountDraftSetters,
     loadingBatchRuntimeControls: batchJobRuntimeControlsQuery.isFetching,
+    loadingLiquidityProviderMandates: queries.liquidityProviderMandatesQuery.isFetching,
     onRefreshBatchRuntimeControls: () => void batchJobRuntimeControlsQuery.refetch().then((result) => {
       if (result.isError) {
         setMessage(getAdminUnknownErrorMessage(result.error, "배치 자동 실행 상태를 조회하지 못했습니다."));
       }
     }),
+    onRefreshLiquidityProviderMandates: () => {
+      void queries.liquidityProviderMandatesQuery.refetch();
+    },
     onClearProfileSelection: () => setEditingProfileType(null),
     onRunCashFlow: () => void runAutoParticipantCashFlowNow(),
     onSelectAutoMarketDraft: selectAutoMarketConfigDraft,

@@ -3,22 +3,29 @@ import { mutationOptions } from "@tanstack/react-query";
 import type { ApiResult } from "@/app/lib/api";
 import {
   amendOrder,
+  activateUnderwritingSupply,
+  activateInstitutionPilot,
+  activateLiquidityProvider,
   applyCorporateAction,
   adjustAutoParticipantCash,
   adjustUserAccountCash,
   cancelOrder,
   cancelOrderPartially,
+  createScaledInstitutionDefaults,
   createOrderBookInstrument,
   deleteInstrumentReport,
   jumpSimulationClock,
   openStockAccount,
   placeOrder,
+  provisionScaledLiquidityShadow,
   publishInstrumentReport,
   reconnectStockAccount,
   regenerateAutoMarketDailyRegime,
   regenerateAutoMarketRegimeModifier,
   retryFailedEodPhase,
   runAutoParticipantCashFlow,
+  suspendInstitutionPilot,
+  suspendUnderwritingSupply,
   subscribeCorporateAction,
   updateAutoMarketConfig,
   updateAutoParticipantProfileConfig,
@@ -41,6 +48,13 @@ import type {
   StockBatchJobRuntimeControlPayload,
   StockCorporateActionPayload,
   StockCorporateActionSubscriptionPayload,
+  InstitutionScaledPresetPayload,
+  InstitutionPilotActivationPayload,
+  InstitutionPilotSuspensionPayload,
+  LiquidityProviderActivationPayload,
+  LiquidityProviderScaledProvisionPayload,
+  UnderwritingSupplyActivationPayload,
+  UnderwritingSupplySuspensionPayload,
   StockInstrumentReportPayload,
   StockListingAutoAccountConfigPayload,
   StockMarketStatusPayload,
@@ -281,6 +295,67 @@ export function adminUpdateBatchJobRuntimeControlMutationOptions() {
 
 export function adminRunAutoParticipantCashFlowMutationOptions() {
   return adminNoVariablesMutationOptions(runAutoParticipantCashFlow);
+}
+
+export function adminCreateScaledInstitutionDefaultsMutationOptions() {
+  return adminMutationOptions(
+    (token, payload: InstitutionScaledPresetPayload) =>
+      createScaledInstitutionDefaults(token, payload),
+  );
+}
+
+export function adminActivateInstitutionPilotMutationOptions() {
+  return adminMutationOptions(
+    (token, variables: {
+      portfolioId: number;
+      payload: InstitutionPilotActivationPayload;
+    }) => activateInstitutionPilot(token, variables.portfolioId, variables.payload),
+  );
+}
+
+export function adminSuspendInstitutionPilotMutationOptions() {
+  return adminMutationOptions(
+    (token, variables: {
+      portfolioId: number;
+      payload: InstitutionPilotSuspensionPayload;
+    }) => suspendInstitutionPilot(token, variables.portfolioId, variables.payload),
+  );
+}
+
+export function adminProvisionScaledLiquidityShadowMutationOptions() {
+  return adminMutationOptions(
+    (token, variables: {
+      symbol: string;
+      payload: LiquidityProviderScaledProvisionPayload;
+    }) => provisionScaledLiquidityShadow(token, variables.symbol, variables.payload),
+  );
+}
+
+export function adminActivateLiquidityProviderMutationOptions() {
+  return adminMutationOptions(
+    (token, variables: {
+      symbol: string;
+      payload: LiquidityProviderActivationPayload;
+    }) => activateLiquidityProvider(token, variables.symbol, variables.payload),
+  );
+}
+
+export function adminActivateUnderwritingSupplyMutationOptions() {
+  return adminMutationOptions(
+    (token, variables: {
+      contractId: number;
+      payload: UnderwritingSupplyActivationPayload;
+    }) => activateUnderwritingSupply(token, variables.contractId, variables.payload),
+  );
+}
+
+export function adminSuspendUnderwritingSupplyMutationOptions() {
+  return adminMutationOptions(
+    (token, variables: {
+      contractId: number;
+      payload: UnderwritingSupplySuspensionPayload;
+    }) => suspendUnderwritingSupply(token, variables.contractId, variables.payload),
+  );
 }
 
 export function adminRetryFailedEodPhaseMutationOptions() {

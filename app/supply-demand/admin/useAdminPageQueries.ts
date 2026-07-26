@@ -8,13 +8,17 @@ import {
   adminInvestorFlowSummaryQueryOptions,
   adminUserFundFlowQueryOptions,
   autoParticipantsQueryOptions,
+  autoParticipantWithdrawalAuditsQueryOptions,
   autoParticipantOverviewsQueryOptions,
   autoParticipantPerformanceSummaryQueryOptions,
   autoParticipantProfileOverviewsQueryOptions,
   autoParticipantSymbolConfigsQueryOptions,
   batchJobRuntimeControlsQueryOptions,
   eodOperationsOverviewQueryOptions,
+  institutionPortfoliosQueryOptions,
+  liquidityProviderMandatesQueryOptions,
   latestManualCashFlowRunQueryOptions,
+  underwritingContractsQueryOptions,
 } from "@/app/lib/react-query/stockAdminQueries";
 import {
   autoMarketStatusQueryOptions,
@@ -105,6 +109,11 @@ export function useAdminPageQueries({
     lifecycleScope: "WITHDRAWN",
     refetchIntervalMs: false,
   }));
+  const dormantAutoParticipantWithdrawalAuditsQuery = useQuery(
+    autoParticipantWithdrawalAuditsQueryOptions(accessToken, {
+      enabled: queryFlags.shouldUseDormantAutoParticipants,
+    }),
+  );
   const dormantAutoParticipantOverviewsQuery = useQuery(autoParticipantOverviewsQueryOptions(accessToken, {
     activityScope: "ALL",
     enabled: queryFlags.shouldUseDormantAutoParticipants,
@@ -181,6 +190,15 @@ export function useAdminPageQueries({
     enabled: queryFlags.shouldUseEodOverview,
     refetchIntervalMs: ADMIN_EOD_REFETCH_MS,
   }));
+  const institutionPortfoliosQuery = useQuery(institutionPortfoliosQueryOptions(accessToken, {
+    enabled: queryFlags.shouldUseInstitutionPortfolios,
+  }));
+  const liquidityProviderMandatesQuery = useQuery(liquidityProviderMandatesQueryOptions(accessToken, {
+    enabled: queryFlags.shouldUseLiquidityProviderMandates,
+  }));
+  const underwritingContractsQuery = useQuery(underwritingContractsQueryOptions(accessToken, {
+    enabled: queryFlags.shouldUseUnderwritingContracts,
+  }));
   const autoMarketSummaryQuery = useQuery(autoMarketSummaryStatusQueryOptions({
     enabled: queryFlags.shouldUseAutoMarketSummary,
     includeRuntimeMetrics: false,
@@ -239,10 +257,14 @@ export function useAdminPageQueries({
     batchJobRuntimeControlsQuery,
     latestManualCashFlowRunQuery,
     eodOperationsOverviewQuery,
+    institutionPortfoliosQuery,
+    liquidityProviderMandatesQuery,
+    underwritingContractsQuery,
     corporateActionsQuery,
     dormantAutoParticipantOverviewsQuery,
     dormantAutoParticipantsQuery,
     dormantAutoParticipantSymbolConfigsQuery,
+    dormantAutoParticipantWithdrawalAuditsQuery,
     shouldLoadInstrumentDetails: queryFlags.shouldLoadInstrumentDetails,
     simulationClockQuery,
     userFundFlowQuery,

@@ -19,6 +19,9 @@
 - `/corporate-actions`
 - `/admin/**`
 - `/admin/participants/dormant` (탈퇴 자동 참여자의 자산 반환·계좌 종료 감사 및 보존 전략·거래 원장)
+- `/admin/market/liquidity` (전용 LP 계약·계정/STP·일일 한도 감사, 일시정지 장전의 종목별 SHADOW 준비, 레거시 종료 또는 신규 상장 개장 준비와 LIVE 전환)
+- `/admin/participants/institutions` (기관 AUM·실제/예상/목표 비중·SHADOW 근거 감사, 20거래일 검증 후 단일 종목 PILOT 전환과 실행 중 비상 중단)
+- `/admin/corporate/underwriting` (인수기관·종목별 계정, 최초 유통·잠금 배정원장과 수량 대사, 유한 수동 매도 공급 활성·중단·예산 감사)
 
 이전 `/supply-demand`, `/reports`, `/supply-demand/admin/**` 주소는 `next.config.ts`에서 위 canonical route로 redirect합니다.
 

@@ -13,13 +13,17 @@ import {
   getAdminUserFundFlow,
   getAutoMarketRegimeHistoryRange,
   getAutoParticipants,
+  getAutoParticipantWithdrawalAudits,
   getAutoParticipantOverviews,
   getAutoParticipantPerformanceSummary,
   getAutoParticipantProfileOverviews,
   getAutoParticipantSymbolConfigs,
   getBatchJobRuntimeControls,
   getEodOperationsOverview,
+  getInstitutionPortfolios,
+  getLiquidityProviderMandates,
   getLatestAutoParticipantCashFlowRun,
+  getUnderwritingContracts,
 } from "@/app/lib/stock";
 import type { AutoParticipantLifecycleScope, AutoParticipantPerformanceBasis } from "@/app/types/stock";
 import { stockKeys } from "@/app/lib/react-query/stockKeys";
@@ -115,6 +119,54 @@ export function adminInvestorFlowSummaryQueryOptions(
     enabled: options.enabled,
     refetchInterval: options.refetchIntervalMs ?? false,
     refetchIntervalInBackground: false,
+  });
+}
+
+export function institutionPortfoliosQueryOptions(
+  token: string | null,
+  options: {
+    enabled?: boolean;
+  } = {},
+) {
+  return adminAuthenticatedQueryOptions(token, {
+    queryKey: stockKeys.institutionPortfolios(),
+    request: getInstitutionPortfolios,
+    fallbackMessage: "기관 포트폴리오와 최근 shadow 결정을 조회하지 못했습니다.",
+    enabled: options.enabled,
+    refetchInterval: false,
+    staleTime: ADMIN_SNAPSHOT_STALE_MS,
+  });
+}
+
+export function liquidityProviderMandatesQueryOptions(
+  token: string | null,
+  options: {
+    enabled?: boolean;
+  } = {},
+) {
+  return adminAuthenticatedQueryOptions(token, {
+    queryKey: stockKeys.liquidityProviderMandates(),
+    request: getLiquidityProviderMandates,
+    fallbackMessage: "LP 계약·계정·일일 위험 상태를 조회하지 못했습니다.",
+    enabled: options.enabled,
+    refetchInterval: false,
+    staleTime: ADMIN_SNAPSHOT_STALE_MS,
+  });
+}
+
+export function underwritingContractsQueryOptions(
+  token: string | null,
+  options: {
+    enabled?: boolean;
+  } = {},
+) {
+  return adminAuthenticatedQueryOptions(token, {
+    queryKey: stockKeys.underwritingContracts(),
+    request: getUnderwritingContracts,
+    fallbackMessage: "인수계약과 최초 배정원장을 조회하지 못했습니다.",
+    enabled: options.enabled,
+    refetchInterval: false,
+    staleTime: ADMIN_SNAPSHOT_STALE_MS,
   });
 }
 
@@ -287,6 +339,27 @@ export function autoParticipantsQueryOptions(
     enabled: options.enabled,
     refetchInterval: options.refetchIntervalMs ?? false,
     staleTime: options.staleTimeMs ?? ADMIN_SNAPSHOT_STALE_MS,
+  });
+}
+
+export function autoParticipantWithdrawalAuditsQueryOptions(
+  token: string | null,
+  options: {
+    enabled?: boolean;
+    staleTimeMs?: number;
+    userKeys?: string[];
+  } = {},
+) {
+  const normalizedUserKeys = normalizeStringList(options.userKeys, { sort: true });
+  return adminSnapshotQueryOptions(token, {
+    queryKey: stockKeys.autoParticipantWithdrawalAudits(normalizedUserKeys),
+    request: (nextToken) => getAutoParticipantWithdrawalAudits(nextToken, {
+      userKeys: normalizedUserKeys,
+    }),
+    fallbackMessage: "탈퇴 자산 이전 감사 원장을 조회하지 못했습니다.",
+    enabled: options.enabled,
+    refetchInterval: false,
+    staleTime: options.staleTimeMs ?? ADMIN_LEDGER_STALE_MS,
   });
 }
 

@@ -15,6 +15,10 @@ export type StockOrderBookInstrumentCreatePayload = {
   initialPrice: number;
   issuedShares: number;
   priceLimitRate?: number;
+  initialIssueAllocation?: {
+    mode: "SCALED_ROLE_SEPARATED" | "LEGACY_FULL_FLOAT";
+    tradableShareRate?: number;
+  };
   listingAutoAccount?: {
     displayName?: string;
     enabled?: boolean;

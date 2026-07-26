@@ -63,7 +63,7 @@ export function AdminAutoParticipantWithdrawalDialog({
             value={overviewLoading && overview === null ? "불러오는 중" : formatWon(reclaimableCash)}
           />
           <WithdrawalMetric
-            label="주관사 반납 주식"
+            label="보관 이전 주식"
             value={overviewLoading && overview === null ? "불러오는 중" : formatCount(overview?.totalHoldingQuantity ?? 0, "주")}
           />
           <WithdrawalMetric
@@ -76,14 +76,14 @@ export function AdminAutoParticipantWithdrawalDialog({
           <p className="text-sm font-black text-admin-danger">탈퇴와 동시에 한 트랜잭션으로 처리됩니다.</p>
           <ul className="mt-2 grid gap-1.5 text-xs font-bold leading-5 text-admin-muted">
             <li>모든 시장의 미체결 주문 {formatCount(overview?.openOrderCount ?? 0, "건")}을 취소하고 매수·매도 예약을 해제합니다.</li>
-            <li>보유 주식 {formatNumber(overview?.totalHoldingQuantity ?? 0)}주는 종목별 상장주관사 계좌로 전량 반납합니다.</li>
+            <li>보유 주식 {formatNumber(overview?.totalHoldingQuantity ?? 0)}주는 주문이 금지된 시스템 보관계정으로 전량 이전합니다.</li>
             <li>예약 해제 후 남은 현금은 시스템으로 회수하고, 활성 정기입금·배당 재투자 예산은 만료합니다.</li>
             <li>계좌는 삭제하지 않고 <span className="text-white">CLOSED</span>로 종료해 과거 주문·체결·정산 이력을 보존합니다.</li>
           </ul>
         </div>
 
         <p className="mt-3 rounded-md border border-admin-warning/25 bg-admin-warning/[0.06] px-3 py-2.5 text-xs font-bold leading-5 text-admin-warning">
-          보유 종목의 활성 상장주관사 계좌가 없거나 지급·청약·신주 상장 등 완료되지 않은 기업행사 권리가 있으면 자산 누락을 막기 위해 탈퇴가 거부됩니다. 설정 또는 기업행사를 먼저 완료한 뒤 다시 시도하세요.
+          시스템 보관계정이 준비되지 않았거나 지급·청약·신주 상장 등 완료되지 않은 기업행사 권리가 있으면 자산 누락을 막기 위해 탈퇴가 거부됩니다. 설정 또는 기업행사를 먼저 완료한 뒤 다시 시도하세요.
         </p>
 
         <label className="mt-4 block text-xs font-black text-admin-muted" htmlFor={`withdraw-${participant.userKey}`}>

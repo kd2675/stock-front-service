@@ -13,6 +13,10 @@
 - `/research` - 종목 분석
 - `/corporate-actions`
 - `/admin/**` - 관리자 운영 화면
+- `/admin/market/liquidity` - 전용 LP 계약·위험 감사, 일시정지 장전의 종목별 SHADOW 준비와 레거시 종료·LIVE 전환
+- `/admin/participants/institutions` - 4개 축소형 기관의 목표 비중·결정·주문 감사, 20거래일 SHADOW 근거를 충족한 한 종목 PILOT 전환과 비상 중단
+- `/admin/corporate/instruments` - 역할 분리형 유통·잠금 배정을 기본으로 하고 LP LIVE 전까지 CLOSED로 대기하는 신규 상장
+- `/admin/corporate/underwriting` - 인수계정, 최초 배정원장과 발행·유통·잠금 수량 대사, 축소시장용 유한 수동 매도 공급의 활성·중단·누적/일일 한도 감사
 
 이전 `/supply-demand`, `/reports`, `/supply-demand/admin/**` 주소는 canonical route로 영구 redirect합니다. 사용자 화면은 상단 5개 탭, 관리자 화면은 독립 상단 바와 업무별 좌측 navigation을 사용합니다.
 

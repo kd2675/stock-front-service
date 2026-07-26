@@ -49,6 +49,9 @@ export const stockKeys = {
   batchJobRuntimeControls: () => [...stockKeys.market(), "batch-jobs", "runtime-controls"] as const,
   eodOperationsOverview: () => [...stockKeys.market(), "batch-jobs", "eod", "overview"] as const,
   latestManualCashFlowRun: () => [...stockKeys.market(), "auto-market", "cash-flow", "run", "latest"] as const,
+  institutionPortfolios: () => [...stockKeys.market(), "institution-portfolios"] as const,
+  liquidityProviderMandates: () => [...stockKeys.market(), "liquidity-mandates"] as const,
+  underwritingContracts: () => [...stockKeys.market(), "underwriting-contracts"] as const,
   autoMarketStatus: () => [...stockKeys.market(), "auto-market"] as const,
   autoMarketRegimeHistoryRoot: () => [...stockKeys.autoMarketStatus(), "regime-history"] as const,
   autoMarketRegimeHistoryRange: (symbol: string, endDate?: string) => [
@@ -94,6 +97,15 @@ export const stockKeys = {
   ] as const,
   autoParticipantsRoot: () => [...stockKeys.autoMarketStatus(), "participants", "list"] as const,
   autoParticipants: (lifecycleScope = "CURRENT") => [...stockKeys.autoParticipantsRoot(), lifecycleScope] as const,
+  autoParticipantWithdrawalAuditsRoot: () => [
+    ...stockKeys.autoMarketStatus(),
+    "participants",
+    "withdrawal-audits",
+  ] as const,
+  autoParticipantWithdrawalAudits: (userKeys?: string[]) => [
+    ...stockKeys.autoParticipantWithdrawalAuditsRoot(),
+    [...(userKeys ?? [])].sort(),
+  ] as const,
   autoParticipantSymbolConfigsRoot: () => [...stockKeys.autoMarketStatus(), "participants", "symbol-configs"] as const,
   autoParticipantSymbolConfigs: (options?: { lifecycleScope?: string; userKeys?: string[] }) => [
     ...stockKeys.autoParticipantSymbolConfigsRoot(),

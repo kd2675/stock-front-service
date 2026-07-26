@@ -1,0 +1,845 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+
+import DataTableViewport from "@/app/components/DataTableViewport";
+import { setInstitutionPortfoliosQueryData } from "@/app/lib/react-query/stockCacheUpdates";
+import {
+  adminActivateInstitutionPilotMutationOptions,
+  adminCreateScaledInstitutionDefaultsMutationOptions,
+  adminSuspendInstitutionPilotMutationOptions,
+} from "@/app/lib/react-query/stockMutations";
+import { getAdminActionData } from "@/app/supply-demand/admin/AdminActionResultHelpers";
+import {
+  formatCompactWon,
+  formatCount,
+  formatDateTime,
+  formatInteger,
+  formatNumber,
+} from "@/app/supply-demand/admin/AdminFormatters";
+import { ProfileMiniMetric } from "@/app/supply-demand/admin/AdminMetricCards";
+import type {
+  InstitutionDecisionAction,
+  InstitutionPortfolio,
+  InstitutionSymbolMandate,
+} from "@/app/types/stock";
+
+type Feedback = {
+  tone: "success" | "error";
+  message: string;
+};
+
+export function AdminInstitutionPortfolioPanel({
+  accessToken,
+  portfolios,
+  loading,
+  error,
+  onRefresh,
+}: {
+  accessToken: string | null;
+  portfolios: InstitutionPortfolio[];
+  loading: boolean;
+  error: boolean;
+  onRefresh: () => void;
+}) {
+  const queryClient = useQueryClient();
+  const createPresetMutation = useMutation(adminCreateScaledInstitutionDefaultsMutationOptions());
+  const [aumPercent, setAumPercent] = useState("1.0");
+  const [changeReason, setChangeReason] = useState("축소 시장용 4개 기관 shadow 기준선 생성");
+  const [confirmed, setConfirmed] = useState(false);
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const summary = useMemo(() => summarizePortfolios(portfolios), [portfolios]);
+  const normalizedAumPercent = Number(aumPercent);
+  const canCreate = portfolios.length === 0
+    && Boolean(accessToken)
+    && !loading
+    && !error
+    && confirmed
+    && Number.isFinite(normalizedAumPercent)
+    && normalizedAumPercent >= 0.1
+    && normalizedAumPercent <= 2;
+
+  const createScaledPreset = async () => {
+    if (!canCreate || !accessToken || createPresetMutation.isPending) {
+      return;
+    }
+    setFeedback(null);
+    const result = await createPresetMutation.mutateAsync({
+      token: accessToken,
+      institutionAumRateOfMarketCap: normalizedAumPercent / 100,
+      changeReason: changeReason.trim() || undefined,
+    });
+    const created = getAdminActionData(
+      result,
+      "축소 기관 포트폴리오 기준선 생성에 실패했습니다.",
+    );
+    if (!created.ok) {
+      setFeedback({ tone: "error", message: created.message });
+      return;
+    }
+    setInstitutionPortfoliosQueryData(queryClient, created.data);
+    setFeedback({
+      tone: "success",
+      message: `${formatCount(created.data.length, "개")} 기관 포트폴리오를 SHADOW 모드로 준비했습니다. 실제 주문은 생성되지 않습니다.`,
+    });
+  };
+
+  return (
+    <section className="admin-panel mt-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-base font-black">기관 포트폴리오·주문 감사</h2>
+          <p className="mt-1 max-w-4xl text-xs font-bold leading-5 text-stock-subtle">
+            150명 안팎 자동 참여자와 소수 유저로 구성된 축소 시장 기준입니다. 주·보조 압력은 직접 BUY/SELL을 강제하지 않고 제한된 목표 비중 변화로만 반영합니다.
+          </p>
+          <p className="mt-1 max-w-4xl text-[11px] font-bold leading-5 text-admin-quiet">
+            SHADOW는 의사결정·예산만 저장하고, PILOT은 한 기관·한 종목의 제한 주문만 허용합니다. 목표 도달 후 HOLD, 미체결 포함 예상 포지션, 주문 출처와 자기체결 방지를 함께 검증합니다.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 text-xs font-black">
+          {loading ? <span className="rounded-md bg-white/10 px-2 py-1 text-admin-accent-soft">조회 중</span> : null}
+          {error ? <span className="rounded-md bg-admin-danger-surface px-2 py-1 text-admin-danger">조회 실패</span> : null}
+          <button
+            type="button"
+            onClick={onRefresh}
+            disabled={loading}
+            className="min-h-9 rounded-md bg-stock-surface-strong px-3 py-1.5 text-xs font-black text-stock-ink disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {loading ? "조회 중" : "새로고침"}
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
+        <ProfileMiniMetric label="기관 포트폴리오" value={formatCount(portfolios.length, "개")} tone="blue" />
+        <ProfileMiniMetric label="합산 AUM" value={formatCompactWon(summary.totalAsset)} tone="blue" />
+        <ProfileMiniMetric label="주식 비중" value={formatRate(summary.stockAllocationRate)} tone="muted" />
+        <ProfileMiniMetric label="오늘 계획 총매매" value={formatCompactWon(summary.dailyPlannedGrossAmount)} tone="muted" />
+        <ProfileMiniMetric label="최근 HOLD" value={formatCount(summary.holdCount, "종목")} tone="green" />
+        <ProfileMiniMetric label="점검 신호" value={formatCount(summary.reviewCount, "건")} tone={summary.reviewCount > 0 ? "red" : "green"} />
+      </div>
+
+      {feedback ? (
+        <p
+          role="status"
+          className={[
+            "mt-4 rounded-md border px-3 py-3 text-xs font-bold leading-5",
+            feedback.tone === "success"
+              ? "border-admin-success/25 bg-admin-success-surface text-admin-success"
+              : "border-admin-danger/25 bg-admin-danger-surface text-admin-danger",
+          ].join(" ")}
+        >
+          {feedback.message}
+        </p>
+      ) : null}
+
+      {error ? (
+        <p role="alert" className="mt-4 rounded-md border border-admin-danger/25 bg-admin-danger-surface px-3 py-3 text-xs font-bold leading-5 text-admin-danger">
+          기관·계정·포트폴리오·결정 감사 중 일부를 읽지 못했습니다. 표시된 값만으로 주문 안전성을 판단하지 마세요.
+        </p>
+      ) : null}
+
+      {!loading && !error && portfolios.length === 0 ? (
+        <InstitutionPresetProvisioning
+          aumPercent={aumPercent}
+          changeReason={changeReason}
+          confirmed={confirmed}
+          pending={createPresetMutation.isPending}
+          canCreate={canCreate}
+          onAumPercentChange={setAumPercent}
+          onChangeReasonChange={setChangeReason}
+          onConfirmedChange={setConfirmed}
+          onCreate={() => void createScaledPreset()}
+        />
+      ) : null}
+
+      <div className="mt-4 grid gap-3">
+        {portfolios.map((portfolio) => (
+          <InstitutionPortfolioCard
+            key={portfolio.portfolioId}
+            accessToken={!loading && !error ? accessToken : null}
+            portfolio={portfolio}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function InstitutionPresetProvisioning({
+  aumPercent,
+  changeReason,
+  confirmed,
+  pending,
+  canCreate,
+  onAumPercentChange,
+  onChangeReasonChange,
+  onConfirmedChange,
+  onCreate,
+}: {
+  aumPercent: string;
+  changeReason: string;
+  confirmed: boolean;
+  pending: boolean;
+  canCreate: boolean;
+  onAumPercentChange: (value: string) => void;
+  onChangeReasonChange: (value: string) => void;
+  onConfirmedChange: (value: boolean) => void;
+  onCreate: () => void;
+}) {
+  return (
+    <div className="mt-4 rounded-md border border-admin-accent/25 bg-admin-accent-surface/25 p-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-black text-white">축소형 4개 기관 기준선</h3>
+          <p className="mt-1 max-w-3xl text-xs font-bold leading-5 text-stock-subtle">
+            연기금·가치 역추세·모멘텀·단기 적극운용 4개를 생성합니다. 각 기관은 동일한 시장 시가총액 비율의 현금 AUM을 받고, 종목별 기준 거래량은 유통주식의 3%로 시작합니다.
+          </p>
+        </div>
+        <span className="rounded-md bg-black/25 px-2 py-1 text-[10px] font-black text-admin-accent-soft">
+          일시정지 · 장전 · SHADOW
+        </span>
+      </div>
+      <div className="mt-3 grid gap-3 md:grid-cols-[180px_minmax(0,1fr)]">
+        <label className="grid gap-1 text-xs font-black text-admin-muted">
+          기관별 시가총액 대비 AUM
+          <span className="relative">
+            <input
+              type="number"
+              min="0.1"
+              max="2"
+              step="0.1"
+              value={aumPercent}
+              onChange={(event) => onAumPercentChange(event.target.value)}
+              className="admin-control w-full px-3 pr-8 text-sm font-bold"
+            />
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-black text-admin-quiet">%</span>
+          </span>
+          <span className="text-[10px] font-bold text-admin-quiet">허용 0.1~2.0%, 기본 1.0%</span>
+        </label>
+        <label className="grid gap-1 text-xs font-black text-admin-muted">
+          변경 사유
+          <input
+            value={changeReason}
+            maxLength={500}
+            onChange={(event) => onChangeReasonChange(event.target.value)}
+            className="admin-control w-full px-3 text-sm font-bold"
+          />
+          <span className="text-[10px] font-bold text-admin-quiet">다음 거래일부터 효력이 생기는 정책 버전 감사에 저장됩니다.</span>
+        </label>
+      </div>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-3">
+        <label className="flex max-w-3xl items-start gap-2 text-xs font-bold leading-5 text-stock-subtle">
+          <input
+            type="checkbox"
+            checked={confirmed}
+            onChange={(event) => onConfirmedChange(event.target.checked)}
+            className="mt-1 size-4 shrink-0 accent-[var(--admin-accent)]"
+          />
+          현재 시뮬레이션이 일시정지된 장전이며, 4개 기관·계좌와 개장 현금 원장을 생성하지만 실제 주문은 만들지 않는다는 점을 확인했습니다.
+        </label>
+        <button
+          type="button"
+          onClick={onCreate}
+          disabled={!canCreate || pending}
+          className="min-h-9 rounded-md bg-admin-accent px-3 py-1.5 text-xs font-black text-admin-canvas disabled:cursor-not-allowed disabled:opacity-45"
+        >
+          {pending ? "기준선 생성 중" : "4개 shadow 기관 생성"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function InstitutionPortfolioCard({
+  accessToken,
+  portfolio,
+}: {
+  accessToken: string | null;
+  portfolio: InstitutionPortfolio;
+}) {
+  const reviewReasons = portfolioReviewReasons(portfolio);
+  const actionCounts = countActions(portfolio.mandates);
+
+  return (
+    <article className="min-w-0 rounded-md border border-white/10 bg-black/20 p-3">
+      <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="break-words text-sm font-black text-white">{portfolio.displayName}</h3>
+            <span className="rounded-md bg-admin-accent-surface px-2 py-1 text-[10px] font-black text-admin-accent-soft">
+              {portfolio.executionMode}
+            </span>
+            <span className={portfolio.status === "ACTIVE"
+              ? "rounded-md bg-admin-success-surface px-2 py-1 text-[10px] font-black text-admin-success"
+              : "rounded-md bg-admin-danger-surface px-2 py-1 text-[10px] font-black text-admin-danger"}
+            >
+              {portfolio.status}
+            </span>
+            <span className="rounded-md bg-white/10 px-2 py-1 text-[10px] font-black text-stock-subtle">
+              {portfolio.investmentStyle}
+            </span>
+            {reviewReasons.length > 0 ? (
+              <span className="rounded-md bg-admin-danger-surface px-2 py-1 text-[10px] font-black text-admin-danger">
+                점검 {formatCount(reviewReasons.length, "건")}
+              </span>
+            ) : (
+              <span className="rounded-md bg-admin-success-surface px-2 py-1 text-[10px] font-black text-admin-success">
+                구조 정상
+              </span>
+            )}
+          </div>
+          <p className="mt-1 break-all text-xs font-bold text-stock-subtle">
+            {portfolio.portfolioCode} · 계좌 #{portfolio.accountId} · 정책 v{portfolio.policyVersion}
+          </p>
+          <p className="mt-1 break-all text-[11px] font-bold text-admin-quiet">
+            자기체결 그룹 {portfolio.accountSelfTradeGroupId ?? "미설정"}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2 text-[10px] font-black">
+          <span className="rounded-md bg-admin-success-surface px-2 py-1 text-admin-success">HOLD {actionCounts.HOLD}</span>
+          <span className="rounded-md bg-admin-accent-surface px-2 py-1 text-admin-accent-soft">BUY {actionCounts.BUY}</span>
+          <span className="rounded-md bg-admin-danger-surface px-2 py-1 text-admin-danger">SELL {actionCounts.SELL}</span>
+        </div>
+      </div>
+
+      {reviewReasons.length > 0 ? (
+        <ul className="mt-3 grid gap-1 rounded-md border border-admin-danger/20 bg-admin-danger-surface/60 px-3 py-2 text-xs font-bold leading-5 text-admin-danger">
+          {reviewReasons.map((reason) => <li key={reason}>· {reason}</li>)}
+        </ul>
+      ) : null}
+
+      <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
+        <PortfolioMetric label="AUM" value={formatCompactWon(portfolio.totalAsset)} />
+        <PortfolioMetric label="현금 / 주식" value={`${formatRate(1 - portfolio.currentStockAllocationRate)} / ${formatRate(portfolio.currentStockAllocationRate)}`} />
+        <PortfolioMetric label="기준 목표" value={formatRate(portfolio.baseStockAllocationRate)} />
+        <PortfolioMetric label="허용 밴드" value={`${formatRate(portfolio.minStockAllocationRate)}~${formatRate(portfolio.maxStockAllocationRate)}`} />
+        <PortfolioMetric label="일일 총매매 한도" value={formatRate(portfolio.dailyTurnoverLimitRate)} />
+        <PortfolioMetric label="결정당 한도" value={formatRate(portfolio.maxDecisionTurnoverRate)} />
+        <PortfolioMetric label="결정 주기" value={`${formatInteger(portfolio.decisionIntervalMinutes)}분`} />
+        <PortfolioMetric label="미체결 기관 주문" value={formatCount(portfolio.institutionalOpenOrderCount, "건")} />
+      </div>
+
+      <div className="mt-3 grid gap-2 md:grid-cols-3">
+        <PortfolioInfo
+          label="최근 결정"
+          primary={portfolio.latestDecisionStatus ?? "아직 실행 전"}
+          secondary={portfolio.latestDecisionSlot ? `${formatDateTime(portfolio.latestDecisionSlot)} · run #${portfolio.latestDecisionRunId}` : `다음 ${formatDateTime(portfolio.nextDecisionAt)}`}
+        />
+        <PortfolioInfo
+          label={`일일 계획 예산 · ${portfolio.budgetTradeDate}`}
+          primary={`매수 ${formatCompactWon(portfolio.dailyPlannedBuyAmount)} · 매도 ${formatCompactWon(portfolio.dailyPlannedSellAmount)}`}
+          secondary={`계획 ${formatNumber(portfolio.dailyPlannedBuyQuantity)}주 / ${formatNumber(portfolio.dailyPlannedSellQuantity)}주 · 제출 ${formatCompactWon(portfolio.dailySubmittedBuyAmount)} / ${formatCompactWon(portfolio.dailySubmittedSellAmount)}`}
+        />
+        <PortfolioInfo
+          label="레짐 해석"
+          primary={`주 ${formatRate(portfolio.primaryRegimeWeight)} · 보조 ${formatRate(1 - portfolio.primaryRegimeWeight)}`}
+          secondary={`자산선호 ${formatSensitivity(portfolio.assetPreferenceSensitivity)} · 변동성 ${formatSensitivity(portfolio.volatilitySensitivity)}`}
+        />
+      </div>
+
+      {portfolio.latestDecisionError ? (
+        <p className="mt-3 rounded-md border border-admin-danger/20 bg-admin-danger-surface px-3 py-2 text-xs font-bold leading-5 text-admin-danger">
+          최근 기관 결정 실패: {portfolio.latestDecisionError}
+        </p>
+      ) : null}
+
+      {portfolio.executionMode === "SHADOW" ? (
+        <InstitutionPilotActivationControls
+          accessToken={accessToken}
+          portfolio={portfolio}
+        />
+      ) : null}
+
+      {portfolio.executionMode === "PILOT" && portfolio.status === "ACTIVE" ? (
+        <InstitutionPilotEmergencyStopControls
+          accessToken={accessToken}
+          portfolio={portfolio}
+        />
+      ) : null}
+
+      {portfolio.status === "SUSPENDED" ? (
+        <p className="mt-3 rounded-md border border-admin-danger/25 bg-admin-danger-surface px-3 py-2 text-xs font-bold leading-5 text-admin-danger">
+          이 포트폴리오는 중단 상태입니다. 신규 결정과 주문은 차단되며, 재개 API를 별도로 구현하기 전에는 DB 값을 직접 되돌리지 마세요.
+        </p>
+      ) : null}
+
+      <DataTableViewport label={`${portfolio.displayName} 종목별 결정·주문 감사`} tone="dark" className="mt-3">
+        <table className="min-w-[1320px] w-full text-left text-xs">
+          <thead className="bg-white/[0.045] text-[10px] font-black uppercase tracking-wide text-admin-quiet">
+            <tr>
+              <th className="px-3 py-2">종목</th>
+              <th className="px-3 py-2">실제 / 예상 / 목표</th>
+              <th className="px-3 py-2">결정</th>
+              <th className="px-3 py-2">원인 / 게이트</th>
+              <th className="px-3 py-2 text-right">계획·주문</th>
+              <th className="px-3 py-2 text-right">기준 거래량·참여율</th>
+              <th className="px-3 py-2">혼합 압력</th>
+              <th className="px-3 py-2">수익률 신호</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/10">
+            {portfolio.mandates.map((mandate) => (
+              <InstitutionMandateRow key={mandate.mandateId} mandate={mandate} />
+            ))}
+          </tbody>
+        </table>
+      </DataTableViewport>
+    </article>
+  );
+}
+
+function InstitutionPilotEmergencyStopControls({
+  accessToken,
+  portfolio,
+}: {
+  accessToken: string | null;
+  portfolio: InstitutionPortfolio;
+}) {
+  const queryClient = useQueryClient();
+  const mutation = useMutation(adminSuspendInstitutionPilotMutationOptions());
+  const [changeReason, setChangeReason] = useState("PILOT 위험 한도 또는 시장 품질 이상 즉시 중단");
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
+
+  const suspendPilot = async () => {
+    if (!accessToken || mutation.isPending) {
+      return;
+    }
+    const confirmed = window.confirm(
+      `${portfolio.displayName}의 신규 결정을 즉시 중단하고 전용 계좌의 모든 미체결 주문을 취소합니다.\n\n시뮬레이션 실행 중에도 적용되는 비상 조치입니다. 계속하시겠습니까?`,
+    );
+    if (!confirmed) {
+      return;
+    }
+    setFeedback(null);
+    const result = await mutation.mutateAsync({
+      token: accessToken,
+      portfolioId: portfolio.portfolioId,
+      payload: {
+        changeReason: changeReason.trim() || undefined,
+      },
+    });
+    const suspended = getAdminActionData(
+      result,
+      "기관 PILOT 비상 중단에 실패했습니다.",
+    );
+    if (!suspended.ok) {
+      setFeedback({ tone: "error", message: suspended.message });
+      return;
+    }
+    setInstitutionPortfoliosQueryData(queryClient, suspended.data);
+    setFeedback({
+      tone: "success",
+      message: `${portfolio.displayName}의 신규 결정과 미체결 주문을 중단했습니다.`,
+    });
+  };
+
+  return (
+    <div className="mt-3 rounded-md border border-admin-danger/25 bg-admin-danger-surface/35 p-3">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <label className="grid min-w-0 flex-1 gap-1 text-xs font-black text-admin-danger">
+          PILOT 비상 중단 사유
+          <input
+            value={changeReason}
+            maxLength={500}
+            onChange={(event) => setChangeReason(event.target.value)}
+            className="admin-control w-full px-3 text-sm font-bold"
+          />
+          <span className="text-[10px] font-bold leading-5 text-stock-subtle">
+            포트폴리오를 먼저 SUSPENDED로 확정한 뒤 대기 주문 의도를 거절하고 전용 계좌의 주문 예약을 반환합니다.
+          </span>
+        </label>
+        <button
+          type="button"
+          onClick={() => void suspendPilot()}
+          disabled={!accessToken || mutation.isPending}
+          className="min-h-9 rounded-md bg-admin-danger px-3 py-1.5 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-45"
+        >
+          {mutation.isPending ? "중단 처리 중" : "PILOT 즉시 중단"}
+        </button>
+      </div>
+      {feedback ? (
+        <p
+          role="status"
+          className={[
+            "mt-3 rounded-md border px-3 py-2 text-[11px] font-bold leading-5",
+            feedback.tone === "success"
+              ? "border-admin-success/25 bg-admin-success-surface text-admin-success"
+              : "border-admin-danger/25 bg-admin-danger-surface text-admin-danger",
+          ].join(" ")}
+        >
+          {feedback.message}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function InstitutionPilotActivationControls({
+  accessToken,
+  portfolio,
+}: {
+  accessToken: string | null;
+  portfolio: InstitutionPortfolio;
+}) {
+  const queryClient = useQueryClient();
+  const mutation = useMutation(adminActivateInstitutionPilotMutationOptions());
+  const enabledMandates = portfolio.mandates.filter((mandate) => mandate.enabled);
+  const [symbol, setSymbol] = useState(enabledMandates[0]?.symbol ?? "");
+  const [changeReason, setChangeReason] = useState(
+    `${portfolio.displayName} 20거래일 SHADOW 검토 후 단일 종목 PILOT`,
+  );
+  const [confirmed, setConfirmed] = useState(false);
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const evidenceReady = portfolio.completedShadowTradingDays >= 20
+    && portfolio.recentShadowFailureCount === 0;
+  const structureReady = portfolio.status === "ACTIVE"
+    && portfolio.participantStatus === "ACTIVE"
+    && portfolio.accountStatus === "ACTIVE"
+    && portfolio.participantSelfTradeGroupId === portfolio.accountSelfTradeGroupId
+    && portfolio.institutionalOpenOrderCount === 0;
+  const selectedMandateExists = enabledMandates.some(
+    (mandate) => mandate.symbol === symbol,
+  );
+  const canActivate = Boolean(accessToken)
+    && confirmed
+    && evidenceReady
+    && structureReady
+    && selectedMandateExists
+    && !mutation.isPending;
+
+  const activatePilot = async () => {
+    if (!canActivate || !accessToken) {
+      return;
+    }
+    setFeedback(null);
+    const result = await mutation.mutateAsync({
+      token: accessToken,
+      portfolioId: portfolio.portfolioId,
+      payload: {
+        symbol,
+        changeReason: changeReason.trim() || undefined,
+      },
+    });
+    const activated = getAdminActionData(
+      result,
+      "기관 PILOT 전환에 실패했습니다.",
+    );
+    if (!activated.ok) {
+      setFeedback({ tone: "error", message: activated.message });
+      return;
+    }
+    setInstitutionPortfoliosQueryData(queryClient, activated.data);
+    setFeedback({
+      tone: "success",
+      message: `${portfolio.displayName}을 ${symbol} 단일 종목 PILOT으로 전환했습니다. 다음 개장 결정부터 제한 주문이 허용됩니다.`,
+    });
+  };
+
+  return (
+    <div className="mt-3 rounded-md border border-admin-accent/25 bg-admin-accent-surface/20 p-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h4 className="text-xs font-black text-white">SHADOW → 단일 종목 PILOT</h4>
+          <p className="mt-1 max-w-3xl text-[11px] font-bold leading-5 text-stock-subtle">
+            실주문 범위를 한 종목으로 줄여 단계적으로 검증합니다. 서버는 일시정지 장전, 20거래일 완료, 최근 실패 0건, 깨끗한 당일 예산·주문 상태를 다시 잠금 검증합니다.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2 text-[10px] font-black">
+          <span className={portfolio.completedShadowTradingDays >= 20
+            ? "rounded-md bg-admin-success-surface px-2 py-1 text-admin-success"
+            : "rounded-md bg-white/10 px-2 py-1 text-stock-subtle"}
+          >
+            완료 {formatInteger(portfolio.completedShadowTradingDays)}/20일
+          </span>
+          <span className={portfolio.recentShadowFailureCount === 0
+            ? "rounded-md bg-admin-success-surface px-2 py-1 text-admin-success"
+            : "rounded-md bg-admin-danger-surface px-2 py-1 text-admin-danger"}
+          >
+            최근 실패 {formatCount(portfolio.recentShadowFailureCount, "건")}
+          </span>
+        </div>
+      </div>
+
+      <div className="mt-3 grid gap-3 md:grid-cols-[180px_minmax(0,1fr)]">
+        <label className="grid gap-1 text-xs font-black text-admin-muted">
+          PILOT 지정 종목
+          <select
+            value={symbol}
+            onChange={(event) => {
+              setSymbol(event.target.value);
+              setConfirmed(false);
+              setFeedback(null);
+            }}
+            className="admin-control w-full px-3 text-sm font-bold"
+          >
+            {enabledMandates.map((mandate) => (
+              <option key={mandate.mandateId} value={mandate.symbol}>
+                {mandate.symbol}
+              </option>
+            ))}
+          </select>
+          <span className="text-[10px] font-bold text-admin-quiet">
+            나머지 종목 위임은 원자적으로 비활성화됩니다.
+          </span>
+        </label>
+        <label className="grid gap-1 text-xs font-black text-admin-muted">
+          전환 사유
+          <input
+            value={changeReason}
+            maxLength={500}
+            onChange={(event) => setChangeReason(event.target.value)}
+            className="admin-control w-full px-3 text-sm font-bold"
+          />
+          <span className="text-[10px] font-bold text-admin-quiet">
+            정책 버전과 효력 거래일 감사에 저장됩니다.
+          </span>
+        </label>
+      </div>
+
+      {!evidenceReady || !structureReady ? (
+        <p className="mt-3 rounded-md border border-white/10 bg-black/20 px-3 py-2 text-[11px] font-bold leading-5 text-stock-subtle">
+          {!evidenceReady
+            ? "20개 완료 SHADOW 거래일과 최근 20일 실패 0건을 충족해야 합니다."
+            : "기관·계좌·자기체결 그룹이 정상이고 기관 origin 미체결 주문이 없어야 합니다."}
+        </p>
+      ) : null}
+
+      {feedback ? (
+        <p
+          role="status"
+          className={[
+            "mt-3 rounded-md border px-3 py-2 text-[11px] font-bold leading-5",
+            feedback.tone === "success"
+              ? "border-admin-success/25 bg-admin-success-surface text-admin-success"
+              : "border-admin-danger/25 bg-admin-danger-surface text-admin-danger",
+          ].join(" ")}
+        >
+          {feedback.message}
+        </p>
+      ) : null}
+
+      <div className="mt-3 flex flex-wrap items-start justify-between gap-3 border-t border-white/10 pt-3">
+        <label className="flex max-w-3xl items-start gap-2 text-[11px] font-bold leading-5 text-stock-subtle">
+          <input
+            type="checkbox"
+            checked={confirmed}
+            onChange={(event) => setConfirmed(event.target.checked)}
+            className="mt-1 size-4 shrink-0 accent-[var(--admin-accent)]"
+          />
+          시뮬레이션을 일시정지한 장전 상태이며, {symbol || "선택 종목"}만 실제 주문 대상으로 전환되고 자동 롤백은 신규 주문 중지·미체결 취소 방식으로 수행해야 함을 확인했습니다.
+        </label>
+        <button
+          type="button"
+          onClick={() => void activatePilot()}
+          disabled={!canActivate}
+          className="min-h-9 rounded-md bg-admin-accent px-3 py-1.5 text-xs font-black text-admin-canvas disabled:cursor-not-allowed disabled:opacity-45"
+        >
+          {mutation.isPending ? "PILOT 전환 중" : `${symbol || "종목"} PILOT 전환`}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function InstitutionMandateRow({ mandate }: { mandate: InstitutionSymbolMandate }) {
+  return (
+    <tr className="align-top text-admin-muted">
+      <td className="px-3 py-3">
+        <p className="font-black text-white">{mandate.symbol}</p>
+        <p className="mt-1 tabular-nums text-[10px] text-admin-quiet">{formatInteger(mandate.currentPrice)}원</p>
+      </td>
+      <td className="px-3 py-3 tabular-nums">
+        <p className="font-black text-white">
+          {formatOptionalRate(mandate.actualAllocationRate)}
+          {" / "}{formatOptionalRate(mandate.projectedAllocationRate)}
+          {" / "}<span className="text-admin-accent-soft">{formatOptionalRate(mandate.targetAllocationRate)}</span>
+        </p>
+        <p className="mt-1 text-[10px] text-admin-quiet">
+          {formatNumber(mandate.actualQuantity)}주
+          {" → "}{formatNumber(mandate.projectedQuantity)}주
+          {mandate.openBuyQuantity > 0 || mandate.openSellQuantity > 0
+            ? ` · 대기 +${formatNumber(mandate.openBuyQuantity)} / -${formatNumber(mandate.openSellQuantity)}`
+            : ""}
+          {mandate.dailyPlannedBuyQuantity > 0 || mandate.dailyPlannedSellQuantity > 0
+            ? ` · shadow +${formatNumber(mandate.dailyPlannedBuyQuantity)} / -${formatNumber(mandate.dailyPlannedSellQuantity)}`
+            : ""}
+        </p>
+      </td>
+      <td className="px-3 py-3">
+        <span className={actionClassName(mandate.action)}>{mandate.action ?? "미결정"}</span>
+      </td>
+      <td className="px-3 py-3">
+        <p className="font-black text-white">{mandate.decisionReason ?? "첫 결정 대기"}</p>
+        <p className="mt-1 break-words text-[10px] text-admin-quiet">{mandate.gateReason ?? "—"}</p>
+      </td>
+      <td className="px-3 py-3 text-right tabular-nums">
+        <p className="font-black text-white">{formatNumber(mandate.gatedQuantity)}주</p>
+        <p className="mt-1 text-[10px] text-admin-quiet">{formatCompactWon(mandate.gatedTradeAmount)}</p>
+        <p className="mt-1 text-[10px] font-black text-admin-accent-soft">
+          {formatOrderIntent(mandate)}
+        </p>
+        {mandate.orderSubmissionReason ? (
+          <p className="mt-1 max-w-56 break-words text-[10px] text-admin-quiet">
+            {mandate.orderSubmissionReason}
+          </p>
+        ) : null}
+      </td>
+      <td className="px-3 py-3 text-right tabular-nums">
+        <p className="font-black text-white">{formatNumber(mandate.referenceDailyVolume)}주 · {formatRate(mandate.dailyParticipationRate)}</p>
+        <p className="mt-1 text-[10px] text-admin-quiet">
+          일일 {formatNumber(mandate.dailyGrossQuantityLimit)}주 / {formatCompactWon(mandate.dailyGrossNotionalLimit)}
+        </p>
+      </td>
+      <td className="px-3 py-3 tabular-nums">
+        <p className="font-black text-white">
+          가격 {formatPressure(mandate.blendedPricePressure)}
+          {" · 자산 "}{formatPressure(mandate.blendedAssetPreferencePressure)}
+        </p>
+        <p className="mt-1 text-[10px] text-admin-quiet">
+          변동 {formatPressure(mandate.blendedVolatilityPressure)}
+          {" · 유동 "}{formatPressure(mandate.blendedLiquidityPressure)}
+          {" · 공격 "}{formatPressure(mandate.blendedExecutionAggressionPressure)}
+        </p>
+      </td>
+      <td className="px-3 py-3 tabular-nums">
+        <p className="font-black text-white">5일 {formatOptionalRate(mandate.return5Day)} · 20일 {formatOptionalRate(mandate.return20Day)}</p>
+        <p className="mt-1 text-[10px] text-admin-quiet">보고서 {formatPressure(mandate.reportPressure)}</p>
+      </td>
+    </tr>
+  );
+}
+
+function PortfolioMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0 rounded-md bg-white/[0.04] px-3 py-2">
+      <p className="text-[10px] font-bold text-admin-quiet">{label}</p>
+      <p className="mt-1 truncate text-xs font-black tabular-nums text-white" title={value}>{value}</p>
+    </div>
+  );
+}
+
+function PortfolioInfo({
+  label,
+  primary,
+  secondary,
+}: {
+  label: string;
+  primary: string;
+  secondary: string;
+}) {
+  return (
+    <div className="min-w-0 rounded-md border border-white/10 bg-white/[0.025] px-3 py-2">
+      <p className="text-[10px] font-black text-admin-quiet">{label}</p>
+      <p className="mt-1 break-words text-xs font-black text-white">{primary}</p>
+      <p className="mt-1 break-words text-[10px] font-bold text-stock-subtle">{secondary}</p>
+    </div>
+  );
+}
+
+function summarizePortfolios(portfolios: InstitutionPortfolio[]) {
+  const totalAsset = portfolios.reduce((sum, portfolio) => sum + portfolio.totalAsset, 0);
+  const holdingMarketValue = portfolios.reduce(
+    (sum, portfolio) => sum + portfolio.holdingMarketValue,
+    0,
+  );
+  const actions = portfolios.flatMap((portfolio) => portfolio.mandates.map((mandate) => mandate.action));
+  return {
+    totalAsset,
+    stockAllocationRate: totalAsset > 0 ? holdingMarketValue / totalAsset : 0,
+    dailyPlannedGrossAmount: portfolios.reduce(
+      (sum, portfolio) =>
+        sum + portfolio.dailyPlannedBuyAmount + portfolio.dailyPlannedSellAmount,
+      0,
+    ),
+    holdCount: actions.filter((action) => action === "HOLD").length,
+    reviewCount: portfolios.reduce(
+      (sum, portfolio) => sum + portfolioReviewReasons(portfolio).length,
+      0,
+    ),
+  };
+}
+
+function portfolioReviewReasons(portfolio: InstitutionPortfolio) {
+  const reasons: string[] = [];
+  if (portfolio.executionMode === "LIVE") {
+    reasons.push("전체 LIVE 모드는 아직 안전 게이트 대상이 아닙니다.");
+  }
+  if (
+    portfolio.executionMode === "PILOT"
+    && portfolio.mandates.filter((mandate) => mandate.enabled).length !== 1
+  ) {
+    reasons.push("PILOT은 활성 종목 위임이 정확히 1개여야 합니다.");
+  }
+  if (portfolio.participantSelfTradeGroupId !== portfolio.accountSelfTradeGroupId) {
+    reasons.push("기관과 계좌의 자기체결 방지 그룹이 일치하지 않습니다.");
+  }
+  if (portfolio.participantStatus !== "ACTIVE" || portfolio.accountStatus !== "ACTIVE") {
+    reasons.push("기관 또는 계좌가 ACTIVE 상태가 아닙니다.");
+  }
+  if (portfolio.institutionalOpenOrderCount > 0 && portfolio.executionMode === "SHADOW") {
+    reasons.push("SHADOW 계좌에 기관 origin 미체결 주문이 존재합니다.");
+  }
+  if (portfolio.latestDecisionStatus === "FAILED") {
+    reasons.push("최근 기관 결정이 실패했습니다.");
+  }
+  if (portfolio.mandates.some((mandate) =>
+    mandate.orderIntentStatus === "FAILED" || mandate.orderIntentStatus === "REJECTED"
+  )) {
+    reasons.push("최근 주문 의도가 실패 또는 거절 상태입니다.");
+  }
+  return reasons;
+}
+
+function countActions(mandates: InstitutionSymbolMandate[]) {
+  return mandates.reduce<Record<InstitutionDecisionAction, number>>(
+    (counts, mandate) => {
+      if (mandate.action) {
+        counts[mandate.action] += 1;
+      }
+      return counts;
+    },
+    { BUY: 0, SELL: 0, HOLD: 0 },
+  );
+}
+
+function actionClassName(action: InstitutionDecisionAction | null) {
+  const tone = action === "BUY"
+    ? "bg-admin-accent-surface text-admin-accent-soft"
+    : action === "SELL"
+      ? "bg-admin-danger-surface text-admin-danger"
+      : "bg-admin-success-surface text-admin-success";
+  return `inline-flex rounded-md px-2 py-1 text-[10px] font-black ${tone}`;
+}
+
+function formatOptionalRate(value: number | null) {
+  return value == null ? "—" : formatRate(value);
+}
+
+function formatRate(value: number) {
+  return `${formatNumber(value * 100)}%`;
+}
+
+function formatPressure(value: number | null) {
+  if (value == null) {
+    return "—";
+  }
+  const score = value * 100;
+  return `${score > 0 ? "+" : ""}${formatNumber(score)}`;
+}
+
+function formatSensitivity(value: number) {
+  const score = value * 100;
+  return `${score > 0 ? "+" : ""}${formatNumber(score)}`;
+}
+
+function formatOrderIntent(mandate: InstitutionSymbolMandate) {
+  if (!mandate.orderIntentStatus) {
+    return "주문 의도 없음";
+  }
+  if (mandate.orderIntentStatus === "SUBMITTED") {
+    return `제출 #${mandate.submittedOrderId ?? "?"} · ${formatNumber(mandate.submittedQuantity)}주 @ ${formatInteger(mandate.submittedPrice ?? 0)}원`;
+  }
+  return `${mandate.orderIntentStatus} · 요청 ${formatNumber(mandate.orderIntentRequestedQuantity)}주 · 시도 ${formatInteger(mandate.orderIntentAttemptCount)}회`;
+}

@@ -12,7 +12,11 @@ import type {
 export const ADMIN_PARTICIPANT_CATEGORIES: AdminParticipantCategory[] = [
   "MANUAL_PARTICIPANT",
   "AUTO_PARTICIPANT",
+  "INSTITUTIONAL_INVESTOR",
+  "LIQUIDITY_PROVIDER",
+  "ISSUE_UNDERWRITER",
   "LISTING_UNDERWRITER",
+  "SYSTEM_CUSTODY",
 ];
 
 export const ADMIN_PARTICIPANT_CATEGORY_META: Record<AdminParticipantCategory, {
@@ -31,9 +35,29 @@ export const ADMIN_PARTICIPANT_CATEGORY_META: Record<AdminParticipantCategory, {
     surfaceClassName: "border-admin-success/25 bg-admin-success-surface/25",
   },
   LISTING_UNDERWRITER: {
-    label: "상장주관사",
+    label: "기존 상장주관사",
     colorClassName: "bg-admin-warning",
     surfaceClassName: "border-admin-warning/25 bg-admin-warning/[0.06]",
+  },
+  INSTITUTIONAL_INVESTOR: {
+    label: "기관투자자",
+    colorClassName: "bg-admin-accent",
+    surfaceClassName: "border-admin-accent/25 bg-admin-accent-surface/20",
+  },
+  LIQUIDITY_PROVIDER: {
+    label: "유동성 공급자",
+    colorClassName: "bg-admin-accent-soft",
+    surfaceClassName: "border-admin-accent/20 bg-admin-accent-surface/15",
+  },
+  ISSUE_UNDERWRITER: {
+    label: "발행 인수기관",
+    colorClassName: "bg-admin-warning",
+    surfaceClassName: "border-admin-warning/25 bg-admin-warning/[0.06]",
+  },
+  SYSTEM_CUSTODY: {
+    label: "시스템 보관",
+    colorClassName: "bg-admin-subtle",
+    surfaceClassName: "border-white/10 bg-white/[0.04]",
   },
 };
 
@@ -47,6 +71,10 @@ export const ADMIN_PARTICIPANT_SCOPE_LABELS: Record<AdminParticipantScope, strin
   MANUAL_PARTICIPANT: ADMIN_PARTICIPANT_CATEGORY_META.MANUAL_PARTICIPANT.label,
   AUTO_PARTICIPANT: ADMIN_PARTICIPANT_CATEGORY_META.AUTO_PARTICIPANT.label,
   LISTING_UNDERWRITER: ADMIN_PARTICIPANT_CATEGORY_META.LISTING_UNDERWRITER.label,
+  INSTITUTIONAL_INVESTOR: ADMIN_PARTICIPANT_CATEGORY_META.INSTITUTIONAL_INVESTOR.label,
+  LIQUIDITY_PROVIDER: ADMIN_PARTICIPANT_CATEGORY_META.LIQUIDITY_PROVIDER.label,
+  ISSUE_UNDERWRITER: ADMIN_PARTICIPANT_CATEGORY_META.ISSUE_UNDERWRITER.label,
+  SYSTEM_CUSTODY: ADMIN_PARTICIPANT_CATEGORY_META.SYSTEM_CUSTODY.label,
 };
 
 export function resolveParticipantFundFlow(

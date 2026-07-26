@@ -33,7 +33,10 @@ export type AdminPageQueryFlags = {
   shouldUseAutoParticipants: boolean;
   shouldUseAutoParticipantProfileOverviews: boolean;
   shouldUseInstrumentDetails: boolean;
+  shouldUseInstitutionPortfolios: boolean;
+  shouldUseLiquidityProviderMandates: boolean;
   shouldUseMarketSummary: boolean;
+  shouldUseUnderwritingContracts: boolean;
 };
 
 export function resolveAdminPageQueryFlags({
@@ -105,6 +108,9 @@ export function resolveAdminPageQueryFlags({
     shouldUseAutoParticipants: isAdminAllowed && shouldLoadAutoParticipants,
     shouldUseAutoParticipantProfileOverviews: isAdminAllowed && activeAdminSection === "participants-overview",
     shouldUseInstrumentDetails: isAdminAllowed && (activeAdminSection === "market-instruments" || activeAdminTab === "corporate"),
+    shouldUseInstitutionPortfolios: isAdminAllowed && activeAdminSection === "participants-institutions",
+    shouldUseLiquidityProviderMandates: isAdminAllowed && activeAdminSection === "market-liquidity",
     shouldUseMarketSummary: isAdminAllowed && (activeAdminSection === "dashboard" || activeAdminSection === "market-instruments"),
+    shouldUseUnderwritingContracts: isAdminAllowed && activeAdminSection === "corporate-underwriting",
   };
 }

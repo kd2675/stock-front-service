@@ -1,6 +1,7 @@
 import { AdminAutoMarketConfigPanel, type AutoMarketConfigDraft, type AutoMarketConfigDraftSetters } from "@/app/supply-demand/admin/AdminAutoMarketConfigPanel";
 import { AdminBatchRuntimeControlPanel } from "@/app/supply-demand/admin/AdminBatchRuntimeControls";
 import { AdminListingAutoAccountPanel, type ListingAutoAccountDraft, type ListingAutoAccountDraftSetters } from "@/app/supply-demand/admin/AdminListingAutoAccountPanel";
+import { AdminLiquidityProviderPanel } from "@/app/supply-demand/admin/AdminLiquidityProviderPanel";
 import type { AdminSection } from "@/app/supply-demand/admin/AdminNavigationConfig";
 import { AdminProfilesSection } from "@/app/supply-demand/admin/AdminProfilesSection";
 import type { ProfileConfigDraft, ProfileConfigDraftSetters } from "@/app/supply-demand/admin/AdminProfileConfigTypes";
@@ -10,6 +11,7 @@ import type {
   AutoParticipantProfileType,
   BatchJobRuntimeStatus,
   ListingAutoAccount,
+  LiquidityProviderMandate,
   StockBatchJobRun,
 } from "@/app/types/stock";
 
@@ -37,6 +39,10 @@ type AdminAutomationSectionProps = {
   updatingListingAutoAccount: boolean;
   onSelectListingAutoDraft: (account: ListingAutoAccount) => void;
   onSubmitListingAutoConfig: () => void;
+  liquidityProviderMandates: LiquidityProviderMandate[];
+  loadingLiquidityProviderMandates: boolean;
+  liquidityProviderMandatesError: boolean;
+  onRefreshLiquidityProviderMandates: () => void;
   batchJobRuntimeControls: BatchJobRuntimeStatus[];
   loadingBatchRuntimeControls: boolean;
   batchRuntimeControlsError: boolean;
@@ -81,6 +87,10 @@ export function AdminAutomationSection({
   updatingListingAutoAccount,
   onSelectListingAutoDraft,
   onSubmitListingAutoConfig,
+  liquidityProviderMandates,
+  loadingLiquidityProviderMandates,
+  liquidityProviderMandatesError,
+  onRefreshLiquidityProviderMandates,
   batchJobRuntimeControls,
   loadingBatchRuntimeControls,
   batchRuntimeControlsError,
@@ -139,16 +149,25 @@ export function AdminAutomationSection({
 
   if (activeSection === "market-liquidity") {
     return (
-      <AdminListingAutoAccountPanel
-        accounts={listingAutoAccounts}
-        selectedAccount={selectedListingAutoAccount}
-        draft={listingAutoDraft}
-        draftSetters={listingAutoDraftSetters}
-        editingSymbol={editingListingAutoSymbol}
-        updating={updatingListingAutoAccount}
-        onSelectDraft={onSelectListingAutoDraft}
-        onSubmit={onSubmitListingAutoConfig}
-      />
+      <>
+        <AdminLiquidityProviderPanel
+          accessToken={accessToken}
+          mandates={liquidityProviderMandates}
+          loading={loadingLiquidityProviderMandates}
+          error={liquidityProviderMandatesError}
+          onRefresh={onRefreshLiquidityProviderMandates}
+        />
+        <AdminListingAutoAccountPanel
+          accounts={listingAutoAccounts}
+          selectedAccount={selectedListingAutoAccount}
+          draft={listingAutoDraft}
+          draftSetters={listingAutoDraftSetters}
+          editingSymbol={editingListingAutoSymbol}
+          updating={updatingListingAutoAccount}
+          onSelectDraft={onSelectListingAutoDraft}
+          onSubmit={onSubmitListingAutoConfig}
+        />
+      </>
     );
   }
 
