@@ -15,7 +15,6 @@ export const ADMIN_PARTICIPANT_CATEGORIES: AdminParticipantCategory[] = [
   "INSTITUTIONAL_INVESTOR",
   "LIQUIDITY_PROVIDER",
   "ISSUE_UNDERWRITER",
-  "LISTING_UNDERWRITER",
   "SYSTEM_CUSTODY",
 ];
 
@@ -33,11 +32,6 @@ export const ADMIN_PARTICIPANT_CATEGORY_META: Record<AdminParticipantCategory, {
     label: "자동 참여자",
     colorClassName: "bg-admin-success",
     surfaceClassName: "border-admin-success/25 bg-admin-success-surface/25",
-  },
-  LISTING_UNDERWRITER: {
-    label: "기존 상장주관사",
-    colorClassName: "bg-admin-warning",
-    surfaceClassName: "border-admin-warning/25 bg-admin-warning/[0.06]",
   },
   INSTITUTIONAL_INVESTOR: {
     label: "기관투자자",
@@ -70,7 +64,6 @@ export const ADMIN_PARTICIPANT_SCOPE_LABELS: Record<AdminParticipantScope, strin
   ALL: "전체",
   MANUAL_PARTICIPANT: ADMIN_PARTICIPANT_CATEGORY_META.MANUAL_PARTICIPANT.label,
   AUTO_PARTICIPANT: ADMIN_PARTICIPANT_CATEGORY_META.AUTO_PARTICIPANT.label,
-  LISTING_UNDERWRITER: ADMIN_PARTICIPANT_CATEGORY_META.LISTING_UNDERWRITER.label,
   INSTITUTIONAL_INVESTOR: ADMIN_PARTICIPANT_CATEGORY_META.INSTITUTIONAL_INVESTOR.label,
   LIQUIDITY_PROVIDER: ADMIN_PARTICIPANT_CATEGORY_META.LIQUIDITY_PROVIDER.label,
   ISSUE_UNDERWRITER: ADMIN_PARTICIPANT_CATEGORY_META.ISSUE_UNDERWRITER.label,

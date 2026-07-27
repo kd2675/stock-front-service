@@ -32,7 +32,6 @@ const MARKET_ROLE_LABELS: Readonly<Record<string, string>> = {
   SYSTEM_CUSTODY: "시스템 보관계정",
   AUTO_PARTICIPANT: "자동 참여자",
   MANUAL_PARTICIPANT: "일반 참여자",
-  LISTING_UNDERWRITER: "기존 상장주관 계정",
   FIRM_COMMITMENT: "총액 인수",
   BEST_EFFORTS: "모집 주선",
   TRADABLE: "거래 가능",

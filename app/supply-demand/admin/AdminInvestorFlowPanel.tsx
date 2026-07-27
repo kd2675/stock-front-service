@@ -83,7 +83,7 @@ export function AdminInvestorFlowPanel({
               {refreshing ? <span className="text-[11px] font-bold text-admin-muted">확인 중</span> : null}
             </div>
             <p className="mt-1 max-w-3xl text-xs font-bold leading-5 text-stock-subtle">
-              시뮬레이션 오늘의 유저·자동 참여자·상장주관사 매수와 매도입니다. 체결금액을 대표값으로 비교하고 수량은 보조 지표로 제공합니다.
+              시뮬레이션 오늘의 활동 계정 역할별 매수와 매도입니다. 체결금액을 대표값으로 비교하고 수량은 보조 지표로 제공합니다.
             </p>
           </div>
           <div className="flex shrink-0 flex-wrap items-start justify-end gap-2">
@@ -150,7 +150,7 @@ export function AdminInvestorFlowPanel({
         </div>
 
         <p className="mt-3 text-[11px] font-bold leading-5 text-admin-muted">
-          화면은 10초마다 갱신하며, 계좌별 당일 요약은 기본 30초 주기로 반영되어 장중에는 최대 약 40초 늦을 수 있습니다. 유저·자동 참여자·상장주관사 구분은 계좌의 시스템 역할을 기준으로 집계합니다.
+          화면은 10초마다 갱신하며, 계좌별 당일 요약은 기본 30초 주기로 반영되어 장중에는 최대 약 40초 늦을 수 있습니다. 참여자 구분은 계좌의 시스템 역할을 기준으로 집계합니다.
         </p>
       </section>
 

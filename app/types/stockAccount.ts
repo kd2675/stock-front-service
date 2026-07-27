@@ -220,7 +220,6 @@ export type AdminCorporateActionFlowSummary = {
 export type AdminParticipantCategory =
   | "MANUAL_PARTICIPANT"
   | "AUTO_PARTICIPANT"
-  | "LISTING_UNDERWRITER"
   | "INSTITUTIONAL_INVESTOR"
   | "LIQUIDITY_PROVIDER"
   | "ISSUE_UNDERWRITER"

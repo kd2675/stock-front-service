@@ -49,7 +49,7 @@ export function AdminInvestorFlowHistoryModal({
           <div>
             <h3 id="investor-flow-history-title" className="text-base font-black text-white">참여자별 체결 흐름 · 최근 7일</h3>
             <p className="mt-1 max-w-3xl text-xs font-bold leading-5 text-stock-subtle">
-              시뮬레이션 거래일별 유저·자동 참여자·상장주관사의 순매수 금액과 금액 참여율을 우선 비교합니다. 수량은 보조 지표이며 세 역할의 순매수 금액 합계는 정상 반영 시 0원입니다.
+              시뮬레이션 거래일별 계정 역할의 순매수 금액과 금액 참여율을 우선 비교합니다. 수량은 보조 지표이며 표시된 역할의 순매수 금액 합계는 정상 반영 시 0원입니다.
             </p>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-2">

@@ -124,11 +124,11 @@ export function AdminDormantWithdrawalAudit({
 }
 
 function formatReceiverRole(role: AutoParticipantWithdrawalAudit["shareTransfers"][number]["receiverRole"]) {
-  return role === "SYSTEM_CUSTODY" ? "시스템 보관" : "과거 상장주관사 반환";
+  return role === "SYSTEM_CUSTODY" ? "시스템 보관" : "발행 인수기관 반환";
 }
 
 function formatTransferReason(reason: AutoParticipantWithdrawalAudit["shareTransfers"][number]["transferReason"]) {
   return reason === "AUTO_PARTICIPANT_WITHDRAWAL_CUSTODY"
     ? "자동 참여자 탈퇴 보관 이전"
-    : "과거 상장주관사 반환";
+    : "발행 인수기관 반환";
 }

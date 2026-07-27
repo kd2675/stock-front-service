@@ -163,8 +163,8 @@ export type AutoParticipantShareTransfer = {
   symbol: string;
   receiverAccountId: number;
   receiverUserKey: string;
-  receiverRole: "LISTING_UNDERWRITER" | "SYSTEM_CUSTODY";
-  transferReason: "LEGACY_UNDERWRITER_RETURN" | "AUTO_PARTICIPANT_WITHDRAWAL_CUSTODY";
+  receiverRole: "ISSUE_UNDERWRITER" | "SYSTEM_CUSTODY";
+  transferReason: "ISSUE_UNDERWRITER_RETURN" | "AUTO_PARTICIPANT_WITHDRAWAL_CUSTODY";
   receiverAccountStatus: string;
   receiverSelfTradeGroupId?: string | null;
   quantity: number;
@@ -302,6 +302,29 @@ export type InstitutionPortfolio = {
   mandates: InstitutionSymbolMandate[];
 };
 
+export type InstitutionInvestmentStyle =
+  | "BALANCED_LONG_TERM"
+  | "VALUE_CONTRARIAN"
+  | "MOMENTUM"
+  | "ACTIVE_SHORT_TERM";
+
+export type InstitutionPortfolioStylePreset = {
+  investmentStyle: InstitutionInvestmentStyle;
+  label: string;
+  description: string;
+  recommended: boolean;
+  recommendedAumRateOfMarketCap: number;
+  recommendedAumAmountPerPortfolio: number;
+  baseStockAllocationRate: number;
+  minStockAllocationRate: number;
+  maxStockAllocationRate: number;
+  primaryRegimeWeight: number;
+  dailyTurnoverLimitRate: number;
+  maxDecisionTurnoverRate: number;
+  decisionIntervalMinutes: number;
+  dailyParticipationRate: number;
+};
+
 export type InstitutionPortfolioRecommendation = {
   activeSymbolCount: number;
   currentPortfolioCount: number;
@@ -312,20 +335,10 @@ export type InstitutionPortfolioRecommendation = {
   minAumRateOfMarketCap: number;
   maxAumRateOfMarketCap: number;
   recommendedAumAmountPerPortfolio: number;
-  styles: {
-    investmentStyle: string;
-    label: string;
-    baseStockAllocationRate: number;
-    minStockAllocationRate: number;
-    maxStockAllocationRate: number;
-    primaryRegimeWeight: number;
-    dailyTurnoverLimitRate: number;
-    maxDecisionTurnoverRate: number;
-    decisionIntervalMinutes: number;
-    dailyParticipationRate: number;
-  }[];
+  styles: InstitutionPortfolioStylePreset[];
   symbols: {
     symbol: string;
+    name: string;
     tradableShares: number;
     currentPrice: number;
     marketWeight: number;

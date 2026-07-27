@@ -73,11 +73,6 @@ assert.equal(resolveAdminTabFromPath("/admin/corporate/reports"), "corporate");
 assert.equal(typeof nextConfig.redirects, "function", "Next.js redirect 설정이 없습니다.");
 const redirects = await nextConfig.redirects();
 const redirectsBySource = new Map(redirects.map((redirect) => [redirect.source, redirect.destination]));
-assert.equal(
-  redirectsBySource.get("/supply-demand/admin/automation/listing-auto"),
-  "/admin/market/liquidity-providers",
-  "이전 상장주관사 설정 경로는 신규 유동성 공급자 탭으로 이동해야 합니다.",
-);
 assert.equal(redirectsBySource.has("/admin/participants/symbols"), false, "이전 자동 참여자 경로에 호환 리다이렉트를 두면 안 됩니다.");
 assert.equal(redirectsBySource.has("/supply-demand/admin/automation/symbols"), false, "이전 자동장 경로에 호환 리다이렉트를 두면 안 됩니다.");
 
