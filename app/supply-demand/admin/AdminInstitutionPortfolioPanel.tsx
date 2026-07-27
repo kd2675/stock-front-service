@@ -102,7 +102,7 @@ export function AdminInstitutionPortfolioPanel({
     setConfirmed(false);
     setFeedback({
       tone: "success",
-      message: `${created.data.displayName}을 제한된 실운영 상태로 생성했습니다. 다른 기관은 필요할 때 별도로 추가할 수 있습니다.`,
+      message: `${created.data.displayName}을 생성했습니다. 첫 운용 시각은 ${formatDateTime(created.data.nextDecisionAt)}로 예약되었습니다.`,
     });
     onRefresh();
   };
@@ -424,7 +424,7 @@ function InstitutionPortfolioProvisioning({
             onChange={(event) => onConfirmedChange(event.target.checked)}
             className="mt-1 size-4 shrink-0 accent-[var(--admin-accent)]"
           />
-          현재 시뮬레이션이 일시정지된 장전이며, 이 기관과 전용 계좌·개장 현금 원장만 생성하고 실제 주문은 만들지 않는다는 점을 확인했습니다.
+          기관과 전용 계좌·개장 현금 원장을 지금 생성하며, 현재 장에는 진입하지 않고 다음 개장부터 실제 주문 결정을 시작한다는 점을 확인했습니다.
         </label>
         <button
           type="button"
