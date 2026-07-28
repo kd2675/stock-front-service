@@ -39,7 +39,7 @@ export function InstrumentInvestorFlowReport({ report }: { report: InstrumentMar
         <ActivityMetric label="최대 계좌 거래 집중도" value={`${formatNumber(flow.topAccountExecutionShareRate20Days)}%`} detail="최근 20거래일 계좌별 체결금액" />
       </div>
       <p className="mt-3 text-xs font-bold leading-5 text-stock-subtle">
-        순매수 수량은 매수-매도, 순현금흐름은 매도 유입-매수 유출입니다. 실물시장 투자자 분류가 아니라 모의시장의 유저·자동 참여자·상장주관사 계정 역할을 기준으로 집계합니다.
+        순매수 수량은 매수-매도, 순현금흐름은 매도 유입-매수 유출입니다. 실물시장 투자자 분류가 아니라 모의시장의 유저·자동 참여자·발행 인수기관 계정 역할을 기준으로 집계합니다.
       </p>
     </ReportSection>
   );
