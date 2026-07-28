@@ -77,7 +77,7 @@ export function AdminStockEventPanel({
         )}
         {isInitialIssue ? (
           <div className="rounded-md border border-white/10 bg-black/20 px-3 py-2 text-xs font-bold text-stock-subtle">
-            종목과 INITIAL_ISSUE 보관원장만 생성하며 인수계약과 LP는 각 전용 탭에서 따로 만듭니다.
+            실행 중에도 종목과 INITIAL_ISSUE 보관원장을 CLOSED 상태로 준비할 수 있습니다.
           </div>
         ) : (
           <DarkSelect label="종목" value={draft.actionSymbol} onChange={draftSetters.setActionSymbol}>
@@ -93,7 +93,7 @@ export function AdminStockEventPanel({
           </div>
         ) : (
           <div className="rounded-md border border-white/10 bg-black/20 px-3 py-2 text-xs font-bold text-stock-subtle">
-            {isInitialIssue ? "발행 직후에는 CLOSED 상태이며 인수계약과 LP를 별도로 준비한 뒤 거래를 엽니다." : "가격과 수량을 조정하는 이벤트는 열린 주문 정책을 먼저 검증합니다."}
+            {isInitialIssue ? "인수계약과 LP는 일시정지 장전에서 별도로 준비하며, 거래는 그 다음 개장부터 시작합니다." : "가격과 수량을 조정하는 이벤트는 열린 주문 정책을 먼저 검증합니다."}
           </div>
         )}
       </div>

@@ -47,7 +47,7 @@ export function useAdminInitialIssueActions({
       reportSymbolRef.current = instrument.symbol;
       setReportSymbol(instrument.symbol);
       setMessage(
-        "신규 상장을 준비했습니다. 유통분과 비유통분을 시스템 보관계정에 분리 배정했습니다. 시장은 CLOSED로 유지되며 인수계약과 종목 전용 LP를 별도로 준비해야 합니다.",
+        "신규 상장을 CLOSED 상태로 준비했습니다. 유통분과 비유통분을 시스템 보관계정에 분리 배정했으며, 일시정지 장전에서 인수계약과 종목 전용 LP를 준비하면 다음 개장부터 거래할 수 있습니다.",
       );
       await invalidateAdminInitialIssueQueries(queryClient, instrument.symbol);
     },

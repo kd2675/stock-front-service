@@ -36,7 +36,7 @@ export function AdminInitialIssueFormPanel({
         onSubmit();
       }}
     >
-      <InitialIssueSection title="발행 조건" description="종목 원장과 최초 인수원가의 기준이 되는 값을 입력합니다.">
+      <InitialIssueSection title="발행 조건" description="시간 실행 여부와 관계없이 CLOSED 상태의 신규 종목을 준비합니다.">
         <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <DarkFormInput label="종목 코드" registration={createInstrumentForm.register("symbol")} placeholder="예: DEMO001" error={createInstrumentForm.formState.errors.symbol?.message} />
           <DarkFormInput label="종목명" registration={createInstrumentForm.register("name")} placeholder="예: 제로큐 주문장" error={createInstrumentForm.formState.errors.name?.message} className="sm:col-span-2" />
@@ -66,17 +66,17 @@ export function AdminInitialIssueFormPanel({
                 ? `유통 ${tradableShares.toLocaleString()}주 · 보관 ${lockedShares.toLocaleString()}주`
                 : "유통비율 입력값을 확인해 주세요."}
             </p>
-            <p className="mt-1">발행 직후에는 CLOSED로 대기하며, 인수와 LP를 각 전용 탭에서 별도로 생성합니다.</p>
+            <p className="mt-1">실행 중에도 생성할 수 있습니다. 거래는 인수와 LP 준비가 끝난 다음 개장부터 시작합니다.</p>
           </div>
         </div>
       </InitialIssueSection>
 
       <div className="flex flex-col gap-2 border-t border-white/10 pt-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-[11px] font-bold leading-5 text-admin-placeholder">
-          종목과 유통 대기·잠금 배정원장만 만들고 CLOSED로 대기합니다. 인수계약 생성과 LP 생성은 역할별 탭에서 각각 진행합니다.
+          종목과 유통 대기·잠금 배정원장만 원자적으로 만들고 CLOSED로 대기합니다. 인수계약과 LP 준비는 일시정지 장전에서 진행합니다.
         </p>
         <button type="submit" disabled={creatingInitialIssue} className="min-h-11 shrink-0 rounded-md bg-white px-5 py-3 text-sm font-black text-admin-canvas transition hover:bg-admin-accent-label disabled:cursor-wait disabled:opacity-50">
-          {creatingInitialIssue ? "발행 중" : "신규 발행 생성"}
+          {creatingInitialIssue ? "준비 중" : "신규 발행 준비"}
         </button>
       </div>
     </form>
