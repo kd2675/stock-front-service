@@ -33,7 +33,7 @@ export function AdminProfileConfigSummaryPanel({ config }: AdminProfileConfigSum
       <ProfileSummaryGroup title="행동 모델">
         <ProfileMetric
           label="프로필 일괄 적용"
-          value={config.behaviorModelVersion === "V2" ? "V2 · 상태 기반" : "V1 · 기존 모델"}
+          value="V3 · 확률적 행동"
         />
       </ProfileSummaryGroup>
       <ProfileSummaryGroup title="행동 신호">
@@ -68,7 +68,7 @@ function ProfileSummaryGroup({ title, children }: { title: string; children: Rea
 }
 
 function formatPricingMode(value: AutoParticipantProfileConfig["pricingMode"]) {
-  return value === "MARKET_MAKING" ? "양방향 시장조성" : "방향 신호";
+  return value === "DIRECTIONAL" ? "방향 신호" : "-";
 }
 
 function formatExitMode(value: AutoParticipantProfileConfig["exitMode"]) {
@@ -78,5 +78,5 @@ function formatExitMode(value: AutoParticipantProfileConfig["exitMode"]) {
 }
 
 function formatInventoryMode(value: AutoParticipantProfileConfig["inventoryMode"]) {
-  return value === "TARGET_ALLOCATION" ? "목표 재고" : "신호 기반";
+  return value === "SIGNAL_DRIVEN" ? "신호 기반" : "-";
 }

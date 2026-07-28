@@ -13,6 +13,7 @@ import {
   getAdminUserFundFlow,
   getAutoMarketRegimeHistoryRange,
   getAutoParticipants,
+  getAutoParticipantV3Operations,
   getAutoParticipantWithdrawalAudits,
   getAutoParticipantOverviews,
   getAutoParticipantPerformanceSummary,
@@ -47,6 +48,20 @@ function adminAuthenticatedQueryOptions<TData>(
     retry: 1,
     staleTime: ADMIN_SNAPSHOT_STALE_MS,
     ...config,
+  });
+}
+
+export function autoParticipantV3OperationsQueryOptions(
+  token: string | null,
+  options: { enabled?: boolean } = {},
+) {
+  return adminSnapshotQueryOptions(token, {
+    queryKey: stockKeys.autoParticipantV3Operations(),
+    request: getAutoParticipantV3Operations,
+    fallbackMessage: "자동 참여자 V3 운영 상태를 조회하지 못했습니다.",
+    enabled: options.enabled,
+    refetchInterval: 10_000,
+    staleTime: 5_000,
   });
 }
 

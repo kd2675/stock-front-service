@@ -38,9 +38,7 @@ export const PROFILE_CONFIG_SIGNAL_FIELDS = [
 ] as const satisfies ReadonlyArray<ProfileConfigNumericField>;
 
 export const PROFILE_CONFIG_EXECUTION_FIELDS = [
-  { key: "orderMultiplier", setterKey: "setOrderMultiplier", formLabel: "V1 호환 주문 배율", summaryLabel: "V1 호환 배율", placeholder: "1", min: 0, max: 5, defaultValue: DEFAULT_PROFILE_MULTIPLIER, suffix: "배" },
-  { key: "decisionFrequencyMultiplier", setterKey: "setDecisionFrequencyMultiplier", formLabel: "의사결정 빈도(0=중지)", summaryLabel: "의사결정 빈도", placeholder: "1", min: 0, max: 20, defaultValue: DEFAULT_PROFILE_MULTIPLIER, suffix: "배" },
-  { key: "ordersPerDecisionMultiplier", setterKey: "setOrdersPerDecisionMultiplier", formLabel: "회당 주문 수(0=중지)", summaryLabel: "회당 주문 수", placeholder: "1", min: 0, max: 5, defaultValue: DEFAULT_PROFILE_MULTIPLIER, suffix: "배" },
+  { key: "orderMultiplier", setterKey: "setOrderMultiplier", formLabel: "프로필 실행 강도", summaryLabel: "실행 강도", placeholder: "1", min: 0, max: 5, defaultValue: DEFAULT_PROFILE_MULTIPLIER, suffix: "배" },
   { key: "aggressionMultiplier", setterKey: "setAggressionMultiplier", formLabel: "호가 공격성(0-5)", summaryLabel: "호가 공격성", placeholder: "1", min: 0, max: 5, defaultValue: DEFAULT_PROFILE_MULTIPLIER, suffix: "배" },
   { key: "pricePressureSensitivity", setterKey: "setPricePressureSensitivity", formLabel: "가격 압력 민감도(0-2)", summaryLabel: "가격 민감도", placeholder: "1", min: 0, max: 2, defaultValue: DEFAULT_PROFILE_MULTIPLIER, suffix: "배" },
   { key: "orderTtlMultiplier", setterKey: "setOrderTtlMultiplier", formLabel: "주문 유지 시간(0.1-10)", summaryLabel: "주문 유지 시간", placeholder: "1", min: 0.1, max: 10, defaultValue: DEFAULT_PROFILE_MULTIPLIER, suffix: "배" },
@@ -69,7 +67,9 @@ export function buildDefaultProfileConfigDraft(): ProfileConfigDraft {
 
   return {
     ...numericDefaults,
-    behaviorModelVersion: "V2",
+    behaviorModelVersion: "V3",
+    decisionFrequencyMultiplier: DEFAULT_PROFILE_MULTIPLIER,
+    ordersPerDecisionMultiplier: DEFAULT_PROFILE_MULTIPLIER,
     pricingMode: "DIRECTIONAL",
     exitMode: "SIGNAL_DRIVEN",
     inventoryMode: "SIGNAL_DRIVEN",

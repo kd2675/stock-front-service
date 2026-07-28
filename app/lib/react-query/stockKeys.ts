@@ -57,6 +57,11 @@ export const stockKeys = {
   underwritingContractRecommendation: () => [...stockKeys.underwritingContracts(), "recommendation"] as const,
   systemCustodyOverview: () => [...stockKeys.market(), "system-custody"] as const,
   autoMarketStatus: () => [...stockKeys.market(), "auto-market"] as const,
+  autoParticipantV3Operations: () => [
+    ...stockKeys.autoMarketStatus(),
+    "v3",
+    "operations",
+  ] as const,
   autoMarketRegimeHistoryRoot: () => [...stockKeys.autoMarketStatus(), "regime-history"] as const,
   autoMarketRegimeHistoryRange: (symbol: string, endDate?: string) => [
     ...stockKeys.autoMarketRegimeHistoryRoot(),

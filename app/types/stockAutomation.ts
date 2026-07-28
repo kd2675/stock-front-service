@@ -100,7 +100,7 @@ export type AutoParticipantProfileType =
   | "LOSS_AVERSE"
   | "OVERCONFIDENT"
   | "HERD_FOLLOWER"
-  | "MARKET_MAKER"
+  | "PASSIVE_LIMIT_TRADER"
   | "NOISE_TRADER"
   | "VALUE_ANCHOR"
   | "SCALPER"
@@ -123,11 +123,11 @@ export type AutoParticipantProfileType =
   | "OBSERVER";
 
 export type RecurringCashIntervalUnit = "SECOND" | "MINUTE" | "HOUR" | "DAY" | "MONTH" | "YEAR";
-export type AutoParticipantBehaviorModelVersion = "V1" | "V2";
+export type AutoParticipantBehaviorModelVersion = "V3";
 export type AutoParticipantLifecycleScope = "CURRENT" | "WITHDRAWN";
-export type AutoParticipantProfilePricingMode = "DIRECTIONAL" | "MARKET_MAKING";
+export type AutoParticipantProfilePricingMode = "DIRECTIONAL";
 export type AutoParticipantProfileExitMode = "SIGNAL_DRIVEN" | "TAKE_PROFIT_FIRST" | "HOLD_LOSSES";
-export type AutoParticipantProfileInventoryMode = "SIGNAL_DRIVEN" | "TARGET_ALLOCATION";
+export type AutoParticipantProfileInventoryMode = "SIGNAL_DRIVEN";
 
 export type AutoParticipant = {
   userKey: string;
@@ -1078,6 +1078,56 @@ export type AutoParticipantProfileConfig = {
   };
   customized: boolean;
   updatedAt?: string | null;
+};
+
+export type AutoParticipantV3Operations = {
+  simulationTradeDate: string;
+  policies: Array<{
+    policyVersion: number;
+    status: "ACTIVE" | "SCHEDULED";
+    effectiveTradeDate: string;
+    runtimeEnabled: boolean;
+    policyJson: string;
+    createdBy: string;
+    createdAt: string;
+    activatedAt?: string | null;
+    retiredAt?: string | null;
+    runtimeChangeReason?: string | null;
+    runtimeChangedBy?: string | null;
+    runtimeChangedAt?: string | null;
+  }>;
+  dailySummary: {
+    accountCount: number;
+    offlineAccountCount: number;
+    submittedOrderCount: number;
+    submittedNotional: number;
+    observedExecutionCount: number;
+    observedExecutionNotional: number;
+    observedCancelCount: number;
+    averageFatigueScore: number;
+  };
+  accountStates: Array<{
+    accountId: number;
+    userKey: string;
+    profileType: AutoParticipantProfileType;
+    policyVersion: number;
+    activityState: "OFFLINE" | "LOW" | "NORMAL" | "HIGH";
+    activitySession: string;
+    eventSequence: number;
+    fatigueScore: number;
+    submittedOrderCount: number;
+    submittedNotional: number;
+    observedExecutionCount: number;
+    observedExecutionNotional: number;
+    observedCancelCount: number;
+    lastResultReason?: string | null;
+    lastHoldReason?: string | null;
+    nextAttentionAt?: string | null;
+    nextGuardAt?: string | null;
+    nextRunAt?: string | null;
+    updatedAt: string;
+  }>;
+  incompleteLiquidationPlanCount: number;
 };
 
 export type AutoMarketStatus = {

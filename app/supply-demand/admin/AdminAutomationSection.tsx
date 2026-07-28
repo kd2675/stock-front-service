@@ -98,6 +98,7 @@ export function AdminAutomationSection({
   if (activeSection === "participants-profiles") {
     return (
       <AdminProfilesSection
+        accessToken={accessToken}
         profileConfigs={profileConfigs}
         editingProfileType={editingProfileType}
         selectedProfileConfig={selectedProfileConfig}

@@ -6,7 +6,7 @@ import {
   authenticatedPostJson,
   toQuery,
 } from "@/app/lib/stock-api/core";
-import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowBreakdown, AdminFundFlowScope, AdminInvestorFlowHistory, AdminInvestorFlowSummary, AdminParticipantScope, AdminSymbolFlowList, AdminTotalAssetHistoryPage, AutoMarketDistributionBias, AutoMarketRegimeCountWeights, AutoMarketRegimeHistoryRange, AutoMarketStatus, AutoParticipant, AutoParticipantBehaviorModelVersion, AutoParticipantCashAdjustment, AutoParticipantLifecycleScope, AutoParticipantOverview, AutoParticipantPerformanceBasis, AutoParticipantPerformanceSummary, AutoParticipantProfileExitMode, AutoParticipantProfileInventoryMode, AutoParticipantProfileOverview, AutoParticipantProfilePricingMode, AutoParticipantProfileType, AutoParticipantSymbolConfig, AutoParticipantWithdrawalAudit, BatchJobRuntimeStatus, EodOperationsOverview, EodPhaseRetryResult, InstitutionInvestmentStyle, InstitutionPortfolio, InstitutionPortfolioRecommendation, InstitutionSymbolPolicy, LiquidityProviderMandate, LiquidityProviderPolicyUpdatePayload, LiquidityProviderRecommendation, LiquidityProviderStatusChangePayload, RecurringCashIntervalUnit, StockBatchJobRun, SystemCustodyOverview, UnderwritingContract, UnderwritingContractRecommendation } from "@/app/types/stock";
+import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowBreakdown, AdminFundFlowScope, AdminInvestorFlowHistory, AdminInvestorFlowSummary, AdminParticipantScope, AdminSymbolFlowList, AdminTotalAssetHistoryPage, AutoMarketDistributionBias, AutoMarketRegimeCountWeights, AutoMarketRegimeHistoryRange, AutoMarketStatus, AutoParticipant, AutoParticipantBehaviorModelVersion, AutoParticipantCashAdjustment, AutoParticipantLifecycleScope, AutoParticipantOverview, AutoParticipantPerformanceBasis, AutoParticipantPerformanceSummary, AutoParticipantProfileExitMode, AutoParticipantProfileInventoryMode, AutoParticipantProfileOverview, AutoParticipantProfilePricingMode, AutoParticipantProfileType, AutoParticipantSymbolConfig, AutoParticipantV3Operations, AutoParticipantWithdrawalAudit, BatchJobRuntimeStatus, EodOperationsOverview, EodPhaseRetryResult, InstitutionInvestmentStyle, InstitutionPortfolio, InstitutionPortfolioRecommendation, InstitutionSymbolPolicy, LiquidityProviderMandate, LiquidityProviderPolicyUpdatePayload, LiquidityProviderRecommendation, LiquidityProviderStatusChangePayload, RecurringCashIntervalUnit, StockBatchJobRun, SystemCustodyOverview, UnderwritingContract, UnderwritingContractRecommendation } from "@/app/types/stock";
 
 export type { AdminFundFlowScope } from "@/app/types/stock";
 
@@ -514,6 +514,24 @@ export function updateAutoParticipantProfileConfig(
   return authenticatedPatchJson<AutoMarketStatus["participantProfileConfigs"][number]>(
     token,
     `/api/stock/v1/markets/auto-market/profile-configs/${encodeURIComponent(profileType)}`,
+    payload,
+  );
+}
+
+export function getAutoParticipantV3Operations(token: string) {
+  return authenticatedGetJson<AutoParticipantV3Operations>(
+    token,
+    "/api/stock/v1/markets/auto-market/v3/operations",
+  );
+}
+
+export function updateAutoParticipantV3Runtime(
+  token: string,
+  payload: { runtimeEnabled: boolean; changeReason: string },
+) {
+  return authenticatedPatchJson<AutoParticipantV3Operations>(
+    token,
+    "/api/stock/v1/markets/auto-market/v3/runtime",
     payload,
   );
 }

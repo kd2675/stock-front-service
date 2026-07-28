@@ -11,7 +11,6 @@ import type { RecurringCashIntervalUnit } from "@/app/types/stock";
 
 const PRICING_MODE_OPTIONS = [
   { value: "DIRECTIONAL", label: "방향 신호형" },
-  { value: "MARKET_MAKING", label: "양방향 시장조성형" },
 ] as const;
 const EXIT_MODE_OPTIONS = [
   { value: "SIGNAL_DRIVEN", label: "신호 기반" },
@@ -20,7 +19,6 @@ const EXIT_MODE_OPTIONS = [
 ] as const;
 const INVENTORY_MODE_OPTIONS = [
   { value: "SIGNAL_DRIVEN", label: "신호 기반" },
-  { value: "TARGET_ALLOCATION", label: "목표 재고형" },
 ] as const;
 
 type AdminProfileConfigFormPanelProps = {
@@ -44,20 +42,10 @@ export function AdminProfileConfigFormPanel({
     <>
       <ProfilePolicySection
         title="행동 모델"
-        description="이 프로필을 사용하는 모든 자동 참여자에게 동일하게 적용됩니다. 이미 생성된 주문은 생성 당시 모델을 유지하고, 저장 이후 신규 주문부터 선택한 모델을 사용합니다."
+        description="일반 자동 참여자는 V3만 사용합니다. 정책 변경은 다음 개장 전 활성화되며 장중 난수 흐름을 바꾸지 않습니다."
       >
-        <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
-          <DarkSelect
-            label="프로필 행동 모델"
-            value={draft.behaviorModelVersion}
-            onChange={(value) => draftSetters.setBehaviorModelVersion(value as typeof draft.behaviorModelVersion)}
-          >
-            <option value="V2">V2 · 상태 기반 모델</option>
-            <option value="V1">V1 · 기존 모델</option>
-          </DarkSelect>
-          <div className="rounded-md border border-white/10 bg-black/15 px-3 py-2 text-xs font-bold leading-5 text-stock-subtle">
-            개인별 V1/V2 선택은 사용하지 않습니다. 참여자의 프로필을 바꾸면 새 프로필의 행동 모델이 적용됩니다.
-          </div>
+        <div className="rounded-md border border-white/10 bg-black/15 px-3 py-2 text-xs font-bold leading-5 text-stock-subtle">
+          V3 · 확률적 관심, 단일 종목 선택, 조건부 실행, 안전 상한 선계산, 피로·재진입, 전 종목 리스크 가드
         </div>
       </ProfilePolicySection>
 
@@ -74,7 +62,7 @@ export function AdminProfileConfigFormPanel({
 
       <ProfilePolicySection
         title="주문 실행"
-        description="결정 주기·회당 주문 수·가격·청산·재고·TTL·수량을 독립적으로 제어합니다. 의사결정 빈도·회당 주문 수·주문 수량의 0배만 주문 생성을 중지하며, 공격성·가격 민감도의 0배는 해당 반응만 끕니다."
+        description="V3의 관심 시각과 이벤트당 단일 주문은 활성 정책이 확률적으로 정합니다. 여기서는 프로필별 신호 실행 강도·가격·청산·재고·TTL·수량 성향만 조정합니다."
       >
         <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-3">
           <DarkSelect label="가격 생성 모드" value={draft.pricingMode} onChange={(value) => draftSetters.setPricingMode(value as typeof draft.pricingMode)}>
@@ -93,7 +81,7 @@ export function AdminProfileConfigFormPanel({
           ))}
         </div>
         <p className="mt-3 text-xs font-bold leading-5 text-stock-subtle">
-          V2는 의사결정 빈도와 회당 주문 수를 분리해 배율 중복 증폭을 막습니다. 기존 주문 배율은 V1 호환용이며, V2 실행에서는 분리된 값을 사용합니다.
+          자발적 관심 이벤트는 최대 한 건만 주문합니다. 수량은 현금·보유·미체결·자산배분·예산·호가잔량·ADV 상한을 먼저 계산한 뒤 확률 분포로 정합니다.
         </p>
       </ProfilePolicySection>
 

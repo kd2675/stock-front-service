@@ -1,9 +1,11 @@
 import AutoSignalGuide from "@/app/supply-demand/admin/AdminSignalGuide";
+import { AdminAutoParticipantV3OperationsPanel } from "@/app/supply-demand/admin/AdminAutoParticipantV3OperationsPanel";
 import { AdminProfileConfigPanel } from "@/app/supply-demand/admin/AdminProfileConfigPanel";
 import type { ProfileConfigDraft, ProfileConfigDraftSetters } from "@/app/supply-demand/admin/AdminProfileConfigTypes";
 import type { AutoParticipantProfileConfig, AutoParticipantProfileType } from "@/app/types/stock";
 
 type AdminProfilesSectionProps = {
+  accessToken: string | null;
   profileConfigs: AutoParticipantProfileConfig[];
   editingProfileType: AutoParticipantProfileType | null;
   selectedProfileConfig: AutoParticipantProfileConfig | null;
@@ -16,6 +18,7 @@ type AdminProfilesSectionProps = {
 };
 
 export function AdminProfilesSection({
+  accessToken,
   profileConfigs,
   editingProfileType,
   selectedProfileConfig,
@@ -28,6 +31,7 @@ export function AdminProfilesSection({
 }: AdminProfilesSectionProps) {
   return (
     <>
+      <AdminAutoParticipantV3OperationsPanel accessToken={accessToken} />
       <AutoSignalGuide />
 
       <AdminProfileConfigPanel

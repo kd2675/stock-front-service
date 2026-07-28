@@ -17,7 +17,7 @@ export function AutoParticipantProfileSection({ participant }: { participant: Au
       <p className="font-black text-white">{formatAutoParticipantProfile(participant.profileType)}</p>
       <p className="mt-1 text-xs font-bold leading-5 text-stock-subtle">{formatAutoParticipantProfileDescription(participant.profileType)}</p>
       <p className="mt-1 text-xs font-bold leading-5 text-admin-muted">
-        {participant.behaviorModelVersion === "V2" ? "프로필 V2 · " : "프로필 V1 · "}
+        프로필 V3 ·{" "}
         {formatAutoParticipantProfileBehavior(participant.profileType)}
       </p>
       <p className="mt-2 text-[11px] font-black text-admin-accent">
