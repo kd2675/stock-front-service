@@ -13,11 +13,11 @@
 - `/research` - 종목 분석
 - `/corporate-actions`
 - `/admin/**` - 관리자 운영 화면
-- `/admin/market/liquidity-providers` - 종목별 LP 권장값·재고 밴드·호가·일일한도를 확인하고 LP를 개별 생성·중단·수정·재개
+- `/admin/market/liquidity-providers` - 종목별 LP 권장값·재고 밴드·호가·일일한도를 확인하고 LP 준비와 다음 안전 개장일 활성화·재개 예약, 즉시 중단을 수행
 - `/admin/funds/custody` - 탈퇴·유통 대기·잠금 시스템 보관계정과 휴면 자동 참여자 원장
 - `/admin/participants/institutions` - 운용 유형별 생성 프리셋으로 기관을 만들고 입금 계좌 ID·가용/예약 현금·AUM을 감사하며, 현금 입금·회수와 표시명·목표 비중·위험 한도·결정 주기·종목별 정책의 다음 개장 예약을 수행
 - `/admin/corporate/instruments` - 종목과 유통 대기·잠금 보관원장만 생성하고 인수계약과 LP 준비 전까지 CLOSED로 대기
-- `/admin/corporate/underwriting` - 발행 대기 종목의 인수계정·계약을 하나씩 생성하고 권장 유한 공급률·기간과 누적/일일 한도 감사
+- `/admin/corporate/underwriting` - 실행 중에도 발행 대기 종목의 인수계정·계약을 하나씩 생성하고 다음 안전 개장일 유한 공급을 예약하며 누적/일일 한도를 감사
 
 이전 `/supply-demand`, `/reports`, `/supply-demand/admin/**` 주소는 canonical route로 영구 redirect합니다. 사용자 화면은 상단 5개 탭, 관리자 화면은 독립 상단 바와 업무별 좌측 navigation을 사용합니다.
 

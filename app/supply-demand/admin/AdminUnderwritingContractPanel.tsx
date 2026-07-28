@@ -126,7 +126,7 @@ export function AdminUnderwritingContractPanel({
       return;
     }
     const approved = window.confirm(
-      `${contract.symbol} 인수재고 중 ${supplyPercent}%를 최대 ${durationDays}일 동안 유한 공급합니다.\n\n매수 주문은 만들지 않고 한 번에 수동 매도호가 1개만 유지합니다. 취소·TTL 만료된 주문도 제출예산을 돌려받지 않습니다. 시뮬레이션이 일시정지된 장전 상태인지 확인했습니까?`,
+      `${contract.symbol} 인수재고 중 ${supplyPercent}%를 최대 ${durationDays}일 동안 유한 공급하도록 예약합니다.\n\n현재 장에는 주문을 만들지 않으며 다음 안전한 개장 준비 단계에서 가용 재고를 다시 계산한 뒤 매도 전용 공급을 시작합니다. 계속할까요?`,
     );
     if (!approved) {
       return;
@@ -155,7 +155,7 @@ export function AdminUnderwritingContractPanel({
       setConfirmed(false);
       setFeedback({
         tone: "success",
-        message: `${activated.data.symbol} 인수기관을 유한·매도 전용 공급 상태로 전환했습니다.`,
+        message: `${activated.data.symbol} 인수기관 유한 공급을 ${activated.data.scheduledSupply?.effectiveBusinessDate ?? "다음 개장일"} 적용으로 예약했습니다.`,
       });
     } finally {
       setWorkingContractId(null);
@@ -167,11 +167,15 @@ export function AdminUnderwritingContractPanel({
       || loading
       || error
       || suspensionMutation.isPending
-      || contract.status !== "STABILIZING") {
+      || (contract.status !== "STABILIZING" && !contract.scheduledSupply)) {
       return;
     }
+    const cancellingSchedule = contract.status === "ALLOCATED"
+      && contract.scheduledSupply !== null;
     const approved = window.confirm(
-      `${contract.symbol} 인수기관 공급을 즉시 중단하고 계약 소유 미체결 주문을 취소합니다. 이미 사용한 제출예산은 복원하지 않습니다. 계속할까요?`,
+      cancellingSchedule
+        ? `${contract.symbol} 인수기관 공급 활성화 예약을 취소합니다. 계속할까요?`
+        : `${contract.symbol} 인수기관 공급을 즉시 중단하고 계약 소유 미체결 주문을 취소합니다. 이미 사용한 제출예산은 복원하지 않습니다. 계속할까요?`,
     );
     if (!approved) {
       return;
@@ -197,7 +201,9 @@ export function AdminUnderwritingContractPanel({
       upsertUnderwritingContractQueryData(queryClient, suspended.data);
       setFeedback({
         tone: "success",
-        message: `${suspended.data.symbol} 인수기관 공급을 중단하고 인수 배정 완료 상태로 되돌렸습니다.`,
+        message: cancellingSchedule
+          ? `${suspended.data.symbol} 인수기관 공급 활성화 예약을 취소했습니다.`
+          : `${suspended.data.symbol} 인수기관 공급을 중단하고 인수 배정 완료 상태로 되돌렸습니다.`,
       });
     } finally {
       setWorkingContractId(null);
@@ -408,7 +414,7 @@ export function AdminUnderwritingContractPanel({
             </p>
           </div>
           <span className="rounded-md bg-admin-warning-surface px-2 py-1 text-[10px] font-black text-admin-warning">
-            일시정지·장전에서만 활성화
+            실행 중 예약 가능
           </span>
         </div>
         <div className="mt-3 grid gap-3 md:grid-cols-3">
@@ -470,17 +476,11 @@ export function AdminUnderwritingContractPanel({
               && activationPolicyValid
               && contract.status === "ALLOCATED"
               && contract.reconciliation.issues.length === 0
-              && Math.min(
-                Math.max(
-                  1,
-                  Math.floor(contract.account.availableSellQuantity * supplyRate),
-                ),
-                contract.account.availableSellQuantity,
-              ) > contract.supply.lifetimeSubmittedQuantity}
+              && contract.account.availableSellQuantity > 0}
             canSuspend={Boolean(accessToken)
               && !loading
               && !error
-              && contract.status === "STABILIZING"}
+              && (contract.status === "STABILIZING" || contract.scheduledSupply !== null)}
             onActivate={() => void activateSupply(contract)}
             onSuspend={() => void suspendSupply(contract)}
           />
@@ -541,7 +541,7 @@ function UnderwritingContractCard({
               disabled={!canActivate || working}
               className="min-h-9 rounded-md bg-admin-accent-surface px-3 py-1.5 text-xs font-black text-admin-accent-soft disabled:cursor-not-allowed disabled:opacity-40"
             >
-              {working ? "처리 중" : "유한 공급 활성화"}
+              {working ? "처리 중" : contract.scheduledSupply ? "공급 예약 수정" : "유한 공급 예약"}
             </button>
             <button
               type="button"
@@ -549,7 +549,9 @@ function UnderwritingContractCard({
               disabled={!canSuspend || working}
               className="min-h-9 rounded-md bg-admin-danger-surface px-3 py-1.5 text-xs font-black text-admin-danger disabled:cursor-not-allowed disabled:opacity-40"
             >
-              즉시 중단
+              {contract.status === "ALLOCATED" && contract.scheduledSupply
+                ? "공급 예약 취소"
+                : "즉시 중단"}
             </button>
           </div>
         </div>
@@ -564,6 +566,15 @@ function UnderwritingContractCard({
           계약 내부 수량, 최초 배정원장, 현재 발행수량 보존, 전용 계정 역할과 자기체결 그룹이 모두 정상입니다.
         </p>
       )}
+
+      {contract.scheduledSupply ? (
+        <p className="mt-3 rounded-md border border-admin-accent/30 bg-admin-accent-surface/20 px-3 py-2 text-xs font-bold text-admin-accent-soft">
+          {contract.scheduledSupply.effectiveBusinessDate} 장전 활성화 예약
+          {" · "}가용 재고의 {formatRate(contract.scheduledSupply.supplyRate)}
+          {" · "}{contract.scheduledSupply.durationDays}일
+          {" · "}정책 v{contract.scheduledSupply.policyVersion}
+        </p>
+      ) : null}
 
       <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
         <ContractMetric label="발행주식" value={formatCount(contract.totalIssueQuantity, "주")} />

@@ -98,7 +98,7 @@ export function AdminLiquidityProviderPanel({
       setConfirmed(false);
       setFeedback({
         tone: "success",
-        message: `${provisioned.data.symbol} 전용 LP 계정과 계약을 실운영 상태로 생성했습니다.`,
+        message: `${provisioned.data.symbol} 전용 LP 계정과 시드 자산을 준비했습니다. ${provisioned.data.scheduledPolicy?.effectiveBusinessDate ?? "다음 개장일"} 장전부터 활성화됩니다.`,
       });
       onRefresh();
     } catch (error) {
@@ -125,7 +125,7 @@ export function AdminLiquidityProviderPanel({
             LP는 발행·인수나 방향성 투자 없이 지정 종목의 제한된 양방향 호가만 담당합니다. 기준 거래량, 외부 5호가 깊이, 재고 밴드, 일일 제출·체결·손실 한도를 동시에 적용합니다.
           </p>
           <p className="mt-1 max-w-4xl text-[11px] font-bold leading-5 text-admin-quiet">
-            생성은 일시정지된 장전 상태에서만 가능합니다. 종목별 보관·인수 계정에서 선택한 시드 재고를 옮기고 전용 LP 계정과 계약을 한 트랜잭션으로 생성합니다.
+            실행 중에도 생성할 수 있습니다. 시드 재고와 현금, 전용 계정과 계약은 한 트랜잭션으로 준비하고 주문과 시장 활성화는 표시된 다음 개장일 장전에 반영합니다.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs font-black">
@@ -175,7 +175,7 @@ export function AdminLiquidityProviderPanel({
         <div className="mt-4 rounded-md border border-white/10 bg-black/20 px-4 py-5">
           <p className="text-sm font-black text-white">아직 전용 LP 계약이 없습니다.</p>
           <p className="mt-2 max-w-4xl text-xs font-bold leading-5 text-stock-subtle">
-            아래에서 종목을 하나씩 곧바로 실운영 상태로 생성할 수 있습니다. 별도의 사전 관찰 단계는 없으며 실패하면 계정·계약·시드 이전을 함께 롤백합니다.
+            아래에서 종목별 계정과 시드 자산을 준비할 수 있습니다. 생성 직후에는 활성화 대기 상태이며 실패하면 계정·계약·시드 이전을 함께 롤백합니다.
           </p>
         </div>
       ) : null}
@@ -461,7 +461,7 @@ function LiquidityProvisioningForm({
             onChange={(event) => onConfirmedChange(event.target.checked)}
             className="mt-1"
           />
-          현재 시뮬레이션이 일시정지된 장전이며, 시드 주식 이전·시드 현금 유입·전용 LP 계정과 계약 생성이 한 번에 처리되는 감사 대상 작업임을 확인했습니다.
+          시드 주식 이전·시드 현금 유입·전용 LP 계정과 계약 준비는 즉시 처리되고, 주문과 시장 활성화는 다음 안전한 개장 준비 단계에서 처리됨을 확인했습니다.
         </label>
         <button
           type="button"
@@ -469,7 +469,7 @@ function LiquidityProvisioningForm({
           disabled={!canProvision || pending}
           className="min-h-10 rounded-md bg-admin-accent px-4 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {pending ? "생성 중" : "LP 실운영 생성"}
+          {pending ? "준비 중" : "LP 생성·활성화 예약"}
         </button>
       </div>
     </div>

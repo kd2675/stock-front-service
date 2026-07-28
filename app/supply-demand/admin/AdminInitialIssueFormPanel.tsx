@@ -73,7 +73,7 @@ export function AdminInitialIssueFormPanel({
 
       <div className="flex flex-col gap-2 border-t border-white/10 pt-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-[11px] font-bold leading-5 text-admin-placeholder">
-          종목과 유통 대기·잠금 배정원장만 원자적으로 만들고 CLOSED로 대기합니다. 인수계약과 LP 준비는 일시정지 장전에서 진행합니다.
+          종목과 유통 대기·잠금 배정원장만 원자적으로 만들고 CLOSED로 대기합니다. 인수계약과 LP 준비는 실행 중에도 가능하며 예약된 개장일부터 거래합니다.
         </p>
         <button type="submit" disabled={creatingInitialIssue} className="min-h-11 shrink-0 rounded-md bg-white px-5 py-3 text-sm font-black text-admin-canvas transition hover:bg-admin-accent-label disabled:cursor-wait disabled:opacity-50">
           {creatingInitialIssue ? "준비 중" : "신규 발행 준비"}

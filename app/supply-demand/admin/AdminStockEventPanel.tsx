@@ -93,7 +93,7 @@ export function AdminStockEventPanel({
           </div>
         ) : (
           <div className="rounded-md border border-white/10 bg-black/20 px-3 py-2 text-xs font-bold text-stock-subtle">
-            {isInitialIssue ? "인수계약과 LP는 일시정지 장전에서 별도로 준비하며, 거래는 그 다음 개장부터 시작합니다." : "가격과 수량을 조정하는 이벤트는 열린 주문 정책을 먼저 검증합니다."}
+            {isInitialIssue ? "인수계약과 LP는 실행 중에도 별도로 준비하며, 거래는 예약된 개장일부터 시작합니다." : "가격과 수량을 조정하는 이벤트는 열린 주문 정책을 먼저 검증합니다."}
           </div>
         )}
       </div>

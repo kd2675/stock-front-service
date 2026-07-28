@@ -177,7 +177,9 @@ export function AdminLiquidityProviderMandateCard({
   };
 
   const suspend = async () => {
-    if (!accessToken || pending || mandate.status !== "ACTIVE") {
+    const cancellingResume = mandate.status === "SUSPENDED"
+      && mandate.scheduledPolicy?.activationAction === "RESUME";
+    if (!accessToken || pending || (mandate.status !== "ACTIVE" && !cancellingResume)) {
       return;
     }
     setFeedback(null);
@@ -190,7 +192,9 @@ export function AdminLiquidityProviderMandateCard({
       if (applyResult(
         result,
         "LP를 중단하지 못했습니다.",
-        `${mandate.symbol} LP를 중단하고 미체결 LP 주문을 취소했습니다.`,
+        cancellingResume
+          ? `${mandate.symbol} LP 재개 예약을 취소했습니다.`
+          : `${mandate.symbol} LP를 중단하고 미체결 LP 주문을 취소했습니다.`,
       )) {
         setEditing(true);
       }
@@ -213,7 +217,7 @@ export function AdminLiquidityProviderMandateCard({
       if (applyResult(
         result,
         "LP를 재개하지 못했습니다.",
-        `${mandate.symbol} LP를 실운영 상태로 재개했습니다.`,
+        `${mandate.symbol} LP 재개를 다음 개장일부터 적용하도록 예약했습니다.`,
       )) {
         setEditing(false);
       }
@@ -294,14 +298,25 @@ export function AdminLiquidityProviderMandateCard({
             </button>
           ) : null}
           {mandate.status === "SUSPENDED" ? (
-            <button
-              type="button"
-              onClick={() => void resume()}
-              disabled={!accessToken || pending || editing}
-              className="min-h-9 rounded-md bg-admin-success px-3 text-xs font-black text-white disabled:opacity-40"
-            >
-              {resumeMutation.isPending ? "재개 중" : "실운영 재개"}
-            </button>
+            mandate.scheduledPolicy?.activationAction === "RESUME" ? (
+              <button
+                type="button"
+                onClick={() => void suspend()}
+                disabled={!accessToken || pending}
+                className="min-h-9 rounded-md bg-admin-danger px-3 text-xs font-black text-white disabled:opacity-40"
+              >
+                {suspendMutation.isPending ? "취소 중" : "재개 예약 취소"}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => void resume()}
+                disabled={!accessToken || pending || editing}
+                className="min-h-9 rounded-md bg-admin-success px-3 text-xs font-black text-white disabled:opacity-40"
+              >
+                {resumeMutation.isPending ? "예약 중" : "다음 개장 재개"}
+              </button>
+            )
           ) : null}
         </div>
       </div>
@@ -415,13 +430,15 @@ function ScheduledPolicyNotice({ mandate }: { mandate: LiquidityProviderMandate 
     <section className="mt-3 rounded-md border border-admin-accent/30 bg-admin-accent-surface/20 p-3">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <h4 className="text-sm font-black text-white">다음 거래일 예약 정책</h4>
+          <h4 className="text-sm font-black text-white">
+            {formatMarketRoleCode(scheduled.activationAction)} 예약
+          </h4>
           <p className="mt-1 text-[10px] font-bold text-stock-subtle">
             {scheduled.effectiveBusinessDate} 적용 · 정책 v{scheduled.policyVersion} · 예약자 {scheduled.changedBy}
           </p>
         </div>
         <span className="rounded-md bg-admin-accent/15 px-2 py-1 text-[10px] font-black text-admin-accent-label">
-          당일 정책 유지
+          현재 장 영향 없음
         </span>
       </div>
       <p className="mt-2 text-xs font-bold text-admin-muted">{scheduled.changeReason}</p>
@@ -834,7 +851,9 @@ function mandateReviewReasons(mandate: LiquidityProviderMandate) {
   if (!mandate.transition) {
     reasons.push("종목 단위 생성·이전 감사 기록이 없습니다.");
   }
-  if (!mandate.roleEligible) {
+  const pendingActivation = mandate.status === "PENDING"
+    && mandate.transition?.stage === "PENDING_ACTIVATION";
+  if (!mandate.roleEligible && !pendingActivation) {
     reasons.push(
       `전용 계정 역할 검증 실패: ${formatMarketRoleCode(
         mandate.roleEligibilityIssue,
@@ -845,12 +864,12 @@ function mandateReviewReasons(mandate: LiquidityProviderMandate) {
   if (!mandate.policy.passiveOnly) {
     reasons.push("공격 주문 정책은 현재 LP 엔진에서 허용하지 않습니다.");
   }
-  if (mandate.status !== "ACTIVE" && mandate.status !== "SUSPENDED") {
+  if (mandate.status !== "ACTIVE" && mandate.status !== "SUSPENDED" && !pendingActivation) {
     reasons.push(`계약 상태가 ${formatMarketRoleCode(mandate.status)}입니다.`);
   }
-  if (!mandate.dailyState) {
+  if (!mandate.dailyState && !pendingActivation) {
     reasons.push("현재 거래일 LP 판단 기록이 아직 없습니다.");
-  } else {
+  } else if (mandate.dailyState) {
     if (mandate.dailyState.limitBreached) {
       reasons.push(
         `일일 위험 게이트가 중단되었습니다: ${formatMarketRoleCode(

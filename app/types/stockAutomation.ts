@@ -508,7 +508,7 @@ export type LiquidityProviderMandate = {
   mandateCode: string;
   symbol: string;
   executionMode: LiquidityProviderExecutionMode;
-  status: "ACTIVE" | "SUSPENDED" | "EXPIRED";
+  status: "PENDING" | "ACTIVE" | "SUSPENDED" | "EXPIRED";
   simulationTradeDate: string;
   contractStartDate: string;
   contractEndDate: string | null;
@@ -522,6 +522,8 @@ export type LiquidityProviderMandate = {
   scheduledPolicy: {
     policyVersion: number;
     effectiveBusinessDate: string;
+    activationAction: "POLICY_UPDATE" | "PROVISION" | "RESUME";
+    targetStatus: "ACTIVE" | "SUSPENDED";
     policy: LiquidityProviderPolicy;
     changeReason: string;
     changedBy: string;
@@ -531,7 +533,7 @@ export type LiquidityProviderMandate = {
   transition: {
     transitionId: number;
     transitionKey: string;
-    stage: "LIVE_ACTIVE" | "SUSPENDED";
+    stage: "PENDING_ACTIVATION" | "LIVE_ACTIVE" | "SUSPENDED";
     sourceAccountId: number;
     legacyAccountId: number | null;
     referenceDailyVolume: number;
@@ -693,6 +695,17 @@ export type UnderwritingContract = {
       updatedAt: string;
     } | null;
   };
+  scheduledSupply: {
+    policyVersion: number;
+    effectiveBusinessDate: string;
+    activationAction: "ACTIVATE_SUPPLY";
+    targetStatus: "STABILIZING";
+    supplyRate: number;
+    durationDays: number;
+    changeReason: string;
+    changedBy: string;
+    updatedAt: string;
+  } | null;
   reconciliation: {
     initialAllocationLedgerQuantity: number;
     initialTradableLedgerQuantity: number;
