@@ -372,6 +372,7 @@ export type InstitutionPortfolioStylePreset = {
 
 export type InstitutionPortfolioRecommendation = {
   activeSymbolCount: number;
+  policyEligibleSymbolCount: number;
   currentPortfolioCount: number;
   recommendedPortfolioCount: number;
   recommendedRemainingCount: number;
@@ -391,6 +392,7 @@ export type InstitutionPortfolioRecommendation = {
     recommendedReferenceDailyVolumeRate: number;
     referenceVolumeHistoryDays: number;
     referenceVolumeSource: "COMPLETED_20_DAY_ADV" | "FLOAT_FALLBACK";
+    marketActivationStatus: "ACTIVE" | "PENDING_MARKET_ACTIVATION";
   }[];
 };
 

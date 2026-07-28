@@ -355,7 +355,7 @@ function InstitutionPortfolioProvisioning({
         <div>
           <h3 className="text-sm font-black text-white">기관 투자자 개별 생성</h3>
           <p className="mt-1 max-w-3xl text-xs font-bold leading-5 text-stock-subtle">
-            한 번에 한 기관만 생성합니다. 운용 유형에 따라 권장 AUM과 회전·참여 한도가 달라지며, 초기 AUM은 선택한 종목의 합산 시가총액을 기준으로 계산합니다.
+            한 번에 한 기관만 생성합니다. 운용 유형에 따라 권장 AUM과 회전·참여 한도가 달라지며, 초기 AUM은 선택한 종목의 합산 유통 시가총액을 기준으로 계산합니다. 개장 대기 종목은 시장 활성화 후 주문 대상이 됩니다.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -526,6 +526,9 @@ function InstitutionPortfolioProvisioning({
                   </span>
                   <span className="mt-1 block text-[10px] font-bold text-admin-quiet">
                     {symbol.symbol} · 비중 {formatRate(symbol.marketWeight)} · {formatNumber(symbol.currentPrice)}원
+                    {symbol.marketActivationStatus === "PENDING_MARKET_ACTIVATION"
+                      ? " · 개장 대기"
+                      : ""}
                   </span>
                 </span>
               </label>
@@ -534,7 +537,7 @@ function InstitutionPortfolioProvisioning({
         </div>
         {!recommendation?.symbols.length ? (
           <p className="mt-3 text-xs font-bold text-admin-danger">
-            선택할 수 있는 활성 주문장 종목이 없습니다.
+            선택할 수 있는 활성 또는 개장 대기 주문장 종목이 없습니다.
           </p>
         ) : null}
       </div>
@@ -542,10 +545,11 @@ function InstitutionPortfolioProvisioning({
         <div className="mt-3">
           <p className="mb-1 text-[10px] font-black text-admin-quiet">종목별 권장 기준량</p>
           <DataTableViewport label="종목별 권장 기준량" tone="dark">
-            <table className="min-w-[680px] w-full text-left text-xs">
+            <table className="min-w-[760px] w-full text-left text-xs">
               <thead className="bg-white/[0.045] text-[10px] font-black text-admin-quiet">
                 <tr>
                   <th className="px-3 py-2">종목</th>
+                  <th className="px-3 py-2">상태</th>
                   <th className="px-3 py-2 text-right">유통주식</th>
                   <th className="px-3 py-2 text-right">현재가</th>
                   <th className="px-3 py-2 text-right">시장 비중</th>
@@ -556,6 +560,13 @@ function InstitutionPortfolioProvisioning({
                 {recommendation.symbols.map((symbol) => (
                   <tr key={symbol.symbol}>
                     <td className="px-3 py-2 font-black text-white">{symbol.symbol}</td>
+                    <td className="px-3 py-2 font-bold">
+                      {symbol.marketActivationStatus === "ACTIVE" ? (
+                        <span className="text-admin-success">활성</span>
+                      ) : (
+                        <span className="text-admin-warning">개장 대기</span>
+                      )}
+                    </td>
                     <td className="px-3 py-2 text-right">{formatNumber(symbol.tradableShares)}주</td>
                     <td className="px-3 py-2 text-right">{formatNumber(symbol.currentPrice)}원</td>
                     <td className="px-3 py-2 text-right">{formatRate(symbol.marketWeight)}</td>

@@ -5,6 +5,10 @@ import type {
   CreateInstrumentPayload,
 } from "@/app/lib/validation/adminSchemas";
 import { DarkFormInput } from "@/app/supply-demand/admin/AdminFormControls";
+import {
+  formatCount,
+  formatWon,
+} from "@/app/supply-demand/admin/AdminFormatters";
 
 type AdminInitialIssueFormPanelProps = {
   createInstrumentForm: UseFormReturn<CreateInstrumentFormValues, unknown, CreateInstrumentPayload>;
@@ -17,6 +21,7 @@ export function AdminInitialIssueFormPanel({
   creatingInitialIssue,
   onSubmit,
 }: AdminInitialIssueFormPanelProps) {
+  const initialPrice = Number(createInstrumentForm.watch("initialPrice"));
   const issuedShares = Number(createInstrumentForm.watch("issuedShares"));
   const tradableShareRatePercent = Number(createInstrumentForm.watch("tradableShareRatePercent"));
   const validIssuedShares = Number.isSafeInteger(issuedShares) && issuedShares > 0 ? issuedShares : 0;
@@ -27,6 +32,10 @@ export function AdminInitialIssueFormPanel({
     ? Math.floor(validIssuedShares * tradableShareRatePercent / 100)
     : 0;
   const lockedShares = hasValidTradableRate ? Math.max(0, validIssuedShares - tradableShares) : 0;
+  const recommendedMaxOrderQuantity = recommendedAutoMarketMaxOrderQuantity(
+    initialPrice,
+    tradableShares,
+  );
 
   return (
     <form
@@ -68,6 +77,17 @@ export function AdminInitialIssueFormPanel({
             </p>
             <p className="mt-1">실행 중에도 생성할 수 있습니다. 거래는 인수와 LP 준비가 끝난 다음 개장부터 시작합니다.</p>
           </div>
+          <div className="rounded-md border border-admin-warning/25 bg-admin-warning-surface/35 px-3 py-2.5 text-[11px] font-bold leading-5 text-stock-subtle sm:col-span-2 lg:col-span-4">
+            <p className="text-admin-warning">
+              자동시장 1회 주문상한{" "}
+              {recommendedMaxOrderQuantity === null
+                ? "계산 대기"
+                : `${formatCount(recommendedMaxOrderQuantity, "주")} · ${formatWon(initialPrice * recommendedMaxOrderQuantity)}`}
+            </p>
+            <p className="mt-1">
+              발행가 기준 500만원과 유통주식의 0.02% 중 더 작은 수량을 안전상한으로 적용합니다. 이는 거래 목표가 아니며, 실제 V3 주문량은 이 범위 안에서 소액 편향 확률분포로 결정됩니다.
+            </p>
+          </div>
         </div>
       </InitialIssueSection>
 
@@ -81,6 +101,21 @@ export function AdminInitialIssueFormPanel({
       </div>
     </form>
   );
+}
+
+function recommendedAutoMarketMaxOrderQuantity(
+  initialPrice: number,
+  tradableShares: number,
+) {
+  if (!Number.isFinite(initialPrice)
+    || initialPrice <= 0
+    || !Number.isSafeInteger(tradableShares)
+    || tradableShares <= 0) {
+    return null;
+  }
+  const notionalQuantity = Math.floor(5_000_000 / initialPrice);
+  const floatQuantity = Math.floor(tradableShares * 0.0002);
+  return Math.max(1, Math.min(notionalQuantity, floatQuantity));
 }
 
 function InitialIssueSection({

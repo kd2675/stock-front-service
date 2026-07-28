@@ -98,6 +98,7 @@ export async function invalidateAdminInitialIssueQueries(
     stockKeys.orderBook(symbol),
     stockKeys.autoMarketStatus(),
     stockKeys.orderBookMarketStatusRoot(),
+    stockKeys.institutionPortfolioRecommendation(),
   ]);
 }
 
@@ -212,6 +213,7 @@ export async function invalidateOrderBookMarketAdminQueries(queryClient: QueryCl
   await invalidateAdminFlowImpactedQueries(queryClient, [
     stockKeys.orderBookMarketStatusRoot(),
     stockKeys.orderBookInstruments(),
+    stockKeys.institutionPortfolioRecommendation(),
   ]);
 }
 

@@ -71,6 +71,10 @@ export function AdminInstitutionPolicyEditor({
   const removedSymbols = currentActiveSymbols.filter(
     (symbol) => !selectedSymbolSet.has(symbol),
   );
+  const pendingActivationSymbols = (recommendation?.symbols ?? [])
+    .filter((symbol) => selectedSymbolSet.has(symbol.symbol)
+      && symbol.marketActivationStatus === "PENDING_MARKET_ACTIVATION")
+    .map((symbol) => symbol.symbol);
   const baseWeightSum = draft.mandates.reduce(
     (sum, mandate) => sum + mandate.baseSymbolWeight,
     0,
@@ -106,6 +110,7 @@ export function AdminInstitutionPolicyEditor({
           recommendation,
           style,
           styled.mandates,
+          true,
         ),
       };
     });
@@ -129,6 +134,43 @@ export function AdminInstitutionPolicyEditor({
           recommendation,
           style,
           current.mandates,
+          false,
+        ),
+      };
+    });
+  };
+
+  const recalculateSelectedSymbols = () => {
+    setDraft((current) => {
+      const style = recommendation?.styles.find(
+        (item) => item.investmentStyle === current.investmentStyle,
+      ) ?? null;
+      return {
+        ...current,
+        mandates: recommendedMandates(
+          current.mandates.map((mandate) => mandate.symbol),
+          recommendation,
+          style,
+          current.mandates,
+          false,
+        ),
+      };
+    });
+  };
+
+  const selectAllSymbolsAndRecalculate = () => {
+    setDraft((current) => {
+      const style = recommendation?.styles.find(
+        (item) => item.investmentStyle === current.investmentStyle,
+      ) ?? null;
+      return {
+        ...current,
+        mandates: recommendedMandates(
+          (recommendation?.symbols ?? []).map((symbol) => symbol.symbol),
+          recommendation,
+          style,
+          current.mandates,
+          false,
         ),
       };
     });
@@ -144,6 +186,9 @@ export function AdminInstitutionPolicyEditor({
         removedSymbols.length > 0
           ? `제외 종목 ${removedSymbols.join(", ")}은 보유 수량이 있으면 목표 0% 청산 전용으로 전환됩니다.`
           : "현재 운용 종목을 유지합니다.",
+        pendingActivationSymbols.length > 0
+          ? `개장 대기 종목 ${pendingActivationSymbols.join(", ")}은 시장 활성화가 완료돼야 정책에 실제 반영됩니다. 미활성 상태면 배치가 적용을 거부하고 예약 정책을 유지합니다.`
+          : "선택 종목은 모두 현재 시장 활성 상태입니다.",
         "당일 주문·예산과 섞이지 않도록 개장 시점에 미체결 주문과 당일 사용 여부를 다시 검증합니다.",
       ].join("\n\n"),
     );
@@ -356,8 +401,29 @@ export function AdminInstitutionPolicyEditor({
           <fieldset className="mt-3 rounded-md border border-white/10 p-3">
             <legend className="px-1 text-[11px] font-black text-white">거래 가능 종목</legend>
             <p className="text-[10px] font-bold leading-5 text-stock-subtle">
-              신규 상장 종목을 선택하면 이 기관도 다음 개장부터 거래합니다. 체크 해제 종목은 보유분이 있으면 청산 전용, 잔고가 없으면 비활성으로 전환됩니다.
+              신규 상장·개장 대기 종목을 선택하면 이 기관도 시장 활성화 후 거래합니다. 체크 해제 종목은 보유분이 있으면 청산 전용, 잔고가 없으면 비활성으로 전환됩니다.
             </p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={selectAllSymbolsAndRecalculate}
+                disabled={!recommendation?.symbols.length}
+                className="min-h-8 rounded-md bg-admin-accent px-3 text-[10px] font-black text-admin-canvas disabled:opacity-45"
+              >
+                전체 {recommendation?.policyEligibleSymbolCount ?? 0}종목 선택·시총비중 재계산
+              </button>
+              <button
+                type="button"
+                onClick={recalculateSelectedSymbols}
+                disabled={draft.mandates.length === 0}
+                className="min-h-8 rounded-md bg-white/10 px-3 text-[10px] font-black text-white disabled:opacity-45"
+              >
+                현재 선택 종목 비중 재계산
+              </button>
+              <span className="text-[10px] font-bold text-admin-quiet">
+                기존 민감도·참여율·상하한은 유지하고 기준 비중만 유통 시가총액으로 다시 합계 100%를 맞춥니다.
+              </span>
+            </div>
             <div className="mt-2 flex flex-wrap gap-2">
               {(recommendation?.symbols ?? []).map((symbol) => (
                 <label
@@ -376,6 +442,11 @@ export function AdminInstitutionPolicyEditor({
                     className="size-4 accent-[var(--admin-accent)]"
                   />
                   {symbol.symbol} · {symbol.name}
+                  {symbol.marketActivationStatus === "PENDING_MARKET_ACTIVATION" ? (
+                    <span className="rounded bg-admin-warning-surface px-1.5 py-0.5 text-[9px] text-admin-warning">
+                      개장 대기
+                    </span>
+                  ) : null}
                 </label>
               ))}
             </div>
@@ -396,7 +467,7 @@ export function AdminInstitutionPolicyEditor({
                       <p className="text-xs font-black text-white">{mandate.symbol}</p>
                       <p className="mt-1 text-[10px] font-bold text-admin-quiet">
                         {market
-                          ? `${market.name} · 시가총액 ${formatCompactWon(market.currentPrice * market.tradableShares)} · 권장 기준 거래량 ${formatInteger(market.recommendedReferenceDailyVolume)}주`
+                          ? `${market.name} · 유통 시가총액 ${formatCompactWon(market.currentPrice * market.tradableShares)} · 시장비중 ${formatRate(market.marketWeight)} · 권장 기준 거래량 ${formatInteger(market.recommendedReferenceDailyVolume)}주${market.marketActivationStatus === "PENDING_MARKET_ACTIVATION" ? " · 개장 대기" : ""}`
                           : "현재 추천 시장 목록에서 찾을 수 없는 종목"}
                       </p>
                     </div>
@@ -623,6 +694,7 @@ function recommendedMandates(
   recommendation: InstitutionPortfolioRecommendation | null,
   style: InstitutionPortfolioStylePreset | null,
   current: InstitutionSymbolPolicy[],
+  applyStyleToExisting: boolean,
 ) {
   if (symbols.length === 0) {
     return [];
@@ -639,7 +711,7 @@ function recommendedMandates(
     (sum, value) => sum + value,
     0,
   );
-  const maximumAllocation = symbols.length === 1
+  const diversificationMaximum = symbols.length === 1
     ? style?.maxStockAllocationRate ?? 1
     : symbols.length <= 3
       ? 0.5
@@ -656,29 +728,53 @@ function recommendedMandates(
           : 1 / symbols.length,
       );
     assignedWeight += baseSymbolWeight;
+    const preserveExisting = existing && !applyStyleToExisting;
+    const recommendedMaximumAllocation = roundRate(Math.min(
+      1,
+      Math.max(
+        diversificationMaximum,
+        baseSymbolWeight * (style?.maxStockAllocationRate ?? 1),
+      ),
+    ));
     return {
       symbol,
       baseSymbolWeight,
-      minPortfolioAllocationRate: 0,
-      maxPortfolioAllocationRate: maximumAllocation,
-      pricePressureSensitivity: style?.pricePressureSensitivity
-        ?? existing?.pricePressureSensitivity
-        ?? 0,
-      momentumSensitivity: style?.momentumSensitivity
-        ?? existing?.momentumSensitivity
-        ?? 0,
-      valueSensitivity: style?.valueSensitivity
-        ?? existing?.valueSensitivity
-        ?? 0,
-      reportSensitivity: style?.reportSensitivity
-        ?? existing?.reportSensitivity
-        ?? 0,
-      referenceDailyVolume: market?.recommendedReferenceDailyVolume
-        ?? existing?.referenceDailyVolume
-        ?? 1,
-      dailyParticipationRate: style?.dailyParticipationRate
-        ?? existing?.dailyParticipationRate
-        ?? 0.01,
+      minPortfolioAllocationRate: preserveExisting
+        ? existing.minPortfolioAllocationRate
+        : 0,
+      maxPortfolioAllocationRate: preserveExisting
+        ? existing.maxPortfolioAllocationRate
+        : recommendedMaximumAllocation,
+      pricePressureSensitivity: preserveExisting
+        ? existing.pricePressureSensitivity
+        : style?.pricePressureSensitivity
+          ?? existing?.pricePressureSensitivity
+          ?? 0,
+      momentumSensitivity: preserveExisting
+        ? existing.momentumSensitivity
+        : style?.momentumSensitivity
+          ?? existing?.momentumSensitivity
+          ?? 0,
+      valueSensitivity: preserveExisting
+        ? existing.valueSensitivity
+        : style?.valueSensitivity
+          ?? existing?.valueSensitivity
+          ?? 0,
+      reportSensitivity: preserveExisting
+        ? existing.reportSensitivity
+        : style?.reportSensitivity
+          ?? existing?.reportSensitivity
+          ?? 0,
+      referenceDailyVolume: preserveExisting
+        ? existing.referenceDailyVolume
+        : market?.recommendedReferenceDailyVolume
+          ?? existing?.referenceDailyVolume
+          ?? 1,
+      dailyParticipationRate: preserveExisting
+        ? existing.dailyParticipationRate
+        : style?.dailyParticipationRate
+          ?? existing?.dailyParticipationRate
+          ?? 0.01,
     };
   });
 }
