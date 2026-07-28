@@ -7,6 +7,10 @@ import { formatAutoParticipantProfile } from "@/app/lib/autoParticipantProfiles"
 import { AutoParticipantOverviewDetail } from "@/app/supply-demand/admin/AdminAutoParticipantOverviewDetail";
 import { AdminDormantWithdrawalAudit } from "@/app/supply-demand/admin/AdminDormantWithdrawalAudit";
 import {
+  AdminEntitySelector,
+  type AdminEntitySelectorItem,
+} from "@/app/supply-demand/admin/AdminEntitySelector";
+import {
   formatCount,
   formatDateTime,
   formatInteger,
@@ -61,6 +65,7 @@ export function AdminDormantAssetsPanel({
   const [searchTerm, setSearchTerm] = useState("");
   const [assetFilter, setAssetFilter] = useState<DormantAssetFilter>("ALL");
   const [page, setPage] = useState(0);
+  const [selectedParticipantKey, setSelectedParticipantKey] = useState("");
   const rows = useMemo(
     () => buildDormantParticipantRows(participants, overviews, symbolConfigs, withdrawalAudits),
     [overviews, participants, symbolConfigs, withdrawalAudits],
@@ -76,6 +81,22 @@ export function AdminDormantAssetsPanel({
   const boundedPage = Math.min(page, Math.max(totalPages - 1, 0));
   const pageStart = boundedPage * DORMANT_PAGE_SIZE;
   const visibleRows = filteredRows.slice(pageStart, pageStart + DORMANT_PAGE_SIZE);
+  const selectedRow = visibleRows.find(
+    (row) => row.participant.userKey === selectedParticipantKey,
+  ) ?? visibleRows[0] ?? null;
+  const selectorItems: AdminEntitySelectorItem[] = visibleRows.map((row) => ({
+    key: row.participant.userKey,
+    title: row.participant.displayName,
+    subtitle: row.participant.userKey,
+    statusLabel: row.reviewReasons.length > 0
+      ? `점검 ${formatInteger(row.reviewReasons.length)}건`
+      : "정산 완료",
+    statusTone: row.reviewReasons.length > 0 ? "danger" : "success",
+    metricLabel: formatAutoParticipantProfile(row.participant.profileType),
+    metricValue: row.overview
+      ? formatWon(row.overview.estimatedTotalAsset)
+      : formatWon(row.participant.cashBalance ?? 0),
+  }));
 
   const updateSearchTerm = (value: string) => {
     setSearchTerm(value);
@@ -167,11 +188,25 @@ export function AdminDormantAssetsPanel({
         </div>
       ) : null}
 
-      <div className="mt-4 grid gap-3">
-        {visibleRows.map((row) => (
-          <DormantParticipantCard key={row.participant.userKey} row={row} />
-        ))}
-      </div>
+      {selectedRow ? (
+        <div className="mt-4 grid min-w-0 gap-5 xl:grid-cols-[280px_minmax(0,1fr)]">
+          <AdminEntitySelector
+            ariaLabel="휴면 참여자 선택"
+            heading="휴면 참여자 선택"
+            hint={`${formatCount(visibleRows.length, "명")} 표시`}
+            mobileLabel="감사할 휴면 참여자"
+            items={selectorItems}
+            selectedKey={selectedRow.participant.userKey}
+            onSelect={setSelectedParticipantKey}
+          />
+          <div className="min-w-0">
+            <DormantParticipantCard
+              key={selectedRow.participant.userKey}
+              row={selectedRow}
+            />
+          </div>
+        </div>
+      ) : null}
 
       {!loading && !error && filteredRows.length === 0 ? (
         <div className="mt-4 rounded-md border border-dashed border-white/15 bg-black/15 px-4 py-8 text-center">

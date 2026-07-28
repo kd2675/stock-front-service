@@ -18,6 +18,10 @@ import {
   formatNumber,
   formatWon,
 } from "@/app/supply-demand/admin/AdminFormatters";
+import {
+  AdminEntitySelector,
+  type AdminEntitySelectorTone,
+} from "@/app/supply-demand/admin/AdminEntitySelector";
 import { ProfileMiniMetric } from "@/app/supply-demand/admin/AdminMetricCards";
 import { formatMarketRoleCode } from "@/app/supply-demand/admin/adminMarketRoleFormatters";
 import type {
@@ -64,7 +68,23 @@ export function AdminUnderwritingContractPanel({
   const [confirmed, setConfirmed] = useState(false);
   const [workingContractId, setWorkingContractId] = useState<number | null>(null);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const [selectedContractKey, setSelectedContractKey] = useState("");
   const summary = useMemo(() => summarizeContracts(contracts), [contracts]);
+  const selectedContract = contracts.find(
+    (contract) => String(contract.contractId) === selectedContractKey,
+  ) ?? contracts[0] ?? null;
+  const selectorItems = useMemo(
+    () => contracts.map((contract) => ({
+      key: String(contract.contractId),
+      title: `${contract.symbol} · ${contract.instrumentName}`,
+      subtitle: contract.contractCode,
+      statusLabel: formatMarketRoleCode(contract.status),
+      statusTone: underwritingStatusTone(contract.status),
+      metricLabel: "현재 재고 · 대사",
+      metricValue: `${formatCount(contract.account.holdingQuantity, "주")} · ${formatCount(contract.reconciliation.issues.length, "건")}`,
+    })),
+    [contracts],
+  );
   const supplyRate = Number(supplyPercent) / 100;
   const normalizedDurationDays = Number(durationDays);
   const activationPolicyValid = Number.isFinite(supplyRate)
@@ -106,6 +126,7 @@ export function AdminUnderwritingContractPanel({
       return;
     }
     upsertUnderwritingContractQueryData(queryClient, created.data);
+    setSelectedContractKey(String(created.data.contractId));
     setContractConfirmed(false);
     setFeedback({
       tone: "success",
@@ -399,93 +420,111 @@ export function AdminUnderwritingContractPanel({
         </div>
       ) : null}
 
-      <div className="mt-4 rounded-md border border-white/10 bg-black/20 p-3">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p className="text-sm font-black text-white">축소 시장용 초기 공급 정책</p>
-            <p className="mt-1 max-w-4xl text-[11px] font-bold leading-5 text-stock-subtle">
-              전체 인수재고를 시장에 내놓지 않습니다. 계약 총 제출량, 거래일별 제출량, 일일 주문 횟수, 주문 1건, 외부 매수 5호가 깊이 중 가장 작은 한도만 매도하며 취소된 주문도 예산과 주문 횟수를 소비합니다.
-            </p>
-            <p className="mt-1 max-w-4xl text-[10px] font-bold leading-5 text-admin-quiet">
-              역할 분리형 신규 종목은 먼저 전용 LP를 실운영으로 전환해 주문장 시장을 활성화하고, 종목 자동시장·기준 거래량 위험 설정이 켜져 있어야 합니다.
-            </p>
-            <p className="mt-1 max-w-4xl text-[10px] font-bold leading-5 text-admin-warning">
-              공급 기간이나 총 상한이 끝난 뒤 남은 인수재고는 자동 분산되지 않습니다. 현재 초기 참여자 배정·락업 해제 처리 흐름이 없으므로 신규 종목의 실제 활동 유통량을 별도로 검토한 뒤 공급률을 확정하세요.
-            </p>
-          </div>
-          <span className="rounded-md bg-admin-warning-surface px-2 py-1 text-[10px] font-black text-admin-warning">
-            실행 중 예약 가능
-          </span>
-        </div>
-        <div className="mt-3 grid gap-3 md:grid-cols-3">
-          <label className="text-xs font-black text-stock-subtle">
-            총 공급 상한 · 현재 가용재고 대비 %
-            <input
-              value={supplyPercent}
-              onChange={(event) => setSupplyPercent(event.target.value)}
-              inputMode="decimal"
-              className="mt-1 min-h-10 w-full rounded-md border border-white/10 bg-black/25 px-3 text-sm font-black text-white"
-            />
-            <span className="mt-1 block text-[10px] text-admin-quiet">1~25% · 기본 10%</span>
-          </label>
-          <label className="text-xs font-black text-stock-subtle">
-            공급 기간 · 시뮬레이션 일
-            <input
-              value={durationDays}
-              onChange={(event) => setDurationDays(event.target.value)}
-              inputMode="numeric"
-              className="mt-1 min-h-10 w-full rounded-md border border-white/10 bg-black/25 px-3 text-sm font-black text-white"
-            />
-            <span className="mt-1 block text-[10px] text-admin-quiet">1~60일 · 기본 20일</span>
-          </label>
-          <label className="text-xs font-black text-stock-subtle">
-            변경 사유
-            <input
-              value={supplyChangeReason}
-              onChange={(event) => setSupplyChangeReason(event.target.value)}
-              className="mt-1 min-h-10 w-full rounded-md border border-white/10 bg-black/25 px-3 text-sm font-black text-white"
-            />
-          </label>
-        </div>
-        <label className="mt-3 flex items-start gap-2 text-xs font-bold leading-5 text-stock-subtle">
-          <input
-            type="checkbox"
-            checked={confirmed}
-            onChange={(event) => setConfirmed(event.target.checked)}
-            className="mt-1"
+      {selectedContract ? (
+        <div className="mt-5 grid min-w-0 gap-5 border-t border-white/10 pt-5 xl:grid-cols-[280px_minmax(0,1fr)]">
+          <AdminEntitySelector
+            ariaLabel="상장 인수계약 선택"
+            heading="인수계약 선택"
+            hint={`${formatCount(contracts.length, "개")} 계약`}
+            mobileLabel="관리할 인수계약"
+            items={selectorItems}
+            selectedKey={String(selectedContract.contractId)}
+            onSelect={(key) => {
+              setSelectedContractKey(key);
+              setConfirmed(false);
+            }}
           />
-          매수·가격추격·영구 재보충이 없고, 취소해도 제출예산이 복원되지 않는 유한 공급임을 확인했습니다.
-        </label>
-        {!activationPolicyValid ? (
-          <p className="mt-2 text-xs font-bold text-admin-danger">
-            공급률은 1~25%, 기간은 1~60의 정수로 입력하세요.
-          </p>
-        ) : null}
-      </div>
 
-      <div className="mt-4 grid gap-3">
-        {contracts.map((contract) => (
-          <UnderwritingContractCard
-            key={contract.contractId}
-            contract={contract}
-            working={workingContractId === contract.contractId}
-            canActivate={Boolean(accessToken)
-              && !loading
-              && !error
-              && confirmed
-              && activationPolicyValid
-              && contract.status === "ALLOCATED"
-              && contract.reconciliation.issues.length === 0
-              && contract.account.availableSellQuantity > 0}
-            canSuspend={Boolean(accessToken)
-              && !loading
-              && !error
-              && (contract.status === "STABILIZING" || contract.scheduledSupply !== null)}
-            onActivate={() => void activateSupply(contract)}
-            onSuspend={() => void suspendSupply(contract)}
-          />
-        ))}
-      </div>
+          <div className="min-w-0">
+            <div className="rounded-md border border-white/10 bg-black/20 p-3">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-black text-white">{selectedContract.symbol} 초기 공급 정책</p>
+                  <p className="mt-1 max-w-4xl text-[11px] font-bold leading-5 text-stock-subtle">
+                    전체 인수재고를 시장에 내놓지 않습니다. 계약 총 제출량, 거래일별 제출량, 일일 주문 횟수, 주문 1건, 외부 매수 5호가 깊이 중 가장 작은 한도만 매도하며 취소된 주문도 예산과 주문 횟수를 소비합니다.
+                  </p>
+                  <p className="mt-1 max-w-4xl text-[10px] font-bold leading-5 text-admin-quiet">
+                    역할 분리형 신규 종목은 먼저 전용 LP를 실운영으로 전환해 주문장 시장을 활성화하고, 종목 자동시장·기준 거래량 위험 설정이 켜져 있어야 합니다.
+                  </p>
+                  <p className="mt-1 max-w-4xl text-[10px] font-bold leading-5 text-admin-warning">
+                    공급 기간이나 총 상한이 끝난 뒤 남은 인수재고는 자동 분산되지 않습니다. 현재 초기 참여자 배정·락업 해제 처리 흐름이 없으므로 신규 종목의 실제 활동 유통량을 별도로 검토한 뒤 공급률을 확정하세요.
+                  </p>
+                </div>
+                <span className="rounded-md bg-admin-warning-surface px-2 py-1 text-[10px] font-black text-admin-warning">
+                  실행 중 예약 가능
+                </span>
+              </div>
+              <div className="mt-3 grid gap-3 md:grid-cols-3">
+                <label className="text-xs font-black text-stock-subtle">
+                  총 공급 상한 · 현재 가용재고 대비 %
+                  <input
+                    value={supplyPercent}
+                    onChange={(event) => setSupplyPercent(event.target.value)}
+                    inputMode="decimal"
+                    className="mt-1 min-h-10 w-full rounded-md border border-white/10 bg-black/25 px-3 text-sm font-black text-white"
+                  />
+                  <span className="mt-1 block text-[10px] text-admin-quiet">1~25% · 기본 10%</span>
+                </label>
+                <label className="text-xs font-black text-stock-subtle">
+                  공급 기간 · 시뮬레이션 일
+                  <input
+                    value={durationDays}
+                    onChange={(event) => setDurationDays(event.target.value)}
+                    inputMode="numeric"
+                    className="mt-1 min-h-10 w-full rounded-md border border-white/10 bg-black/25 px-3 text-sm font-black text-white"
+                  />
+                  <span className="mt-1 block text-[10px] text-admin-quiet">1~60일 · 기본 20일</span>
+                </label>
+                <label className="text-xs font-black text-stock-subtle">
+                  변경 사유
+                  <input
+                    value={supplyChangeReason}
+                    onChange={(event) => setSupplyChangeReason(event.target.value)}
+                    className="mt-1 min-h-10 w-full rounded-md border border-white/10 bg-black/25 px-3 text-sm font-black text-white"
+                  />
+                </label>
+              </div>
+              <label className="mt-3 flex items-start gap-2 text-xs font-bold leading-5 text-stock-subtle">
+                <input
+                  type="checkbox"
+                  checked={confirmed}
+                  onChange={(event) => setConfirmed(event.target.checked)}
+                  className="mt-1"
+                />
+                선택한 {selectedContract.symbol} 계약에 매수·가격추격·영구 재보충이 없고, 취소해도 제출예산이 복원되지 않는 유한 공급임을 확인했습니다.
+              </label>
+              {!activationPolicyValid ? (
+                <p className="mt-2 text-xs font-bold text-admin-danger">
+                  공급률은 1~25%, 기간은 1~60의 정수로 입력하세요.
+                </p>
+              ) : null}
+            </div>
+
+            <div className="mt-4">
+              <UnderwritingContractCard
+                key={selectedContract.contractId}
+                contract={selectedContract}
+                working={workingContractId === selectedContract.contractId}
+                canActivate={Boolean(accessToken)
+                  && !loading
+                  && !error
+                  && confirmed
+                  && activationPolicyValid
+                  && selectedContract.status === "ALLOCATED"
+                  && selectedContract.reconciliation.issues.length === 0
+                  && selectedContract.account.availableSellQuantity > 0}
+                canSuspend={Boolean(accessToken)
+                  && !loading
+                  && !error
+                  && (selectedContract.status === "STABILIZING"
+                    || selectedContract.scheduledSupply !== null)}
+                onActivate={() => void activateSupply(selectedContract)}
+                onSuspend={() => void suspendSupply(selectedContract)}
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -784,6 +823,21 @@ function statusClassName(status: UnderwritingContract["status"]) {
         ? "bg-white/10 text-stock-subtle"
         : "bg-admin-accent-surface text-admin-accent-soft";
   return `rounded-md px-2 py-1 text-[10px] font-black ${tone}`;
+}
+
+function underwritingStatusTone(
+  status: UnderwritingContract["status"],
+): AdminEntitySelectorTone {
+  if (status === "STABILIZING") {
+    return "warning";
+  }
+  if (status === "ALLOCATED") {
+    return "accent";
+  }
+  if (status === "CANCELLED") {
+    return "danger";
+  }
+  return "muted";
 }
 
 function formatRate(value: number) {

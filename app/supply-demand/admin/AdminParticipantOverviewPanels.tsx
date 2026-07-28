@@ -1,6 +1,10 @@
 import { memo, useMemo, useState } from "react";
 
 import useModalDialog from "@/app/hooks/useModalDialog";
+import {
+  AdminEntitySelector,
+  type AdminEntitySelectorItem,
+} from "@/app/supply-demand/admin/AdminEntitySelector";
 import { formatCount, formatDateTime, formatInteger, formatNumber, formatSignedPercent, formatWon } from "@/app/supply-demand/admin/AdminFormatters";
 import { ProfileMiniMetric, ProfileOverviewInfoItem } from "@/app/supply-demand/admin/AdminMetricCards";
 import type { ParticipantProfileOverviewSummary } from "@/app/supply-demand/admin/AdminParticipantPolicyHelpers";
@@ -38,7 +42,17 @@ export function ParticipantProfileOverviewPanel({
     : livePerformanceSummary;
   const performance = performanceSummary?.total ?? null;
   const [showAllModal, setShowAllModal] = useState(false);
+  const [selectedProfileType, setSelectedProfileType] = useState("");
+  const [selectedAllProfileType, setSelectedAllProfileType] = useState("");
   const allHistoryDialogRef = useModalDialog<HTMLDivElement>(showAllModal, () => setShowAllModal(false));
+  const selectedSummary = summaries.find((summary) => summary.profileType === selectedProfileType)
+    ?? summaries[0]
+    ?? null;
+  const selectedAllSummary = allSummaries.find((summary) => summary.profileType === selectedAllProfileType)
+    ?? allSummaries[0]
+    ?? null;
+  const summarySelectorItems = useMemo(() => buildProfileSelectorItems(summaries), [summaries]);
+  const allSummarySelectorItems = useMemo(() => buildProfileSelectorItems(allSummaries), [allSummaries]);
 
   const openAllModal = () => {
     setShowAllModal(true);
@@ -153,11 +167,22 @@ export function ParticipantProfileOverviewPanel({
         </p>
       </div>
 
-      <div className="mt-4 grid min-w-0 gap-3">
-        {summaries.map((summary) => (
-          <ParticipantProfileOverviewCard key={summary.profileType} summary={summary} />
-        ))}
-      </div>
+      {selectedSummary ? (
+        <div className="mt-4 grid min-w-0 gap-5 xl:grid-cols-[280px_minmax(0,1fr)]">
+          <AdminEntitySelector
+            ariaLabel="자동 참여자 프로필 선택"
+            heading="프로필 선택"
+            hint={`${formatCount(summaries.length, "개")} 프로필`}
+            mobileLabel="확인할 자동 참여자 프로필"
+            items={summarySelectorItems}
+            selectedKey={selectedSummary.profileType}
+            onSelect={setSelectedProfileType}
+          />
+          <div className="min-w-0">
+            <ParticipantProfileOverviewCard summary={selectedSummary} />
+          </div>
+        </div>
+      ) : null}
       {showAllModal ? (
         <div className="modal-scroll fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 px-4 py-8">
           <div ref={allHistoryDialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="participant-history-title" className="w-full max-w-6xl rounded-lg border border-white/10 bg-admin-modal p-4 shadow-[var(--shadow-dialog)] outline-none">
@@ -196,16 +221,26 @@ export function ParticipantProfileOverviewPanel({
               <ProfileMiniMetric label="합산 손익" value={performance ? formatWon(performance.totalProfit) : "—"} tone={profitTone(performance?.totalProfit)} />
               <ProfileMiniMetric label="합산 순입금 대비 수익률" value={formatOptionalPercent(performance?.aggregateReturnRate)} tone={profitTone(performance?.aggregateReturnRate)} />
             </div>
-            <div className="mt-4 grid min-w-0 gap-3">
-              {allSummaries.map((summary) => (
-                <ParticipantProfileOverviewCard key={summary.profileType} summary={summary} />
-              ))}
-              {allSummaries.length === 0 && !loadingAll ? (
-                <div className="rounded-md border border-white/10 bg-black/20 px-3 py-4 text-sm font-bold text-stock-subtle">
-                  전체 이력 조회 결과가 없습니다.
+            {selectedAllSummary ? (
+              <div className="mt-4 grid min-w-0 gap-5 xl:grid-cols-[280px_minmax(0,1fr)]">
+                <AdminEntitySelector
+                  ariaLabel="전체 이력 자동 참여자 프로필 선택"
+                  heading="프로필 선택"
+                  hint={`${formatCount(allSummaries.length, "개")} 프로필`}
+                  mobileLabel="전체 이력에서 확인할 프로필"
+                  items={allSummarySelectorItems}
+                  selectedKey={selectedAllSummary.profileType}
+                  onSelect={setSelectedAllProfileType}
+                />
+                <div className="min-w-0">
+                  <ParticipantProfileOverviewCard summary={selectedAllSummary} />
                 </div>
-              ) : null}
-            </div>
+              </div>
+            ) : allSummaries.length === 0 && !loadingAll ? (
+              <div className="mt-4 rounded-md border border-white/10 bg-black/20 px-3 py-4 text-sm font-bold text-stock-subtle">
+                전체 이력 조회 결과가 없습니다.
+              </div>
+            ) : null}
           </div>
         </div>
       ) : null}
@@ -292,6 +327,22 @@ const ParticipantProfileOverviewCard = memo(function ParticipantProfileOverviewC
     </article>
   );
 });
+
+function buildProfileSelectorItems(
+  summaries: ParticipantProfileOverviewSummary[],
+): AdminEntitySelectorItem[] {
+  return summaries.map((summary) => ({
+    key: summary.profileType,
+    title: summary.label,
+    subtitle: summary.profileType,
+    statusLabel: summary.enabledCount > 0
+      ? `가동 ${formatInteger(summary.enabledCount)}명`
+      : "가동 없음",
+    statusTone: summary.enabledCount > 0 ? "success" : "muted",
+    metricLabel: "총자산 · 손익",
+    metricValue: `${formatWon(summary.estimatedTotalAsset)} · ${formatWon(summary.totalProfit)}`,
+  }));
+}
 
 function formatOptionalPercent(value: number | null | undefined) {
   return value === null || value === undefined ? "—" : formatSignedPercent(value);

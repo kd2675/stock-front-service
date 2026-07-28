@@ -7,6 +7,10 @@ import DataTableViewport from "@/app/components/DataTableViewport";
 import { upsertLiquidityProviderMandateQueryData } from "@/app/lib/react-query/stockCacheUpdates";
 import { adminCreateLiquidityProviderLiveMutationOptions } from "@/app/lib/react-query/stockMutations";
 import { getAdminActionData } from "@/app/supply-demand/admin/AdminActionResultHelpers";
+import {
+  AdminEntitySelector,
+  type AdminEntitySelectorTone,
+} from "@/app/supply-demand/admin/AdminEntitySelector";
 import { AdminLiquidityProviderMandateCard } from "@/app/supply-demand/admin/AdminLiquidityProviderMandateCard";
 import {
   formatCompactWon,
@@ -43,7 +47,26 @@ export function AdminLiquidityProviderPanel({
   const [changeReason, setChangeReason] = useState("축소 시장용 종목 전용 LP 실운영 전환");
   const [confirmed, setConfirmed] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const [selectedMandateSymbol, setSelectedMandateSymbol] = useState("");
   const summary = useMemo(() => summarizeMandates(mandates), [mandates]);
+  const selectedMandate = mandates.find(
+    (mandate) => mandate.symbol === selectedMandateSymbol,
+  ) ?? mandates[0] ?? null;
+  const selectorItems = useMemo(
+    () => mandates.map((mandate) => {
+      const reviewCount = countMandateReviewSignals(mandate);
+      return {
+        key: mandate.symbol,
+        title: mandate.symbol,
+        subtitle: mandate.mandateCode,
+        statusLabel: formatMarketRoleCode(mandate.status),
+        statusTone: liquidityProviderStatusTone(mandate.status),
+        metricLabel: "NAV · 점검",
+        metricValue: `${mandate.dailyState ? formatCompactWon(mandate.dailyState.currentNetAssetValue) : "상태 없음"} · ${formatCount(reviewCount, "건")}`,
+      };
+    }),
+    [mandates],
+  );
   const normalizedSymbol = symbol.trim().toUpperCase();
   const referenceVolumeRate = Number(referenceVolumePercent) / 100;
   const seedInventoryRate = Number(seedInventoryPercent) / 100;
@@ -95,6 +118,7 @@ export function AdminLiquidityProviderPanel({
         return;
       }
       upsertLiquidityProviderMandateQueryData(queryClient, provisioned.data);
+      setSelectedMandateSymbol(provisioned.data.symbol);
       setConfirmed(false);
       setFeedback({
         tone: "success",
@@ -223,16 +247,27 @@ export function AdminLiquidityProviderPanel({
         onProvision={() => void createLive()}
       />
 
-      <div className="mt-4 grid gap-3">
-        {mandates.map((mandate) => (
-          <AdminLiquidityProviderMandateCard
-            key={mandate.mandateId}
-            accessToken={accessToken}
-            mandate={mandate}
-            onRefresh={onRefresh}
+      {selectedMandate ? (
+        <div className="mt-5 grid min-w-0 gap-5 border-t border-white/10 pt-5 xl:grid-cols-[280px_minmax(0,1fr)]">
+          <AdminEntitySelector
+            ariaLabel="유동성 공급자 선택"
+            heading="LP 선택"
+            hint={`${formatCount(mandates.length, "개")} 계약`}
+            mobileLabel="관리할 LP"
+            items={selectorItems}
+            selectedKey={selectedMandate.symbol}
+            onSelect={setSelectedMandateSymbol}
           />
-        ))}
-      </div>
+          <div className="min-w-0">
+            <AdminLiquidityProviderMandateCard
+              key={selectedMandate.mandateId}
+              accessToken={accessToken}
+              mandate={selectedMandate}
+              onRefresh={onRefresh}
+            />
+          </div>
+        </div>
+      ) : null}
 
     </section>
   );
@@ -524,6 +559,21 @@ function countMandateReviewSignals(mandate: LiquidityProviderMandate) {
     mandate.dailyState?.stateStatus === "ERROR",
     mandate.dailyState != null && mandate.dailyState.policyVersion !== mandate.policyVersion,
   ].filter(Boolean).length;
+}
+
+function liquidityProviderStatusTone(
+  status: LiquidityProviderMandate["status"],
+): AdminEntitySelectorTone {
+  if (status === "ACTIVE") {
+    return "success";
+  }
+  if (status === "PENDING") {
+    return "accent";
+  }
+  if (status === "SUSPENDED") {
+    return "warning";
+  }
+  return "muted";
 }
 
 function formatPercent(value: number) {

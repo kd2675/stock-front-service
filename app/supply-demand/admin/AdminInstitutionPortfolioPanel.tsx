@@ -20,6 +20,10 @@ import {
   formatInteger,
   formatNumber,
 } from "@/app/supply-demand/admin/AdminFormatters";
+import {
+  AdminEntitySelector,
+  type AdminEntitySelectorTone,
+} from "@/app/supply-demand/admin/AdminEntitySelector";
 import { ProfileMiniMetric } from "@/app/supply-demand/admin/AdminMetricCards";
 import { AdminInstitutionCashAdjustment } from "@/app/supply-demand/admin/AdminInstitutionCashAdjustment";
 import { AdminInstitutionPolicyEditor } from "@/app/supply-demand/admin/AdminInstitutionPolicyEditor";
@@ -64,8 +68,27 @@ export function AdminInstitutionPortfolioPanel({
   const [changeReason, setChangeReason] = useState("축소 시장용 기관 포트폴리오 단건 생성");
   const [confirmed, setConfirmed] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const [selectedPortfolioKey, setSelectedPortfolioKey] = useState("");
   const initializedPreset = useRef(false);
   const summary = useMemo(() => summarizePortfolios(portfolios), [portfolios]);
+  const selectedPortfolio = portfolios.find(
+    (portfolio) => String(portfolio.portfolioId) === selectedPortfolioKey,
+  ) ?? portfolios[0] ?? null;
+  const selectorItems = useMemo(
+    () => portfolios.map((portfolio) => {
+      const reviewCount = portfolioReviewReasons(portfolio).length;
+      return {
+        key: String(portfolio.portfolioId),
+        title: portfolio.displayName,
+        subtitle: portfolio.portfolioCode,
+        statusLabel: formatMarketRoleCode(portfolio.status),
+        statusTone: institutionStatusTone(portfolio.status),
+        metricLabel: "AUM · 점검",
+        metricValue: `${formatCompactWon(portfolio.totalAsset)} · ${formatCount(reviewCount, "건")}`,
+      };
+    }),
+    [portfolios],
+  );
   const normalizedAumPercent = Number(aumPercent);
   const normalizedPortfolioCode = portfolioCode.trim().toUpperCase();
   const normalizedDisplayName = displayName.trim();
@@ -127,6 +150,7 @@ export function AdminInstitutionPortfolioPanel({
       return;
     }
     upsertInstitutionPortfolioQueryData(queryClient, created.data);
+    setSelectedPortfolioKey(String(created.data.portfolioId));
     setConfirmed(false);
     setFeedback({
       tone: "success",
@@ -234,16 +258,27 @@ export function AdminInstitutionPortfolioPanel({
         />
       ) : null}
 
-      <div className="mt-4 grid gap-3">
-        {portfolios.map((portfolio) => (
-          <InstitutionPortfolioCard
-            key={portfolio.portfolioId}
-            accessToken={!loading && !error ? accessToken : null}
-            portfolio={portfolio}
-            recommendation={recommendation}
+      {selectedPortfolio ? (
+        <div className="mt-5 grid min-w-0 gap-5 border-t border-white/10 pt-5 xl:grid-cols-[280px_minmax(0,1fr)]">
+          <AdminEntitySelector
+            ariaLabel="기관 투자자 선택"
+            heading="기관 선택"
+            hint={`${formatCount(portfolios.length, "개")} 포트폴리오`}
+            mobileLabel="관리할 기관"
+            items={selectorItems}
+            selectedKey={String(selectedPortfolio.portfolioId)}
+            onSelect={setSelectedPortfolioKey}
           />
-        ))}
-      </div>
+          <div className="min-w-0">
+            <InstitutionPortfolioCard
+              key={selectedPortfolio.portfolioId}
+              accessToken={!loading && !error ? accessToken : null}
+              portfolio={selectedPortfolio}
+              recommendation={recommendation}
+            />
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -1106,6 +1141,16 @@ function portfolioReviewReasons(portfolio: InstitutionPortfolio) {
     reasons.push("최근 주문 의도가 실패 또는 거절 상태입니다.");
   }
   return reasons;
+}
+
+function institutionStatusTone(status: string): AdminEntitySelectorTone {
+  if (status === "ACTIVE") {
+    return "success";
+  }
+  if (status === "SUSPENDED") {
+    return "warning";
+  }
+  return "muted";
 }
 
 function countActions(mandates: InstitutionSymbolMandate[]) {
