@@ -388,6 +388,9 @@ export type InstitutionPortfolioRecommendation = {
     currentPrice: number;
     marketWeight: number;
     recommendedReferenceDailyVolume: number;
+    recommendedReferenceDailyVolumeRate: number;
+    referenceVolumeHistoryDays: number;
+    referenceVolumeSource: "COMPLETED_20_DAY_ADV" | "FLOAT_FALLBACK";
   }[];
 };
 
@@ -580,6 +583,9 @@ export type LiquidityProviderRecommendation = {
     recommendedSourceAccountId: number | null;
     sourceAvailableQuantity: number;
     recommendedReferenceDailyVolume: number;
+    recommendedReferenceDailyVolumeRate: number;
+    referenceVolumeHistoryDays: number;
+    referenceVolumeSource: "COMPLETED_20_DAY_ADV" | "FLOAT_FALLBACK";
     recommendedSeedInventoryQuantity: number;
     recommendedInitialCash: number;
     creationEligible: boolean;

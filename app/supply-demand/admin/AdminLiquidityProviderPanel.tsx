@@ -51,6 +51,8 @@ export function AdminLiquidityProviderPanel({
   const selectedRecommendation = recommendation?.symbols.find(
     (item) => item.symbol === normalizedSymbol,
   );
+  const minReferenceVolumeRate = recommendation?.minReferenceDailyVolumeRate ?? 0.005;
+  const maxReferenceVolumeRate = recommendation?.maxReferenceDailyVolumeRate ?? 2;
   const canProvision = Boolean(accessToken)
     && !loading
     && !error
@@ -59,8 +61,8 @@ export function AdminLiquidityProviderPanel({
     && !mandates.some((mandate) => mandate.symbol === normalizedSymbol)
     && selectedRecommendation?.creationEligible === true
     && Number.isFinite(referenceVolumeRate)
-    && referenceVolumeRate >= 0.005
-    && referenceVolumeRate <= 0.08
+    && referenceVolumeRate >= minReferenceVolumeRate
+    && referenceVolumeRate <= maxReferenceVolumeRate
     && Number.isFinite(seedInventoryRate)
     && seedInventoryRate >= 0.001
     && seedInventoryRate <= 0.02
@@ -188,15 +190,28 @@ export function AdminLiquidityProviderPanel({
         confirmed={confirmed}
         pending={provisionMutation.isPending}
         canProvision={canProvision}
-        onSymbolChange={setSymbol}
+        onSymbolChange={(value) => {
+          setSymbol(value);
+          const selected = recommendation?.symbols.find(
+            (item) => item.symbol === value.trim().toUpperCase(),
+          );
+          if (selected) {
+            setReferenceVolumePercent(String(
+              selected.recommendedReferenceDailyVolumeRate * 100,
+            ));
+          }
+        }}
         onReferenceVolumePercentChange={setReferenceVolumePercent}
         onSeedInventoryPercentChange={setSeedInventoryPercent}
         onCashMultiplierChange={setCashMultiplier}
         onChangeReasonChange={setChangeReason}
         onConfirmedChange={setConfirmed}
         onApplyRecommendation={() => {
+          const recommendedReferenceRate = selectedRecommendation
+            ? selectedRecommendation.recommendedReferenceDailyVolumeRate
+            : recommendation?.recommendedReferenceDailyVolumeRate ?? 0.03;
           setReferenceVolumePercent(String(
-            (recommendation?.recommendedReferenceDailyVolumeRate ?? 0.03) * 100,
+            recommendedReferenceRate * 100,
           ));
           setSeedInventoryPercent(String(
             (recommendation?.recommendedSeedInventoryRate ?? 0.005) * 100,
@@ -285,7 +300,7 @@ function LiquidityProvisioningForm({
           <button
             type="button"
             onClick={onApplyRecommendation}
-            disabled={!recommendation}
+            disabled={!selectedRecommendation}
             className="min-h-8 rounded-md bg-white/10 px-3 text-[10px] font-black text-white disabled:opacity-40"
           >
             권장 비율 적용
@@ -296,7 +311,7 @@ function LiquidityProvisioningForm({
         <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           <MandateMetric label="권장 LP 수" value={`${formatInteger(recommendation.recommendedProviderCount)}개`} />
           <MandateMetric label="추가 권장" value={`${formatInteger(recommendation.recommendedRemainingCount)}개`} />
-          <MandateMetric label="권장 기준 거래량" value={formatPercent(recommendation.recommendedReferenceDailyVolumeRate)} />
+          <MandateMetric label="무이력 기준 거래량" value={formatPercent(recommendation.recommendedReferenceDailyVolumeRate)} />
           <MandateMetric label="권장 시드 재고" value={formatPercent(recommendation.recommendedSeedInventoryRate)} />
         </div>
       ) : null}
@@ -321,7 +336,14 @@ function LiquidityProvisioningForm({
                     <td className="px-3 py-2 font-black text-white">{item.symbol}</td>
                     <td className="px-3 py-2 text-right">{formatNumber(item.tradableShares)}주</td>
                     <td className="px-3 py-2 text-right font-black text-admin-accent-soft">
-                      {formatNumber(item.recommendedReferenceDailyVolume)}주
+                      <p>{formatNumber(item.recommendedReferenceDailyVolume)}주</p>
+                      <p className="mt-0.5 text-[9px] text-admin-quiet">
+                        {item.referenceVolumeSource === "COMPLETED_20_DAY_ADV"
+                          ? `완료 ${item.referenceVolumeHistoryDays}일 ADV`
+                          : "무이력 유통주식 기준"}
+                        {" · "}
+                        {formatPercent(item.recommendedReferenceDailyVolumeRate)}
+                      </p>
                     </td>
                     <td className="px-3 py-2 text-right">{formatNumber(item.recommendedSeedInventoryQuantity)}주</td>
                     <td className="px-3 py-2 text-right">{formatWon(item.recommendedInitialCash)}</td>
@@ -360,8 +382,8 @@ function LiquidityProvisioningForm({
           <div className="flex min-h-10 items-center rounded-md border border-white/10 bg-black/25 px-3">
             <input
               type="number"
-              min="0.5"
-              max="8"
+              min={(recommendation?.minReferenceDailyVolumeRate ?? 0.005) * 100}
+              max={(recommendation?.maxReferenceDailyVolumeRate ?? 2) * 100}
               step="0.1"
               value={referenceVolumePercent}
               onChange={(event) => onReferenceVolumePercentChange(event.target.value)}
@@ -414,6 +436,11 @@ function LiquidityProvisioningForm({
         <div className="mt-3 rounded-md border border-white/10 bg-black/20 px-3 py-2 text-xs font-bold text-stock-subtle">
           <span className="font-black text-white">{selectedRecommendation.symbol} 권장 실수량</span>
           <span className="ml-3">기준 거래량 {formatNumber(selectedRecommendation.recommendedReferenceDailyVolume)}주</span>
+          <span className="ml-3">
+            {selectedRecommendation.referenceVolumeSource === "COMPLETED_20_DAY_ADV"
+              ? `완료 ${selectedRecommendation.referenceVolumeHistoryDays}일 ADV`
+              : "무이력 유통주식 기준"}
+          </span>
           <span className="ml-3">시드 {formatNumber(selectedRecommendation.recommendedSeedInventoryQuantity)}주</span>
           <span className="ml-3">초기 현금 {formatWon(selectedRecommendation.recommendedInitialCash)}</span>
           {!selectedRecommendation.creationEligible ? (

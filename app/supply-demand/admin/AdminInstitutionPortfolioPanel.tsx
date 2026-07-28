@@ -100,8 +100,8 @@ export function AdminInstitutionPortfolioPanel({
     && normalizedDisplayName.length <= 120
     && Boolean(investmentStyle)
     && Number.isFinite(normalizedAumPercent)
-    && normalizedAumPercent >= 0.1
-    && normalizedAumPercent <= 2
+    && normalizedAumPercent >= (recommendation?.minAumRateOfMarketCap ?? 0.001) * 100
+    && normalizedAumPercent <= (recommendation?.maxAumRateOfMarketCap ?? 0.1) * 100
     && selectedSymbols.length > 0;
 
   const createPortfolio = async () => {
@@ -406,8 +406,8 @@ function InstitutionPortfolioProvisioning({
           <span className="relative">
             <input
               type="number"
-              min="0.1"
-              max="2"
+              min={(recommendation?.minAumRateOfMarketCap ?? 0.001) * 100}
+              max={(recommendation?.maxAumRateOfMarketCap ?? 0.1) * 100}
               step="0.05"
               value={aumPercent}
               onChange={(event) => onAumPercentChange(event.target.value)}
@@ -525,7 +525,14 @@ function InstitutionPortfolioProvisioning({
                     <td className="px-3 py-2 text-right">{formatNumber(symbol.currentPrice)}원</td>
                     <td className="px-3 py-2 text-right">{formatRate(symbol.marketWeight)}</td>
                     <td className="px-3 py-2 text-right font-black text-admin-accent-soft">
-                      {formatNumber(symbol.recommendedReferenceDailyVolume)}주
+                      <p>{formatNumber(symbol.recommendedReferenceDailyVolume)}주</p>
+                      <p className="mt-0.5 text-[9px] text-admin-quiet">
+                        {symbol.referenceVolumeSource === "COMPLETED_20_DAY_ADV"
+                          ? `완료 ${symbol.referenceVolumeHistoryDays}일 ADV`
+                          : "무이력 유통주식 기준"}
+                        {" · "}
+                        {formatRate(symbol.recommendedReferenceDailyVolumeRate)}
+                      </p>
                     </td>
                   </tr>
                 ))}
