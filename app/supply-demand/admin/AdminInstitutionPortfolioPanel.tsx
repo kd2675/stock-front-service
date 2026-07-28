@@ -21,6 +21,8 @@ import {
   formatNumber,
 } from "@/app/supply-demand/admin/AdminFormatters";
 import { ProfileMiniMetric } from "@/app/supply-demand/admin/AdminMetricCards";
+import { AdminInstitutionCashAdjustment } from "@/app/supply-demand/admin/AdminInstitutionCashAdjustment";
+import { AdminInstitutionPolicyEditor } from "@/app/supply-demand/admin/AdminInstitutionPolicyEditor";
 import { formatMarketRoleCode } from "@/app/supply-demand/admin/adminMarketRoleFormatters";
 import type {
   InstitutionDecisionAction,
@@ -238,6 +240,7 @@ export function AdminInstitutionPortfolioPanel({
             key={portfolio.portfolioId}
             accessToken={!loading && !error ? accessToken : null}
             portfolio={portfolio}
+            recommendation={recommendation}
           />
         ))}
       </div>
@@ -671,9 +674,11 @@ function InstitutionStylePresetSelector({
 function InstitutionPortfolioCard({
   accessToken,
   portfolio,
+  recommendation,
 }: {
   accessToken: string | null;
   portfolio: InstitutionPortfolio;
+  recommendation: InstitutionPortfolioRecommendation | null;
 }) {
   const reviewReasons = portfolioReviewReasons(portfolio);
   const actionCounts = countActions(portfolio.mandates);
@@ -711,7 +716,10 @@ function InstitutionPortfolioCard({
             )}
           </div>
           <p className="mt-1 break-all text-xs font-bold text-stock-subtle">
-            {portfolio.portfolioCode} · 계좌 #{portfolio.accountId} · 정책 v{portfolio.policyVersion}
+            입금 계좌 ID {portfolio.accountUserKey ?? "미설정"}
+          </p>
+          <p className="mt-1 break-all text-[11px] font-bold text-admin-quiet">
+            {portfolio.portfolioCode} · 내부 계좌 #{portfolio.accountId} · 정책 v{portfolio.policyVersion}
           </p>
           <p className="mt-1 break-all text-[11px] font-bold text-admin-quiet">
             자기체결 그룹 {portfolio.accountSelfTradeGroupId ?? "미설정"}
@@ -730,8 +738,10 @@ function InstitutionPortfolioCard({
         </ul>
       ) : null}
 
-      <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
+      <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5 xl:grid-cols-10">
         <PortfolioMetric label="AUM" value={formatCompactWon(portfolio.totalAsset)} />
+        <PortfolioMetric label="가용 현금" value={formatCompactWon(portfolio.cashBalance)} />
+        <PortfolioMetric label="매수 예약 현금" value={formatCompactWon(portfolio.openBuyReservedCash)} />
         <PortfolioMetric label="현금 / 주식" value={`${formatRate(1 - portfolio.currentStockAllocationRate)} / ${formatRate(portfolio.currentStockAllocationRate)}`} />
         <PortfolioMetric label="기준 목표" value={formatRate(portfolio.baseStockAllocationRate)} />
         <PortfolioMetric label="허용 밴드" value={`${formatRate(portfolio.minStockAllocationRate)}~${formatRate(portfolio.maxStockAllocationRate)}`} />
@@ -770,6 +780,17 @@ function InstitutionPortfolioCard({
           최근 기관 결정 실패: {portfolio.latestDecisionError}
         </p>
       ) : null}
+
+      <AdminInstitutionCashAdjustment
+        accessToken={accessToken}
+        portfolio={portfolio}
+      />
+
+      <AdminInstitutionPolicyEditor
+        accessToken={accessToken}
+        portfolio={portfolio}
+        recommendation={recommendation}
+      />
 
       {portfolio.executionMode === "LIVE" && portfolio.status === "ACTIVE" ? (
         <InstitutionEmergencyStopControls
@@ -910,10 +931,25 @@ function InstitutionEmergencyStopControls({
 }
 
 function InstitutionMandateRow({ mandate }: { mandate: InstitutionSymbolMandate }) {
+  const mandateStatus = !mandate.enabled
+    ? "운용 제외"
+    : mandate.maxPortfolioAllocationRate === 0
+      ? "청산 전용"
+      : "운용 중";
   return (
     <tr className="align-top text-admin-muted">
       <td className="px-3 py-3">
         <p className="font-black text-white">{mandate.symbol}</p>
+        <span className={[
+          "mt-1 inline-flex rounded-md px-2 py-0.5 text-[9px] font-black",
+          mandateStatus === "운용 중"
+            ? "bg-admin-success-surface text-admin-success"
+            : mandateStatus === "청산 전용"
+              ? "bg-admin-warning-surface text-admin-warning"
+              : "bg-white/10 text-admin-quiet",
+        ].join(" ")}>
+          {mandateStatus}
+        </span>
         <p className="mt-1 tabular-nums text-[10px] text-admin-quiet">{formatInteger(mandate.currentPrice)}원</p>
       </td>
       <td className="px-3 py-3 tabular-nums">

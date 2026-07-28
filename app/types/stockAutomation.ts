@@ -251,11 +251,46 @@ export type InstitutionSymbolMandate = {
   submittedAt: string | null;
 };
 
+export type InstitutionSymbolPolicy = {
+  symbol: string;
+  baseSymbolWeight: number;
+  minPortfolioAllocationRate: number;
+  maxPortfolioAllocationRate: number;
+  pricePressureSensitivity: number;
+  momentumSensitivity: number;
+  valueSensitivity: number;
+  reportSensitivity: number;
+  referenceDailyVolume: number;
+  dailyParticipationRate: number;
+};
+
+export type InstitutionPortfolioScheduledPolicy = {
+  policyVersion: number;
+  effectiveBusinessDate: string;
+  displayName: string;
+  investmentStyle: InstitutionInvestmentStyle;
+  baseStockAllocationRate: number;
+  minStockAllocationRate: number;
+  maxStockAllocationRate: number;
+  primaryRegimeWeight: number;
+  assetPreferenceSensitivity: number;
+  volatilitySensitivity: number;
+  entryThresholdRate: number;
+  exitThresholdRate: number;
+  dailyTurnoverLimitRate: number;
+  maxDecisionTurnoverRate: number;
+  decisionIntervalMinutes: number;
+  mandates: InstitutionSymbolPolicy[];
+  changeReason: string;
+  changedBy: string;
+  updatedAt: string;
+};
+
 export type InstitutionPortfolio = {
   portfolioId: number;
   portfolioCode: string;
   displayName: string;
-  investmentStyle: string;
+  investmentStyle: InstitutionInvestmentStyle;
   executionMode: "LIVE";
   status: string;
   policyVersion: number;
@@ -264,6 +299,7 @@ export type InstitutionPortfolio = {
   participantStatus: string;
   participantSelfTradeGroupId: string;
   accountId: number;
+  accountUserKey: string | null;
   accountStatus: string;
   accountSelfTradeGroupId: string | null;
   cashBalance: number;
@@ -299,6 +335,7 @@ export type InstitutionPortfolio = {
   institutionalOpenOrderCount: number;
   completedDecisionTradingDays: number;
   recentDecisionFailureCount: number;
+  scheduledPolicy: InstitutionPortfolioScheduledPolicy | null;
   mandates: InstitutionSymbolMandate[];
 };
 
@@ -319,9 +356,17 @@ export type InstitutionPortfolioStylePreset = {
   minStockAllocationRate: number;
   maxStockAllocationRate: number;
   primaryRegimeWeight: number;
+  assetPreferenceSensitivity: number;
+  volatilitySensitivity: number;
+  entryThresholdRate: number;
+  exitThresholdRate: number;
   dailyTurnoverLimitRate: number;
   maxDecisionTurnoverRate: number;
   decisionIntervalMinutes: number;
+  pricePressureSensitivity: number;
+  momentumSensitivity: number;
+  valueSensitivity: number;
+  reportSensitivity: number;
   dailyParticipationRate: number;
 };
 

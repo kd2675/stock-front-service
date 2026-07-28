@@ -4,6 +4,7 @@ import type { ApiResult } from "@/app/lib/api";
 import {
   amendOrder,
   activateUnderwritingSupply,
+  adjustInstitutionPortfolioCash,
   applyCorporateAction,
   adjustAutoParticipantCash,
   adjustUserAccountCash,
@@ -32,6 +33,7 @@ import {
   updateAutoParticipantProfileConfig,
   updateAutoParticipantSymbolConfig,
   updateBatchJobRuntimeControl,
+  updateInstitutionPortfolioPolicy,
   updateInstrumentReport,
   updateLiquidityProviderPolicy,
   updateOrderBookInstrumentTradingRules,
@@ -50,6 +52,8 @@ import type {
   StockCorporateActionPayload,
   StockCorporateActionSubscriptionPayload,
   InstitutionPortfolioCreatePayload,
+  InstitutionPortfolioCashAdjustmentPayload,
+  InstitutionPortfolioPolicyUpdatePayload,
   InstitutionSuspensionPayload,
   LiquidityProviderProvisionPayload,
   UnderwritingContractCreatePayload,
@@ -296,6 +300,32 @@ export function adminCreateInstitutionPortfolioMutationOptions() {
   return adminMutationOptions(
     (token, payload: InstitutionPortfolioCreatePayload) =>
       createInstitutionPortfolio(token, payload),
+  );
+}
+
+export function adminUpdateInstitutionPortfolioPolicyMutationOptions() {
+  return adminMutationOptions(
+    (token, variables: {
+      portfolioId: number;
+      payload: InstitutionPortfolioPolicyUpdatePayload;
+    }) => updateInstitutionPortfolioPolicy(
+      token,
+      variables.portfolioId,
+      variables.payload,
+    ),
+  );
+}
+
+export function adminAdjustInstitutionPortfolioCashMutationOptions() {
+  return adminMutationOptions(
+    (token, variables: {
+      portfolioId: number;
+      payload: InstitutionPortfolioCashAdjustmentPayload;
+    }) => adjustInstitutionPortfolioCash(
+      token,
+      variables.portfolioId,
+      variables.payload,
+    ),
   );
 }
 

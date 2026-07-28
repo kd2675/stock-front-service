@@ -6,7 +6,7 @@ import {
   authenticatedPostJson,
   toQuery,
 } from "@/app/lib/stock-api/core";
-import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowBreakdown, AdminFundFlowScope, AdminInvestorFlowHistory, AdminInvestorFlowSummary, AdminParticipantScope, AdminSymbolFlowList, AdminTotalAssetHistoryPage, AutoMarketDistributionBias, AutoMarketRegimeCountWeights, AutoMarketRegimeHistoryRange, AutoMarketStatus, AutoParticipant, AutoParticipantBehaviorModelVersion, AutoParticipantCashAdjustment, AutoParticipantLifecycleScope, AutoParticipantOverview, AutoParticipantPerformanceBasis, AutoParticipantPerformanceSummary, AutoParticipantProfileExitMode, AutoParticipantProfileInventoryMode, AutoParticipantProfileOverview, AutoParticipantProfilePricingMode, AutoParticipantProfileType, AutoParticipantSymbolConfig, AutoParticipantWithdrawalAudit, BatchJobRuntimeStatus, EodOperationsOverview, EodPhaseRetryResult, InstitutionInvestmentStyle, InstitutionPortfolio, InstitutionPortfolioRecommendation, LiquidityProviderMandate, LiquidityProviderPolicyUpdatePayload, LiquidityProviderRecommendation, LiquidityProviderStatusChangePayload, RecurringCashIntervalUnit, StockBatchJobRun, SystemCustodyOverview, UnderwritingContract, UnderwritingContractRecommendation } from "@/app/types/stock";
+import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowBreakdown, AdminFundFlowScope, AdminInvestorFlowHistory, AdminInvestorFlowSummary, AdminParticipantScope, AdminSymbolFlowList, AdminTotalAssetHistoryPage, AutoMarketDistributionBias, AutoMarketRegimeCountWeights, AutoMarketRegimeHistoryRange, AutoMarketStatus, AutoParticipant, AutoParticipantBehaviorModelVersion, AutoParticipantCashAdjustment, AutoParticipantLifecycleScope, AutoParticipantOverview, AutoParticipantPerformanceBasis, AutoParticipantPerformanceSummary, AutoParticipantProfileExitMode, AutoParticipantProfileInventoryMode, AutoParticipantProfileOverview, AutoParticipantProfilePricingMode, AutoParticipantProfileType, AutoParticipantSymbolConfig, AutoParticipantWithdrawalAudit, BatchJobRuntimeStatus, EodOperationsOverview, EodPhaseRetryResult, InstitutionInvestmentStyle, InstitutionPortfolio, InstitutionPortfolioRecommendation, InstitutionSymbolPolicy, LiquidityProviderMandate, LiquidityProviderPolicyUpdatePayload, LiquidityProviderRecommendation, LiquidityProviderStatusChangePayload, RecurringCashIntervalUnit, StockBatchJobRun, SystemCustodyOverview, UnderwritingContract, UnderwritingContractRecommendation } from "@/app/types/stock";
 
 export type { AdminFundFlowScope } from "@/app/types/stock";
 
@@ -86,6 +86,29 @@ export type InstitutionPortfolioCreatePayload = {
   changeReason?: string;
 };
 
+export type InstitutionPortfolioCashAdjustmentPayload = {
+  adjustmentType: "DEPOSIT" | "WITHDRAW";
+  amount: number;
+};
+
+export type InstitutionPortfolioPolicyUpdatePayload = {
+  displayName: string;
+  investmentStyle: InstitutionInvestmentStyle;
+  baseStockAllocationRate: number;
+  minStockAllocationRate: number;
+  maxStockAllocationRate: number;
+  primaryRegimeWeight: number;
+  assetPreferenceSensitivity: number;
+  volatilitySensitivity: number;
+  entryThresholdRate: number;
+  exitThresholdRate: number;
+  dailyTurnoverLimitRate: number;
+  maxDecisionTurnoverRate: number;
+  decisionIntervalMinutes: number;
+  mandates: InstitutionSymbolPolicy[];
+  changeReason?: string;
+};
+
 export type InstitutionSuspensionPayload = {
   changeReason?: string;
 };
@@ -136,6 +159,30 @@ export function createInstitutionPortfolio(
   return authenticatedPostJson<InstitutionPortfolio>(
     token,
     "/api/stock/v1/markets/institution-portfolios",
+    payload,
+  );
+}
+
+export function updateInstitutionPortfolioPolicy(
+  token: string,
+  portfolioId: number,
+  payload: InstitutionPortfolioPolicyUpdatePayload,
+) {
+  return authenticatedPatchJson<InstitutionPortfolio>(
+    token,
+    `/api/stock/v1/markets/institution-portfolios/${portfolioId}/policy`,
+    payload,
+  );
+}
+
+export function adjustInstitutionPortfolioCash(
+  token: string,
+  portfolioId: number,
+  payload: InstitutionPortfolioCashAdjustmentPayload,
+) {
+  return authenticatedPostJson<InstitutionPortfolio>(
+    token,
+    `/api/stock/v1/markets/institution-portfolios/${portfolioId}/cash-adjustments`,
     payload,
   );
 }

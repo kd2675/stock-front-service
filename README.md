@@ -15,7 +15,7 @@
 - `/admin/**` - 관리자 운영 화면
 - `/admin/market/liquidity-providers` - 종목별 LP 권장값·재고 밴드·호가·일일한도를 확인하고 LP를 개별 생성·중단·수정·재개
 - `/admin/funds/custody` - 탈퇴·유통 대기·잠금 시스템 보관계정과 휴면 자동 참여자 원장
-- `/admin/participants/institutions` - 운용 유형별 생성 프리셋·AUM·위험 수치와 종목을 선택하고 기관을 하나씩 제한된 다종목 LIVE로 생성한 뒤 결정·주문 감사
+- `/admin/participants/institutions` - 운용 유형별 생성 프리셋으로 기관을 만들고 입금 계좌 ID·가용/예약 현금·AUM을 감사하며, 현금 입금·회수와 표시명·목표 비중·위험 한도·결정 주기·종목별 정책의 다음 개장 예약을 수행
 - `/admin/corporate/instruments` - 종목과 유통 대기·잠금 보관원장만 생성하고 인수계약과 LP 준비 전까지 CLOSED로 대기
 - `/admin/corporate/underwriting` - 발행 대기 종목의 인수계정·계약을 하나씩 생성하고 권장 유한 공급률·기간과 누적/일일 한도 감사
 
