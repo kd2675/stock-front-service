@@ -483,6 +483,9 @@ export type LiquidityProviderDailyState = {
   openingNetAssetValue: number;
   currentNetAssetValue: number;
   riskProfit: number;
+  openingInventoryQuantity: number;
+  inventoryMarketMoveProfit: number;
+  controllableRiskProfit: number;
   targetBuyOpenQuantity: number;
   targetSellOpenQuantity: number;
   lastOpenBuyQuantity: number;
@@ -500,6 +503,14 @@ export type LiquidityProviderDailyState = {
   gateReason: string;
   quoteRunCount: number;
   limitBreached: boolean;
+  eligibleRegularSeconds: number;
+  bidCoveredSeconds: number;
+  askCoveredSeconds: number;
+  twoSidedCoveredSeconds: number;
+  lastCoverageObservedAt: string | null;
+  quoteGapCount: number;
+  currentQuoteGapSeconds: number;
+  maxQuoteGapSeconds: number;
   policyVersion: number;
   version: number;
   updatedAt: string;

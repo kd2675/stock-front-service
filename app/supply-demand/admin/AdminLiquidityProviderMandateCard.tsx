@@ -361,7 +361,7 @@ export function AdminLiquidityProviderMandateCard({
 
       <InventoryBandProgress mandate={mandate} />
 
-      <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
+      <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-9">
         <MandateMetric label="가용 현금" value={formatCompactWon(mandate.account.availableCash)} />
         <MandateMetric label="보유 평가액" value={formatCompactWon(mandate.account.holdingMarketValue)} />
         <MandateMetric label="현재 / 예상 재고" value={`${formatInteger(state?.lastInventoryQuantity ?? mandate.account.holdingQuantity)} / ${formatInteger(state?.lastProjectedInventoryQuantity ?? mandate.account.holdingQuantity)}주`} />
@@ -369,10 +369,11 @@ export function AdminLiquidityProviderMandateCard({
         <MandateMetric label="기준 거래량" value={`${formatInteger(mandate.policy.referenceDailyVolume)}주`} />
         <MandateMetric label="체결 한도 사용" value={formatPercent(executionUsage)} />
         <MandateMetric label="제출 한도 사용" value={formatPercent(submissionUsage)} />
-        <MandateMetric label="일일 위험손익" value={formatSignedWon(state?.riskProfit ?? 0)} />
+        <MandateMetric label="전체 NAV 손익" value={formatSignedWon(state?.riskProfit ?? 0)} />
+        <MandateMetric label="통제 가능 손익" value={formatSignedWon(state?.controllableRiskProfit ?? 0)} />
       </div>
 
-      <div className="mt-3 grid gap-2 md:grid-cols-3">
+      <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
         <MandateInfo
           label="호가·외부 깊이"
           primary={state ? `매수 ${formatNullableWon(state.lastBidPrice)} · 매도 ${formatNullableWon(state.lastAskPrice)}` : "오늘 판단 전"}
@@ -386,7 +387,12 @@ export function AdminLiquidityProviderMandateCard({
         <MandateInfo
           label="NAV·손익"
           primary={state ? `${formatCompactWon(state.openingNetAssetValue)} → ${formatCompactWon(state.currentNetAssetValue)}` : "오늘 기준 NAV 없음"}
-          secondary={state ? `실현 ${formatSignedWon(state.realizedProfit)} · 미실현 ${formatSignedWon(state.unrealizedProfit)} · 손실 한도 ${formatCompactWon(mandate.policy.dailyLossLimitAmount)}` : `손실 한도 ${formatCompactWon(mandate.policy.dailyLossLimitAmount)}`}
+          secondary={state ? `시장 재고효과 ${formatSignedWon(state.inventoryMarketMoveProfit)} · 통제 가능 ${formatSignedWon(state.controllableRiskProfit)} · 손실 한도 ${formatCompactWon(mandate.policy.dailyLossLimitAmount)}` : `손실 한도 ${formatCompactWon(mandate.policy.dailyLossLimitAmount)}`}
+        />
+        <MandateInfo
+          label="호가 유지 KPI"
+          primary={state ? `양방향 ${formatPercent(safeRate(state.twoSidedCoveredSeconds, state.eligibleRegularSeconds))} · 매수 ${formatPercent(safeRate(state.bidCoveredSeconds, state.eligibleRegularSeconds))} · 매도 ${formatPercent(safeRate(state.askCoveredSeconds, state.eligibleRegularSeconds))}` : "오늘 관측 전"}
+          secondary={state ? `관측 ${formatInteger(state.eligibleRegularSeconds)}초 · 공백 ${formatInteger(state.quoteGapCount)}회 · 최대 ${formatInteger(state.maxQuoteGapSeconds)}초` : "정규장 적격 시간 기준"}
         />
       </div>
 

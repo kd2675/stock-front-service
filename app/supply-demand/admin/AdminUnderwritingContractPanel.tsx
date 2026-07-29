@@ -627,10 +627,10 @@ function UnderwritingContractCard({
       </div>
 
       <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-        <ContractMetric label="공급 총 상한" value={formatCount(contract.stabilizationQuantityLimit, "주")} />
+        <ContractMetric label="공급 총 수량 상한" value={formatCount(contract.stabilizationQuantityLimit, "주")} />
         <ContractMetric label="누적 제출 / 체결" value={`${formatNumber(contract.supply.lifetimeSubmittedQuantity)} / ${formatNumber(contract.supply.lifetimeExecutedQuantity)}주`} />
         <ContractMetric label="남은 제출량" value={formatCount(contract.supply.remainingSubmissionQuantity, "주")} />
-        <ContractMetric label="남은 제출금액" value={formatCompactWon(contract.supply.remainingSubmissionAmount)} />
+        <ContractMetric label="누적 제출금액" value={formatCompactWon(contract.supply.lifetimeSubmittedAmount)} />
         <ContractMetric
           label="최근 일일 게이트"
           value={contract.supply.latestDailyState
@@ -653,8 +653,8 @@ function UnderwritingContractCard({
         <ContractInfo
           label="한시 초기 공급"
           primary={stabilizationEnabled
-            ? `${formatNumber(contract.stabilizationQuantityLimit)}주 · ${formatCompactWon(contract.stabilizationAmountLimit)}`
-            : "비활성 · 수량·금액 한도 0"}
+            ? `${formatNumber(contract.stabilizationQuantityLimit)}주 · 금액 관측기준 ${formatCompactWon(contract.stabilizationAmountLimit)}`
+            : "비활성 · 수량 상한 0"}
           secondary={contract.stabilizationStartDate || contract.stabilizationEndDate
             ? `${contract.stabilizationStartDate ?? "시작 미정"} ~ ${contract.stabilizationEndDate ?? "종료 미정"}`
             : "활성화 전에는 인수계정이 주문을 만들지 않습니다."}
