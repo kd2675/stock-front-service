@@ -50,7 +50,7 @@ export function AdminProfileConfigPanel({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-black">프로필 행동 설정</h2>
-          <p className="mt-1 text-xs font-bold text-stock-subtle">프로필별 행동 모델과 의사결정 빈도, 회당 주문 수, 가격·청산·재고 모드, 호가 공격성, 주문 유지 시간과 수량을 일괄 조정합니다. 같은 프로필의 모든 자동 참여자에게 적용됩니다.</p>
+          <p className="mt-1 text-xs font-bold text-stock-subtle">프로필별 행동 모델과 관심 빈도, 자발적 주문 실행 확률, 가격·청산·재고 모드, 호가 공격성, 주문 유지 시간과 수량을 일괄 조정합니다. 같은 프로필의 모든 자동 참여자에게 적용됩니다.</p>
         </div>
       </div>
       <div className="mt-4 rounded-md border border-white/10 bg-black/15 p-3">

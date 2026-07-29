@@ -16,18 +16,18 @@ export default function AutoSignalGuide() {
       <div className="grid gap-3 lg:grid-cols-3">
         <SignalGuideCard
           label="낮음 · 1-3"
-          title="드문 주문 · 약한 가격 반응"
-          body="프로필·유동성 보정 전 기본 주문 수는 보통 1건입니다. 가격 압력의 호가 반영 강도도 10~30% 수준이라 관망형 참여자에 적합합니다."
+          title="드문 관심 · 약한 가격 반응"
+          body="계좌 평균 강도가 낮으면 자발적 관심 이벤트가 드물고, 종목 강도가 낮으면 가격 압력의 호가 반영도 10~30% 수준입니다. 한 이벤트는 주문을 내더라도 최대 1건입니다."
         />
         <SignalGuideCard
           label="중간 · 4-7"
-          title="기본 주문 활동 구간"
-          body="프로필·유동성 보정 전 기본 주문 수는 보통 2건입니다. 별도 설정이 없는 참여자는 5를 사용하며, 방향성보다 활동량을 적당히 늘리는 중립 구간입니다."
+          title="기본 관심 활동 구간"
+          body="별도 설정이 없는 종목은 5를 사용합니다. 계좌 평균 강도가 관심 시계의 발생률을 높이고, 선택된 종목 강도는 프로필 판단과 호가 가격 반응에 사용됩니다."
         />
         <SignalGuideCard
           label="높음 · 8-10"
-          title="잦은 주문 · 강한 가격 반응"
-          body="프로필·유동성 보정 전 기본 주문 수는 보통 3건입니다. 9 이상에서는 압력이 충분히 강할 때 일부 프로필이 매수·매도를 더 단호하게 선택할 수 있습니다."
+          title="잦은 관심 · 강한 가격 반응"
+          body="계좌 평균 강도가 높으면 자발적 관심 이벤트가 잦아지고, 종목 강도 9 이상에서는 압력이 충분히 강할 때 일부 프로필이 방향을 더 단호하게 선택합니다. 주문 묶음을 강제로 만들지는 않습니다."
         />
       </div>
 
@@ -41,7 +41,7 @@ export default function AutoSignalGuide() {
         <div className="rounded-md border border-admin-warning/20 bg-admin-warning/[0.06] px-3 py-3 text-xs font-bold leading-5 text-[#d8c49c]">
           <p className="font-black text-admin-warning-soft">강도가 정하지 않는 것</p>
           <p className="mt-1">
-            활동 강도 자체는 상승·하락 방향, 1회 주문 수량, 보유 목표, TTL을 정하지 않습니다. 방향은 다섯 압력·프로필·보고서·수익률·계좌 상태가 정하며, 활동 강도는 그 결과가 주문 건수와 호가에 반영되는 크기를 조절합니다.
+            활동 강도 자체는 상승·하락 방향, 1회 주문 수량, 보유 목표, TTL을 정하지 않습니다. 방향은 다섯 압력·프로필·보고서·수익률·계좌 상태가 정하며, 활동 강도는 자발적 관심 빈도와 호가 가격 반응 크기를 조절합니다.
           </p>
         </div>
       </div>
@@ -66,7 +66,7 @@ export function AutoMarketConfigGuide() {
     },
     {
       name: "1회 주문 최대 수량",
-      description: "자동장이 한 번에 만들 수 있는 주문 수량의 종목 단위 절대 상한입니다. 프로필 수량 배율은 추첨 수량에 연속 적용되지만 1배를 넘어도 이 상한은 넘지 않습니다. 수량 배율 0은 해당 프로필 주문 생성을 중지합니다.",
+      description: "자동장이 한 번에 만들 수 있는 주문 수량의 종목 단위 절대 상한입니다. 프로필 수량 배율은 이 안전 상한 안에서 적용되며 1배를 넘어도 종목 상한은 넘지 않습니다. 자발적 주문은 소액 편향으로 추첨하고, 명시적 목표 조정·포지션 종료는 안전 최댓값을 사용합니다. 수량 배율 0은 해당 프로필 주문 생성을 중지합니다.",
     },
     {
       name: "미체결 호가 TTL(초)",
@@ -79,7 +79,7 @@ export function AutoMarketConfigGuide() {
       <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 marker:hidden">
         <span className="min-w-0">
           <span className="block text-sm font-black text-white">자동장 설정·행동 기준</span>
-          <span className="mt-0.5 block text-[11px] font-bold leading-4 text-stock-subtle">각 압력과 주문 활동 강도가 주문 건수·방향·호가에 미치는 영향을 확인합니다.</span>
+          <span className="mt-0.5 block text-[11px] font-bold leading-4 text-stock-subtle">각 압력과 주문 활동 강도가 관심 빈도·방향·호가에 미치는 영향을 확인합니다.</span>
         </span>
         <span aria-hidden="true" className="shrink-0 text-admin-accent transition-transform group-open:rotate-180">⌄</span>
       </summary>
@@ -104,7 +104,7 @@ export function AutoMarketConfigGuide() {
             <div>
               <p className="text-sm font-black text-white">여섯 주문 행동 요인의 실제 영향</p>
               <p className="mt-1 text-xs font-bold leading-5 text-stock-subtle">
-                다섯 압력은 종목별 랜덤 시장환경이고 주문 활동 강도는 참여자·종목별 기준 활동도입니다. 서로 척도와 생성 방식은 다르지만 최종 주문 건수·방향·호가를 함께 만듭니다.
+                다섯 압력은 종목별 랜덤 시장환경이고 주문 활동 강도는 참여자·종목별 기준 활동도입니다. 서로 척도와 생성 방식은 다르지만 최종 관심 빈도·방향·호가에 함께 반영됩니다.
               </p>
             </div>
             <span className="text-[11px] font-black text-stock-subtle">압력 -100~100 · 활동 강도 1~10</span>
@@ -159,10 +159,10 @@ const ORDER_BEHAVIOR_GUIDE_ITEMS = [
   {
     name: "유동성",
     scale: "-100~100",
-    low: "− 주문 공급 축소",
-    high: "+ 주문 공급 확대",
-    description: "한 번의 실행에서 만들 주문 건수를 조절하고 상대 호가에 붙을 확률을 일부 높입니다. 최종 -100은 약 0.2배, +100은 약 1.8배의 주문 건수 배율입니다.",
-    caution: "현재 주문장의 실제 유동성 측정치가 아니라 자동장이 공급하려는 밀도입니다.",
+    low: "− 낮은 교차 성향",
+    high: "+ 높은 교차 성향",
+    description: "자동 참여자의 방향성 주문이 상대 최우선 호가에 붙을 확률을 일부 조절합니다. 주문 건수를 늘리지는 않으며 한 의사결정 이벤트는 최대 한 건입니다.",
+    caution: "현재 주문장의 실제 유동성 측정치가 아니라 자동 주문 가격 정책에 주는 시장환경 신호입니다.",
   },
   {
     name: "체결 공격성",
@@ -175,10 +175,10 @@ const ORDER_BEHAVIOR_GUIDE_ITEMS = [
   {
     name: "주문 활동 강도",
     scale: "1~10",
-    low: "1 · 적은 주문",
-    high: "10 · 많은 주문",
-    description: "참여자별 주문 후보 우선순위, 기본 주문 건수, 가격 압력의 기본 호가 반영 크기를 조절합니다. 설정이 없으면 5이며 보고서 점수로 변경되지 않습니다.",
-    caution: "압력처럼 랜덤 생성되지 않습니다. 가격 반영에는 프로필별 가격 민감도가 추가로 곱해지고, 주문·공격성 배율과 방향·가격 노이즈는 별도로 적용됩니다.",
+    low: "1 · 드문 관심",
+    high: "10 · 잦은 관심",
+    description: "계좌 전체 종목의 평균값은 자발적 관심 시계와 후보 우선순위를, 선택된 종목의 값은 프로필 판단과 가격 압력의 호가 반영 크기를 조절합니다. 설정이 없으면 5입니다.",
+    caution: "압력처럼 랜덤 생성되지 않으며 회당 주문 건수를 뜻하지 않습니다. 프로필 평가·만료 후 재시도 시계는 자발적 관심 시계와 분리됩니다.",
   },
 ] as const;
 

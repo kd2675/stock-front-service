@@ -100,8 +100,8 @@ export function AdminAutoParticipantStrategyPanel({
         </summary>
         <div className="grid gap-2 border-t border-white/[0.07] p-3 text-xs font-bold leading-5 text-stock-subtle lg:grid-cols-3">
           <div className="rounded-md bg-white/[0.04] px-3 py-2.5">
-            <span className="font-black text-white">주문 건수</span>
-            <p className="mt-0.5">1-3은 보통 1건, 4-7은 2건, 8-10은 3건에서 시작하며 프로필과 유동성 압력에 따라 0-8건으로 최종 조정됩니다.</p>
+            <span className="font-black text-white">관심 빈도</span>
+            <p className="mt-0.5">계좌의 활성 종목 강도 평균이 높을수록 자발적 관심 이벤트가 잦아집니다. 한 이벤트는 관망하거나 최대 한 건의 주문만 만듭니다.</p>
           </div>
           <div className="rounded-md bg-white/[0.04] px-3 py-2.5">
             <span className="font-black text-white">가격 반응</span>
@@ -109,7 +109,7 @@ export function AdminAutoParticipantStrategyPanel({
           </div>
           <div className="rounded-md bg-white/[0.04] px-3 py-2.5">
             <span className="font-black text-white">기본값·프로필 보정</span>
-            <p className="mt-0.5">설정이 없으면 5입니다. 보고서 점수는 활동 강도를 바꾸지 않고 별도 방향 압력으로 적용되며, 프로필별 가격 민감도·주문·공격성 배율과 매 주문 노이즈를 각각 적용합니다.</p>
+            <p className="mt-0.5">설정이 없으면 5입니다. 보고서 점수는 활동 강도를 바꾸지 않고 별도 방향 압력으로 적용되며, 프로필별 가격 민감도·주문 실행 확률·공격성 배율과 매 주문 노이즈를 각각 적용합니다.</p>
           </div>
         </div>
       </details>

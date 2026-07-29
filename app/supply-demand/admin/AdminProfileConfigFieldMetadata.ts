@@ -27,7 +27,7 @@ export const PROFILE_CONFIG_SIGNAL_FIELDS = [
   { key: "contrarianWeight", setterKey: "setContrarianWeight", formLabel: "역추세(0-1)", summaryLabel: "역추세", placeholder: "0.6", min: 0, max: 1, defaultValue: DEFAULT_PROFILE_WEIGHT },
   { key: "lossAversionWeight", setterKey: "setLossAversionWeight", formLabel: "손실 회피(0-1)", summaryLabel: "손실", placeholder: "0.7", min: 0, max: 1, defaultValue: DEFAULT_PROFILE_WEIGHT },
   { key: "herdingWeight", setterKey: "setHerdingWeight", formLabel: "군중 추종(0-1)", summaryLabel: "군중", placeholder: "0.6", min: 0, max: 1, defaultValue: DEFAULT_PROFILE_WEIGHT },
-  { key: "marketMakingWeight", setterKey: "setMarketMakingWeight", formLabel: "시장 조성(0-1)", summaryLabel: "조성", placeholder: "0.9", min: 0, max: 1, defaultValue: DEFAULT_PROFILE_WEIGHT },
+  { key: "marketMakingWeight", setterKey: "setMarketMakingWeight", formLabel: "호가 대기 성향(0-1)", summaryLabel: "호가 대기", placeholder: "0.9", min: 0, max: 1, defaultValue: DEFAULT_PROFILE_WEIGHT },
   { key: "overconfidenceWeight", setterKey: "setOverconfidenceWeight", formLabel: "과신(0-1)", summaryLabel: "과신", placeholder: "0.6", min: 0, max: 1, defaultValue: DEFAULT_PROFILE_WEIGHT },
   { key: "noiseWeight", setterKey: "setNoiseWeight", formLabel: "노이즈(0-1)", summaryLabel: "노이즈", placeholder: "0.8", min: 0, max: 1, defaultValue: DEFAULT_PROFILE_WEIGHT },
   { key: "panicSellWeight", setterKey: "setPanicSellWeight", formLabel: "패닉 매도(0-1)", summaryLabel: "패닉", placeholder: "0.5", min: 0, max: 1, defaultValue: DEFAULT_PROFILE_WEIGHT },
@@ -38,7 +38,8 @@ export const PROFILE_CONFIG_SIGNAL_FIELDS = [
 ] as const satisfies ReadonlyArray<ProfileConfigNumericField>;
 
 export const PROFILE_CONFIG_EXECUTION_FIELDS = [
-  { key: "orderMultiplier", setterKey: "setOrderMultiplier", formLabel: "프로필 실행 강도", summaryLabel: "실행 강도", placeholder: "1", min: 0, max: 5, defaultValue: DEFAULT_PROFILE_MULTIPLIER, suffix: "배" },
+  { key: "decisionFrequencyMultiplier", setterKey: "setDecisionFrequencyMultiplier", formLabel: "관심 빈도(0-20)", summaryLabel: "관심 빈도", placeholder: "1", min: 0, max: 20, defaultValue: DEFAULT_PROFILE_MULTIPLIER, suffix: "배" },
+  { key: "ordersPerDecisionMultiplier", setterKey: "setOrdersPerDecisionMultiplier", formLabel: "주문 발생 확률(0-5)", summaryLabel: "주문 확률", placeholder: "1", min: 0, max: 5, defaultValue: DEFAULT_PROFILE_MULTIPLIER, suffix: "배" },
   { key: "aggressionMultiplier", setterKey: "setAggressionMultiplier", formLabel: "호가 공격성(0-5)", summaryLabel: "호가 공격성", placeholder: "1", min: 0, max: 5, defaultValue: DEFAULT_PROFILE_MULTIPLIER, suffix: "배" },
   { key: "pricePressureSensitivity", setterKey: "setPricePressureSensitivity", formLabel: "가격 압력 민감도(0-2)", summaryLabel: "가격 민감도", placeholder: "1", min: 0, max: 2, defaultValue: DEFAULT_PROFILE_MULTIPLIER, suffix: "배" },
   { key: "orderTtlMultiplier", setterKey: "setOrderTtlMultiplier", formLabel: "주문 유지 시간(0.1-10)", summaryLabel: "주문 유지 시간", placeholder: "1", min: 0.1, max: 10, defaultValue: DEFAULT_PROFILE_MULTIPLIER, suffix: "배" },
@@ -68,6 +69,7 @@ export function buildDefaultProfileConfigDraft(): ProfileConfigDraft {
   return {
     ...numericDefaults,
     behaviorModelVersion: "V3",
+    orderMultiplier: DEFAULT_PROFILE_MULTIPLIER,
     decisionFrequencyMultiplier: DEFAULT_PROFILE_MULTIPLIER,
     ordersPerDecisionMultiplier: DEFAULT_PROFILE_MULTIPLIER,
     pricingMode: "DIRECTIONAL",

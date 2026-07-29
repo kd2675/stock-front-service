@@ -68,7 +68,9 @@ function ProfileSummaryGroup({ title, children }: { title: string; children: Rea
 }
 
 function formatPricingMode(value: AutoParticipantProfileConfig["pricingMode"]) {
-  return value === "DIRECTIONAL" ? "방향 신호" : "-";
+  if (value === "DIRECTIONAL") return "방향 신호";
+  if (value === "PASSIVE_POST_ONLY") return "비공격 지정가";
+  return "-";
 }
 
 function formatExitMode(value: AutoParticipantProfileConfig["exitMode"]) {

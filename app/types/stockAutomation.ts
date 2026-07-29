@@ -125,7 +125,7 @@ export type AutoParticipantProfileType =
 export type RecurringCashIntervalUnit = "SECOND" | "MINUTE" | "HOUR" | "DAY" | "MONTH" | "YEAR";
 export type AutoParticipantBehaviorModelVersion = "V3";
 export type AutoParticipantLifecycleScope = "CURRENT" | "WITHDRAWN";
-export type AutoParticipantProfilePricingMode = "DIRECTIONAL";
+export type AutoParticipantProfilePricingMode = "DIRECTIONAL" | "PASSIVE_POST_ONLY";
 export type AutoParticipantProfileExitMode = "SIGNAL_DRIVEN" | "TAKE_PROFIT_FIRST" | "HOLD_LOSSES";
 export type AutoParticipantProfileInventoryMode = "SIGNAL_DRIVEN";
 
@@ -1138,11 +1138,12 @@ export type AutoParticipantV3Operations = {
     lastResultReason?: string | null;
     lastHoldReason?: string | null;
     nextAttentionAt?: string | null;
-    nextGuardAt?: string | null;
+    nextProfileEvaluationAt?: string | null;
+    nextExecutionRetryAt?: string | null;
     nextRunAt?: string | null;
     updatedAt: string;
   }>;
-  incompleteLiquidationPlanCount: number;
+  profileOrderContractViolationCount: number;
 };
 
 export type AutoMarketStatus = {

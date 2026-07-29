@@ -11,6 +11,7 @@ import type { RecurringCashIntervalUnit } from "@/app/types/stock";
 
 const PRICING_MODE_OPTIONS = [
   { value: "DIRECTIONAL", label: "방향 신호형" },
+  { value: "PASSIVE_POST_ONLY", label: "비공격 지정가 (post-only)" },
 ] as const;
 const EXIT_MODE_OPTIONS = [
   { value: "SIGNAL_DRIVEN", label: "신호 기반" },
@@ -45,7 +46,7 @@ export function AdminProfileConfigFormPanel({
         description="일반 자동 참여자는 V3만 사용합니다. 정책 변경은 다음 개장 전 활성화되며 장중 난수 흐름을 바꾸지 않습니다."
       >
         <div className="rounded-md border border-white/10 bg-black/15 px-3 py-2 text-xs font-bold leading-5 text-stock-subtle">
-          V3 · 확률적 관심, 단일 종목 선택, 조건부 실행, 안전 상한 선계산, 피로·재진입, 전 종목 리스크 가드
+          V3 · 확률적 관심, 단일 종목 선택, 프로필 판단, 거래 불변조건 검증, 피로·재진입
         </div>
       </ProfilePolicySection>
 
@@ -81,7 +82,7 @@ export function AdminProfileConfigFormPanel({
           ))}
         </div>
         <p className="mt-3 text-xs font-bold leading-5 text-stock-subtle">
-          자발적 관심 이벤트는 최대 한 건만 주문합니다. 수량은 현금·보유·미체결·자산배분·예산·호가잔량·ADV 상한을 먼저 계산한 뒤 확률 분포로 정합니다.
+          자발적 관심 이벤트는 최대 한 건만 주문합니다. 수량은 프로필 성향으로 먼저 정하고 수수료 포함 가용 현금·예약되지 않은 보유수량·종목 주문상한·전용 예산 같은 거래 불변조건만 검증합니다. 시장 방향이나 전체 주문량을 맞추기 위한 별도 가드는 적용하지 않습니다.
         </p>
       </ProfilePolicySection>
 

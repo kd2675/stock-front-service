@@ -12,7 +12,7 @@ export const AUTO_PARTICIPANT_PROFILE_OPTIONS: AutoParticipantProfileOption[] = 
   { value: "MOMENTUM_FOLLOWER", label: "추세추종형", description: "1시간과 1거래일 추세를 함께 확인", behavior: "1시간 모멘텀과 직전 거래일 수익률의 방향이 일치할 때만 추세를 따라 주문합니다." },
   { value: "CONTRARIAN", label: "역추세형", description: "3·5거래일 과도한 움직임에 역행", behavior: "3거래일과 5거래일 수익률이 함께 과도하게 하락하면 매수하고, 함께 과도하게 상승하면 보유분을 매도합니다." },
   { value: "LOSS_AVERSE", label: "손실회피형", description: "손실 중인 종목 매도를 꺼림", behavior: "평균단가 대비 손실이면 추가 매수로 뒤집지 않고 주문을 쉬어 손실 확정을 미룹니다. 물타기 행동은 물타기형 프로필이 담당합니다." },
-  { value: "OVERCONFIDENT", label: "과신형", description: "최근 실현 성과와 확인된 상승 추세에 과잉 반응", behavior: "미실현 수익 또는 최근 5거래일 중 충분한 수익 일수가 있고 1시간·1거래일 상승이 함께 확인되면 주문 수와 매수 성향을 높입니다. 손실 중에는 추가 행동을 쉽니다." },
+  { value: "OVERCONFIDENT", label: "과신형", description: "최근 실현 성과와 확인된 상승 추세에 과잉 반응", behavior: "미실현 수익 또는 최근 5거래일 중 충분한 수익 일수가 있고 1시간·1거래일 상승이 함께 확인되면 매수 결정을 더 쉽게 실행합니다. 손실 중에는 추가 행동을 쉽니다." },
   { value: "HERD_FOLLOWER", label: "군중추종형", description: "호가 깊이와 실제 단기 참여를 함께 추종", behavior: "상위 매수·매도 호가 깊이와 5분 모멘텀이 같은 방향이고, 최근 5분 체결량과 서로 다른 참여 계좌 수가 확인된 경우에만 군중을 따라갑니다. 재시작 직후 관측 창이 덜 찼으면 주문하지 않습니다." },
   { value: "PASSIVE_LIMIT_TRADER", label: "수동 지정가형", description: "시장 의무 없이 낮은 공격도로 한 방향 지정가를 제출", behavior: "관심 이벤트가 발생한 경우에만 한 종목과 한 방향을 선택합니다. 양방향 호가 유지나 자동 재호가는 하지 않으며 공식 LP와 역할을 분리합니다." },
   { value: "NOISE_TRADER", label: "노이즈형", description: "랜덤성이 크지만 현금/보유 제약은 지킴", behavior: "방향성보다 무작위성이 크지만 현금 부족, 보유 부족, 예약 수량 제한은 반드시 지킵니다." },
@@ -32,7 +32,7 @@ export const AUTO_PARTICIPANT_PROFILE_OPTIONS: AutoParticipantProfileOption[] = 
   { value: "PROFIT_LOCKER", label: "익절우선형", description: "계좌별 +4~6%부터 보유량 일부를 이익 확정", behavior: "계좌별 고정 수익 임계값에 도달하면 한 번에 가용 보유량의 35%를 익절 대상으로 계획합니다." },
   { value: "LIQUIDITY_AVOIDANT", label: "유동성회피형", description: "넓은 스프레드·얕은 호가·적은 체결을 회피", behavior: "스프레드가 4틱을 넘거나 양쪽 가시 호가 깊이가 주문 상한의 2배보다 작으면 주문하지 않습니다. 최근 5분 관측이 준비된 뒤 체결량 또는 참여 계좌가 너무 적어도 쉽니다." },
   { value: "CASH_DEFENSIVE", label: "현금방어형", description: "현금 비중 60~70% 범위를 방어", behavior: "현금 비중이 60% 아래면 보유분 매도를 우선하고, 70% 이상이면서 강한 상승 신호가 있을 때만 제한적으로 매수합니다." },
-  { value: "WHALE", label: "고래형", description: "큰 주문을 내되 시장 깊이와 거래량으로 제한", behavior: "큰 수량 배율을 사용하지만 5일 평균 거래량의 2%, 반대 호가 깊이의 25%, 계좌 자산 위험 한도를 넘지 않습니다." },
+  { value: "WHALE", label: "고래형", description: "큰 주문을 내되 시장 깊이와 거래량에 반응", behavior: "큰 수량 배율을 사용하되 프로필 자체가 5일 평균 거래량의 2%와 반대 호가 깊이의 25%를 주문 크기 기준으로 사용합니다. 최종 주문은 종목 주문상한과 실제 가용 현금·보유수량을 지킵니다." },
   { value: "SMALL_DIVERSIFIER", label: "소액분산형", description: "종목 집중도를 낮추며 작은 주문으로 분산", behavior: "보유 종목이 3개 미만이거나 종목 비중이 15% 미만이면, 현재 보유와 미체결 매수 평가액이 낮은 활성 종목을 우선해 작은 주문으로 늘립니다. 25% 이상인 종목은 비중을 줄입니다." },
   { value: "OBSERVER", label: "관망형", description: "강한 신호가 아니면 거의 움직이지 않음", behavior: "중립 신호에서는 주문을 쉬고 강한 신호에서도 작은 주문을 한 번만 냅니다." },
 ];
