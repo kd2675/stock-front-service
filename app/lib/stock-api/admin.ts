@@ -105,6 +105,8 @@ export type InstitutionPortfolioPolicyUpdatePayload = {
   dailyTurnoverLimitRate: number;
   maxDecisionTurnoverRate: number;
   decisionIntervalMinutes: number;
+  buildHorizonDays: number;
+  buildParticipationRate: number;
   mandates: InstitutionSymbolPolicy[];
   changeReason?: string;
 };

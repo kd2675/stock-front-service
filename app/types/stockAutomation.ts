@@ -240,7 +240,7 @@ export type InstitutionSymbolMandate = {
   dailyPlannedSellAmount: number;
   dailySubmittedBuyAmount: number;
   dailySubmittedSellAmount: number;
-  orderIntentStatus: "PENDING" | "SUBMITTED" | "REJECTED" | "FAILED" | null;
+  orderIntentStatus: "PENDING" | "SUBMITTED" | "COMPLETED" | "CANCELLED" | "REJECTED" | "FAILED" | null;
   orderIntentAttemptCount: number;
   orderIntentRequestedQuantity: number;
   orderIntentPlannedAmount: number;
@@ -249,6 +249,30 @@ export type InstitutionSymbolMandate = {
   submittedQuantity: number;
   orderSubmissionReason: string | null;
   submittedAt: string | null;
+  executionProgramSide: InstitutionDecisionAction | null;
+  executionProgramStatus: "ACTIVE" | "WAITING_MINIMUM_LOT" | "COMPLETED" | "CANCELLED" | null;
+  executionProgramGeneration: number;
+  executionProgramTargetQuantity: number;
+  executionProgramRemainingQuantity: number;
+  executionProgramCommittedQuantity: number;
+  executionProgramTargetAmount: number;
+  executionProgramResidualTargetAmount: number;
+  executionProgramCumulativeFilledQuantity: number;
+  executionProgramCumulativeFilledAmount: number;
+  executionProgramArrivalPrice: number;
+  executionProgramAverageFilledPrice: number;
+  executionProgramCompletionRate: number;
+  executionProgramSlippageRate: number;
+  executionUrgencyRate: number;
+  effectiveParticipationRate: number;
+  intradayMarketVolume: number;
+  povHeadroomQuantity: number;
+  scheduledDailyQuantity: number;
+  scheduleHeadroomQuantity: number;
+  programScheduleTradeDate: string | null;
+  programStartedTradeDate: string | null;
+  programTargetCompletionDate: string | null;
+  executionProgramLastOrderStatus: string | null;
 };
 
 export type InstitutionSymbolPolicy = {
@@ -280,6 +304,8 @@ export type InstitutionPortfolioScheduledPolicy = {
   dailyTurnoverLimitRate: number;
   maxDecisionTurnoverRate: number;
   decisionIntervalMinutes: number;
+  buildHorizonDays: number;
+  buildParticipationRate: number;
   mandates: InstitutionSymbolPolicy[];
   changeReason: string;
   changedBy: string;
@@ -318,6 +344,8 @@ export type InstitutionPortfolio = {
   dailyTurnoverLimitRate: number;
   maxDecisionTurnoverRate: number;
   decisionIntervalMinutes: number;
+  buildHorizonDays: number;
+  buildParticipationRate: number;
   nextDecisionAt: string | null;
   latestDecisionRunId: number | null;
   latestDecisionSlot: string | null;
@@ -332,6 +360,8 @@ export type InstitutionPortfolio = {
   dailyPlannedSellAmount: number;
   dailySubmittedBuyAmount: number;
   dailySubmittedSellAmount: number;
+  dailyExecutedBuyAmount: number;
+  dailyExecutedSellAmount: number;
   institutionalOpenOrderCount: number;
   completedDecisionTradingDays: number;
   recentDecisionFailureCount: number;
@@ -363,6 +393,8 @@ export type InstitutionPortfolioStylePreset = {
   dailyTurnoverLimitRate: number;
   maxDecisionTurnoverRate: number;
   decisionIntervalMinutes: number;
+  buildHorizonDays: number;
+  buildParticipationRate: number;
   pricePressureSensitivity: number;
   momentumSensitivity: number;
   valueSensitivity: number;

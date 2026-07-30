@@ -34,6 +34,8 @@ type PolicyDraft = {
   dailyTurnoverLimitRate: number;
   maxDecisionTurnoverRate: number;
   decisionIntervalMinutes: number;
+  buildHorizonDays: number;
+  buildParticipationRate: number;
   mandates: InstitutionSymbolPolicy[];
   changeReason: string;
 };
@@ -373,7 +375,29 @@ export function AdminInstitutionPolicyEditor({
                 decisionIntervalMinutes: value,
               }))}
             />
+            <PolicyNumberInput
+              label="초기 구축 기간(거래일)"
+              value={draft.buildHorizonDays}
+              rate={false}
+              step="1"
+              onChange={(value) => setDraft((current) => ({
+                ...current,
+                buildHorizonDays: value,
+              }))}
+            />
+            <PolicyNumberInput
+              label="기관별 구축 POV 요청 상한"
+              value={draft.buildParticipationRate}
+              onChange={(value) => setDraft((current) => ({
+                ...current,
+                buildParticipationRate: value,
+              }))}
+            />
           </div>
+          <p className="mt-2 text-[10px] leading-4 text-admin-quiet">
+            종목별 활성 기관의 요청값 합계가 20%를 넘으면 전체 기관 참여율이
+            20% 이내가 되도록 비례 조정됩니다.
+          </p>
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
             {(recommendation?.styles ?? []).map((style) => (
@@ -393,7 +417,7 @@ export function AdminInstitutionPolicyEditor({
             ))}
             <span className="text-[10px] font-bold text-admin-quiet">
               {selectedStyle
-                ? `선택 유형 권장: 주식 ${formatRate(selectedStyle.baseStockAllocationRate)} · 일일 회전 ${formatRate(selectedStyle.dailyTurnoverLimitRate)}`
+                ? `선택 유형 권장: 주식 ${formatRate(selectedStyle.baseStockAllocationRate)} · 일반 참여 ${formatRate(selectedStyle.dailyParticipationRate)} · 구축 참여 ${formatRate(selectedStyle.buildParticipationRate)} / ${selectedStyle.buildHorizonDays}일`
                 : "운용 유형별 권장값 조회 대기"}
             </span>
           </div>
@@ -647,6 +671,8 @@ function createDraft(portfolio: InstitutionPortfolio): PolicyDraft {
     dailyTurnoverLimitRate: policy.dailyTurnoverLimitRate,
     maxDecisionTurnoverRate: policy.maxDecisionTurnoverRate,
     decisionIntervalMinutes: policy.decisionIntervalMinutes,
+    buildHorizonDays: policy.buildHorizonDays,
+    buildParticipationRate: policy.buildParticipationRate,
     mandates: mandates.map((mandate) => ({ ...mandate })),
     changeReason: portfolio.scheduledPolicy?.changeReason
       ?? "시장 규모와 운용 유형 기준 기관 정책·종목 비율 재조정",
@@ -686,6 +712,8 @@ function applyStylePreset(
     dailyTurnoverLimitRate: style.dailyTurnoverLimitRate,
     maxDecisionTurnoverRate: style.maxDecisionTurnoverRate,
     decisionIntervalMinutes: style.decisionIntervalMinutes,
+    buildHorizonDays: style.buildHorizonDays,
+    buildParticipationRate: style.buildParticipationRate,
   };
 }
 
@@ -811,6 +839,8 @@ function validateDraft(
     draft.dailyTurnoverLimitRate,
     draft.maxDecisionTurnoverRate,
     draft.decisionIntervalMinutes,
+    draft.buildHorizonDays,
+    draft.buildParticipationRate,
     ...draft.mandates.flatMap((mandate) => [
       mandate.baseSymbolWeight,
       mandate.minPortfolioAllocationRate,
@@ -852,6 +882,14 @@ function validateDraft(
     || draft.decisionIntervalMinutes < 5
     || draft.decisionIntervalMinutes > 1440) {
     return "결정 주기는 5~1,440분의 정수여야 합니다.";
+  }
+  if (!Number.isInteger(draft.buildHorizonDays)
+    || draft.buildHorizonDays < 1
+    || draft.buildHorizonDays > 60) {
+    return "초기 포트폴리오 구축 기간은 1~60거래일의 정수여야 합니다.";
+  }
+  if (draft.buildParticipationRate <= 0 || draft.buildParticipationRate > 0.2) {
+    return "기관별 구축 POV 요청 상한은 0% 초과 20% 이하여야 합니다.";
   }
   if (Math.abs(baseWeightSum - 1) > 0.0001) {
     return "종목 기준 비중 합계는 100%여야 합니다.";

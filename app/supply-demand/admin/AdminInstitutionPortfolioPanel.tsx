@@ -791,7 +791,7 @@ function InstitutionPortfolioCard({
         </ul>
       ) : null}
 
-      <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5 xl:grid-cols-10">
+      <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5 xl:grid-cols-11">
         <PortfolioMetric label="AUM" value={formatCompactWon(portfolio.totalAsset)} />
         <PortfolioMetric label="가용 현금" value={formatCompactWon(portfolio.cashBalance)} />
         <PortfolioMetric label="매수 예약 현금" value={formatCompactWon(portfolio.openBuyReservedCash)} />
@@ -801,6 +801,10 @@ function InstitutionPortfolioCard({
         <PortfolioMetric label="일일 총매매 한도" value={formatRate(portfolio.dailyTurnoverLimitRate)} />
         <PortfolioMetric label="결정당 한도" value={formatRate(portfolio.maxDecisionTurnoverRate)} />
         <PortfolioMetric label="결정 주기" value={`${formatInteger(portfolio.decisionIntervalMinutes)}분`} />
+        <PortfolioMetric
+          label="초기 구축 요청"
+          value={`${formatInteger(portfolio.buildHorizonDays)}거래일 · ${formatRate(portfolio.buildParticipationRate)} POV`}
+        />
         <PortfolioMetric label="미체결 기관 주문" value={formatCount(portfolio.institutionalOpenOrderCount, "건")} />
       </div>
 
@@ -819,7 +823,7 @@ function InstitutionPortfolioCard({
         <PortfolioInfo
           label={`일일 계획 예산 · ${portfolio.budgetTradeDate}`}
           primary={`매수 ${formatCompactWon(portfolio.dailyPlannedBuyAmount)} · 매도 ${formatCompactWon(portfolio.dailyPlannedSellAmount)}`}
-          secondary={`계획 ${formatNumber(portfolio.dailyPlannedBuyQuantity)}주 / ${formatNumber(portfolio.dailyPlannedSellQuantity)}주 · 제출 ${formatCompactWon(portfolio.dailySubmittedBuyAmount)} / ${formatCompactWon(portfolio.dailySubmittedSellAmount)}`}
+          secondary={`계획 ${formatNumber(portfolio.dailyPlannedBuyQuantity)}주 / ${formatNumber(portfolio.dailyPlannedSellQuantity)}주 · 제출 ${formatCompactWon(portfolio.dailySubmittedBuyAmount)} / ${formatCompactWon(portfolio.dailySubmittedSellAmount)} · 체결 ${formatCompactWon(portfolio.dailyExecutedBuyAmount)} / ${formatCompactWon(portfolio.dailyExecutedSellAmount)}`}
         />
         <PortfolioInfo
           label="레짐 해석"
@@ -867,7 +871,7 @@ function InstitutionPortfolioCard({
               <th className="px-3 py-2">결정</th>
               <th className="px-3 py-2">원인 / 게이트</th>
               <th className="px-3 py-2 text-right">계획·주문</th>
-              <th className="px-3 py-2 text-right">기준 거래량·참여율</th>
+              <th className="px-3 py-2 text-right">Parent·POV 집행</th>
               <th className="px-3 py-2">혼합 압력</th>
               <th className="px-3 py-2">수익률 신호</th>
             </tr>
@@ -1052,9 +1056,61 @@ function InstitutionMandateRow({ mandate }: { mandate: InstitutionSymbolMandate 
         ) : null}
       </td>
       <td className="px-3 py-3 text-right tabular-nums">
-        <p className="font-black text-white">{formatNumber(mandate.referenceDailyVolume)}주 · {formatRate(mandate.dailyParticipationRate)}</p>
+        <p className="font-black text-white">
+          {formatMarketRoleCode(mandate.executionProgramStatus, "집행 대기")}
+          {" · "}{formatMarketRoleCode(mandate.executionProgramSide, "—")}
+          {mandate.executionProgramGeneration > 0
+            ? ` · 프로그램 #${formatInteger(mandate.executionProgramGeneration)}`
+            : ""}
+        </p>
         <p className="mt-1 text-[10px] text-admin-quiet">
-          일일 {formatNumber(mandate.dailyGrossQuantityLimit)}주 / {formatCompactWon(mandate.dailyGrossNotionalLimit)}
+          목표 {formatNumber(mandate.executionProgramTargetQuantity)}주
+          {" / "}{formatCompactWon(mandate.executionProgramTargetAmount)}
+          {" · 잔여 "}{formatNumber(mandate.executionProgramRemainingQuantity)}주
+          {" · 주문중 "}{formatNumber(mandate.executionProgramCommittedQuantity)}주
+        </p>
+        <p className="mt-1 text-[10px] text-admin-quiet">
+          장중 {formatNumber(mandate.intradayMarketVolume)}주
+          {" · POV 여유 "}{formatNumber(mandate.povHeadroomQuantity)}주
+          {" · "}{formatRate(mandate.effectiveParticipationRate)}
+        </p>
+        <p className="mt-1 text-[10px] text-admin-quiet">
+          오늘 구축 예정 {formatNumber(mandate.scheduledDailyQuantity)}주
+          {" · 추가 집행 여유 "}{formatNumber(mandate.scheduleHeadroomQuantity)}주
+          {mandate.programScheduleTradeDate
+            ? ` · ${mandate.programScheduleTradeDate}`
+            : ""}
+        </p>
+        <p className="mt-1 text-[10px] text-admin-quiet">
+          일반 {formatRate(mandate.dailyParticipationRate)}
+          {" · 긴급도 "}{formatRate(mandate.executionUrgencyRate)}
+          {" · 진척 "}{formatRate(mandate.executionProgramCompletionRate)}
+        </p>
+        <p className="mt-1 text-[10px] text-admin-quiet">
+          누적체결 {formatNumber(mandate.executionProgramCumulativeFilledQuantity)}주
+          {" / "}{formatCompactWon(mandate.executionProgramCumulativeFilledAmount)}
+          {" · 도착/평균 "}{formatCompactWon(mandate.executionProgramArrivalPrice)}
+          {" / "}{formatCompactWon(mandate.executionProgramAverageFilledPrice)}
+          {" · 슬리피지 "}{formatRate(mandate.executionProgramSlippageRate)}
+        </p>
+        {mandate.executionProgramLastOrderStatus ? (
+          <p className="mt-1 text-[10px] text-admin-quiet">
+            최근 집행 {formatMarketRoleCode(mandate.executionProgramLastOrderStatus, "—")}
+          </p>
+        ) : null}
+        {mandate.programTargetCompletionDate ? (
+          <p className="mt-1 text-[10px] font-black text-admin-accent-soft">
+            구축 {mandate.programStartedTradeDate ?? "—"} → {mandate.programTargetCompletionDate}
+          </p>
+        ) : null}
+        {mandate.executionProgramResidualTargetAmount > 0 ? (
+          <p className="mt-1 text-[10px] text-admin-warning">
+            최소 lot 대기 {formatCompactWon(mandate.executionProgramResidualTargetAmount)}
+          </p>
+        ) : null}
+        <p className="mt-1 text-[10px] text-admin-quiet">
+          기준 {formatNumber(mandate.referenceDailyVolume)}주
+          {" · 일일상한 "}{formatNumber(mandate.dailyGrossQuantityLimit)}주
         </p>
       </td>
       <td className="px-3 py-3 tabular-nums">
