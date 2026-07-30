@@ -136,6 +136,7 @@ export type UnderwritingSupplySuspensionPayload = {
 export type UnderwritingContractCreatePayload = {
   underwritingType?: "FIRM_COMMITMENT";
   changeReason?: string;
+  autoParticipantAllocationRate?: number;
 };
 
 export type AutoParticipantActivityScope = "RECENT_SIMULATION_DAY" | "ALL";

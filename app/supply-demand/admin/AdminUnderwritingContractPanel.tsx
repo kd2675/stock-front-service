@@ -58,12 +58,13 @@ export function AdminUnderwritingContractPanel({
   const [supplyPercent, setSupplyPercent] = useState("10");
   const [durationDays, setDurationDays] = useState("20");
   const [contractSymbol, setContractSymbol] = useState("");
+  const [autoAllocationPercent, setAutoAllocationPercent] = useState("10");
   const [contractReason, setContractReason] = useState(
     "발행 대기 유통분의 종목별 인수계정·계약 생성",
   );
   const [contractConfirmed, setContractConfirmed] = useState(false);
   const [supplyChangeReason, setSupplyChangeReason] = useState(
-    "축소 시장 초기 수급용 유한 수동 매도 공급",
+    "축소 시장 초기 수급용 유한 분할 매도 공급",
   );
   const [confirmed, setConfirmed] = useState(false);
   const [workingContractId, setWorkingContractId] = useState<number | null>(null);
@@ -94,12 +95,17 @@ export function AdminUnderwritingContractPanel({
     && normalizedDurationDays >= 1
     && normalizedDurationDays <= 60;
   const normalizedContractSymbol = contractSymbol.trim().toUpperCase();
+  const autoAllocationRate = Number(autoAllocationPercent) / 100;
+  const autoAllocationValid = Number.isFinite(autoAllocationRate)
+    && autoAllocationRate >= 0
+    && autoAllocationRate <= 0.25;
   const contractCandidate = recommendation?.symbols.find(
     (item) => item.symbol === normalizedContractSymbol,
   );
   const canCreateContract = Boolean(accessToken)
     && !loading
     && !error
+    && autoAllocationValid
     && contractConfirmed
     && contractCandidate?.creationEligible === true
     && !contracts.some((contract) => contract.symbol === normalizedContractSymbol);
@@ -115,6 +121,7 @@ export function AdminUnderwritingContractPanel({
       payload: {
         underwritingType: "FIRM_COMMITMENT",
         changeReason: contractReason.trim() || undefined,
+        autoParticipantAllocationRate: autoAllocationRate,
       },
     });
     const created = getAdminActionData(
@@ -147,7 +154,7 @@ export function AdminUnderwritingContractPanel({
       return;
     }
     const approved = window.confirm(
-      `${contract.symbol} 인수재고 중 ${supplyPercent}%를 최대 ${durationDays}일 동안 유한 공급하도록 예약합니다.\n\n현재 장에는 주문을 만들지 않으며 다음 안전한 개장 준비 단계에서 가용 재고를 다시 계산한 뒤 매도 전용 공급을 시작합니다. 계속할까요?`,
+      `${contract.symbol} 인수재고 중 ${supplyPercent}%를 최대 ${durationDays}일 동안 유한 공급하도록 예약합니다.\n\n현재 장에는 주문을 만들지 않으며 다음 안전한 개장 준비 단계에서 가용 재고를 다시 계산합니다. 공급 주문은 수동 호가를 우선하되 예정 진척이 크게 늦고 발행가 이상 매수호가가 있을 때만 제한적으로 즉시 체결합니다. 계속할까요?`,
     );
     if (!approved) {
       return;
@@ -333,7 +340,7 @@ export function AdminUnderwritingContractPanel({
             </DataTableViewport>
           </div>
         ) : null}
-        <div className="mt-3 grid gap-3 md:grid-cols-3">
+        <div className="mt-3 grid gap-3 md:grid-cols-4">
           <label className="text-xs font-black text-stock-subtle">
             발행 대기 종목
             <select
@@ -351,6 +358,26 @@ export function AdminUnderwritingContractPanel({
               ))}
             </select>
           </label>
+          <label className="text-xs font-black text-stock-subtle">
+            자동참여자 공모 배정률
+            <div className="relative mt-1">
+              <input
+                type="number"
+                min="0"
+                max="25"
+                step="0.1"
+                value={autoAllocationPercent}
+                onChange={(event) => setAutoAllocationPercent(event.target.value)}
+                className="min-h-10 w-full rounded-md border border-white/10 bg-black/25 px-3 pr-8 text-sm font-black text-white"
+              />
+              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-black text-admin-quiet">
+                %
+              </span>
+            </div>
+            <span className={autoAllocationValid ? "mt-1 block text-[10px] text-admin-quiet" : "mt-1 block text-[10px] text-admin-danger"}>
+              유통 대기 물량의 0~25% · 권장 10%
+            </span>
+          </label>
           <label className="text-xs font-black text-stock-subtle md:col-span-2">
             생성 사유
             <input
@@ -366,6 +393,9 @@ export function AdminUnderwritingContractPanel({
             <strong className="text-white">{contractCandidate.symbol}</strong>
             {" · "}발행 {formatNumber(contractCandidate.issuedShares)}주
             {" · "}유통 대기 {formatNumber(contractCandidate.floatCustodyAvailableQuantity)}주
+            {" · "}자동참여자 예정 {autoAllocationValid
+              ? `${formatNumber(Math.floor(contractCandidate.floatCustodyAvailableQuantity * autoAllocationRate))}주`
+              : "입력 확인"}
             {" · "}잠금 {formatNumber(contractCandidate.lockedShares)}주
             {" · "}발행가 {formatWon(contractCandidate.issuePrice)}
           </p>
@@ -378,7 +408,7 @@ export function AdminUnderwritingContractPanel({
               onChange={(event) => setContractConfirmed(event.target.checked)}
               className="mt-1"
             />
-            선택 종목의 유통 대기 물량 전부를 종목 전용 인수계정으로 이전하며, LP 계약과 공급 활성화는 함께 생성되지 않는다는 점을 확인했습니다.
+            선택한 비율은 활성 자동참여자에게 프로필·자산규모 기반으로 확률 배정하고, 잔여 유통 물량만 종목 전용 인수계정으로 이전합니다. LP 계약과 공급 활성화는 함께 생성되지 않습니다.
           </label>
           <button
             type="button"
