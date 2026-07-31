@@ -1160,6 +1160,8 @@ export type AutoParticipantV3Operations = {
     submittedOrderCount: number;
     submittedNotional: number;
     observedExecutionCount: number;
+    observedExecutionBuyQuantity: number;
+    observedExecutionSellQuantity: number;
     observedExecutionNotional: number;
     observedCancelCount: number;
     averageFatigueScore: number;
@@ -1176,6 +1178,8 @@ export type AutoParticipantV3Operations = {
     submittedOrderCount: number;
     submittedNotional: number;
     observedExecutionCount: number;
+    observedExecutionBuyQuantity: number;
+    observedExecutionSellQuantity: number;
     observedExecutionNotional: number;
     observedCancelCount: number;
     lastResultReason?: string | null;

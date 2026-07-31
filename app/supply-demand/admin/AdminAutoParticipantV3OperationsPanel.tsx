@@ -58,6 +58,7 @@ export function AdminAutoParticipantV3OperationsPanel({ accessToken }: Props) {
           <h2 className="mt-1 text-lg font-black text-white">확률 행동 운영 상태</h2>
           <p className="mt-1 text-xs font-bold leading-5 text-stock-subtle">
             정책 버전, 일일 잠재 상태, 피로도, 다음 프로필 관심 시각과 주문 메타데이터 계약을 10초마다 확인합니다.
+            체결 수량은 자동참여자 계좌의 매수와 매도를 합한 계좌측 참여량입니다.
           </p>
         </div>
         <div className="flex min-w-0 flex-col gap-2 sm:min-w-[360px] sm:flex-row">
@@ -99,13 +100,22 @@ export function AdminAutoParticipantV3OperationsPanel({ accessToken }: Props) {
       {operationsQuery.isError ? (
         <p className="mt-4 text-sm font-bold text-admin-danger">V3 운영 상태를 불러오지 못했습니다.</p>
       ) : (
-        <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-8">
+        <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-9">
           <Metric label="정책" value={activePolicy ? `v${activePolicy.policyVersion}` : "-"} />
           <Metric label="런타임" value={activePolicy?.runtimeEnabled ? "실행" : "정지"} />
           <Metric label="계좌" value={formatNumber(summary?.accountCount)} />
           <Metric label="OFFLINE" value={formatNumber(summary?.offlineAccountCount)} />
           <Metric label="제출 주문" value={formatNumber(summary?.submittedOrderCount)} />
           <Metric label="관측 체결" value={formatNumber(summary?.observedExecutionCount)} />
+          <Metric
+            label="계좌측 체결 수량"
+            value={formatQuantity(
+              summary == null
+                ? undefined
+                : summary.observedExecutionBuyQuantity
+                  + summary.observedExecutionSellQuantity,
+            )}
+          />
           <Metric label="평균 피로" value={formatDecimal(summary?.averageFatigueScore)} />
           <Metric label="계약 위반" value={formatNumber(operations?.profileOrderContractViolationCount)} />
         </div>
@@ -120,6 +130,7 @@ export function AdminAutoParticipantV3OperationsPanel({ accessToken }: Props) {
                 <th className="px-2 py-2">상태</th>
                 <th className="px-2 py-2">피로</th>
                 <th className="px-2 py-2">주문/체결/취소</th>
+                <th className="px-2 py-2">매수/매도 수량</th>
                 <th className="px-2 py-2">다음 실행</th>
                 <th className="px-2 py-2">최근 결과</th>
               </tr>
@@ -131,6 +142,9 @@ export function AdminAutoParticipantV3OperationsPanel({ accessToken }: Props) {
                   <td className="px-2 py-2">{state.activityState} · {state.activitySession}</td>
                   <td className="px-2 py-2">{formatDecimal(state.fatigueScore)}</td>
                   <td className="px-2 py-2">{state.submittedOrderCount}/{state.observedExecutionCount}/{state.observedCancelCount}</td>
+                  <td className="px-2 py-2 tabular-nums">
+                    {formatNumber(state.observedExecutionBuyQuantity)} / {formatQuantity(state.observedExecutionSellQuantity)}
+                  </td>
                   <td className="px-2 py-2">
                     <span>{formatDateTime(state.nextRunAt)}</span>
                     <span className="ml-1 text-stock-subtle">
@@ -177,6 +191,10 @@ function formatNumber(value: number | undefined) {
 
 function formatDecimal(value: number | undefined) {
   return value == null ? "-" : value.toFixed(3);
+}
+
+function formatQuantity(value: number | undefined) {
+  return value == null ? "-" : `${formatNumber(value)}주`;
 }
 
 function formatDateTime(value: string | null | undefined) {
