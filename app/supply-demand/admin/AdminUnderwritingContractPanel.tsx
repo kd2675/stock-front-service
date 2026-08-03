@@ -30,6 +30,16 @@ import type {
   UnderwritingContractRecommendation,
 } from "@/app/types/stock";
 
+const DISTRIBUTED_TRADABLE_SHARE_CHECKPOINTS = [
+  0.05,
+  0.10,
+  0.25,
+  0.50,
+  0.75,
+  1,
+] as const;
+const UNDERWRITING_SUPPLY_DURATION_DAYS = 20;
+
 export function AdminUnderwritingContractPanel({
   accessToken,
   contracts,
@@ -55,8 +65,6 @@ export function AdminUnderwritingContractPanel({
   const suspensionMutation = useMutation(
     adminSuspendUnderwritingSupplyMutationOptions(),
   );
-  const [supplyPercent, setSupplyPercent] = useState("10");
-  const [durationDays, setDurationDays] = useState("20");
   const [contractSymbol, setContractSymbol] = useState("");
   const [contractReason, setContractReason] = useState(
     "발행 대기 유통분의 종목별 인수계정·계약 생성",
@@ -73,6 +81,11 @@ export function AdminUnderwritingContractPanel({
   const selectedContract = contracts.find(
     (contract) => String(contract.contractId) === selectedContractKey,
   ) ?? contracts[0] ?? null;
+  const nextDistributionCheckpoint = selectedContract
+    ? findNextDistributionCheckpoint(
+      selectedContract.supply.distributedTradableShareRate,
+    )
+    : null;
   const selectorItems = useMemo(
     () => contracts.map((contract) => ({
       key: String(contract.contractId),
@@ -85,14 +98,6 @@ export function AdminUnderwritingContractPanel({
     })),
     [contracts],
   );
-  const supplyRate = Number(supplyPercent) / 100;
-  const normalizedDurationDays = Number(durationDays);
-  const activationPolicyValid = Number.isFinite(supplyRate)
-    && supplyRate >= 0.01
-    && supplyRate <= 0.25
-    && Number.isInteger(normalizedDurationDays)
-    && normalizedDurationDays >= 1
-    && normalizedDurationDays <= 60;
   const normalizedContractSymbol = contractSymbol.trim().toUpperCase();
   const contractCandidate = recommendation?.symbols.find(
     (item) => item.symbol === normalizedContractSymbol,
@@ -136,18 +141,21 @@ export function AdminUnderwritingContractPanel({
   };
 
   const activateSupply = async (contract: UnderwritingContract) => {
+    const targetDistributedTradableShareRate = findNextDistributionCheckpoint(
+      contract.supply.distributedTradableShareRate,
+    );
     if (!accessToken
       || loading
       || error
       || !confirmed
-      || !activationPolicyValid
+      || targetDistributedTradableShareRate === null
       || activationMutation.isPending
       || contract.status !== "ALLOCATED"
       || !contract.reconciliation.roleEligible) {
       return;
     }
     const approved = window.confirm(
-      `${contract.symbol} 인수재고 중 ${supplyPercent}%를 최대 ${durationDays}일 동안 유한 공급하도록 예약합니다.\n\n현재 장에는 주문을 만들지 않으며 다음 안전한 개장 준비 단계에서 가용 재고를 다시 계산한 뒤 매도 전용 공급을 시작합니다. 계속할까요?`,
+      `${contract.symbol} 실제 분산 유통률을 ${formatRate(contract.supply.distributedTradableShareRate)}에서 ${formatRate(targetDistributedTradableShareRate)} 체크포인트까지 높이도록 예약합니다.\n\n현재 장에는 주문을 만들지 않으며 다음 안전한 개장 준비 단계에서 재고를 다시 계산한 뒤 ${UNDERWRITING_SUPPLY_DURATION_DAYS}일의 고정 관찰 구간으로 매도 전용 공급을 시작합니다. 계속할까요?`,
     );
     if (!approved) {
       return;
@@ -159,8 +167,7 @@ export function AdminUnderwritingContractPanel({
         token: accessToken,
         contractId: contract.contractId,
         payload: {
-          supplyRate,
-          durationDays: normalizedDurationDays,
+          targetDistributedTradableShareRate,
           changeReason: supplyChangeReason.trim() || undefined,
         },
       });
@@ -441,40 +448,35 @@ export function AdminUnderwritingContractPanel({
                 <div>
                   <p className="text-sm font-black text-white">{selectedContract.symbol} 초기 공급 정책</p>
                   <p className="mt-1 max-w-4xl text-[11px] font-bold leading-5 text-stock-subtle">
-                    전체 인수재고를 시장에 내놓지 않습니다. 계약 총 제출량, 거래일별 제출량, 일일 주문 횟수, 주문 1건, 외부 매수 5호가 깊이 중 가장 작은 한도만 매도하며 취소된 주문도 예산과 주문 횟수를 소비합니다.
+                    실제 체결로 분산된 유통주식만 집계합니다. 현재 분산율에서 다음 체크포인트 하나만 예약하며, 거래일별 제출량·일일 주문 횟수·주문 1건·외부 매수 5호가 깊이 중 가장 작은 한도만 매도합니다.
                   </p>
                   <p className="mt-1 max-w-4xl text-[10px] font-bold leading-5 text-admin-quiet">
                     역할 분리형 신규 종목은 먼저 전용 LP를 실운영으로 전환해 주문장 시장을 활성화하고, 종목 자동시장·기준 거래량 위험 설정이 켜져 있어야 합니다.
                   </p>
                   <p className="mt-1 max-w-4xl text-[10px] font-bold leading-5 text-admin-warning">
-                    공급 기간이나 총 상한이 끝난 뒤 남은 인수재고는 자동 분산되지 않습니다. 현재 초기 참여자 배정·락업 해제 처리 흐름이 없으므로 신규 종목의 실제 활동 유통량을 별도로 검토한 뒤 공급률을 확정하세요.
+                    각 체크포인트는 20일 고정 관찰 구간을 사용합니다. 구간 종료 때 목표 체결량이 남으면 계약은 완료되지 않고 다시 ALLOCATED로 돌아가며, 다음 체크포인트는 현재 실제 분산율을 확인한 뒤에만 예약할 수 있습니다.
                   </p>
                 </div>
                 <span className="rounded-md bg-admin-warning-surface px-2 py-1 text-[10px] font-black text-admin-warning">
                   실행 중 예약 가능
                 </span>
               </div>
-              <div className="mt-3 grid gap-3 md:grid-cols-3">
-                <label className="text-xs font-black text-stock-subtle">
-                  총 공급 상한 · 현재 가용재고 대비 %
-                  <input
-                    value={supplyPercent}
-                    onChange={(event) => setSupplyPercent(event.target.value)}
-                    inputMode="decimal"
-                    className="mt-1 min-h-10 w-full rounded-md border border-white/10 bg-black/25 px-3 text-sm font-black text-white"
-                  />
-                  <span className="mt-1 block text-[10px] text-admin-quiet">1~25% · 기본 10%</span>
-                </label>
-                <label className="text-xs font-black text-stock-subtle">
-                  공급 기간 · 시뮬레이션 일
-                  <input
-                    value={durationDays}
-                    onChange={(event) => setDurationDays(event.target.value)}
-                    inputMode="numeric"
-                    className="mt-1 min-h-10 w-full rounded-md border border-white/10 bg-black/25 px-3 text-sm font-black text-white"
-                  />
-                  <span className="mt-1 block text-[10px] text-admin-quiet">1~60일 · 기본 20일</span>
-                </label>
+              <div className="mt-3 grid gap-3 md:grid-cols-2">
+                <div className="rounded-md border border-white/10 bg-black/25 px-3 py-2">
+                  <p className="text-xs font-black text-stock-subtle">
+                    실제 분산 유통률 · 다음 체크포인트
+                  </p>
+                  <p className="mt-1 text-sm font-black text-white">
+                    {formatRate(selectedContract.supply.distributedTradableShareRate)}
+                    {" → "}
+                    {nextDistributionCheckpoint === null
+                      ? "100% 도달"
+                      : formatRate(nextDistributionCheckpoint)}
+                  </p>
+                  <span className="mt-1 block text-[10px] text-admin-quiet">
+                    허용 단계 5 · 10 · 25 · 50 · 75 · 100% · 관찰 구간 20일 고정
+                  </span>
+                </div>
                 <label className="text-xs font-black text-stock-subtle">
                   변경 사유
                   <input
@@ -491,11 +493,11 @@ export function AdminUnderwritingContractPanel({
                   onChange={(event) => setConfirmed(event.target.checked)}
                   className="mt-1"
                 />
-                선택한 {selectedContract.symbol} 계약에 매수·가격추격·영구 재보충이 없고, 취소해도 제출예산이 복원되지 않는 유한 공급임을 확인했습니다.
+                선택한 {selectedContract.symbol} 계약은 다음 분산 체크포인트 하나만 목표로 하며, 매수·가격추격·영구 재보충이 없고 취소된 제출은 체결량으로 계산되지 않음을 확인했습니다.
               </label>
-              {!activationPolicyValid ? (
+              {nextDistributionCheckpoint === null ? (
                 <p className="mt-2 text-xs font-bold text-admin-danger">
-                  공급률은 1~25%, 기간은 1~60의 정수로 입력하세요.
+                  실제 분산 유통률이 100%에 도달해 추가 공급 체크포인트가 없습니다.
                 </p>
               ) : null}
             </div>
@@ -509,7 +511,7 @@ export function AdminUnderwritingContractPanel({
                   && !loading
                   && !error
                   && confirmed
-                  && activationPolicyValid
+                  && nextDistributionCheckpoint !== null
                   && selectedContract.status === "ALLOCATED"
                   && selectedContract.reconciliation.issues.length === 0
                   && selectedContract.account.availableSellQuantity > 0}
@@ -609,15 +611,16 @@ function UnderwritingContractCard({
       {contract.scheduledSupply ? (
         <p className="mt-3 rounded-md border border-admin-accent/30 bg-admin-accent-surface/20 px-3 py-2 text-xs font-bold text-admin-accent-soft">
           {contract.scheduledSupply.effectiveBusinessDate} 장전 활성화 예약
-          {" · "}가용 재고의 {formatRate(contract.scheduledSupply.supplyRate)}
+          {" · "}분산 유통 {formatRate(contract.scheduledSupply.targetDistributedTradableShareRate)}
           {" · "}{contract.scheduledSupply.durationDays}일
           {" · "}정책 v{contract.scheduledSupply.policyVersion}
         </p>
       ) : null}
 
-      <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
+      <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-9">
         <ContractMetric label="발행주식" value={formatCount(contract.totalIssueQuantity, "주")} />
         <ContractMetric label="유통 배정" value={`${formatCount(contract.tradableAllocationQuantity, "주")} · ${formatRate(contract.tradableShareRate)}`} />
+        <ContractMetric label="분산 유통" value={`${formatCount(contract.supply.distributedTradableQuantity, "주")} · ${formatRate(contract.supply.distributedTradableShareRate)}`} />
         <ContractMetric label="잠금 배정" value={formatCount(contract.lockedAllocationQuantity, "주")} />
         <ContractMetric label="인수 수량" value={formatCount(contract.underwrittenQuantity, "주")} />
         <ContractMetric label="인수 평가액" value={formatCompactWon(contract.underwrittenQuantity * contract.issuePrice)} />
@@ -627,9 +630,9 @@ function UnderwritingContractCard({
       </div>
 
       <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-        <ContractMetric label="공급 총 수량 상한" value={formatCount(contract.stabilizationQuantityLimit, "주")} />
+        <ContractMetric label="공급 체결 목표" value={`${formatCount(contract.stabilizationQuantityLimit, "주")} · ${formatRate(contract.supply.targetExecutionRate)}`} />
         <ContractMetric label="누적 제출 / 체결" value={`${formatNumber(contract.supply.lifetimeSubmittedQuantity)} / ${formatNumber(contract.supply.lifetimeExecutedQuantity)}주`} />
-        <ContractMetric label="남은 제출량" value={formatCount(contract.supply.remainingSubmissionQuantity, "주")} />
+        <ContractMetric label="남은 체결 목표량" value={formatCount(contract.supply.remainingExecutionTargetQuantity, "주")} />
         <ContractMetric label="누적 제출금액" value={formatCompactWon(contract.supply.lifetimeSubmittedAmount)} />
         <ContractMetric
           label="최근 일일 게이트"
@@ -845,6 +848,15 @@ function formatRate(value: number) {
     return "—";
   }
   return `${formatNumber(value * 100)}%`;
+}
+
+function findNextDistributionCheckpoint(currentRate: number) {
+  if (!Number.isFinite(currentRate)) {
+    return null;
+  }
+  return DISTRIBUTED_TRADABLE_SHARE_CHECKPOINTS.find(
+    (checkpoint) => checkpoint > currentRate + Number.EPSILON,
+  ) ?? null;
 }
 
 function formatReconciliationIssue(issue: string) {

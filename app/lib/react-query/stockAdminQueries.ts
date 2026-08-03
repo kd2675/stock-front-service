@@ -13,7 +13,7 @@ import {
   getAdminUserFundFlow,
   getAutoMarketRegimeHistoryRange,
   getAutoParticipants,
-  getAutoParticipantV3Operations,
+  getAutoParticipantV4Operations,
   getAutoParticipantWithdrawalAudits,
   getAutoParticipantOverviews,
   getAutoParticipantPerformanceSummary,
@@ -26,6 +26,8 @@ import {
   getLiquidityProviderRecommendation,
   getLiquidityProviderMandates,
   getLatestAutoParticipantCashFlowRun,
+  getScaledMarketOverview,
+  getScaledMarketRebasePreview,
   getSystemCustodyOverview,
   getUnderwritingContractRecommendation,
   getUnderwritingContracts,
@@ -51,14 +53,14 @@ function adminAuthenticatedQueryOptions<TData>(
   });
 }
 
-export function autoParticipantV3OperationsQueryOptions(
+export function autoParticipantV4OperationsQueryOptions(
   token: string | null,
   options: { enabled?: boolean } = {},
 ) {
   return adminSnapshotQueryOptions(token, {
-    queryKey: stockKeys.autoParticipantV3Operations(),
-    request: getAutoParticipantV3Operations,
-    fallbackMessage: "자동 참여자 V3 운영 상태를 조회하지 못했습니다.",
+    queryKey: stockKeys.autoParticipantV4Operations(),
+    request: getAutoParticipantV4Operations,
+    fallbackMessage: "자동 참여자 V4 운영 상태를 조회하지 못했습니다.",
     enabled: options.enabled,
     refetchInterval: 10_000,
     staleTime: 5_000,
@@ -250,6 +252,40 @@ export function systemCustodyOverviewQueryOptions(
     enabled: options.enabled,
     refetchInterval: false,
     staleTime: ADMIN_SNAPSHOT_STALE_MS,
+  });
+}
+
+export function scaledMarketOverviewQueryOptions(
+  token: string | null,
+  options: {
+    enabled?: boolean;
+  } = {},
+) {
+  return adminAuthenticatedQueryOptions(token, {
+    queryKey: stockKeys.scaledMarketOverview(),
+    request: getScaledMarketOverview,
+    fallbackMessage: "1/100 시장 계약과 최근 완료장 대사를 조회하지 못했습니다.",
+    enabled: options.enabled,
+    refetchInterval: false,
+  });
+}
+
+export function scaledMarketRebasePreviewQueryOptions(
+  token: string | null,
+  contractVersion: number,
+  options: {
+    enabled?: boolean;
+  } = {},
+) {
+  return adminAuthenticatedQueryOptions(token, {
+    queryKey: stockKeys.scaledMarketRebasePreview(contractVersion),
+    request: (nextToken) => getScaledMarketRebasePreview(
+      nextToken,
+      contractVersion,
+    ),
+    fallbackMessage: "선택한 1/100 시장 계약의 재기준 미리보기를 조회하지 못했습니다.",
+    enabled: options.enabled,
+    refetchInterval: false,
   });
 }
 

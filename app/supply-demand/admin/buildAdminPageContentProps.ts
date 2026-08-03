@@ -17,6 +17,7 @@ export function buildAdminPageContentProps(context: AdminPageContentBuilderConte
   const isUnderwritingContent = context.activeAdminSection === "corporate-underwriting";
   const isEventsContent = context.activeAdminTab === "corporate" && !isUnderwritingContent;
   const isInstitutionContent = context.activeAdminSection === "participants-institutions";
+  const isScaledMarketContent = context.activeAdminSection === "market-scaled-market";
   const isMarketContent = context.activeAdminSection === "dashboard"
     || context.activeAdminSection === "market-instruments"
     || context.activeAdminSection === "market-flows";
@@ -73,6 +74,9 @@ export function buildAdminPageContentProps(context: AdminPageContentBuilderConte
     marketProps: isMarketContent ? buildAdminMarketContentProps(context) : null,
     message: context.message,
     participantsProps: isParticipantsContent ? buildAdminParticipantsContentProps(context) : null,
+    scaledMarketProps: isScaledMarketContent ? {
+      accessToken: context.queries.accessToken,
+    } : null,
     underwritingProps: isUnderwritingContent ? {
       accessToken: context.queries.accessToken,
       contracts: context.queries.underwritingContractsQuery.data ?? [],

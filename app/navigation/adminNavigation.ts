@@ -4,6 +4,7 @@ export type AdminSection =
   | "dashboard"
   | "market-instruments"
   | "market-auto-market"
+  | "market-scaled-market"
   | "market-liquidity-providers"
   | "market-flows"
   | "funds-accounts"
@@ -49,6 +50,7 @@ export const ADMIN_NAVIGATION_GROUPS: readonly AdminNavigationGroup[] = [
     items: [
       { section: "market-instruments", href: "/admin/market/instruments", label: "종목·장 상태", description: "종목별 거래 상태와 가격 제한을 확인하고 제어합니다." },
       { section: "market-auto-market", href: "/admin/market/auto-market", label: "종목별 자동장", description: "종목별 자동 주문 생성, 주문 상한, TTL과 시장 압력 분포를 관리합니다." },
+      { section: "market-scaled-market", href: "/admin/market/scaled-market", label: "1/100 시장 계약", description: "종목 성숙, 발행주식수, 시총·가격·계좌자산을 단계별 계획으로 대사하고 적용합니다." },
       { section: "market-liquidity-providers", href: "/admin/market/liquidity-providers", label: "유동성 공급자", description: "종목별 LP를 하나씩 생성하고 권장 시드·기준 거래량·일일 한도를 비교합니다." },
       { section: "market-flows", href: "/admin/market/flows", label: "시장 흐름", description: "전체 계좌 자산과 참여자별 체결, 종목별 거래·현금 흐름을 확인합니다." },
     ],

@@ -65,7 +65,7 @@ export function resolveProfileConfigDraft(
 ): ProfileConfigDraftValues {
   return {
     profileType: config.profileType,
-    behaviorModelVersion: config.behaviorModelVersion ?? "V3",
+    behaviorModelVersion: config.behaviorModelVersion ?? "V4",
     newsWeight: String(config.newsWeight),
     momentumWeight: String(config.momentumWeight),
     contrarianWeight: String(config.contrarianWeight),

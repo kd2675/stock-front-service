@@ -32,17 +32,18 @@ type Feedback = {
   message: string;
 };
 
-type PolicyDraft = Record<EditablePolicyKey, string> & {
+type PolicyDraft = Record<NumericEditablePolicyKey, string> & {
+  passiveOnly: boolean;
   changeReason: string;
 };
 
-type EditablePolicyKey = Exclude<
+type NumericEditablePolicyKey = Exclude<
   keyof LiquidityProviderPolicyUpdatePayload,
-  "changeReason"
+  "changeReason" | "passiveOnly"
 >;
 
 type PolicyField = {
-  key: EditablePolicyKey;
+  key: NumericEditablePolicyKey;
   label: string;
   min: number;
   max?: number;
@@ -71,7 +72,7 @@ const INVENTORY_FIELDS: PolicyField[] = [
 
 const LIMIT_FIELDS: PolicyField[] = [
   { key: "referenceDailyVolume", label: "기준 일거래량", min: 1, step: 1, suffix: "주" },
-  { key: "dailyExecutionParticipationRate", label: "일일 체결 참여율", min: 0.0001, max: 0.3, step: 0.0001, suffix: "비율" },
+  { key: "dailyExecutionParticipationRate", label: "일일 체결 참여율 상한", min: 0.0001, max: 1, step: 0.0001, suffix: "비율" },
   { key: "dailySubmissionMultiplier", label: "제출 한도 배수", min: 1, max: 10, step: 0.1, suffix: "배" },
   { key: "dailyLossLimitAmount", label: "일일 손실 한도", min: 1, step: 1000, suffix: "원" },
 ];
@@ -402,6 +403,10 @@ export function AdminLiquidityProviderMandateCard({
           presets={mandate.policyPresets ?? []}
           pending={updateMutation.isPending}
           onChange={(key, value) => setDraft((current) => ({ ...current, [key]: value }))}
+          onPassiveOnlyChange={(passiveOnly) => setDraft((current) => ({
+            ...current,
+            passiveOnly,
+          }))}
           onApplyPreset={(preset) => {
             const presetLabel = POLICY_PRESET_LABELS[preset.presetCode].label;
             setDraft(toPolicyDraft(
@@ -462,7 +467,7 @@ function ScheduledPolicyNotice({ mandate }: { mandate: LiquidityProviderMandate 
           value={`${formatNumber(current.targetInventoryQuantity)} ± ${formatNumber(current.inventoryBandQuantity)}주 → ${formatNumber(next.targetInventoryQuantity)} ± ${formatNumber(next.inventoryBandQuantity)}주`}
         />
         <MandateMetric
-          label="일일 체결 참여율"
+          label="일일 체결 참여율 상한"
           value={`${formatPercent(current.dailyExecutionParticipationRate)} → ${formatPercent(next.dailyExecutionParticipationRate)}`}
         />
         <MandateMetric
@@ -540,6 +545,7 @@ function PolicyEditor({
   presets,
   pending,
   onChange,
+  onPassiveOnlyChange,
   onApplyPreset,
   onCancel,
   onSave,
@@ -547,7 +553,8 @@ function PolicyEditor({
   draft: PolicyDraft;
   presets: LiquidityProviderPolicyPreset[];
   pending: boolean;
-  onChange: (key: keyof PolicyDraft, value: string) => void;
+  onChange: (key: NumericEditablePolicyKey | "changeReason", value: string) => void;
+  onPassiveOnlyChange: (passiveOnly: boolean) => void;
   onApplyPreset: (preset: LiquidityProviderPolicyPreset) => void;
   onCancel: () => void;
   onSave: () => void;
@@ -558,10 +565,12 @@ function PolicyEditor({
         <div>
           <h4 className="text-sm font-black text-white">LP 정책 편집</h4>
           <p className="mt-1 text-[10px] font-bold leading-5 text-stock-subtle">
-            운영 중에도 저장할 수 있으며 당일 정책은 유지되고 다음 거래일부터 적용됩니다. 비율은 0.01이 1%이며 LP는 항상 수동 지정가만 사용합니다.
+            운영 중에도 저장할 수 있으며 당일 정책은 유지되고 다음 거래일부터 적용됩니다. 비율은 0.01이 1%입니다. 적응형 체결은 목표 거래량이 뒤처질 때만 실제 외부 호가와 제한적으로 교차합니다.
           </p>
         </div>
-        <span className="rounded-md bg-white/10 px-2 py-1 text-[10px] font-black text-stock-subtle">수동 지정가 전용</span>
+        <span className="rounded-md bg-white/10 px-2 py-1 text-[10px] font-black text-stock-subtle">
+          {draft.passiveOnly ? "post-only 전용" : "목표 미달 적응형"}
+        </span>
       </div>
       <PolicyPresetSelector
         presets={presets}
@@ -572,6 +581,18 @@ function PolicyEditor({
       <PolicyFieldGroup title="재고 목표·레짐 보정" fields={INVENTORY_FIELDS} draft={draft} onChange={onChange} />
       <PolicyFieldGroup title="일일 한도" fields={LIMIT_FIELDS} draft={draft} onChange={onChange} />
       <PolicyFieldGroup title="호가 수명·재호가" fields={TIMING_FIELDS} draft={draft} onChange={onChange} />
+      <label className="mt-3 flex items-start gap-3 rounded-md border border-white/10 bg-black/20 p-3 text-[10px] font-bold leading-5 text-stock-subtle">
+        <input
+          type="checkbox"
+          checked={!draft.passiveOnly}
+          onChange={(event) => onPassiveOnlyChange(!event.target.checked)}
+          className="mt-1 h-4 w-4 shrink-0 accent-admin-accent"
+        />
+        <span>
+          <strong className="block text-xs font-black text-white">목표 미달 적응형 체결 허용</strong>
+          실제 외부 참여자의 반대 호가가 있고 종목별 일일 목표가 뒤처진 경우에만 시장성 지정가를 냅니다. 자기체결·가상 체결은 만들지 않으며 재고·현금·일일 체결·외부 깊이 한도를 모두 적용합니다.
+        </span>
+      </label>
       <label className="mt-3 grid gap-1 text-[10px] font-black text-admin-quiet">
         정책 변경 사유
         <input
@@ -665,7 +686,7 @@ function PolicyFieldGroup({
   title: string;
   fields: PolicyField[];
   draft: PolicyDraft;
-  onChange: (key: keyof PolicyDraft, value: string) => void;
+  onChange: (key: NumericEditablePolicyKey, value: string) => void;
 }) {
   return (
     <fieldset className="mt-3 rounded-md border border-white/10 p-3">
@@ -809,6 +830,7 @@ function toPolicyDraft(
     orderTtlSeconds: String(policy.orderTtlSeconds),
     quoteIntervalSeconds: String(policy.quoteIntervalSeconds),
     dailyLossLimitAmount: String(policy.dailyLossLimitAmount),
+    passiveOnly: policy.passiveOnly,
     changeReason,
   };
 }
@@ -818,9 +840,10 @@ function parsePolicyDraft(draft: PolicyDraft):
   | { ok: false; message: string } {
   const values = Object.fromEntries(
     (Object.keys(draft) as (keyof PolicyDraft)[])
-      .filter((key) => key !== "changeReason")
+      .filter((key): key is NumericEditablePolicyKey =>
+        key !== "changeReason" && key !== "passiveOnly")
       .map((key) => [key, Number(draft[key])]),
-  ) as Record<EditablePolicyKey, number>;
+  ) as Record<NumericEditablePolicyKey, number>;
   if (Object.values(values).some((value) => !Number.isFinite(value))) {
     return { ok: false, message: "LP 정책의 모든 수치를 입력해 주세요." };
   }
@@ -847,6 +870,7 @@ function parsePolicyDraft(draft: PolicyDraft):
     ok: true,
     payload: {
       ...values,
+      passiveOnly: draft.passiveOnly,
       changeReason: draft.changeReason.trim(),
     },
   };
@@ -866,9 +890,6 @@ function mandateReviewReasons(mandate: LiquidityProviderMandate) {
         "원인 확인 필요",
       )}`,
     );
-  }
-  if (!mandate.policy.passiveOnly) {
-    reasons.push("공격 주문 정책은 현재 LP 엔진에서 허용하지 않습니다.");
   }
   if (mandate.status !== "ACTIVE" && mandate.status !== "SUSPENDED" && !pendingActivation) {
     reasons.push(`계약 상태가 ${formatMarketRoleCode(mandate.status)}입니다.`);

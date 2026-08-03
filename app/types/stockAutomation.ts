@@ -123,7 +123,7 @@ export type AutoParticipantProfileType =
   | "OBSERVER";
 
 export type RecurringCashIntervalUnit = "SECOND" | "MINUTE" | "HOUR" | "DAY" | "MONTH" | "YEAR";
-export type AutoParticipantBehaviorModelVersion = "V3";
+export type AutoParticipantBehaviorModelVersion = "V4";
 export type AutoParticipantLifecycleScope = "CURRENT" | "WITHDRAWN";
 export type AutoParticipantProfilePricingMode = "DIRECTIONAL" | "PASSIVE_POST_ONLY";
 export type AutoParticipantProfileExitMode = "SIGNAL_DRIVEN" | "TAKE_PROFIT_FIRST" | "HOLD_LOSSES";
@@ -600,7 +600,7 @@ export type LiquidityProviderMandate = {
 
 export type LiquidityProviderPolicyUpdatePayload = Omit<
   LiquidityProviderPolicy,
-  "primaryRegimeWeight" | "liquiditySizeSensitivity" | "passiveOnly"
+  "primaryRegimeWeight" | "liquiditySizeSensitivity"
 > & {
   changeReason: string;
 };
@@ -715,13 +715,15 @@ export type UnderwritingContract = {
     unmanagedHoldingCount: number;
   };
   supply: {
-    configuredSupplyRate: number;
+    targetExecutionRate: number;
+    distributedTradableQuantity: number;
+    distributedTradableShareRate: number;
     lifetimeSubmittedQuantity: number;
     lifetimeSubmittedAmount: number;
     lifetimeExecutedQuantity: number;
     lifetimeExecutedAmount: number;
-    remainingSubmissionQuantity: number;
-    remainingSubmissionAmount: number;
+    remainingExecutionTargetQuantity: number;
+    remainingExecutionTargetAmount: number;
     generatedOrderCount: number;
     cancelledOrderCount: number;
     latestDailyState: {
@@ -745,7 +747,7 @@ export type UnderwritingContract = {
     effectiveBusinessDate: string;
     activationAction: "ACTIVATE_SUPPLY";
     targetStatus: "STABILIZING";
-    supplyRate: number;
+    targetDistributedTradableShareRate: number;
     durationDays: number;
     changeReason: string;
     changedBy: string;
@@ -1138,10 +1140,11 @@ export type AutoParticipantProfileConfig = {
   updatedAt?: string | null;
 };
 
-export type AutoParticipantV3Operations = {
+export type AutoParticipantV4Operations = {
   simulationTradeDate: string;
   policies: Array<{
     policyVersion: number;
+    behaviorModelVersion: AutoParticipantBehaviorModelVersion;
     status: "ACTIVE" | "SCHEDULED";
     effectiveTradeDate: string;
     runtimeEnabled: boolean;
@@ -1191,6 +1194,60 @@ export type AutoParticipantV3Operations = {
     updatedAt: string;
   }>;
   profileOrderContractViolationCount: number;
+  calibrationReadiness: {
+    scaledMarketContractActive: boolean;
+    contractVersion?: number | null;
+    activePolicyVersion?: number | null;
+    basisCloseRunId?: number | null;
+    basisBusinessDate?: string | null;
+    targetSymbolCount: number;
+    observedSymbolCount: number;
+    engineParticipantCount: number;
+    representedParticipantCount: number;
+    populationWeight: number;
+    observedParticipantStateCount: number;
+    activeParticipantCount: number;
+    participantIdentityMismatchCount: number;
+    observedPolicyVersion?: number | null;
+    targetDailyVolume: number;
+    observedDailyVolume: number;
+    dailyVolumeGap: number;
+    volumeAttainmentRate: number;
+    targetDailyTurnoverLower: number;
+    targetDailyTurnoverUpper: number;
+    observedDailyTurnover: number;
+    turnoverBandStatus: "BELOW" | "WITHIN" | "ABOVE" | "NOT_AVAILABLE";
+    marketExecutionCount: number;
+    marketSubmittedOrderCount: number;
+    marketCancelledOrderCount: number;
+    sessionCloseCancelledOrderCount: number;
+    autoSubmittedOrderCount: number;
+    autoCancelledOrderCount: number;
+    basisOrderContractViolationCount: number;
+    nextRevisionAllowed: boolean;
+    blockers: string[];
+    symbols: Array<{
+      calibrationPriority: number;
+      symbol: string;
+      targetIssuedShares: number;
+      observedIssuedShares: number;
+      targetTradableShares: number;
+      observedTradableShares: number;
+      targetDailyVolume: number;
+      observedDailyVolume: number;
+      dailyVolumeGap: number;
+      targetDailyVolumeRate: number;
+      observedDailyVolumeRate: number;
+      volumeAttainmentRate: number;
+      targetReferencePrice: number;
+      observedClosePrice: number;
+      targetDailyTurnover: number;
+      observedDailyTurnover: number;
+      executionCount: number;
+      referenceCapacityMatched: boolean;
+      shareStructureMatched: boolean;
+    }>;
+  };
 };
 
 export type AutoMarketStatus = {

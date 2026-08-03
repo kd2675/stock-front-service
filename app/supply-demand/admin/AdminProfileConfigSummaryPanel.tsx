@@ -33,7 +33,7 @@ export function AdminProfileConfigSummaryPanel({ config }: AdminProfileConfigSum
       <ProfileSummaryGroup title="행동 모델">
         <ProfileMetric
           label="프로필 일괄 적용"
-          value="V3 · 확률적 행동"
+          value="V4 · 인간 행동 모듈"
         />
       </ProfileSummaryGroup>
       <ProfileSummaryGroup title="행동 신호">

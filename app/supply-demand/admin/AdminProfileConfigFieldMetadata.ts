@@ -68,7 +68,7 @@ export function buildDefaultProfileConfigDraft(): ProfileConfigDraft {
 
   return {
     ...numericDefaults,
-    behaviorModelVersion: "V3",
+    behaviorModelVersion: "V4",
     orderMultiplier: DEFAULT_PROFILE_MULTIPLIER,
     decisionFrequencyMultiplier: DEFAULT_PROFILE_MULTIPLIER,
     ordersPerDecisionMultiplier: DEFAULT_PROFILE_MULTIPLIER,

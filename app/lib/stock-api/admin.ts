@@ -6,7 +6,7 @@ import {
   authenticatedPostJson,
   toQuery,
 } from "@/app/lib/stock-api/core";
-import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowBreakdown, AdminFundFlowScope, AdminInvestorFlowHistory, AdminInvestorFlowSummary, AdminParticipantScope, AdminSymbolFlowList, AdminTotalAssetHistoryPage, AutoMarketDistributionBias, AutoMarketRegimeCountWeights, AutoMarketRegimeHistoryRange, AutoMarketStatus, AutoParticipant, AutoParticipantBehaviorModelVersion, AutoParticipantCashAdjustment, AutoParticipantLifecycleScope, AutoParticipantOverview, AutoParticipantPerformanceBasis, AutoParticipantPerformanceSummary, AutoParticipantProfileExitMode, AutoParticipantProfileInventoryMode, AutoParticipantProfileOverview, AutoParticipantProfilePricingMode, AutoParticipantProfileType, AutoParticipantSymbolConfig, AutoParticipantV3Operations, AutoParticipantWithdrawalAudit, BatchJobRuntimeStatus, EodOperationsOverview, EodPhaseRetryResult, InstitutionInvestmentStyle, InstitutionPortfolio, InstitutionPortfolioRecommendation, InstitutionSymbolPolicy, LiquidityProviderMandate, LiquidityProviderPolicyUpdatePayload, LiquidityProviderRecommendation, LiquidityProviderStatusChangePayload, RecurringCashIntervalUnit, StockBatchJobRun, SystemCustodyOverview, UnderwritingContract, UnderwritingContractRecommendation } from "@/app/types/stock";
+import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowBreakdown, AdminFundFlowScope, AdminInvestorFlowHistory, AdminInvestorFlowSummary, AdminParticipantScope, AdminSymbolFlowList, AdminTotalAssetHistoryPage, AutoMarketDistributionBias, AutoMarketRegimeCountWeights, AutoMarketRegimeHistoryRange, AutoMarketStatus, AutoParticipant, AutoParticipantBehaviorModelVersion, AutoParticipantCashAdjustment, AutoParticipantLifecycleScope, AutoParticipantOverview, AutoParticipantPerformanceBasis, AutoParticipantPerformanceSummary, AutoParticipantProfileExitMode, AutoParticipantProfileInventoryMode, AutoParticipantProfileOverview, AutoParticipantProfilePricingMode, AutoParticipantProfileType, AutoParticipantSymbolConfig, AutoParticipantV4Operations, AutoParticipantWithdrawalAudit, BatchJobRuntimeStatus, EodOperationsOverview, EodPhaseRetryResult, InstitutionInvestmentStyle, InstitutionPortfolio, InstitutionPortfolioRecommendation, InstitutionSymbolPolicy, LiquidityProviderMandate, LiquidityProviderPolicyUpdatePayload, LiquidityProviderRecommendation, LiquidityProviderStatusChangePayload, RecurringCashIntervalUnit, ScaledMarketContractSchedule, ScaledMarketOverview, ScaledMarketPriceCapitalRebasePlan, ScaledMarketRebasePreview, ScaledMarketRoleCapacityPlan, ScaledMarketShareRebasePlan, ScaledMarketSymbolMaturityChange, StockBatchJobRun, SystemCustodyOverview, UnderwritingContract, UnderwritingContractRecommendation } from "@/app/types/stock";
 
 export type { AdminFundFlowScope } from "@/app/types/stock";
 
@@ -124,8 +124,7 @@ export type LiquidityProviderProvisionPayload = {
 };
 
 export type UnderwritingSupplyActivationPayload = {
-  supplyRate?: number;
-  durationDays?: number;
+  targetDistributedTradableShareRate: number;
   changeReason?: string;
 };
 
@@ -136,6 +135,28 @@ export type UnderwritingSupplySuspensionPayload = {
 export type UnderwritingContractCreatePayload = {
   underwritingType?: "FIRM_COMMITMENT";
   changeReason?: string;
+};
+
+export type ScaledMarketPlanCreatePayload = {
+  changeReason: string;
+};
+
+export type ScaledMarketPlanSchedulePayload = {
+  effectiveBusinessDate: string;
+  expectedSourceStateVersion: number;
+};
+
+export type ScaledMarketRoleCapacityPlanCreatePayload = {
+  priceCapitalRebasePlanId: number;
+  changeReason: string;
+};
+
+export type ScaledMarketContractSchedulePayload = {
+  effectiveBusinessDate: string;
+  shareRebasePlanId: number;
+  priceCapitalRebasePlanId: number;
+  roleCapacityPlanId: number;
+  changeReason: string;
 };
 
 export type AutoParticipantActivityScope = "RECENT_SIMULATION_DAY" | "ALL";
@@ -520,20 +541,164 @@ export function updateAutoParticipantProfileConfig(
   );
 }
 
-export function getAutoParticipantV3Operations(token: string) {
-  return authenticatedGetJson<AutoParticipantV3Operations>(
+export function getAutoParticipantV4Operations(token: string) {
+  return authenticatedGetJson<AutoParticipantV4Operations>(
     token,
-    "/api/stock/v1/markets/auto-market/v3/operations",
+    "/api/stock/v1/markets/auto-market/v4/operations",
   );
 }
 
-export function updateAutoParticipantV3Runtime(
+export function getScaledMarketOverview(token: string) {
+  return authenticatedGetJson<ScaledMarketOverview>(
+    token,
+    "/api/stock/v1/markets/admin/scaled-market/overview",
+  );
+}
+
+export function getScaledMarketRebasePreview(
+  token: string,
+  contractVersion: number,
+) {
+  return authenticatedGetJson<ScaledMarketRebasePreview>(
+    token,
+    `/api/stock/v1/markets/admin/scaled-market/contracts/${contractVersion}/rebase-preview`,
+  );
+}
+
+export function createScaledMarketShareRebasePlan(
+  token: string,
+  contractVersion: number,
+  payload: ScaledMarketPlanCreatePayload,
+) {
+  return authenticatedPostJson<ScaledMarketShareRebasePlan>(
+    token,
+    `/api/stock/v1/markets/admin/scaled-market/contracts/${contractVersion}/share-rebase-plans`,
+    payload,
+  );
+}
+
+export function getScaledMarketShareRebasePlan(
+  token: string,
+  planId: number,
+) {
+  return authenticatedGetJson<ScaledMarketShareRebasePlan>(
+    token,
+    `/api/stock/v1/markets/admin/scaled-market/share-rebase-plans/${planId}`,
+  );
+}
+
+export function scheduleScaledMarketShareRebasePlan(
+  token: string,
+  planId: number,
+  payload: ScaledMarketPlanSchedulePayload,
+) {
+  return authenticatedPostJson<ScaledMarketShareRebasePlan>(
+    token,
+    `/api/stock/v1/markets/admin/scaled-market/share-rebase-plans/${planId}/schedule`,
+    payload,
+  );
+}
+
+export function createScaledMarketPriceCapitalRebasePlan(
+  token: string,
+  contractVersion: number,
+  payload: ScaledMarketPlanCreatePayload,
+) {
+  return authenticatedPostJson<ScaledMarketPriceCapitalRebasePlan>(
+    token,
+    `/api/stock/v1/markets/admin/scaled-market/contracts/${contractVersion}/price-capital-rebase-plans`,
+    payload,
+  );
+}
+
+export function getScaledMarketPriceCapitalRebasePlan(
+  token: string,
+  planId: number,
+) {
+  return authenticatedGetJson<ScaledMarketPriceCapitalRebasePlan>(
+    token,
+    `/api/stock/v1/markets/admin/scaled-market/price-capital-rebase-plans/${planId}`,
+  );
+}
+
+export function scheduleScaledMarketPriceCapitalRebasePlan(
+  token: string,
+  planId: number,
+  payload: ScaledMarketPlanSchedulePayload,
+) {
+  return authenticatedPostJson<ScaledMarketPriceCapitalRebasePlan>(
+    token,
+    `/api/stock/v1/markets/admin/scaled-market/price-capital-rebase-plans/${planId}/schedule`,
+    payload,
+  );
+}
+
+export function createScaledMarketRoleCapacityPlan(
+  token: string,
+  contractVersion: number,
+  payload: ScaledMarketRoleCapacityPlanCreatePayload,
+) {
+  return authenticatedPostJson<ScaledMarketRoleCapacityPlan>(
+    token,
+    `/api/stock/v1/markets/admin/scaled-market/contracts/${contractVersion}/role-capacity-plans`,
+    payload,
+  );
+}
+
+export function getScaledMarketRoleCapacityPlan(
+  token: string,
+  planId: number,
+) {
+  return authenticatedGetJson<ScaledMarketRoleCapacityPlan>(
+    token,
+    `/api/stock/v1/markets/admin/scaled-market/role-capacity-plans/${planId}`,
+  );
+}
+
+export function scheduleScaledMarketRoleCapacityPlan(
+  token: string,
+  planId: number,
+  payload: ScaledMarketPlanSchedulePayload,
+) {
+  return authenticatedPostJson<ScaledMarketRoleCapacityPlan>(
+    token,
+    `/api/stock/v1/markets/admin/scaled-market/role-capacity-plans/${planId}/schedule`,
+    payload,
+  );
+}
+
+export function promoteScaledMarketSymbolMature(
+  token: string,
+  contractVersion: number,
+  symbol: string,
+  payload: ScaledMarketPlanCreatePayload,
+) {
+  return authenticatedPostJson<ScaledMarketSymbolMaturityChange>(
+    token,
+    `/api/stock/v1/markets/admin/scaled-market/contracts/${contractVersion}/symbols/${encodeURIComponent(symbol)}/promote-mature`,
+    payload,
+  );
+}
+
+export function scheduleScaledMarketContract(
+  token: string,
+  contractVersion: number,
+  payload: ScaledMarketContractSchedulePayload,
+) {
+  return authenticatedPostJson<ScaledMarketContractSchedule>(
+    token,
+    `/api/stock/v1/markets/admin/scaled-market/contracts/${contractVersion}/schedule`,
+    payload,
+  );
+}
+
+export function updateAutoParticipantV4Runtime(
   token: string,
   payload: { runtimeEnabled: boolean; changeReason: string },
 ) {
-  return authenticatedPatchJson<AutoParticipantV3Operations>(
+  return authenticatedPatchJson<AutoParticipantV4Operations>(
     token,
-    "/api/stock/v1/markets/auto-market/v3/runtime",
+    "/api/stock/v1/markets/auto-market/v4/runtime",
     payload,
   );
 }

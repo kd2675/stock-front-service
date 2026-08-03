@@ -85,7 +85,7 @@ export function AdminInitialIssueFormPanel({
                 : `${formatCount(recommendedMaxOrderQuantity, "주")} · ${formatWon(initialPrice * recommendedMaxOrderQuantity)}`}
             </p>
             <p className="mt-1">
-              발행가 기준 500만원과 유통주식의 0.02% 중 더 작은 수량을 안전상한으로 적용합니다. 이는 거래 목표가 아니며, 실제 V3 주문량은 이 범위 안에서 소액 편향 확률분포로 결정됩니다.
+              발행가 기준 500만원과 유통주식의 0.02% 중 더 작은 수량을 안전상한으로 적용합니다. 이는 거래 목표가 아니며, 실제 V4 주문량은 이 범위 안에서 소액 편향 확률분포로 결정됩니다.
             </p>
           </div>
         </div>

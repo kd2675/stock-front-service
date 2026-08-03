@@ -238,3 +238,15 @@ export async function invalidateEodOperationsOverviewQuery(queryClient: QueryCli
 export async function invalidateLatestManualCashFlowRunQuery(queryClient: QueryClient) {
   await invalidateQuery(queryClient, stockKeys.latestManualCashFlowRun());
 }
+
+export async function invalidateScaledMarketReconstructionQueries(
+  queryClient: QueryClient,
+  contractVersion?: number,
+) {
+  await invalidateQueryGroup(queryClient, [
+    stockKeys.scaledMarketOverview(),
+    ...(contractVersion && contractVersion > 0
+      ? [stockKeys.scaledMarketRebasePreview(contractVersion)]
+      : []),
+  ]);
+}

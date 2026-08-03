@@ -43,10 +43,10 @@ export function AdminProfileConfigFormPanel({
     <>
       <ProfilePolicySection
         title="행동 모델"
-        description="일반 자동 참여자는 V3만 사용합니다. 정책 변경은 다음 개장 전 활성화되며 장중 난수 흐름을 바꾸지 않습니다."
+        description="일반 자동 참여자는 V4만 사용합니다. 정책 변경은 다음 개장 전 활성화되며 장중 난수 흐름을 바꾸지 않습니다."
       >
         <div className="rounded-md border border-white/10 bg-black/15 px-3 py-2 text-xs font-bold leading-5 text-stock-subtle">
-          V3 · 확률적 관심, 단일 종목 선택, 프로필 판단, 거래 불변조건 검증, 피로·재진입
+          V4 · 인간 사고 모듈, 확률적 관심, 단일 종목 선택, 거래 불변조건 검증, 피로·재진입
         </div>
       </ProfilePolicySection>
 
@@ -63,7 +63,7 @@ export function AdminProfileConfigFormPanel({
 
       <ProfilePolicySection
         title="주문 실행"
-        description="V3의 관심 시각과 이벤트당 단일 주문은 활성 정책이 확률적으로 정합니다. 여기서는 프로필별 신호 실행 강도·가격·청산·재고·TTL·수량 성향만 조정합니다."
+        description="V4의 관심 시각과 이벤트당 단일 주문은 활성 정책과 인간 사고 모듈이 정합니다. 여기서는 프로필별 신호 실행 강도·가격·청산·재고·TTL·수량 성향만 조정합니다."
       >
         <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-3">
           <DarkSelect label="가격 생성 모드" value={draft.pricingMode} onChange={(value) => draftSetters.setPricingMode(value as typeof draft.pricingMode)}>

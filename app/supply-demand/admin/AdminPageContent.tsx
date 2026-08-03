@@ -10,6 +10,7 @@ import { AdminInstitutionPortfolioPanel } from "@/app/supply-demand/admin/AdminI
 import { AdminMarketSection } from "@/app/supply-demand/admin/AdminMarketSection";
 import type { AdminSection, AdminTab } from "@/app/supply-demand/admin/AdminNavigationConfig";
 import { AdminPageShell } from "@/app/supply-demand/admin/AdminPageShell";
+import { AdminScaledMarketReconstructionPanel } from "@/app/supply-demand/admin/AdminScaledMarketReconstructionPanel";
 import { AdminUnderwritingContractPanel } from "@/app/supply-demand/admin/AdminUnderwritingContractPanel";
 
 export type AdminPageContentProps = {
@@ -24,6 +25,7 @@ export type AdminPageContentProps = {
   marketProps: ComponentProps<typeof AdminMarketSection> | null;
   message: string | null;
   participantsProps: ComponentProps<typeof AdminAutoParticipantManagementPanel> | null;
+  scaledMarketProps: ComponentProps<typeof AdminScaledMarketReconstructionPanel> | null;
   underwritingProps: ComponentProps<typeof AdminUnderwritingContractPanel> | null;
 };
 
@@ -39,6 +41,7 @@ export function AdminPageContent({
   marketProps,
   message,
   participantsProps,
+  scaledMarketProps,
   underwritingProps,
 }: AdminPageContentProps) {
   return (
@@ -59,6 +62,10 @@ export function AdminPageContent({
 
       {activeAdminSection === "participants-list" && participantsProps ? (
         <AdminAutoParticipantManagementPanel {...participantsProps} />
+      ) : null}
+
+      {scaledMarketProps ? (
+        <AdminScaledMarketReconstructionPanel {...scaledMarketProps} />
       ) : null}
 
       {dormantAssetsProps ? <AdminDormantAssetsPanel {...dormantAssetsProps} /> : null}
