@@ -1096,11 +1096,13 @@ function InstitutionMandateRow({ mandate }: { mandate: InstitutionSymbolMandate 
         {mandate.executionProgramLastOrderStatus ? (
           <p className="mt-1 text-[10px] text-admin-quiet">
             최근 집행 {formatMarketRoleCode(mandate.executionProgramLastOrderStatus, "—")}
+            {" · 연속 패시브 만료 "}
+            {formatInteger(mandate.executionProgramConsecutivePassiveExpiryCount)}회
           </p>
         ) : null}
         {mandate.programTargetCompletionDate ? (
           <p className="mt-1 text-[10px] font-black text-admin-accent-soft">
-            구축 {mandate.programStartedTradeDate ?? "—"} → {mandate.programTargetCompletionDate}
+            집행 {mandate.programStartedTradeDate ?? "—"} → {mandate.programTargetCompletionDate}
           </p>
         ) : null}
         {mandate.executionProgramResidualTargetAmount > 0 ? (

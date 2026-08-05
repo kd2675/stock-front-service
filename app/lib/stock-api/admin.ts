@@ -107,6 +107,8 @@ export type InstitutionPortfolioPolicyUpdatePayload = {
   decisionIntervalMinutes: number;
   buildHorizonDays: number;
   buildParticipationRate: number;
+  rebalanceHorizonDays: number;
+  passiveExpiryEscalationCount: number;
   mandates: InstitutionSymbolPolicy[];
   changeReason?: string;
 };

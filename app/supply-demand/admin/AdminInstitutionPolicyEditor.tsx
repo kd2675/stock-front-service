@@ -36,6 +36,8 @@ type PolicyDraft = {
   decisionIntervalMinutes: number;
   buildHorizonDays: number;
   buildParticipationRate: number;
+  rebalanceHorizonDays: number;
+  passiveExpiryEscalationCount: number;
   mandates: InstitutionSymbolPolicy[];
   changeReason: string;
 };
@@ -393,6 +395,26 @@ export function AdminInstitutionPolicyEditor({
                 buildParticipationRate: value,
               }))}
             />
+            <PolicyNumberInput
+              label="리밸런싱 집행 기간(거래일)"
+              value={draft.rebalanceHorizonDays}
+              rate={false}
+              step="1"
+              onChange={(value) => setDraft((current) => ({
+                ...current,
+                rebalanceHorizonDays: value,
+              }))}
+            />
+            <PolicyNumberInput
+              label="가격개선 전 연속 패시브 만료 횟수"
+              value={draft.passiveExpiryEscalationCount}
+              rate={false}
+              step="1"
+              onChange={(value) => setDraft((current) => ({
+                ...current,
+                passiveExpiryEscalationCount: value,
+              }))}
+            />
           </div>
           <p className="mt-2 text-[10px] leading-4 text-admin-quiet">
             종목별 활성 기관의 요청값 합계가 20%를 넘으면 전체 기관 참여율이
@@ -673,6 +695,8 @@ function createDraft(portfolio: InstitutionPortfolio): PolicyDraft {
     decisionIntervalMinutes: policy.decisionIntervalMinutes,
     buildHorizonDays: policy.buildHorizonDays,
     buildParticipationRate: policy.buildParticipationRate,
+    rebalanceHorizonDays: policy.rebalanceHorizonDays,
+    passiveExpiryEscalationCount: policy.passiveExpiryEscalationCount,
     mandates: mandates.map((mandate) => ({ ...mandate })),
     changeReason: portfolio.scheduledPolicy?.changeReason
       ?? "시장 규모와 운용 유형 기준 기관 정책·종목 비율 재조정",
@@ -714,6 +738,8 @@ function applyStylePreset(
     decisionIntervalMinutes: style.decisionIntervalMinutes,
     buildHorizonDays: style.buildHorizonDays,
     buildParticipationRate: style.buildParticipationRate,
+    rebalanceHorizonDays: style.rebalanceHorizonDays,
+    passiveExpiryEscalationCount: style.passiveExpiryEscalationCount,
   };
 }
 
@@ -841,6 +867,8 @@ function validateDraft(
     draft.decisionIntervalMinutes,
     draft.buildHorizonDays,
     draft.buildParticipationRate,
+    draft.rebalanceHorizonDays,
+    draft.passiveExpiryEscalationCount,
     ...draft.mandates.flatMap((mandate) => [
       mandate.baseSymbolWeight,
       mandate.minPortfolioAllocationRate,
@@ -890,6 +918,16 @@ function validateDraft(
   }
   if (draft.buildParticipationRate <= 0 || draft.buildParticipationRate > 0.2) {
     return "기관별 구축 POV 요청 상한은 0% 초과 20% 이하여야 합니다.";
+  }
+  if (!Number.isInteger(draft.rebalanceHorizonDays)
+    || draft.rebalanceHorizonDays < 1
+    || draft.rebalanceHorizonDays > 60) {
+    return "리밸런싱 집행 기간은 1~60거래일의 정수여야 합니다.";
+  }
+  if (!Number.isInteger(draft.passiveExpiryEscalationCount)
+    || draft.passiveExpiryEscalationCount < 1
+    || draft.passiveExpiryEscalationCount > 20) {
+    return "패시브 만료 가격개선 기준은 1~20회의 정수여야 합니다.";
   }
   if (Math.abs(baseWeightSum - 1) > 0.0001) {
     return "종목 기준 비중 합계는 100%여야 합니다.";

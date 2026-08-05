@@ -273,6 +273,7 @@ export type InstitutionSymbolMandate = {
   programStartedTradeDate: string | null;
   programTargetCompletionDate: string | null;
   executionProgramLastOrderStatus: string | null;
+  executionProgramConsecutivePassiveExpiryCount: number;
 };
 
 export type InstitutionSymbolPolicy = {
@@ -306,6 +307,8 @@ export type InstitutionPortfolioScheduledPolicy = {
   decisionIntervalMinutes: number;
   buildHorizonDays: number;
   buildParticipationRate: number;
+  rebalanceHorizonDays: number;
+  passiveExpiryEscalationCount: number;
   mandates: InstitutionSymbolPolicy[];
   changeReason: string;
   changedBy: string;
@@ -346,6 +349,8 @@ export type InstitutionPortfolio = {
   decisionIntervalMinutes: number;
   buildHorizonDays: number;
   buildParticipationRate: number;
+  rebalanceHorizonDays: number;
+  passiveExpiryEscalationCount: number;
   nextDecisionAt: string | null;
   latestDecisionRunId: number | null;
   latestDecisionSlot: string | null;
@@ -395,6 +400,8 @@ export type InstitutionPortfolioStylePreset = {
   decisionIntervalMinutes: number;
   buildHorizonDays: number;
   buildParticipationRate: number;
+  rebalanceHorizonDays: number;
+  passiveExpiryEscalationCount: number;
   pricePressureSensitivity: number;
   momentumSensitivity: number;
   valueSensitivity: number;
