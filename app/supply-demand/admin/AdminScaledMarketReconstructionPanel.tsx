@@ -821,7 +821,15 @@ export function AdminScaledMarketReconstructionPanel({
                     )}
                   </td>
                   <td className="px-3 py-2">
-                    {symbol.requiresNewListing
+                    {(symbol.currentMatchesTargetStructure
+                      || symbol.currentInstrumentPresent
+                      && symbol.currentIssuedShares === symbol.targetIssuedShares
+                      && symbol.currentTradableShares === symbol.targetTradableShares
+                      && symbol.currentInitialPrice === symbol.targetReferencePrice)
+                      ? symbol.currentHoldingReconciled
+                        ? "목표구조 적용 완료"
+                        : "목표구조 보유 불일치"
+                      : symbol.requiresNewListing
                       ? !symbol.currentInstrumentPresent
                         ? "준비상장 필요"
                         : symbol.currentMatchesExpectedSourceStructure

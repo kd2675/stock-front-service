@@ -242,6 +242,7 @@ export type ScaledMarketRebasePreview = {
     currentMarketCapitalizationMultiplier: number | null;
     dailyVolumeMultiplier: number | null;
     currentMatchesExpectedSourceStructure: boolean;
+    currentMatchesTargetStructure: boolean;
     currentHoldingReconciled: boolean;
     underwriterFloatCleared: boolean;
     requiresNewListing: boolean;
