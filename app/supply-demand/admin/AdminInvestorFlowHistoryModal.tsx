@@ -2,6 +2,8 @@ import DataTableViewport from "@/app/components/DataTableViewport";
 import useModalDialog from "@/app/hooks/useModalDialog";
 import {
   ADMIN_INVESTOR_FLOW_SOURCE_META,
+  ADMIN_MARKET_FLOW_PAGE_CATEGORIES,
+  ADMIN_MARKET_FLOW_PAGE_META,
   ADMIN_PARTICIPANT_CATEGORIES,
   ADMIN_PARTICIPANT_CATEGORY_META,
   emptyParticipantCategory,
@@ -11,17 +13,19 @@ import {
   presentNetQuantity,
   resolveParticipantCategories,
   resolveInvestorFlowSourceStatus,
+  resolveVisibleParticipantCategories,
   summarizeInvestorFlowAmounts,
   type AdminParticipantAmountFlow,
 } from "@/app/supply-demand/admin/adminInvestorFlowPresentation";
 import { formatCompactWon, formatDateTime, formatNumber, formatWon } from "@/app/supply-demand/admin/AdminFormatters";
-import type { AdminInvestorFlowHistory, AdminInvestorFlowSummary } from "@/app/types/stock";
+import type { AdminInvestorFlowHistory, AdminInvestorFlowSummary, AdminMarketFlowPageScope } from "@/app/types/stock";
 
 export function AdminInvestorFlowHistoryModal({
   error,
   history,
   loading,
   open,
+  pageScope,
   onClose,
   onRefresh,
 }: {
@@ -29,6 +33,7 @@ export function AdminInvestorFlowHistoryModal({
   history: AdminInvestorFlowHistory | null;
   loading: boolean;
   open: boolean;
+  pageScope: AdminMarketFlowPageScope;
   onClose: () => void;
   onRefresh: () => void;
 }) {
@@ -40,6 +45,8 @@ export function AdminInvestorFlowHistoryModal({
 
   const dailyFlows = history?.dailyFlows ?? [];
   const periodFlow = aggregateInvestorFlows(dailyFlows, history?.rangeEnd ?? "");
+  const visiblePeriodCategories = resolveVisibleParticipantCategories(periodFlow.categories, pageScope);
+  const pageMeta = ADMIN_MARKET_FLOW_PAGE_META[pageScope];
   const rangeLabel = history ? `${history.rangeStart} - ${history.rangeEnd}` : "최근 7일";
 
   return (
@@ -47,9 +54,11 @@ export function AdminInvestorFlowHistoryModal({
       <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="investor-flow-history-title" className="mx-auto w-full max-w-6xl rounded-lg border border-white/10 bg-admin-modal p-4 shadow-[var(--shadow-dialog)] outline-none">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h3 id="investor-flow-history-title" className="text-base font-black text-white">참여자별 체결 흐름 · 최근 7일</h3>
+            <h3 id="investor-flow-history-title" className="text-base font-black text-white">{pageScope === "ALL" ? "참여자별" : pageMeta.label} 체결 흐름 · 최근 7일</h3>
             <p className="mt-1 max-w-3xl text-xs font-bold leading-5 text-stock-subtle">
-              시뮬레이션 거래일별 계정 역할의 순매수 금액과 금액 참여율을 우선 비교합니다. 수량은 보조 지표이며 표시된 역할의 순매수 금액 합계는 정상 반영 시 0원입니다.
+              {pageScope === "ALL"
+                ? "시뮬레이션 거래일별 계정 역할의 순매수 금액과 금액 참여율을 우선 비교합니다. 수량은 보조 지표이며 표시된 역할의 순매수 금액 합계는 정상 반영 시 0원입니다."
+                : `${pageMeta.label}에 포함된 원천 역할의 거래일별 순매수 금액과 전체 시장 대비 참여율입니다.`}
             </p>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-2">
@@ -67,8 +76,8 @@ export function AdminInvestorFlowHistoryModal({
 
         {history ? (
           <>
-            <div className="mt-4 grid gap-3 lg:grid-cols-3">
-              {periodFlow.categories.map((category) => (
+            <div className={visiblePeriodCategories.length > 1 ? "mt-4 grid gap-3 lg:grid-cols-3" : "mt-4 max-w-3xl"}>
+              {visiblePeriodCategories.map((category) => (
                 <PeriodCategoryCard key={category.category} category={category} />
               ))}
             </div>
@@ -86,7 +95,7 @@ export function AdminInvestorFlowHistoryModal({
               </div>
             ) : null}
 
-            <InvestorFlowHistoryTable dailyFlows={dailyFlows} currentSimulationDate={history.rangeEnd} />
+            <InvestorFlowHistoryTable dailyFlows={dailyFlows} currentSimulationDate={history.rangeEnd} pageScope={pageScope} />
           </>
         ) : (
           <div className="mt-4 rounded-md border border-white/10 bg-black/20 px-3 py-10 text-center text-sm font-bold text-stock-subtle">
@@ -127,10 +136,13 @@ function PeriodCategoryCard({ category }: { category: AdminParticipantAmountFlow
 function InvestorFlowHistoryTable({
   currentSimulationDate,
   dailyFlows,
+  pageScope,
 }: {
   currentSimulationDate: string;
   dailyFlows: AdminInvestorFlowSummary[];
+  pageScope: AdminMarketFlowPageScope;
 }) {
+  const visibleCategoryKeys = ADMIN_MARKET_FLOW_PAGE_CATEGORIES[pageScope];
   return (
     <>
       <DataTableViewport label="최근 7일 참여자별 체결 흐름" tone="dark" className="mt-4 hidden md:block">
@@ -139,7 +151,7 @@ function InvestorFlowHistoryTable({
             <tr>
               <th className="px-3 py-2">거래일</th>
               <th className="px-3 py-2 text-right">실제 체결대금</th>
-              {ADMIN_PARTICIPANT_CATEGORIES.map((category) => (
+              {visibleCategoryKeys.map((category) => (
                 <th key={category} className="px-3 py-2 text-right">{ADMIN_PARTICIPANT_CATEGORY_META[category].label}</th>
               ))}
               <th className="px-3 py-2 text-right">금액·수량 대사</th>
@@ -151,6 +163,7 @@ function InvestorFlowHistoryTable({
               const sourceStatus = resolveInvestorFlowSourceStatus(flow, currentSimulationDate);
               const available = isInvestorFlowIncludedInAggregate(sourceStatus);
               const amountSummary = summarizeInvestorFlowAmounts(resolveParticipantCategories(flow));
+              const visibleCategories = resolveVisibleParticipantCategories(amountSummary.categories, pageScope);
               const balanced = flow.totalBuyQuantity === flow.totalSellQuantity && amountSummary.balanced;
               return (
                 <tr key={flow.simulationTradeDate} className={available ? undefined : "bg-admin-danger/[0.035]"}>
@@ -162,7 +175,7 @@ function InvestorFlowHistoryTable({
                     <p className="font-black tabular-nums text-white">{available ? balanced ? formatCompactWon(amountSummary.totalBuyAmount) : "반영 중" : "—"}</p>
                     <p className="mt-1 text-[11px] font-bold tabular-nums text-stock-subtle">{available ? `${formatWon(amountSummary.totalBuyAmount)} · ${formatNumber(flow.totalBuyQuantity)}주` : "합계 제외"}</p>
                   </td>
-                  {amountSummary.categories.map((category) => (
+                  {visibleCategories.map((category) => (
                     <DailyCategoryCell key={category.category} category={category} available={available} />
                   ))}
                   <td className="px-3 py-3 text-right align-top">
@@ -180,7 +193,7 @@ function InvestorFlowHistoryTable({
 
       <div className="mt-4 space-y-3 md:hidden">
         {dailyFlows.map((flow) => (
-          <DailyFlowCard key={flow.simulationTradeDate} flow={flow} currentSimulationDate={currentSimulationDate} />
+          <DailyFlowCard key={flow.simulationTradeDate} flow={flow} currentSimulationDate={currentSimulationDate} pageScope={pageScope} />
         ))}
       </div>
     </>
@@ -208,10 +221,11 @@ function DailyCategoryCell({
   );
 }
 
-function DailyFlowCard({ flow, currentSimulationDate }: { flow: AdminInvestorFlowSummary; currentSimulationDate: string }) {
+function DailyFlowCard({ flow, currentSimulationDate, pageScope }: { flow: AdminInvestorFlowSummary; currentSimulationDate: string; pageScope: AdminMarketFlowPageScope }) {
   const sourceStatus = resolveInvestorFlowSourceStatus(flow, currentSimulationDate);
   const available = isInvestorFlowIncludedInAggregate(sourceStatus);
   const amountSummary = summarizeInvestorFlowAmounts(resolveParticipantCategories(flow));
+  const visibleCategories = resolveVisibleParticipantCategories(amountSummary.categories, pageScope);
   const balanced = flow.totalBuyQuantity === flow.totalSellQuantity && amountSummary.balanced;
   return (
     <article className={`rounded-md border p-3 ${available ? "border-white/10 bg-black/20" : "border-admin-danger/20 bg-admin-danger/[0.035]"}`}>
@@ -227,7 +241,7 @@ function DailyFlowCard({ flow, currentSimulationDate }: { flow: AdminInvestorFlo
         </div>
       </div>
       <div className="mt-3 space-y-2 border-t border-white/10 pt-3">
-        {available ? amountSummary.categories.map((category) => {
+        {available ? visibleCategories.map((category) => {
           const meta = ADMIN_PARTICIPANT_CATEGORY_META[category.category];
           const netBuyAmount = presentNetBuyAmount(category.netBuyAmount);
           return (

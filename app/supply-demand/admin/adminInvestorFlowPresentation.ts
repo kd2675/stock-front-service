@@ -4,6 +4,7 @@ import type {
   AdminInvestorFlowSummary,
   AdminFundFlowBreakdown,
   AdminFundFlowSummary,
+  AdminMarketFlowPageScope,
   AdminParticipantCategory,
   AdminParticipantCategoryFlow,
   AdminParticipantScope,
@@ -60,8 +61,60 @@ export const ADMIN_PARTICIPANT_SCOPES: AdminParticipantScope[] = [
   ...ADMIN_PARTICIPANT_CATEGORIES,
 ];
 
+export const ADMIN_MARKET_FLOW_PAGE_SCOPES: AdminMarketFlowPageScope[] = [
+  "ALL",
+  "AUTO_PARTICIPANT",
+  "INSTITUTIONAL",
+  "MANUAL_PARTICIPANT",
+  "OTHER",
+];
+
+export const ADMIN_MARKET_FLOW_PAGE_CATEGORIES: Record<AdminMarketFlowPageScope, readonly AdminParticipantCategory[]> = {
+  ALL: ADMIN_PARTICIPANT_CATEGORIES,
+  AUTO_PARTICIPANT: ["AUTO_PARTICIPANT"],
+  INSTITUTIONAL: ["INSTITUTIONAL_INVESTOR", "LIQUIDITY_PROVIDER", "ISSUE_UNDERWRITER"],
+  MANUAL_PARTICIPANT: ["MANUAL_PARTICIPANT"],
+  OTHER: ["SYSTEM_CUSTODY"],
+};
+
+export const ADMIN_MARKET_FLOW_PAGE_META: Record<AdminMarketFlowPageScope, {
+  label: string;
+  description: string;
+}> = {
+  ALL: {
+    label: "종합",
+    description: "현재 시장흐름 전체 화면입니다. 장 지수와 모든 역할의 자산·체결·주문·종목·현금 원장을 함께 확인합니다.",
+  },
+  AUTO_PARTICIPANT: {
+    label: "자동참여자",
+    description: "프로필 전략으로 주문하는 자동 참여자 계좌의 자산과 체결 흐름입니다.",
+  },
+  INSTITUTIONAL: {
+    label: "기관",
+    description: "기관투자자, 유동성 공급자(LP), 발행 인수기관을 구분해 확인하는 기관계 흐름입니다.",
+  },
+  MANUAL_PARTICIPANT: {
+    label: "개인(유저)",
+    description: "사용자가 직접 주문하는 개인 계좌의 자산과 체결 흐름입니다.",
+  },
+  OTHER: {
+    label: "기타",
+    description: "거래 주체가 아닌 시스템 보관 계좌의 자산 이동과 예외 잔고를 확인합니다.",
+  },
+};
+
+export const ADMIN_MARKET_FLOW_FUND_SCOPES: Record<AdminMarketFlowPageScope, readonly AdminParticipantScope[]> = {
+  ALL: ADMIN_PARTICIPANT_SCOPES,
+  AUTO_PARTICIPANT: ["AUTO_PARTICIPANT"],
+  INSTITUTIONAL: ["INSTITUTIONAL", "INSTITUTIONAL_INVESTOR", "LIQUIDITY_PROVIDER", "ISSUE_UNDERWRITER"],
+  MANUAL_PARTICIPANT: ["MANUAL_PARTICIPANT"],
+  OTHER: ["SYSTEM_CUSTODY"],
+};
+
 export const ADMIN_PARTICIPANT_SCOPE_LABELS: Record<AdminParticipantScope, string> = {
   ALL: "전체",
+  INSTITUTIONAL: "기관 전체",
+  OTHER: "기타 전체",
   MANUAL_PARTICIPANT: ADMIN_PARTICIPANT_CATEGORY_META.MANUAL_PARTICIPANT.label,
   AUTO_PARTICIPANT: ADMIN_PARTICIPANT_CATEGORY_META.AUTO_PARTICIPANT.label,
   INSTITUTIONAL_INVESTOR: ADMIN_PARTICIPANT_CATEGORY_META.INSTITUTIONAL_INVESTOR.label,
@@ -80,7 +133,21 @@ export function resolveParticipantFundFlow(
   if (scope === "ALL") {
     return breakdown.total;
   }
-  return breakdown.categories.find((category) => category.participantCategory === scope)?.summary ?? null;
+  const includedCategories = isMarketFlowPageScope(scope)
+    ? ADMIN_MARKET_FLOW_PAGE_CATEGORIES[scope]
+    : [scope];
+  const summaries = breakdown.categories
+    .filter((category) => includedCategories.includes(category.participantCategory))
+    .map((category) => category.summary);
+  return summaries.length > 0 ? sumFundFlowSummaries(summaries) : null;
+}
+
+export function resolveVisibleParticipantCategories(
+  categories: AdminParticipantAmountFlow[],
+  pageScope: AdminMarketFlowPageScope,
+) {
+  const includedCategories = new Set(ADMIN_MARKET_FLOW_PAGE_CATEGORIES[pageScope]);
+  return categories.filter((category) => includedCategories.has(category.category));
 }
 
 export type AdminParticipantAmountFlow = AdminParticipantCategoryFlow & {
@@ -247,4 +314,54 @@ export function emptyParticipantCategory(category: AdminParticipantCategory): Ad
 
 function percentageOf(value: number, total: number) {
   return total > 0 ? (value * 100) / total : 0;
+}
+
+function isMarketFlowPageScope(scope: AdminParticipantScope): scope is AdminMarketFlowPageScope {
+  return ADMIN_MARKET_FLOW_PAGE_SCOPES.some((pageScope) => pageScope === scope);
+}
+
+function sumFundFlowSummaries(summaries: AdminFundFlowSummary[]): AdminFundFlowSummary {
+  return summaries.reduce<AdminFundFlowSummary>((total, summary) => ({
+    activeAccountCount: total.activeAccountCount + summary.activeAccountCount,
+    totalCashBalance: total.totalCashBalance + summary.totalCashBalance,
+    totalReservedBuyCash: total.totalReservedBuyCash + summary.totalReservedBuyCash,
+    totalHoldingMarketValue: total.totalHoldingMarketValue + summary.totalHoldingMarketValue,
+    totalHoldingQuantity: total.totalHoldingQuantity + summary.totalHoldingQuantity,
+    totalReservedSellQuantity: total.totalReservedSellQuantity + summary.totalReservedSellQuantity,
+    totalAvailableHoldingQuantity: total.totalAvailableHoldingQuantity + summary.totalAvailableHoldingQuantity,
+    holdingPositionCount: total.holdingPositionCount + summary.holdingPositionCount,
+    totalAsset: total.totalAsset + summary.totalAsset,
+    externalDepositAmount: total.externalDepositAmount + summary.externalDepositAmount,
+    externalWithdrawAmount: total.externalWithdrawAmount + summary.externalWithdrawAmount,
+    netExternalCashFlow: total.netExternalCashFlow + summary.netExternalCashFlow,
+    dividendIncomeAmount: total.dividendIncomeAmount + summary.dividendIncomeAmount,
+    buyNetAmount: total.buyNetAmount + summary.buyNetAmount,
+    sellNetAmount: total.sellNetAmount + summary.sellNetAmount,
+    tradeNetCashFlow: total.tradeNetCashFlow + summary.tradeNetCashFlow,
+    totalFeeAmount: total.totalFeeAmount + summary.totalFeeAmount,
+    totalTaxAmount: total.totalTaxAmount + summary.totalTaxAmount,
+    realizedProfit: total.realizedProfit + summary.realizedProfit,
+    executionCount: total.executionCount + summary.executionCount,
+  }), {
+    activeAccountCount: 0,
+    totalCashBalance: 0,
+    totalReservedBuyCash: 0,
+    totalHoldingMarketValue: 0,
+    totalHoldingQuantity: 0,
+    totalReservedSellQuantity: 0,
+    totalAvailableHoldingQuantity: 0,
+    holdingPositionCount: 0,
+    totalAsset: 0,
+    externalDepositAmount: 0,
+    externalWithdrawAmount: 0,
+    netExternalCashFlow: 0,
+    dividendIncomeAmount: 0,
+    buyNetAmount: 0,
+    sellNetAmount: 0,
+    tradeNetCashFlow: 0,
+    totalFeeAmount: 0,
+    totalTaxAmount: 0,
+    realizedProfit: 0,
+    executionCount: 0,
+  });
 }

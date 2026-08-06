@@ -1,4 +1,4 @@
-export type AdminTab = "dashboard" | "market" | "funds" | "participants" | "corporate" | "system";
+export type AdminTab = "dashboard" | "market" | "flows" | "funds" | "participants" | "corporate" | "system";
 
 export type AdminSection =
   | "dashboard"
@@ -6,7 +6,11 @@ export type AdminSection =
   | "market-auto-market"
   | "market-scaled-market"
   | "market-liquidity-providers"
-  | "market-flows"
+  | "flows-overview"
+  | "flows-auto-participants"
+  | "flows-institutions"
+  | "flows-users"
+  | "flows-others"
   | "funds-accounts"
   | "funds-ledger"
   | "funds-payroll"
@@ -45,6 +49,17 @@ export const ADMIN_NAVIGATION_GROUPS: readonly AdminNavigationGroup[] = [
     ],
   },
   {
+    tab: "flows",
+    label: "시장 흐름",
+    items: [
+      { section: "flows-overview", href: "/admin/flows", label: "종합", description: "기존 시장흐름 전체 화면에서 장 지수, 모든 역할의 자산·체결, 종목별 거래와 현금 원장을 함께 확인합니다." },
+      { section: "flows-auto-participants", href: "/admin/flows/auto-participants", label: "자동참여자", description: "프로필 전략으로 주문하는 자동 참여자 계좌의 자산과 체결 흐름을 확인합니다." },
+      { section: "flows-institutions", href: "/admin/flows/institutions", label: "기관", description: "기관투자자, 유동성 공급자(LP), 발행 인수기관의 자산과 체결을 역할별로 확인합니다." },
+      { section: "flows-users", href: "/admin/flows/users", label: "개인(유저)", description: "사용자가 직접 주문하는 개인 계좌의 자산과 체결 흐름을 확인합니다." },
+      { section: "flows-others", href: "/admin/flows/others", label: "기타", description: "시스템 보관 계좌의 자산 이동과 예외 잔고를 확인합니다." },
+    ],
+  },
+  {
     tab: "market",
     label: "시장 운영",
     items: [
@@ -52,7 +67,6 @@ export const ADMIN_NAVIGATION_GROUPS: readonly AdminNavigationGroup[] = [
       { section: "market-auto-market", href: "/admin/market/auto-market", label: "종목별 자동장", description: "종목별 자동 주문 생성, 주문 상한, TTL과 시장 압력 분포를 관리합니다." },
       { section: "market-scaled-market", href: "/admin/market/scaled-market", label: "1/100 시장 계약", description: "종목 성숙, 발행주식수, 시총·가격·계좌자산을 단계별 계획으로 대사하고 적용합니다." },
       { section: "market-liquidity-providers", href: "/admin/market/liquidity-providers", label: "유동성 공급자", description: "종목별 LP를 하나씩 생성하고 권장 시드·기준 거래량·일일 한도를 비교합니다." },
-      { section: "market-flows", href: "/admin/market/flows", label: "시장 흐름", description: "전체 계좌 자산과 참여자별 체결, 종목별 거래·현금 흐름을 확인합니다." },
     ],
   },
   {

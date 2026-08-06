@@ -58,10 +58,11 @@ export function resolveAdminPageQueryFlags({
   const isBatchSection = activeAdminSection === "system-jobs";
   const isCashFlowLedgerSection = activeAdminSection === "funds-ledger";
   const isEventsSection = activeAdminTab === "corporate";
+  const isFlowSection = activeAdminTab === "flows";
   const isMarketSection = activeAdminSection === "dashboard"
     || activeAdminSection === "market-instruments"
     || activeAdminSection === "market-auto-market"
-    || activeAdminSection === "market-flows";
+    || isFlowSection;
   const shouldLoadBatchRuntimeControls = activeAdminSection === "system-jobs" || activeAdminSection === "funds-payroll";
   const shouldLoadAutoParticipants = activeAdminSection === "funds-payroll" || activeAdminSection === "participants-list";
   const includeParticipants = false;
@@ -95,14 +96,14 @@ export function resolveAdminPageQueryFlags({
     shouldUseBatchRuntimeControls: isAdminAllowed && shouldLoadBatchRuntimeControls,
     shouldUseDormantAutoParticipants: isAdminAllowed && activeAdminSection === "funds-custody",
     shouldUseEodOverview: isAdminAllowed && activeAdminSection === "system-eod",
-    shouldLoadAdminFlowOverview: activeAdminSection === "market-flows",
+    shouldLoadAdminFlowOverview: isFlowSection,
     shouldLoadAutoMarketDetails,
     shouldLoadAutoMarketSummary: activeAdminSection === "dashboard",
     shouldLoadAutoParticipants,
     shouldLoadAutoParticipantProfileOverviews: activeAdminSection === "participants-overview",
     shouldLoadInstrumentDetails: activeAdminSection === "market-instruments" || activeAdminTab === "corporate",
     shouldLoadMarketSummary: activeAdminSection === "dashboard" || activeAdminSection === "market-instruments",
-    shouldUseAdminFlowOverview: isAdminAllowed && activeAdminSection === "market-flows",
+    shouldUseAdminFlowOverview: isAdminAllowed && isFlowSection,
     shouldUseAutoMarketDetails: isAdminAllowed && shouldLoadAutoMarketDetails,
     shouldUseAutoMarketSummary: isAdminAllowed && activeAdminSection === "dashboard",
     shouldUseAutoParticipants: isAdminAllowed && shouldLoadAutoParticipants,

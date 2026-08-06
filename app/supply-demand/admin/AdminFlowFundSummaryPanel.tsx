@@ -6,7 +6,6 @@ import { FundFlowLine, SalaryMetric } from "@/app/supply-demand/admin/AdminMetri
 import { AdminTotalAssetHistoryModal } from "@/app/supply-demand/admin/AdminTotalAssetHistoryModal";
 import type { AdminAssetHistoryMetric } from "@/app/supply-demand/admin/adminTotalAssetHistoryMetrics";
 import {
-  ADMIN_PARTICIPANT_SCOPES,
   ADMIN_PARTICIPANT_SCOPE_LABELS,
   resolveParticipantFundFlow,
 } from "@/app/supply-demand/admin/adminInvestorFlowPresentation";
@@ -19,6 +18,8 @@ export function AdminFlowFundSummaryPanel({
   loadingCumulative,
   error,
   cumulativeError,
+  initialParticipantScope,
+  participantScopes,
   onLoadCumulative,
   onLoadTotalAssetHistory,
 }: {
@@ -28,10 +29,12 @@ export function AdminFlowFundSummaryPanel({
   loadingCumulative: boolean;
   error: boolean;
   cumulativeError: boolean;
+  initialParticipantScope: AdminParticipantScope;
+  participantScopes: readonly AdminParticipantScope[];
   onLoadCumulative: () => void;
   onLoadTotalAssetHistory: (page: number, participantScope: AdminParticipantScope) => Promise<AdminTotalAssetHistoryPage | null>;
 }) {
-  const [selectedParticipantScope, setSelectedParticipantScope] = useState<AdminParticipantScope>("ALL");
+  const [selectedParticipantScope, setSelectedParticipantScope] = useState<AdminParticipantScope>(initialParticipantScope);
   const [showCumulativeFundFlow, setShowCumulativeFundFlow] = useState(false);
   const [showTotalAssetHistory, setShowTotalAssetHistory] = useState(false);
   const [totalAssetHistoryMetric, setTotalAssetHistoryMetric] = useState<AdminAssetHistoryMetric>("TOTAL_ASSET");
@@ -104,6 +107,7 @@ export function AdminFlowFundSummaryPanel({
           loading={loadingCumulative}
           error={cumulativeError}
           open={showCumulativeFundFlow}
+          participantScopes={participantScopes}
           onClose={() => setShowCumulativeFundFlow(false)}
           onRefresh={onLoadCumulative}
           onOpenTotalAssetHistory={openTotalAssetHistory}
@@ -132,6 +136,7 @@ export function AdminFlowFundSummaryPanel({
 
       <ParticipantScopeTabs
         breakdown={fundFlow}
+        participantScopes={participantScopes}
         selectedScope={selectedParticipantScope}
         onSelect={setSelectedParticipantScope}
       />
@@ -144,6 +149,7 @@ export function AdminFlowFundSummaryPanel({
         loading={loadingCumulative}
         error={cumulativeError}
         open={showCumulativeFundFlow}
+        participantScopes={participantScopes}
         onClose={() => setShowCumulativeFundFlow(false)}
         onRefresh={onLoadCumulative}
         onOpenTotalAssetHistory={openTotalAssetHistory}
@@ -254,12 +260,14 @@ function AdminCumulativeFundFlowModal({
   onRefresh,
   onOpenTotalAssetHistory,
   onParticipantScopeChange,
+  participantScopes,
 }: {
   breakdown: AdminFundFlowBreakdown | null;
   selectedParticipantScope: AdminParticipantScope;
   loading: boolean;
   error: boolean;
   open: boolean;
+  participantScopes: readonly AdminParticipantScope[];
   onClose: () => void;
   onRefresh: () => void;
   onOpenTotalAssetHistory: (metric: AdminAssetHistoryMetric) => void;
@@ -308,6 +316,7 @@ function AdminCumulativeFundFlowModal({
 
         <ParticipantScopeTabs
           breakdown={breakdown}
+          participantScopes={participantScopes}
           selectedScope={selectedParticipantScope}
           onSelect={onParticipantScopeChange}
         />
@@ -326,16 +335,22 @@ function AdminCumulativeFundFlowModal({
 
 function ParticipantScopeTabs({
   breakdown,
+  participantScopes,
   selectedScope,
   onSelect,
 }: {
   breakdown: AdminFundFlowBreakdown | null;
+  participantScopes: readonly AdminParticipantScope[];
   selectedScope: AdminParticipantScope;
   onSelect: (scope: AdminParticipantScope) => void;
 }) {
+  if (participantScopes.length <= 1) {
+    return null;
+  }
+
   return (
     <div className="mt-4 grid grid-cols-2 gap-1 rounded-md border border-white/10 bg-black/25 p-1 sm:grid-cols-4" role="tablist" aria-label="자산·자금 참여자 범위">
-      {ADMIN_PARTICIPANT_SCOPES.map((scope) => {
+      {participantScopes.map((scope) => {
         const active = scope === selectedScope;
         const summary = resolveParticipantFundFlow(breakdown, scope);
         return (

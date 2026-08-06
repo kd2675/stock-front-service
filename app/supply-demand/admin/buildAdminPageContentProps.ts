@@ -20,7 +20,7 @@ export function buildAdminPageContentProps(context: AdminPageContentBuilderConte
   const isScaledMarketContent = context.activeAdminSection === "market-scaled-market";
   const isMarketContent = context.activeAdminSection === "dashboard"
     || context.activeAdminSection === "market-instruments"
-    || context.activeAdminSection === "market-flows";
+    || context.activeAdminTab === "flows";
   const isParticipantsContent = context.activeAdminSection === "participants-list";
 
   return {

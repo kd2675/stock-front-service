@@ -19,6 +19,11 @@ assert.equal(resolvePublicRouteId("/orders"), "orders");
 assert.equal(resolvePublicRouteId("/research/DEMO001"), "research");
 
 const adminItems = ADMIN_NAVIGATION_GROUPS.flatMap((group) => group.items);
+assert.deepEqual(
+  ADMIN_NAVIGATION_GROUPS.map((group) => group.tab),
+  ["dashboard", "flows", "market", "funds", "participants", "corporate", "system"],
+  "시장 흐름 대목차가 시장 운영보다 먼저 노출되어야 합니다.",
+);
 const adminGroupSections = Object.fromEntries(ADMIN_NAVIGATION_GROUPS.map((group) => [
   group.tab,
   group.items.map((item) => item.section),
@@ -30,10 +35,21 @@ assert.deepEqual(
   [
     "market-instruments",
     "market-auto-market",
+    "market-scaled-market",
     "market-liquidity-providers",
-    "market-flows",
   ],
   "시장 운영 메뉴의 업무 순서가 계약과 다릅니다.",
+);
+assert.deepEqual(
+  adminGroupSections.flows,
+  [
+    "flows-overview",
+    "flows-auto-participants",
+    "flows-institutions",
+    "flows-users",
+    "flows-others",
+  ],
+  "시장 흐름 메뉴의 종합·자동참여자·기관·개인·기타 순서가 계약과 다릅니다.",
 );
 assert.deepEqual(
   adminGroupSections.corporate,
@@ -66,6 +82,7 @@ for (const item of adminItems) {
 }
 assert.equal(resolveAdminTabFromPath("/admin/market/liquidity"), "market");
 assert.equal(resolveAdminTabFromPath("/admin/market/auto-market"), "market");
+assert.equal(resolveAdminTabFromPath("/admin/flows/institutions"), "flows");
 assert.equal(resolveAdminTabFromPath("/admin/participants/institutions"), "participants");
 assert.equal(resolveAdminTabFromPath("/admin/participants/profiles"), "participants");
 assert.equal(resolveAdminTabFromPath("/admin/corporate/reports"), "corporate");
@@ -75,6 +92,7 @@ const redirects = await nextConfig.redirects();
 const redirectsBySource = new Map(redirects.map((redirect) => [redirect.source, redirect.destination]));
 assert.equal(redirectsBySource.has("/admin/participants/symbols"), false, "이전 자동 참여자 경로에 호환 리다이렉트를 두면 안 됩니다.");
 assert.equal(redirectsBySource.has("/supply-demand/admin/automation/symbols"), false, "이전 자동장 경로에 호환 리다이렉트를 두면 안 됩니다.");
+assert.equal(redirectsBySource.get("/admin/market/flows"), "/admin/flows", "기존 시장 흐름 주소가 새 독립 업무 영역으로 이동해야 합니다.");
 
 const flagsFor = (section, tab, editingAutoParticipantUserKey = null) => resolveAdminPageQueryFlags({
   activeAdminSection: section,
@@ -88,9 +106,16 @@ assert.deepEqual(
   ["shouldLoadAutoMarketSummary", "shouldLoadMarketSummary", "shouldUseAutoMarketSummary", "shouldUseMarketSummary", "shouldUseSimulationClock"],
 );
 assert.deepEqual(
-  pickEnabled(flagsFor("market-flows", "market")),
+  pickEnabled(flagsFor("flows-overview", "flows")),
   ["shouldLoadAdminFlowOverview", "shouldUseAdminFlowOverview"],
 );
+for (const section of adminGroupSections.flows) {
+  assert.deepEqual(
+    pickEnabled(flagsFor(section, "flows")),
+    ["shouldLoadAdminFlowOverview", "shouldUseAdminFlowOverview"],
+    `${section} 조회 범위가 시장 흐름 계약과 다릅니다.`,
+  );
+}
 assert.deepEqual(
   pickEnabled(flagsFor("market-auto-market", "market")),
   ["includeConfigs", "shouldLoadAutoMarketDetails", "shouldUseAutoMarketDetails"],

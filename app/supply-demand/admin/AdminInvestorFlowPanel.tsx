@@ -3,18 +3,20 @@ import { useState } from "react";
 import {
   ADMIN_PARTICIPANT_CATEGORY_META,
   ADMIN_INVESTOR_FLOW_SOURCE_META,
+  ADMIN_MARKET_FLOW_PAGE_META,
   clampParticipationRate,
   formatParticipationRate,
   presentNetBuyAmount,
   presentNetQuantity,
   resolveParticipantCategories,
   resolveInvestorFlowSourceStatus,
+  resolveVisibleParticipantCategories,
   summarizeInvestorFlowAmounts,
   type AdminParticipantAmountFlow,
 } from "@/app/supply-demand/admin/adminInvestorFlowPresentation";
 import { formatCompactWon, formatDateTime, formatNumber, formatWon } from "@/app/supply-demand/admin/AdminFormatters";
 import { AdminInvestorFlowHistoryModal } from "@/app/supply-demand/admin/AdminInvestorFlowHistoryModal";
-import type { AdminInvestorFlowHistory, AdminInvestorFlowSummary } from "@/app/types/stock";
+import type { AdminInvestorFlowHistory, AdminInvestorFlowSummary, AdminMarketFlowPageScope } from "@/app/types/stock";
 
 export function AdminInvestorFlowPanel({
   error,
@@ -22,6 +24,7 @@ export function AdminInvestorFlowPanel({
   historyError,
   historyLoading,
   investorFlow,
+  pageScope,
   refreshing,
   onLoadHistory,
 }: {
@@ -30,10 +33,12 @@ export function AdminInvestorFlowPanel({
   historyError: boolean;
   historyLoading: boolean;
   investorFlow: AdminInvestorFlowSummary | null | undefined;
+  pageScope: AdminMarketFlowPageScope;
   refreshing: boolean;
   onLoadHistory: () => void;
 }) {
   const [showHistory, setShowHistory] = useState(false);
+  const pageMeta = ADMIN_MARKET_FLOW_PAGE_META[pageScope];
 
   const openHistory = () => {
     setShowHistory(true);
@@ -44,7 +49,7 @@ export function AdminInvestorFlowPanel({
     return (
       <>
         <section className="mt-5 rounded-lg border border-white/10 bg-black/20 px-4 py-8 text-center" aria-labelledby="admin-investor-flow-title">
-          <h3 id="admin-investor-flow-title" className="text-sm font-black text-white">참여자별 체결 흐름</h3>
+          <h3 id="admin-investor-flow-title" className="text-sm font-black text-white">{pageScope === "ALL" ? "참여자별" : pageMeta.label} 체결 흐름</h3>
           <p className="mt-2 text-xs font-bold text-stock-subtle">
             {refreshing ? "시뮬레이션 당일 참여자 체결 흐름을 조회하고 있습니다." : error ? "참여자 체결 흐름을 조회하지 못했습니다. 흐름 새로고침을 다시 눌러 주세요." : "시뮬레이션 당일 참여자 체결 흐름이 없습니다."}
           </p>
@@ -52,20 +57,21 @@ export function AdminInvestorFlowPanel({
             최근 7일 변화
           </button>
         </section>
-        <AdminInvestorFlowHistoryModal error={historyError} history={history} loading={historyLoading} open={showHistory} onClose={() => setShowHistory(false)} onRefresh={onLoadHistory} />
+        <AdminInvestorFlowHistoryModal error={historyError} history={history} loading={historyLoading} open={showHistory} pageScope={pageScope} onClose={() => setShowHistory(false)} onRefresh={onLoadHistory} />
       </>
     );
   }
 
   const categories = resolveParticipantCategories(investorFlow);
   const amountSummary = summarizeInvestorFlowAmounts(categories);
+  const visibleCategories = resolveVisibleParticipantCategories(amountSummary.categories, pageScope);
   const sourceStatus = resolveInvestorFlowSourceStatus(investorFlow, investorFlow.simulationTradeDate);
   const sourceMeta = ADMIN_INVESTOR_FLOW_SOURCE_META[sourceStatus];
   const quantityBalanced = investorFlow.totalBuyQuantity === investorFlow.totalSellQuantity;
   const balanced = quantityBalanced && amountSummary.balanced;
   const quantityImbalance = investorFlow.totalBuyQuantity - investorFlow.totalSellQuantity;
   const amountImbalance = amountSummary.totalBuyAmount - amountSummary.totalSellAmount;
-  const compositionLabel = amountSummary.categories
+  const compositionLabel = visibleCategories
     .map((category) => `${ADMIN_PARTICIPANT_CATEGORY_META[category.category].label} ${formatParticipationRate(category.amountShareRate)}`)
     .join(", ");
 
@@ -75,7 +81,7 @@ export function AdminInvestorFlowPanel({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 id="admin-investor-flow-title" className="text-sm font-black text-white">참여자별 체결 흐름</h3>
+              <h3 id="admin-investor-flow-title" className="text-sm font-black text-white">{pageScope === "ALL" ? "참여자별" : pageMeta.label} 체결 흐름</h3>
               <span className={`inline-flex items-center rounded-md px-2 py-1 text-[11px] font-black ${sourceMeta.badgeClassName}`}>
                 {sourceMeta.label}
               </span>
@@ -83,7 +89,9 @@ export function AdminInvestorFlowPanel({
               {refreshing ? <span className="text-[11px] font-bold text-admin-muted">확인 중</span> : null}
             </div>
             <p className="mt-1 max-w-3xl text-xs font-bold leading-5 text-stock-subtle">
-              시뮬레이션 오늘의 활동 계정 역할별 매수와 매도입니다. 체결금액을 대표값으로 비교하고 수량은 보조 지표로 제공합니다.
+              {pageScope === "ALL"
+                ? "시뮬레이션 오늘의 활동 계정 역할별 매수와 매도입니다. 체결금액을 대표값으로 비교하고 수량은 보조 지표로 제공합니다."
+                : `${pageMeta.label}에 포함된 원천 계정 역할별 매수·매도와 전체 시장 대비 참여율입니다.`}
             </p>
           </div>
           <div className="flex shrink-0 flex-wrap items-start justify-end gap-2">
@@ -98,15 +106,15 @@ export function AdminInvestorFlowPanel({
           </div>
         </div>
 
-        <div className="mt-4 grid gap-3 lg:grid-cols-3">
-          {amountSummary.categories.map((category) => (
+        <div className={visibleCategories.length > 1 ? "mt-4 grid gap-3 lg:grid-cols-3" : "mt-4 max-w-3xl"}>
+          {visibleCategories.map((category) => (
             <ParticipantCategoryCard key={category.category} category={category} />
           ))}
         </div>
 
         <div className="mt-4 rounded-md border border-white/10 bg-admin-canvas/45 px-3 py-3">
           <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] font-bold text-stock-subtle">
-            <span>전체 체결금액 구성</span>
+            <span>{pageScope === "ALL" ? "전체 체결금액 구성" : `전체 체결 대비 ${pageMeta.label} 구성`}</span>
             <span className="tabular-nums">
               {balanced ? `실제 체결대금 ${formatCompactWon(amountSummary.totalBuyAmount)} · ` : "매수·매도 요약 반영 중 · "}
               거래수량 {formatNumber(investorFlow.totalBuyQuantity)}주
@@ -115,7 +123,7 @@ export function AdminInvestorFlowPanel({
           {amountSummary.totalParticipationAmount > 0 ? (
             <>
               <div className="mt-3 flex h-2 overflow-hidden rounded-full bg-white/10" role="img" aria-label={`참여자별 체결금액 비중: ${compositionLabel}`}>
-                {amountSummary.categories.map((category) => (
+                {visibleCategories.map((category) => (
                   <span
                     key={category.category}
                     className={ADMIN_PARTICIPANT_CATEGORY_META[category.category].colorClassName}
@@ -125,7 +133,7 @@ export function AdminInvestorFlowPanel({
               </div>
               <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap gap-x-5 gap-y-2">
-                  {amountSummary.categories.map((category) => {
+                  {visibleCategories.map((category) => {
                     const meta = ADMIN_PARTICIPANT_CATEGORY_META[category.category];
                     return (
                       <span key={category.category} className="inline-flex items-center gap-1.5 text-[11px] font-bold text-stock-subtle">
@@ -150,7 +158,9 @@ export function AdminInvestorFlowPanel({
         </div>
 
         <p className="mt-3 text-[11px] font-bold leading-5 text-admin-muted">
-          화면은 10초마다 갱신하며, 계좌별 당일 요약은 기본 30초 주기로 반영되어 장중에는 최대 약 40초 늦을 수 있습니다. 참여자 구분은 계좌의 시스템 역할을 기준으로 집계합니다.
+          {pageScope === "ALL"
+            ? "화면은 10초마다 갱신하며, 계좌별 당일 요약은 기본 30초 주기로 반영되어 장중에는 최대 약 40초 늦을 수 있습니다. 참여자 구분은 계좌의 시스템 역할을 기준으로 집계합니다."
+            : "화면은 10초마다 갱신하며, 계좌별 당일 요약은 기본 30초 주기로 반영되어 장중에는 최대 약 40초 늦을 수 있습니다. 기관 페이지에서도 기관투자자·LP·발행 인수기관을 합치지 않고 각각 표시합니다."}
         </p>
       </section>
 
@@ -159,6 +169,7 @@ export function AdminInvestorFlowPanel({
         history={history}
         loading={historyLoading}
         open={showHistory}
+        pageScope={pageScope}
         onClose={() => setShowHistory(false)}
         onRefresh={onLoadHistory}
       />

@@ -140,7 +140,14 @@ export type AdminFundFlowSummary = {
 
 export type AdminFundFlowScope = "RECENT_SIMULATION_DAY" | "ALL";
 
-export type AdminParticipantScope = "ALL" | AdminParticipantCategory;
+export type AdminMarketFlowPageScope =
+  | "ALL"
+  | "AUTO_PARTICIPANT"
+  | "INSTITUTIONAL"
+  | "MANUAL_PARTICIPANT"
+  | "OTHER";
+
+export type AdminParticipantScope = AdminMarketFlowPageScope | AdminParticipantCategory;
 
 export type AdminParticipantFundFlow = {
   participantCategory: AdminParticipantCategory;

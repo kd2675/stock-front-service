@@ -8,6 +8,7 @@ import type {
   AdminFundFlowBreakdown,
   AdminInvestorFlowHistory,
   AdminInvestorFlowSummary,
+  AdminMarketFlowPageScope,
   AdminMarketIndex,
   AdminParticipantScope,
   AdminSymbolFlowList,
@@ -19,6 +20,14 @@ import type {
   SimulationClock,
   SimulationClockJumpAction,
 } from "@/app/types/stock";
+
+const MARKET_FLOW_PAGE_SCOPE_BY_SECTION: Partial<Record<AdminSection, AdminMarketFlowPageScope>> = {
+  "flows-overview": "ALL",
+  "flows-auto-participants": "AUTO_PARTICIPANT",
+  "flows-institutions": "INSTITUTIONAL",
+  "flows-users": "MANUAL_PARTICIPANT",
+  "flows-others": "OTHER",
+};
 
 type AdminMarketSectionProps = {
   activeSection: AdminSection;
@@ -113,9 +122,11 @@ export function AdminMarketSection({
     );
   }
 
-  if (activeSection === "market-flows") {
+  const marketFlowPageScope = MARKET_FLOW_PAGE_SCOPE_BY_SECTION[activeSection];
+  if (marketFlowPageScope) {
     return (
       <AdminFlowOverviewPanel
+        pageScope={marketFlowPageScope}
         overview={adminFlowOverview}
         fundFlow={fundFlow}
         cumulativeFundFlow={cumulativeFundFlow}

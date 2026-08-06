@@ -6,9 +6,14 @@ import { AdminMarketIndexPanel } from "@/app/supply-demand/admin/AdminMarketInde
 import { AdminOrderCorporateFlowPanel } from "@/app/supply-demand/admin/AdminOrderCorporateFlowPanel";
 import { AdminRecentCashFlowPreviewPanel } from "@/app/supply-demand/admin/AdminRecentCashFlowPreviewPanel";
 import { AdminSymbolFlowTablePanel } from "@/app/supply-demand/admin/AdminSymbolFlowTablePanel";
-import type { AdminFlowOverview, AdminFundFlowBreakdown, AdminInvestorFlowHistory, AdminInvestorFlowSummary, AdminMarketIndex, AdminParticipantScope, AdminSymbolFlowList, AdminTotalAssetHistoryPage } from "@/app/types/stock";
+import {
+  ADMIN_MARKET_FLOW_FUND_SCOPES,
+  ADMIN_MARKET_FLOW_PAGE_META,
+} from "@/app/supply-demand/admin/adminInvestorFlowPresentation";
+import type { AdminFlowOverview, AdminFundFlowBreakdown, AdminInvestorFlowHistory, AdminInvestorFlowSummary, AdminMarketFlowPageScope, AdminMarketIndex, AdminParticipantScope, AdminSymbolFlowList, AdminTotalAssetHistoryPage } from "@/app/types/stock";
 
 export function AdminFlowOverviewPanel({
+  pageScope,
   overview,
   fundFlow,
   cumulativeFundFlow,
@@ -33,6 +38,7 @@ export function AdminFlowOverviewPanel({
   onLoadWeeklySymbolFlows,
   onRefresh,
 }: {
+  pageScope: AdminMarketFlowPageScope;
   overview: AdminFlowOverview | null;
   fundFlow: AdminFundFlowBreakdown | null;
   cumulativeFundFlow: AdminFundFlowBreakdown | null;
@@ -64,13 +70,19 @@ export function AdminFlowOverviewPanel({
   const visibleSymbolFlows = symbolFlows.slice(0, ADMIN_SYMBOL_FLOW_PREVIEW_SIZE);
   const recentCashFlows = overview?.recentCashFlows.slice(0, 8) ?? [];
   const flowGeneratedAt = overview?.generatedAt ?? fundFlow?.generatedAt;
+  const selectedPageMeta = ADMIN_MARKET_FLOW_PAGE_META[pageScope];
+  const isOverallPage = pageScope === "ALL";
 
   return (
     <section className="admin-panel mt-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-base font-black">시장 흐름 요약</h2>
-          <p className="mt-1 text-xs font-bold text-stock-subtle">전체·역할별 계좌 자산, 참여자별 체결, 주문장 종목 거래와 최근 현금 원장을 확인합니다. 자산과 거래 흐름은 기본적으로 시뮬레이션 하루 기준입니다.</p>
+          <h2 className="text-base font-black">{isOverallPage ? "시장 흐름 요약" : `${selectedPageMeta.label} 흐름 요약`}</h2>
+          <p className="mt-1 text-xs font-bold text-stock-subtle">
+            {isOverallPage
+              ? "전체·역할별 계좌 자산, 참여자별 체결, 주문장 종목 거래와 최근 현금 원장을 확인합니다. 자산과 거래 흐름은 기본적으로 시뮬레이션 하루 기준입니다."
+              : selectedPageMeta.description}
+          </p>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
           <span className="rounded-md bg-admin-accent-surface px-2 py-1 text-xs font-black text-admin-accent">
@@ -92,47 +104,55 @@ export function AdminFlowOverviewPanel({
         </div>
       </div>
 
-      <AdminMarketIndexPanel
-        index={marketIndex}
-        error={marketIndexError}
-        loading={marketIndexLoading}
-      />
-
       <div>
+        {isOverallPage ? (
+          <AdminMarketIndexPanel
+            index={marketIndex}
+            error={marketIndexError}
+            loading={marketIndexLoading}
+          />
+        ) : null}
+
         <AdminFlowFundSummaryPanel
+          key={pageScope}
           fundFlow={fundFlow}
           cumulativeFundFlow={cumulativeFundFlow}
           loading={loadingFundFlow}
           loadingCumulative={loadingCumulativeFundFlow}
           error={fundFlowError}
           cumulativeError={cumulativeFundFlowError}
+          initialParticipantScope={pageScope === "OTHER" ? "SYSTEM_CUSTODY" : pageScope}
+          participantScopes={ADMIN_MARKET_FLOW_FUND_SCOPES[pageScope]}
           onLoadCumulative={onLoadCumulativeFundFlow}
           onLoadTotalAssetHistory={onLoadTotalAssetHistory}
         />
-      </div>
-      <AdminInvestorFlowPanel
-        error={investorFlowError}
-        history={investorFlowHistory}
-        historyError={investorFlowHistoryError}
-        historyLoading={investorFlowHistoryLoading}
-        investorFlow={investorFlow}
-        refreshing={investorFlowRefreshing}
-        onLoadHistory={onLoadInvestorFlowHistory}
-      />
-      <div>
-        <AdminOrderCorporateFlowPanel orderFlow={orderFlow} corporateActionFlow={corporateActionFlow} />
-      </div>
-
-      <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,0.8fr)]">
-        <AdminSymbolFlowTablePanel
-          loading={loadingSymbolFlows}
-          onLoadWeekly={onLoadWeeklySymbolFlows}
-          symbolFlowTotalCount={symbolFlowTotalCount}
-          simulationTradeDate={symbolFlowList.simulationTradeDate ?? null}
-          sourceStatus={symbolFlowList.sourceStatus ?? null}
-          visibleSymbolFlows={visibleSymbolFlows}
+        <AdminInvestorFlowPanel
+          error={investorFlowError}
+          history={investorFlowHistory}
+          historyError={investorFlowHistoryError}
+          historyLoading={investorFlowHistoryLoading}
+          investorFlow={investorFlow}
+          pageScope={pageScope}
+          refreshing={investorFlowRefreshing}
+          onLoadHistory={onLoadInvestorFlowHistory}
         />
-        <AdminRecentCashFlowPreviewPanel cashFlows={recentCashFlows} />
+
+        {isOverallPage ? (
+          <>
+            <AdminOrderCorporateFlowPanel orderFlow={orderFlow} corporateActionFlow={corporateActionFlow} />
+            <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,0.8fr)]">
+              <AdminSymbolFlowTablePanel
+                loading={loadingSymbolFlows}
+                onLoadWeekly={onLoadWeeklySymbolFlows}
+                symbolFlowTotalCount={symbolFlowTotalCount}
+                simulationTradeDate={symbolFlowList.simulationTradeDate ?? null}
+                sourceStatus={symbolFlowList.sourceStatus ?? null}
+                visibleSymbolFlows={visibleSymbolFlows}
+              />
+              <AdminRecentCashFlowPreviewPanel cashFlows={recentCashFlows} />
+            </div>
+          </>
+        ) : null}
       </div>
     </section>
   );

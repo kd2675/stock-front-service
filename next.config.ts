@@ -25,6 +25,7 @@ const nextConfig: NextConfig = {
       { source: "/supply-demand/admin/automation", destination: "/admin/participants/profiles", permanent: true },
       { source: "/supply-demand/admin/automation/strategies", destination: "/admin/participants/list", permanent: true },
       { source: "/admin/market/legacy-liquidity", destination: "/admin/market/liquidity-providers", permanent: true },
+      { source: "/admin/market/flows", destination: "/admin/flows", permanent: true },
       { source: "/supply-demand/admin/automation/batch", destination: "/admin/system/jobs", permanent: true },
       { source: "/supply-demand/admin/events", destination: "/admin/corporate/actions", permanent: true },
     ];
