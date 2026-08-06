@@ -9,6 +9,7 @@ import {
   getAdminFundFlowBreakdown,
   getAdminInvestorFlowHistory,
   getAdminInvestorFlowSummary,
+  getAdminMarketIndex,
   getAdminSymbolFlows,
   getAdminUserFundFlow,
   getAutoMarketRegimeHistoryRange,
@@ -105,6 +106,7 @@ export function adminFlowOverviewQueryOptions(
     fundFlowScope?: AdminFundFlowScope;
     symbolFlowScope?: AdminFundFlowScope;
     symbolFlowLimit?: number;
+    refetchIntervalMs?: number | false;
   } = {},
 ) {
   const includeFundFlow = options.includeFundFlow ?? true;
@@ -123,6 +125,27 @@ export function adminFlowOverviewQueryOptions(
     }),
     fallbackMessage: "전체 흐름을 조회하지 못했습니다.",
     enabled: options.enabled,
+    refetchInterval: options.refetchIntervalMs ?? false,
+    refetchIntervalInBackground: false,
+  });
+}
+
+export function adminMarketIndexQueryOptions(
+  token: string | null,
+  options: {
+    enabled?: boolean;
+    historyDays?: number;
+    refetchIntervalMs?: number | false;
+  } = {},
+) {
+  const historyDays = options.historyDays ?? 7;
+  return adminAuthenticatedQueryOptions(token, {
+    queryKey: stockKeys.adminMarketIndex(historyDays),
+    request: (nextToken) => getAdminMarketIndex(nextToken, historyDays),
+    fallbackMessage: "전체 장 지수를 조회하지 못했습니다.",
+    enabled: options.enabled,
+    refetchInterval: options.refetchIntervalMs ?? false,
+    refetchIntervalInBackground: false,
   });
 }
 

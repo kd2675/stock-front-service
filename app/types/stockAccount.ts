@@ -264,6 +264,58 @@ export type AdminInvestorFlowHistory = {
   dailyFlows: AdminInvestorFlowSummary[];
 };
 
+export type AdminMarketFlowSourceStatus =
+  | "LIVE_CURRENT_PRICE"
+  | "POST_CLOSE_FROZEN"
+  | "CLOSED_SNAPSHOT"
+  | "HISTORICAL_LEDGER_FALLBACK";
+
+export type AdminMarketIndexContribution = {
+  symbol: string;
+  name: string;
+  referenceWeight: number;
+  previousClose: number;
+  currentPrice: number;
+  changeRate: number;
+  indexPointContribution: number;
+  changeRateContribution: number;
+};
+
+export type AdminMarketIndexHistoryPoint = {
+  simulationTradeDate: string;
+  previousCloseValue: number;
+  currentValue: number;
+  changeValue: number;
+  changeRate: number;
+  constituentCount: number;
+  complete: boolean;
+};
+
+export type AdminMarketIndex = {
+  name: string;
+  calculationMethod: string;
+  contractVersion: number;
+  referenceMarket: string;
+  referenceDate: string;
+  simulationTradeDate: string;
+  generatedAt: string;
+  sourceStatus: AdminMarketFlowSourceStatus;
+  sourceUpdatedAt?: string | null;
+  constituentCount: number;
+  expectedConstituentCount: number;
+  complete: boolean;
+  baseValue: number;
+  previousCloseValue: number;
+  currentValue: number;
+  changeValue: number;
+  changeRate: number;
+  referenceMarketCapitalization: number;
+  previousCloseMarketCapitalization: number;
+  currentMarketCapitalization: number;
+  contributions: AdminMarketIndexContribution[];
+  history: AdminMarketIndexHistoryPoint[];
+};
+
 export type AdminSymbolFlow = {
   symbol: string;
   name: string;
@@ -295,6 +347,8 @@ export type AdminSymbolFlowDailyCumulative = {
   simulationTradeDate: string;
   rangeStart: string;
   rangeEnd: string;
+  sourceStatus: AdminMarketFlowSourceStatus;
+  sourceUpdatedAt?: string | null;
   totalCount: number;
   symbolFlows: AdminSymbolFlow[];
 };
@@ -315,6 +369,11 @@ export type AdminCashFlowPage = {
 };
 
 export type AdminFlowOverview = {
+  simulationTradeDate: string;
+  rangeStart: string;
+  rangeEnd: string;
+  symbolFlowSourceStatus?: AdminMarketFlowSourceStatus | null;
+  symbolFlowSourceUpdatedAt?: string | null;
   fundFlow?: AdminFundFlowBreakdown | null;
   orderFlow: AdminOrderFlowSummary;
   corporateActionFlow: AdminCorporateActionFlowSummary;
@@ -326,6 +385,11 @@ export type AdminFlowOverview = {
 };
 
 export type AdminSymbolFlowList = {
+  simulationTradeDate?: string | null;
+  rangeStart?: string | null;
+  rangeEnd?: string | null;
+  sourceStatus?: AdminMarketFlowSourceStatus | null;
+  sourceUpdatedAt?: string | null;
   totalCount: number;
   symbolFlows: AdminSymbolFlow[];
   dailyCumulativeFlows?: AdminSymbolFlowDailyCumulative[];

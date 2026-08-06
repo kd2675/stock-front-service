@@ -185,10 +185,24 @@ export function AdminInstitutionPortfolioPanel({
         </div>
       </div>
 
-      <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
+      <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-8">
         <ProfileMiniMetric label="기관 포트폴리오" value={formatCount(portfolios.length, "개")} tone="blue" />
         <ProfileMiniMetric label="합산 AUM" value={formatCompactWon(summary.totalAsset)} tone="blue" />
         <ProfileMiniMetric label="주식 비중" value={formatRate(summary.stockAllocationRate)} tone="muted" />
+        <ProfileMiniMetric
+          label="기관/유통 현재"
+          value={recommendation
+            ? formatRate(recommendation.currentInstitutionalOwnershipRate)
+            : "조회 대기"}
+          tone="muted"
+        />
+        <ProfileMiniMetric
+          label="프로그램 완료 예상"
+          value={recommendation
+            ? formatRate(recommendation.projectedInstitutionalOwnershipRate)
+            : "조회 대기"}
+          tone="muted"
+        />
         <ProfileMiniMetric label="오늘 계획 총매매" value={formatCompactWon(summary.dailyPlannedGrossAmount)} tone="muted" />
         <ProfileMiniMetric label="최근 보유 유지" value={formatCount(summary.holdCount, "종목")} tone="green" />
         <ProfileMiniMetric label="점검 신호" value={formatCount(summary.reviewCount, "건")} tone={summary.reviewCount > 0 ? "red" : "green"} />
@@ -526,6 +540,8 @@ function InstitutionPortfolioProvisioning({
                   </span>
                   <span className="mt-1 block text-[10px] font-bold text-admin-quiet">
                     {symbol.symbol} · 비중 {formatRate(symbol.marketWeight)} · {formatNumber(symbol.currentPrice)}원
+                    {" · 기관 "}{formatRate(symbol.currentInstitutionalOwnershipRate)}
+                    {"→"}{formatRate(symbol.projectedInstitutionalOwnershipRate)}
                     {symbol.marketActivationStatus === "PENDING_MARKET_ACTIVATION"
                       ? " · 개장 대기"
                       : ""}
@@ -545,7 +561,7 @@ function InstitutionPortfolioProvisioning({
         <div className="mt-3">
           <p className="mb-1 text-[10px] font-black text-admin-quiet">종목별 권장 기준량</p>
           <DataTableViewport label="종목별 권장 기준량" tone="dark">
-            <table className="min-w-[760px] w-full text-left text-xs">
+            <table className="min-w-[980px] w-full text-left text-xs">
               <thead className="bg-white/[0.045] text-[10px] font-black text-admin-quiet">
                 <tr>
                   <th className="px-3 py-2">종목</th>
@@ -553,6 +569,7 @@ function InstitutionPortfolioProvisioning({
                   <th className="px-3 py-2 text-right">유통주식</th>
                   <th className="px-3 py-2 text-right">현재가</th>
                   <th className="px-3 py-2 text-right">시장 비중</th>
+                  <th className="px-3 py-2 text-right">기관/유통 현재→예상</th>
                   <th className="px-3 py-2 text-right">권장 기준 거래량</th>
                 </tr>
               </thead>
@@ -570,6 +587,16 @@ function InstitutionPortfolioProvisioning({
                     <td className="px-3 py-2 text-right">{formatNumber(symbol.tradableShares)}주</td>
                     <td className="px-3 py-2 text-right">{formatNumber(symbol.currentPrice)}원</td>
                     <td className="px-3 py-2 text-right">{formatRate(symbol.marketWeight)}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">
+                      <p className="font-black text-white">
+                        {formatRate(symbol.currentInstitutionalOwnershipRate)}
+                        {" → "}{formatRate(symbol.projectedInstitutionalOwnershipRate)}
+                      </p>
+                      <p className="mt-0.5 text-[9px] text-admin-quiet">
+                        {formatNumber(symbol.currentInstitutionalHoldingQuantity)}주
+                        {" → "}{formatNumber(symbol.projectedInstitutionalHoldingQuantity)}주
+                      </p>
+                    </td>
                     <td className="px-3 py-2 text-right font-black text-admin-accent-soft">
                       <p>{formatNumber(symbol.recommendedReferenceDailyVolume)}주</p>
                       <p className="mt-0.5 text-[9px] text-admin-quiet">

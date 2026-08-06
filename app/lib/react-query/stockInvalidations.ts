@@ -52,6 +52,7 @@ async function invalidateAdminFlowImpactedQueries(
   await invalidateQueryGroup(queryClient, [
     ...queryKeys,
     stockKeys.adminFlowOverviewRoot(),
+    stockKeys.adminMarketIndexRoot(),
     stockKeys.adminInvestorFlowHistoryRoot(),
     stockKeys.adminInvestorFlowSummary(),
     ...(options.includeFundFlowSummary ? [stockKeys.adminFundFlowBreakdownRoot()] : []),
@@ -203,6 +204,7 @@ export async function invalidateSimulationClockQueries(queryClient: QueryClient)
     stockKeys.simulationClock(),
     stockKeys.orderBookMarketStatusRoot(),
     stockKeys.adminFlowOverviewRoot(),
+    stockKeys.adminMarketIndexRoot(),
     stockKeys.adminFundFlowBreakdownRoot(),
     stockKeys.adminInvestorFlowHistoryRoot(),
     stockKeys.adminInvestorFlowSummary(),

@@ -50,7 +50,9 @@ export type ScaledMarketObservedSymbol = {
   issuedShares: number;
   tradableShares: number;
   closePrice: number;
+  previousClose: number;
   marketCapitalization: number;
+  previousMarketCapitalization: number;
   dailyVolume: number;
   dailyTurnover: number;
 };
@@ -66,6 +68,26 @@ export type ScaledMarketObservedMarket = {
   dailyVolume: number;
   dailyTurnover: number;
   symbols: ScaledMarketObservedSymbol[];
+};
+
+export type ScaledMarketIndex = {
+  name: string;
+  calculationMethod: "CONTRACT_FIXED_SHARE_MARKET_CAP_WEIGHTED";
+  contractVersion: number;
+  referenceMarket: string;
+  referenceDate: string;
+  businessDate: string;
+  constituentCount: number;
+  expectedConstituentCount: number;
+  complete: boolean;
+  baseValue: number;
+  previousCloseValue: number;
+  currentValue: number;
+  changeValue: number;
+  changeRate: number;
+  referenceMarketCapitalization: number;
+  previousCloseMarketCapitalization: number;
+  currentMarketCapitalization: number;
 };
 
 export type ScaledMarketSymbolTarget = {
@@ -143,6 +165,7 @@ export type ScaledMarketContract = {
 export type ScaledMarketOverview = {
   activeBusinessDate: string;
   observedMarket: ScaledMarketObservedMarket;
+  marketIndex?: ScaledMarketIndex | null;
   activeContract?: ScaledMarketContract | null;
   draftContracts: ScaledMarketContract[];
   scheduledContracts: ScaledMarketContract[];
@@ -522,11 +545,6 @@ export type OrderBookTradeSummary = {
   vwap: number;
   highPrice: number;
   lowPrice: number;
-  buyVolume: number;
-  sellVolume: number;
-  buyTurnover: number;
-  sellTurnover: number;
-  executionStrength: number;
   lastPrice: number;
   lastExecutedAt?: string | null;
 };
@@ -534,7 +552,6 @@ export type OrderBookTradeSummary = {
 export type OrderBookRecentExecution = {
   id: number;
   symbol: string;
-  side: OrderSide;
   quantity: number;
   price: number;
   grossAmount: number;

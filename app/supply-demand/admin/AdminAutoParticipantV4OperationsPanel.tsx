@@ -176,7 +176,7 @@ export function AdminAutoParticipantV4OperationsPanel({ accessToken }: Props) {
                 종목별 실제 거래량 부족분
               </h3>
               <p className="mt-1 text-xs font-bold leading-5 text-stock-subtle">
-                시장 거래량은 BUY 한쪽 체결만 사용합니다. 실행 {formatNumber(calibration.engineParticipantCount)}명은
+                시장 거래량은 동일 수량의 BUY·SELL 계좌 원장 한 쌍을 1회만 셉니다(BUY 합계 = SELL 합계 = (BUY+SELL)/2). 실행 {formatNumber(calibration.engineParticipantCount)}명은
                 대표 {formatNumber(calibration.representedParticipantCount)}명을 나타냅니다. 가중치{" "}
                 {formatDecimal(calibration.populationWeight)}는 활성 계약의 표본 주문수량과 대표 코호트 판단에 반영하되,
                 종목 목표·현금·보유·방향별 잔여량으로 제한합니다. 완료장 관찰 수치에는 다시 곱하지 않습니다.

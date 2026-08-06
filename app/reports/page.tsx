@@ -92,7 +92,7 @@ export default function ReportsPage() {
               <InstrumentReportHistory reports={reportHistoryQuery.data ?? []} />
               <InstrumentDataQualityReport report={report} />
               <section className="rounded-lg bg-stock-ink px-4 py-4 text-xs font-bold leading-5 text-stock-border-strong">
-                시가총액은 보고서 기준 종가 × 기준일 발행주식수, 유통 시가총액은 기준 종가 × 기준일 유통주식수입니다. 거래량·거래대금은 한 거래의 매수·매도 원장 중 매수 측만 집계해 중복을 제거했습니다. 과거 호가·재무제표·공시·뉴스·보호예수처럼 원장에 없는 정보는 추정하지 않습니다. 이 화면은 모의시장 정보이며 투자 권유가 아닙니다.
+                시가총액은 보고서 기준 종가 × 기준일 발행주식수, 유통 시가총액은 기준 종가 × 기준일 유통주식수입니다. 거래량·거래대금은 동일 수량의 BUY·SELL 계좌 원장 한 쌍을 1회만 집계합니다(BUY 합계 = SELL 합계 = (BUY+SELL)/2). 과거 호가·재무제표·공시·뉴스·보호예수처럼 원장에 없는 정보는 추정하지 않습니다. 이 화면은 모의시장 정보이며 투자 권유가 아닙니다.
               </section>
             </>
           ) : reportQuery.isError ? (

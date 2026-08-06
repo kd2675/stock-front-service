@@ -6,6 +6,7 @@ import {
   adminFundFlowBreakdownQueryOptions,
   adminInvestorFlowHistoryQueryOptions,
   adminInvestorFlowSummaryQueryOptions,
+  adminMarketIndexQueryOptions,
   adminUserFundFlowQueryOptions,
   autoParticipantsQueryOptions,
   autoParticipantWithdrawalAuditsQueryOptions,
@@ -168,6 +169,12 @@ export function useAdminPageQueries({
     includeSymbolFlows: true,
     symbolFlowScope: "RECENT_SIMULATION_DAY",
     symbolFlowLimit: ADMIN_SYMBOL_FLOW_PREVIEW_SIZE,
+    refetchIntervalMs: ADMIN_LIVE_SUMMARY_REFETCH_MS,
+  }));
+  const adminMarketIndexQuery = useQuery(adminMarketIndexQueryOptions(accessToken, {
+    enabled: queryFlags.shouldUseAdminFlowOverview,
+    historyDays: 7,
+    refetchIntervalMs: ADMIN_LIVE_SUMMARY_REFETCH_MS,
   }));
   const adminInvestorFlowSummaryQuery = useQuery(adminInvestorFlowSummaryQueryOptions(accessToken, {
     enabled: queryFlags.shouldUseAdminFlowOverview,
@@ -269,6 +276,7 @@ export function useAdminPageQueries({
     adminFundFlowBreakdownQuery,
     adminInvestorFlowHistoryQuery,
     adminInvestorFlowSummaryQuery,
+    adminMarketIndexQuery,
     autoMarketDetailsQuery,
     autoParticipantsQuery,
     autoParticipantLivePerformanceQuery,

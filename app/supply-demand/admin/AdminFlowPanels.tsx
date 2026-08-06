@@ -2,10 +2,11 @@ import { ADMIN_SYMBOL_FLOW_PREVIEW_SIZE } from "@/app/supply-demand/admin/AdminC
 import { formatDateTime } from "@/app/supply-demand/admin/AdminFormatters";
 import { AdminFlowFundSummaryPanel } from "@/app/supply-demand/admin/AdminFlowFundSummaryPanel";
 import { AdminInvestorFlowPanel } from "@/app/supply-demand/admin/AdminInvestorFlowPanel";
+import { AdminMarketIndexPanel } from "@/app/supply-demand/admin/AdminMarketIndexPanel";
 import { AdminOrderCorporateFlowPanel } from "@/app/supply-demand/admin/AdminOrderCorporateFlowPanel";
 import { AdminRecentCashFlowPreviewPanel } from "@/app/supply-demand/admin/AdminRecentCashFlowPreviewPanel";
 import { AdminSymbolFlowTablePanel } from "@/app/supply-demand/admin/AdminSymbolFlowTablePanel";
-import type { AdminFlowOverview, AdminFundFlowBreakdown, AdminInvestorFlowHistory, AdminInvestorFlowSummary, AdminParticipantScope, AdminSymbolFlowList, AdminTotalAssetHistoryPage } from "@/app/types/stock";
+import type { AdminFlowOverview, AdminFundFlowBreakdown, AdminInvestorFlowHistory, AdminInvestorFlowSummary, AdminMarketIndex, AdminParticipantScope, AdminSymbolFlowList, AdminTotalAssetHistoryPage } from "@/app/types/stock";
 
 export function AdminFlowOverviewPanel({
   overview,
@@ -21,6 +22,9 @@ export function AdminFlowOverviewPanel({
   investorFlowHistoryError,
   investorFlowHistoryLoading,
   investorFlowRefreshing,
+  marketIndex,
+  marketIndexError,
+  marketIndexLoading,
   symbolFlowList,
   loadingSymbolFlows,
   onLoadCumulativeFundFlow,
@@ -42,6 +46,9 @@ export function AdminFlowOverviewPanel({
   investorFlowHistoryError: boolean;
   investorFlowHistoryLoading: boolean;
   investorFlowRefreshing: boolean;
+  marketIndex: AdminMarketIndex | null;
+  marketIndexError: boolean;
+  marketIndexLoading: boolean;
   symbolFlowList: AdminSymbolFlowList;
   loadingSymbolFlows: boolean;
   onLoadCumulativeFundFlow: () => void;
@@ -85,6 +92,12 @@ export function AdminFlowOverviewPanel({
         </div>
       </div>
 
+      <AdminMarketIndexPanel
+        index={marketIndex}
+        error={marketIndexError}
+        loading={marketIndexLoading}
+      />
+
       <div>
         <AdminFlowFundSummaryPanel
           fundFlow={fundFlow}
@@ -115,6 +128,8 @@ export function AdminFlowOverviewPanel({
           loading={loadingSymbolFlows}
           onLoadWeekly={onLoadWeeklySymbolFlows}
           symbolFlowTotalCount={symbolFlowTotalCount}
+          simulationTradeDate={symbolFlowList.simulationTradeDate ?? null}
+          sourceStatus={symbolFlowList.sourceStatus ?? null}
           visibleSymbolFlows={visibleSymbolFlows}
         />
         <AdminRecentCashFlowPreviewPanel cashFlows={recentCashFlows} />

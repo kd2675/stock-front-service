@@ -31,6 +31,8 @@ import {
   formatCompactWon,
   formatCount,
   formatInteger,
+  formatNumber,
+  formatSignedPercent,
 } from "@/app/supply-demand/admin/AdminFormatters";
 import type {
   ScaledMarketContract,
@@ -471,6 +473,7 @@ export function AdminScaledMarketReconstructionPanel({
   });
 
   const observed = overviewQuery.data?.observedMarket;
+  const marketIndex = overviewQuery.data?.marketIndex;
   const preview = previewQuery.data;
   const selectedMaturityTarget =
     selectedContract?.symbolTargets.find(
@@ -521,7 +524,18 @@ export function AdminScaledMarketReconstructionPanel({
         </p>
       ) : null}
 
-      <div className="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-4">
+      <div className="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-5">
+        <Metric
+          label="전체 장 지수 · 기준 1,000"
+          value={marketIndex ? formatNumber(marketIndex.currentValue) : "계산 대기"}
+          detail={marketIndex
+            ? `${formatSignedNumber(marketIndex.changeValue)} · ${formatSignedPercent(
+              marketIndex.changeRate * 100,
+            )} · 구성 ${formatInteger(marketIndex.constituentCount)}/${formatInteger(
+              marketIndex.expectedConstituentCount,
+            )}${marketIndex.complete ? "" : " · 불완전"}`
+            : "활성 계약과 완료장 교집합이 필요합니다."}
+        />
         <Metric
           label="최근 완료장 종목"
           value={formatCount(observed?.symbolCount, "개")}
@@ -535,7 +549,7 @@ export function AdminScaledMarketReconstructionPanel({
           value={formatCompactWon(observed?.marketCapitalization)}
         />
         <Metric
-          label="최근 완료장 BUY 거래량"
+          label="최근 완료장 시장 거래량"
           value={formatCount(observed?.dailyVolume, "주")}
         />
       </div>
@@ -1175,6 +1189,11 @@ function Metric({
       ) : null}
     </div>
   );
+}
+
+function formatSignedNumber(value: number) {
+  const sign = value > 0 ? "+" : "";
+  return `${sign}${formatNumber(value)}`;
 }
 
 function StageCard({

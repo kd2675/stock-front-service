@@ -2,8 +2,8 @@ import { useState } from "react";
 
 import DataTableViewport from "@/app/components/DataTableViewport";
 import useModalDialog from "@/app/hooks/useModalDialog";
-import { formatCount, formatDateTime, formatFlowMarketStatus, formatSignedPercent, formatWon } from "@/app/supply-demand/admin/AdminFormatters";
-import type { AdminSymbolFlow, AdminSymbolFlowDailyCumulative, AdminSymbolFlowList } from "@/app/types/stock";
+import { formatCount, formatDateTime, formatFlowMarketStatus, formatMarketFlowSourceStatus, formatSignedPercent, formatWon } from "@/app/supply-demand/admin/AdminFormatters";
+import type { AdminMarketFlowSourceStatus, AdminSymbolFlow, AdminSymbolFlowDailyCumulative, AdminSymbolFlowList } from "@/app/types/stock";
 
 const WEEKLY_CUMULATIVE_DAYS = 7;
 const EMPTY_PRICE_TEXT = "";
@@ -12,11 +12,15 @@ export function AdminSymbolFlowTablePanel({
   loading,
   onLoadWeekly,
   symbolFlowTotalCount,
+  simulationTradeDate,
+  sourceStatus,
   visibleSymbolFlows,
 }: {
   loading: boolean;
   onLoadWeekly: (dayOffset: number) => Promise<AdminSymbolFlowList | null>;
   symbolFlowTotalCount: number;
+  simulationTradeDate: string | null;
+  sourceStatus: AdminMarketFlowSourceStatus | null;
   visibleSymbolFlows: AdminSymbolFlow[];
 }) {
   const [showWeeklyCumulativeFlows, setShowWeeklyCumulativeFlows] = useState(false);
@@ -51,11 +55,16 @@ export function AdminSymbolFlowTablePanel({
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
             <h3 className="text-sm font-black text-white">시뮬레이션 하루 종목 흐름</h3>
-            <p className="mt-1 text-xs font-bold text-stock-subtle">현재 조회 시점의 시뮬레이션 장 시작부터 지금까지의 체결 기준입니다.</p>
+            <p className="mt-1 text-xs font-bold text-stock-subtle">
+              {simulationTradeDate ? `${simulationTradeDate} 거래일` : "현재 거래일"}의 체결과 {formatMarketFlowSourceStatus(sourceStatus)} 기준입니다.
+            </p>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-2">
             <span className="text-xs font-bold text-stock-subtle">
               거래대금 상위 {formatCount(visibleSymbolFlows.length, "개")} / 전체 {formatCount(symbolFlowTotalCount, "개")}
+            </span>
+            <span className="rounded-md bg-white/10 px-2 py-1 text-[10px] font-black text-admin-accent-soft">
+              {formatMarketFlowSourceStatus(sourceStatus)}
             </span>
             <button
               type="button"
@@ -175,6 +184,9 @@ function AdminWeeklySymbolFlowModal({
                 </div>
                 <span className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-admin-accent-soft">
                   전체 {formatCount(dailyFlow.totalCount, "개")}
+                </span>
+                <span className="rounded-md bg-white/10 px-2 py-1 text-[10px] font-black text-admin-accent-soft">
+                  {formatMarketFlowSourceStatus(dailyFlow.sourceStatus)}
                 </span>
               </div>
               <AdminSymbolFlowTable flows={dailyFlow.symbolFlows} loading={loading} loadingMessage="최근 7일 누적 종목 흐름을 조회하고 있습니다." emptyMessage="해당 시뮬레이션 일자의 종목 흐름이 없습니다." priceLabel="종가" />

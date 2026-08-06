@@ -8,6 +8,7 @@ import type {
   AdminFundFlowBreakdown,
   AdminInvestorFlowHistory,
   AdminInvestorFlowSummary,
+  AdminMarketIndex,
   AdminParticipantScope,
   AdminSymbolFlowList,
   AdminTotalAssetHistoryPage,
@@ -39,6 +40,9 @@ type AdminMarketSectionProps = {
   investorFlowHistoryError: boolean;
   investorFlowHistoryLoading: boolean;
   investorFlowRefreshing: boolean;
+  marketIndex: AdminMarketIndex | null;
+  marketIndexError: boolean;
+  marketIndexLoading: boolean;
   symbolFlowList: AdminSymbolFlowList;
   loadingSymbolFlows: boolean;
   onLoadCumulativeFundFlow: () => void;
@@ -76,6 +80,9 @@ export function AdminMarketSection({
   investorFlowHistoryError,
   investorFlowHistoryLoading,
   investorFlowRefreshing,
+  marketIndex,
+  marketIndexError,
+  marketIndexLoading,
   symbolFlowList,
   loadingSymbolFlows,
   onLoadCumulativeFundFlow,
@@ -122,6 +129,9 @@ export function AdminMarketSection({
         investorFlowHistoryError={investorFlowHistoryError}
         investorFlowHistoryLoading={investorFlowHistoryLoading}
         investorFlowRefreshing={investorFlowRefreshing}
+        marketIndex={marketIndex}
+        marketIndexError={marketIndexError}
+        marketIndexLoading={marketIndexLoading}
         symbolFlowList={symbolFlowList}
         loadingSymbolFlows={loadingSymbolFlows}
         onLoadCumulativeFundFlow={onLoadCumulativeFundFlow}

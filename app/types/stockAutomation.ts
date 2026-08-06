@@ -420,6 +420,11 @@ export type InstitutionPortfolioRecommendation = {
   minAumRateOfMarketCap: number;
   maxAumRateOfMarketCap: number;
   recommendedAumAmountPerPortfolio: number;
+  totalTradableShares: number;
+  currentInstitutionalHoldingQuantity: number;
+  currentInstitutionalOwnershipRate: number;
+  projectedInstitutionalHoldingQuantity: number;
+  projectedInstitutionalOwnershipRate: number;
   styles: InstitutionPortfolioStylePreset[];
   symbols: {
     symbol: string;
@@ -432,6 +437,10 @@ export type InstitutionPortfolioRecommendation = {
     referenceVolumeHistoryDays: number;
     referenceVolumeSource: "COMPLETED_20_DAY_ADV" | "FLOAT_FALLBACK";
     marketActivationStatus: "ACTIVE" | "PENDING_MARKET_ACTIVATION";
+    currentInstitutionalHoldingQuantity: number;
+    currentInstitutionalOwnershipRate: number;
+    projectedInstitutionalHoldingQuantity: number;
+    projectedInstitutionalOwnershipRate: number;
   }[];
 };
 

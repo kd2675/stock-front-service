@@ -58,7 +58,7 @@ export function SelectedOrderBookInstrumentPanel({
         <Metric label="2시간 거래대금" value={formatWon(summary?.todayTurnover)} />
         <Metric label="VWAP" value={formatWon(summary?.vwap)} />
         <Metric label="고가 / 저가" value={`${formatRoundedPriceOrDash(summary?.highPrice)} / ${formatRoundedPriceOrDash(summary?.lowPrice)}`} />
-        <Metric label="체결강도" value={formatExecutionStrength(summary)} tone={resolveExecutionStrengthTone(summary)} />
+        <Metric label="평균 체결량" value={formatAverageExecutionQuantity(summary)} />
       </div>
 
       {message ? <p className="mt-4 rounded-md bg-stock-danger-surface px-3 py-2 text-sm font-bold text-stock-danger-strong">{message}</p> : null}
@@ -94,7 +94,7 @@ export function AutoMarketStatusPanel({
         <StatusRow label="선택 종목 장" value={formatEffectiveMarketSessionStatus(selectedOrderBookConfig?.marketStatus, isSelectedOrderBookOpen)} />
         <StatusRow label="주 가격 편향" value={selectedConfig ? signedPressure(selectedConfig.primaryDistributionBias.pricePressure) : "-"} />
         <StatusRow label="자동 참여자" value={autoMarket ? `${autoMarket.enabledParticipantCount}명` : "-"} />
-        <StatusRow label="2시간 자동 체결 (비동기·보통 30초)" value={autoMarket ? `${autoMarket.todayAutoExecutionCount}건` : "-"} />
+        <StatusRow label="2시간 자동 계좌 체결 참여 (비동기·보통 30초)" value={autoMarket ? `${autoMarket.todayAutoExecutionCount}건` : "-"} />
         <StatusRow label="전체 대기 주문" value={orderBookMarket ? `${orderBookMarket.openOrderCount}건` : "-"} />
         <StatusRow label="마지막 갱신" value={updatedAt ? formatKoKrTimeSecond(updatedAt) : loading ? "조회 중" : "-"} />
       </div>
@@ -156,22 +156,9 @@ function StatusRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function formatExecutionStrength(summary: OrderBookTradeSummary | null) {
-  if (!summary || summary.executionStrength <= 0) {
+function formatAverageExecutionQuantity(summary: OrderBookTradeSummary | null) {
+  if (!summary || summary.todayExecutionCount <= 0) {
     return "-";
   }
-  return `${formatNumber(summary.executionStrength)}%`;
-}
-
-function resolveExecutionStrengthTone(summary: OrderBookTradeSummary | null): "default" | "red" | "blue" {
-  if (!summary || summary.executionStrength <= 0) {
-    return "default";
-  }
-  if (summary.executionStrength >= 120) {
-    return "red";
-  }
-  if (summary.executionStrength <= 80) {
-    return "blue";
-  }
-  return "default";
+  return `${formatNumber(Math.round(summary.todayVolume / summary.todayExecutionCount))}주`;
 }

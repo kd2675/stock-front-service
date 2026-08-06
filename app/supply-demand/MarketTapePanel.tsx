@@ -18,6 +18,7 @@ export function MarketTapePanel({ executions, isLoading }: { executions: OrderBo
         <div>
           <p className="text-xs font-bold text-stock-subtle">MARKET TAPE</p>
           <h3 className="mt-1 text-base font-black">전체 체결</h3>
+          <p className="mt-1 text-xs font-bold text-stock-subtle">매수·매도 계좌 원장 한 쌍을 실제 거래 1건으로 표시합니다.</p>
         </div>
         <span className="rounded-sm bg-stock-surface-strong px-2 py-1 text-xs font-black text-stock-muted">
           최근 {executions.length}건
@@ -29,9 +30,7 @@ export function MarketTapePanel({ executions, isLoading }: { executions: OrderBo
           return (
             <article key={execution.id} className="rounded-md bg-stock-surface-muted px-3 py-2">
               <div className="flex min-w-0 items-center justify-between gap-3">
-                <span className={execution.side === "BUY" ? "shrink-0 text-xs font-black text-stock-danger" : "shrink-0 text-xs font-black text-stock-accent"}>
-                  {execution.side === "BUY" ? "매수체결" : "매도체결"}
-                </span>
+                <span className="shrink-0 text-xs font-black text-stock-muted">체결</span>
                 <span className="min-w-0 truncate text-right text-xs font-bold text-stock-subtle">{formatTimeSecond(execution.executedAt)}</span>
               </div>
               <div className="mt-1 flex min-w-0 items-end justify-between gap-3">

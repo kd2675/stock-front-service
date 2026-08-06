@@ -1,5 +1,23 @@
 import { RECURRING_CASH_INTERVAL_UNIT_LABELS } from "@/app/supply-demand/admin/AdminConstants";
-import type { RecurringCashIntervalUnit } from "@/app/types/stock";
+import type { AdminMarketFlowSourceStatus, RecurringCashIntervalUnit } from "@/app/types/stock";
+
+export function formatMarketFlowSourceStatus(
+  status: AdminMarketFlowSourceStatus | null | undefined,
+) {
+  if (status === "LIVE_CURRENT_PRICE") {
+    return "장중 현재가";
+  }
+  if (status === "POST_CLOSE_FROZEN") {
+    return "장마감 고정 · 스냅샷 대기";
+  }
+  if (status === "CLOSED_SNAPSHOT") {
+    return "완료 스냅샷";
+  }
+  if (status === "HISTORICAL_LEDGER_FALLBACK") {
+    return "과거 체결 원장";
+  }
+  return "가격 소스 확인 중";
+}
 
 export function formatMarketEnabledStatus(status: { enabled: boolean; configCount?: number; configs: unknown[] } | null) {
   if (!status) {

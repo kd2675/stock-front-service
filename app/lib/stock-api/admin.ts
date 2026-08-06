@@ -6,7 +6,7 @@ import {
   authenticatedPostJson,
   toQuery,
 } from "@/app/lib/stock-api/core";
-import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowBreakdown, AdminFundFlowScope, AdminInvestorFlowHistory, AdminInvestorFlowSummary, AdminParticipantScope, AdminSymbolFlowList, AdminTotalAssetHistoryPage, AutoMarketDistributionBias, AutoMarketRegimeCountWeights, AutoMarketRegimeHistoryRange, AutoMarketStatus, AutoParticipant, AutoParticipantBehaviorModelVersion, AutoParticipantCashAdjustment, AutoParticipantLifecycleScope, AutoParticipantOverview, AutoParticipantPerformanceBasis, AutoParticipantPerformanceSummary, AutoParticipantProfileExitMode, AutoParticipantProfileInventoryMode, AutoParticipantProfileOverview, AutoParticipantProfilePricingMode, AutoParticipantProfileType, AutoParticipantSymbolConfig, AutoParticipantV4Operations, AutoParticipantWithdrawalAudit, BatchJobRuntimeStatus, EodOperationsOverview, EodPhaseRetryResult, InstitutionInvestmentStyle, InstitutionPortfolio, InstitutionPortfolioRecommendation, InstitutionSymbolPolicy, LiquidityProviderMandate, LiquidityProviderPolicyUpdatePayload, LiquidityProviderRecommendation, LiquidityProviderStatusChangePayload, RecurringCashIntervalUnit, ScaledMarketContractSchedule, ScaledMarketOverview, ScaledMarketPriceCapitalRebasePlan, ScaledMarketRebasePreview, ScaledMarketRoleCapacityPlan, ScaledMarketShareRebasePlan, ScaledMarketSymbolMaturityChange, StockBatchJobRun, SystemCustodyOverview, UnderwritingContract, UnderwritingContractRecommendation } from "@/app/types/stock";
+import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowBreakdown, AdminFundFlowScope, AdminInvestorFlowHistory, AdminInvestorFlowSummary, AdminMarketIndex, AdminParticipantScope, AdminSymbolFlowList, AdminTotalAssetHistoryPage, AutoMarketDistributionBias, AutoMarketRegimeCountWeights, AutoMarketRegimeHistoryRange, AutoMarketStatus, AutoParticipant, AutoParticipantBehaviorModelVersion, AutoParticipantCashAdjustment, AutoParticipantLifecycleScope, AutoParticipantOverview, AutoParticipantPerformanceBasis, AutoParticipantPerformanceSummary, AutoParticipantProfileExitMode, AutoParticipantProfileInventoryMode, AutoParticipantProfileOverview, AutoParticipantProfilePricingMode, AutoParticipantProfileType, AutoParticipantSymbolConfig, AutoParticipantV4Operations, AutoParticipantWithdrawalAudit, BatchJobRuntimeStatus, EodOperationsOverview, EodPhaseRetryResult, InstitutionInvestmentStyle, InstitutionPortfolio, InstitutionPortfolioRecommendation, InstitutionSymbolPolicy, LiquidityProviderMandate, LiquidityProviderPolicyUpdatePayload, LiquidityProviderRecommendation, LiquidityProviderStatusChangePayload, RecurringCashIntervalUnit, ScaledMarketContractSchedule, ScaledMarketOverview, ScaledMarketPriceCapitalRebasePlan, ScaledMarketRebasePreview, ScaledMarketRoleCapacityPlan, ScaledMarketShareRebasePlan, ScaledMarketSymbolMaturityChange, StockBatchJobRun, SystemCustodyOverview, UnderwritingContract, UnderwritingContractRecommendation } from "@/app/types/stock";
 
 export type { AdminFundFlowScope } from "@/app/types/stock";
 
@@ -352,6 +352,13 @@ export function getAdminFlowOverview(token: string, options?: { symbolFlowLimit?
     symbolFlowScope: options?.symbolFlowScope,
   });
   return authenticatedGetJson<AdminFlowOverview>(token, `/api/stock/v1/markets/admin/flow-overview${query}`);
+}
+
+export function getAdminMarketIndex(token: string, historyDays = 7) {
+  return authenticatedGetJson<AdminMarketIndex>(
+    token,
+    `/api/stock/v1/markets/admin/market-index${toQuery({ historyDays })}`,
+  );
 }
 
 export function getAdminFundFlowBreakdown(token: string, options?: { scope?: AdminFundFlowScope }) {

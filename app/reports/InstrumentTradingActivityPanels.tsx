@@ -15,9 +15,9 @@ export function InstrumentTradingActivityReport({ report }: { report: Instrument
   return (
     <ReportSection eyebrow="TRADING ACTIVITY" title="거래활동과 체결 빈도">
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <ActivityMetric label="체결 건수" value={`${formatNumber(activity.executionCount20Days)}건`} detail="최근 20거래일, 매수 측 원장 기준" />
-        <ActivityMetric label="체결 수량" value={`${formatNumber(activity.executionQuantity20Days)}주`} detail="매수·매도 중복을 제거한 거래량" />
-        <ActivityMetric label="평균 체결 크기" value={formatNumberOrDash(activity.averageExecutionQuantity20Days, "주")} detail="매수 측 체결 원장 기준" />
+        <ActivityMetric label="체결 건수" value={`${formatNumber(activity.executionCount20Days)}건`} detail="최근 20거래일, BUY·SELL 한 쌍당 1건" />
+        <ActivityMetric label="체결 수량" value={`${formatNumber(activity.executionQuantity20Days)}주`} detail="BUY 합계 = SELL 합계 = 양방향 계좌 합계의 절반" />
+        <ActivityMetric label="평균 체결 크기" value={formatNumberOrDash(activity.averageExecutionQuantity20Days, "주")} detail="실제 거래 1건당 수량" />
         <ActivityMetric label="평균 체결 간격" value={formatSeconds(activity.averageSecondsBetweenTrades20Days)} detail="첫 체결부터 마지막 체결 사이" />
       </div>
       <p className="mt-3 text-xs font-bold leading-5 text-stock-subtle">
