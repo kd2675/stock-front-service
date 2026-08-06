@@ -1,4 +1,4 @@
-import { AdminFlowOverviewPanel } from "@/app/supply-demand/admin/AdminFlowPanels";
+import { AdminFlowOverviewPanel, AdminLiveFlowPanel } from "@/app/supply-demand/admin/AdminFlowPanels";
 import { AdminMarketSummaryPanel } from "@/app/supply-demand/admin/AdminMarketSummaryPanel";
 import { AdminOrderBookInstrumentTable } from "@/app/supply-demand/admin/AdminOrderBookInstrumentTable";
 import { AdminSimulationClockControlPanel } from "@/app/supply-demand/admin/AdminSimulationClockControlPanel";
@@ -42,6 +42,7 @@ type AdminMarketSectionProps = {
   loadingFundFlow: boolean;
   loadingCumulativeFundFlow: boolean;
   fundFlowError: boolean;
+  flowOverviewError: boolean;
   cumulativeFundFlowError: boolean;
   investorFlow: AdminInvestorFlowSummary | null;
   investorFlowError: boolean;
@@ -82,6 +83,7 @@ export function AdminMarketSection({
   loadingFundFlow,
   loadingCumulativeFundFlow,
   fundFlowError,
+  flowOverviewError,
   cumulativeFundFlowError,
   investorFlow,
   investorFlowError,
@@ -122,12 +124,24 @@ export function AdminMarketSection({
     );
   }
 
+  if (activeSection === "flows-live") {
+    return (
+      <AdminLiveFlowPanel
+        error={flowOverviewError}
+        loading={loadingSymbolFlows}
+        overview={adminFlowOverview}
+        symbolFlowList={symbolFlowList}
+        onLoadWeeklySymbolFlows={onLoadWeeklySymbolFlows}
+        onRefresh={onRefreshFlow}
+      />
+    );
+  }
+
   const marketFlowPageScope = MARKET_FLOW_PAGE_SCOPE_BY_SECTION[activeSection];
   if (marketFlowPageScope) {
     return (
       <AdminFlowOverviewPanel
         pageScope={marketFlowPageScope}
-        overview={adminFlowOverview}
         fundFlow={fundFlow}
         cumulativeFundFlow={cumulativeFundFlow}
         loadingFundFlow={loadingFundFlow}
@@ -143,12 +157,9 @@ export function AdminMarketSection({
         marketIndex={marketIndex}
         marketIndexError={marketIndexError}
         marketIndexLoading={marketIndexLoading}
-        symbolFlowList={symbolFlowList}
-        loadingSymbolFlows={loadingSymbolFlows}
         onLoadCumulativeFundFlow={onLoadCumulativeFundFlow}
         onLoadTotalAssetHistory={onLoadTotalAssetHistory}
         onLoadInvestorFlowHistory={onLoadInvestorFlowHistory}
-        onLoadWeeklySymbolFlows={onLoadWeeklySymbolFlows}
         onRefresh={onRefreshFlow}
       />
     );

@@ -27,6 +27,8 @@ export type AdminPageQueryFlags = {
   shouldLoadInstrumentDetails: boolean;
   shouldLoadMarketSummary: boolean;
   shouldUseAdminFlowOverview: boolean;
+  shouldUseAdminMarketIndex: boolean;
+  shouldUseAdminParticipantFlow: boolean;
   shouldUseAutoMarketDetails: boolean;
   shouldUseAutoMarketSummary: boolean;
   shouldUseAutoParticipants: boolean;
@@ -59,6 +61,8 @@ export function resolveAdminPageQueryFlags({
   const isCashFlowLedgerSection = activeAdminSection === "funds-ledger";
   const isEventsSection = activeAdminTab === "corporate";
   const isFlowSection = activeAdminTab === "flows";
+  const isLiveFlowSection = activeAdminSection === "flows-live";
+  const isParticipantFlowSection = isFlowSection && !isLiveFlowSection;
   const isMarketSection = activeAdminSection === "dashboard"
     || activeAdminSection === "market-instruments"
     || activeAdminSection === "market-auto-market"
@@ -96,14 +100,16 @@ export function resolveAdminPageQueryFlags({
     shouldUseBatchRuntimeControls: isAdminAllowed && shouldLoadBatchRuntimeControls,
     shouldUseDormantAutoParticipants: isAdminAllowed && activeAdminSection === "funds-custody",
     shouldUseEodOverview: isAdminAllowed && activeAdminSection === "system-eod",
-    shouldLoadAdminFlowOverview: isFlowSection,
+    shouldLoadAdminFlowOverview: isLiveFlowSection,
     shouldLoadAutoMarketDetails,
     shouldLoadAutoMarketSummary: activeAdminSection === "dashboard",
     shouldLoadAutoParticipants,
     shouldLoadAutoParticipantProfileOverviews: activeAdminSection === "participants-overview",
     shouldLoadInstrumentDetails: activeAdminSection === "market-instruments" || activeAdminTab === "corporate",
     shouldLoadMarketSummary: activeAdminSection === "dashboard" || activeAdminSection === "market-instruments",
-    shouldUseAdminFlowOverview: isAdminAllowed && isFlowSection,
+    shouldUseAdminFlowOverview: isAdminAllowed && isLiveFlowSection,
+    shouldUseAdminMarketIndex: isAdminAllowed && activeAdminSection === "flows-overview",
+    shouldUseAdminParticipantFlow: isAdminAllowed && isParticipantFlowSection,
     shouldUseAutoMarketDetails: isAdminAllowed && shouldLoadAutoMarketDetails,
     shouldUseAutoMarketSummary: isAdminAllowed && activeAdminSection === "dashboard",
     shouldUseAutoParticipants: isAdminAllowed && shouldLoadAutoParticipants,

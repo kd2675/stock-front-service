@@ -83,7 +83,7 @@ export const ADMIN_MARKET_FLOW_PAGE_META: Record<AdminMarketFlowPageScope, {
 }> = {
   ALL: {
     label: "종합",
-    description: "현재 시장흐름 전체 화면입니다. 장 지수와 모든 역할의 자산·체결·주문·종목·현금 원장을 함께 확인합니다.",
+    description: "장 지수와 모든 역할의 자산·체결 구성을 함께 확인하는 시장 종합 분석입니다.",
   },
   AUTO_PARTICIPANT: {
     label: "자동참여자",

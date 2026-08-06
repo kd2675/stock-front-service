@@ -6,6 +6,7 @@ export type AdminSection =
   | "market-auto-market"
   | "market-scaled-market"
   | "market-liquidity-providers"
+  | "flows-live"
   | "flows-overview"
   | "flows-auto-participants"
   | "flows-institutions"
@@ -52,7 +53,8 @@ export const ADMIN_NAVIGATION_GROUPS: readonly AdminNavigationGroup[] = [
     tab: "flows",
     label: "시장 흐름",
     items: [
-      { section: "flows-overview", href: "/admin/flows", label: "종합", description: "기존 시장흐름 전체 화면에서 장 지수, 모든 역할의 자산·체결, 종목별 거래와 현금 원장을 함께 확인합니다." },
+      { section: "flows-live", href: "/admin/flows/live", label: "실시간 흐름", description: "현재 주문·체결·취소, 주식 이벤트, 종목별 거래와 최근 현금 원장을 한 화면에서 확인합니다." },
+      { section: "flows-overview", href: "/admin/flows", label: "종합", description: "장 지수와 모든 역할의 자산·체결 구성을 함께 분석합니다." },
       { section: "flows-auto-participants", href: "/admin/flows/auto-participants", label: "자동참여자", description: "프로필 전략으로 주문하는 자동 참여자 계좌의 자산과 체결 흐름을 확인합니다." },
       { section: "flows-institutions", href: "/admin/flows/institutions", label: "기관", description: "기관투자자, 유동성 공급자(LP), 발행 인수기관의 자산과 체결을 역할별로 확인합니다." },
       { section: "flows-users", href: "/admin/flows/users", label: "개인(유저)", description: "사용자가 직접 주문하는 개인 계좌의 자산과 체결 흐름을 확인합니다." },

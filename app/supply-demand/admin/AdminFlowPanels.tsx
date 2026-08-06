@@ -14,7 +14,6 @@ import type { AdminFlowOverview, AdminFundFlowBreakdown, AdminInvestorFlowHistor
 
 export function AdminFlowOverviewPanel({
   pageScope,
-  overview,
   fundFlow,
   cumulativeFundFlow,
   loadingFundFlow,
@@ -30,16 +29,12 @@ export function AdminFlowOverviewPanel({
   marketIndex,
   marketIndexError,
   marketIndexLoading,
-  symbolFlowList,
-  loadingSymbolFlows,
   onLoadCumulativeFundFlow,
   onLoadTotalAssetHistory,
   onLoadInvestorFlowHistory,
-  onLoadWeeklySymbolFlows,
   onRefresh,
 }: {
   pageScope: AdminMarketFlowPageScope;
-  overview: AdminFlowOverview | null;
   fundFlow: AdminFundFlowBreakdown | null;
   cumulativeFundFlow: AdminFundFlowBreakdown | null;
   loadingFundFlow: boolean;
@@ -55,21 +50,12 @@ export function AdminFlowOverviewPanel({
   marketIndex: AdminMarketIndex | null;
   marketIndexError: boolean;
   marketIndexLoading: boolean;
-  symbolFlowList: AdminSymbolFlowList;
-  loadingSymbolFlows: boolean;
   onLoadCumulativeFundFlow: () => void;
   onLoadTotalAssetHistory: (page: number, participantScope: AdminParticipantScope) => Promise<AdminTotalAssetHistoryPage | null>;
   onLoadInvestorFlowHistory: () => void;
-  onLoadWeeklySymbolFlows: (dayOffset: number) => Promise<AdminSymbolFlowList | null>;
   onRefresh: () => void;
 }) {
-  const orderFlow = overview?.orderFlow;
-  const corporateActionFlow = overview?.corporateActionFlow;
-  const symbolFlows = symbolFlowList.symbolFlows;
-  const symbolFlowTotalCount = symbolFlowList.totalCount;
-  const visibleSymbolFlows = symbolFlows.slice(0, ADMIN_SYMBOL_FLOW_PREVIEW_SIZE);
-  const recentCashFlows = overview?.recentCashFlows.slice(0, 8) ?? [];
-  const flowGeneratedAt = overview?.generatedAt ?? fundFlow?.generatedAt;
+  const flowGeneratedAt = fundFlow?.generatedAt;
   const selectedPageMeta = ADMIN_MARKET_FLOW_PAGE_META[pageScope];
   const isOverallPage = pageScope === "ALL";
 
@@ -137,22 +123,72 @@ export function AdminFlowOverviewPanel({
           onLoadHistory={onLoadInvestorFlowHistory}
         />
 
-        {isOverallPage ? (
-          <>
-            <AdminOrderCorporateFlowPanel orderFlow={orderFlow} corporateActionFlow={corporateActionFlow} />
-            <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,0.8fr)]">
-              <AdminSymbolFlowTablePanel
-                loading={loadingSymbolFlows}
-                onLoadWeekly={onLoadWeeklySymbolFlows}
-                symbolFlowTotalCount={symbolFlowTotalCount}
-                simulationTradeDate={symbolFlowList.simulationTradeDate ?? null}
-                sourceStatus={symbolFlowList.sourceStatus ?? null}
-                visibleSymbolFlows={visibleSymbolFlows}
-              />
-              <AdminRecentCashFlowPreviewPanel cashFlows={recentCashFlows} />
-            </div>
-          </>
-        ) : null}
+      </div>
+    </section>
+  );
+}
+
+export function AdminLiveFlowPanel({
+  error,
+  loading,
+  onLoadWeeklySymbolFlows,
+  onRefresh,
+  overview,
+  symbolFlowList,
+}: {
+  error: boolean;
+  loading: boolean;
+  onLoadWeeklySymbolFlows: (dayOffset: number) => Promise<AdminSymbolFlowList | null>;
+  onRefresh: () => void;
+  overview: AdminFlowOverview | null;
+  symbolFlowList: AdminSymbolFlowList;
+}) {
+  const visibleSymbolFlows = symbolFlowList.symbolFlows.slice(0, ADMIN_SYMBOL_FLOW_PREVIEW_SIZE);
+  const recentCashFlows = overview?.recentCashFlows.slice(0, 8) ?? [];
+
+  return (
+    <section className="admin-panel mt-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-base font-black">실시간 흐름</h2>
+          <p className="mt-1 text-xs font-bold text-stock-subtle">
+            현재 주문·체결·취소, 주식 이벤트, 종목별 거래와 최근 현금 원장을 한 화면에서 확인합니다.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <span className="rounded-md bg-admin-accent-surface px-2 py-1 text-xs font-black text-admin-accent">
+            {overview?.generatedAt ? `갱신 ${formatDateTime(overview.generatedAt)}` : "조회 필요"}
+          </span>
+          {loading ? (
+            <span className="rounded-md bg-white/10 px-2 py-1 text-xs font-black text-admin-accent-soft">실시간 흐름 조회 중</span>
+          ) : null}
+          {error ? (
+            <span className="rounded-md bg-admin-danger-surface px-2 py-1 text-xs font-black text-admin-danger">실시간 흐름 실패</span>
+          ) : null}
+          <button
+            type="button"
+            onClick={onRefresh}
+            className="min-h-11 rounded-md bg-white px-3 py-2 text-xs font-black text-admin-canvas"
+          >
+            흐름 새로고침
+          </button>
+        </div>
+      </div>
+
+      <AdminOrderCorporateFlowPanel
+        orderFlow={overview?.orderFlow}
+        corporateActionFlow={overview?.corporateActionFlow}
+      />
+      <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,0.8fr)]">
+        <AdminSymbolFlowTablePanel
+          loading={loading && overview === null}
+          onLoadWeekly={onLoadWeeklySymbolFlows}
+          symbolFlowTotalCount={symbolFlowList.totalCount}
+          simulationTradeDate={symbolFlowList.simulationTradeDate ?? null}
+          sourceStatus={symbolFlowList.sourceStatus ?? null}
+          visibleSymbolFlows={visibleSymbolFlows}
+        />
+        <AdminRecentCashFlowPreviewPanel cashFlows={recentCashFlows} />
       </div>
     </section>
   );

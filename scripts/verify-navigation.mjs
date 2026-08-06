@@ -43,13 +43,14 @@ assert.deepEqual(
 assert.deepEqual(
   adminGroupSections.flows,
   [
+    "flows-live",
     "flows-overview",
     "flows-auto-participants",
     "flows-institutions",
     "flows-users",
     "flows-others",
   ],
-  "시장 흐름 메뉴의 종합·자동참여자·기관·개인·기타 순서가 계약과 다릅니다.",
+  "시장 흐름 메뉴의 실시간·종합·자동참여자·기관·개인·기타 순서가 계약과 다릅니다.",
 );
 assert.deepEqual(
   adminGroupSections.corporate,
@@ -83,6 +84,7 @@ for (const item of adminItems) {
 assert.equal(resolveAdminTabFromPath("/admin/market/liquidity"), "market");
 assert.equal(resolveAdminTabFromPath("/admin/market/auto-market"), "market");
 assert.equal(resolveAdminTabFromPath("/admin/flows/institutions"), "flows");
+assert.equal(resolveAdminSectionFromPath("/admin/flows/live"), "flows-live");
 assert.equal(resolveAdminTabFromPath("/admin/participants/institutions"), "participants");
 assert.equal(resolveAdminTabFromPath("/admin/participants/profiles"), "participants");
 assert.equal(resolveAdminTabFromPath("/admin/corporate/reports"), "corporate");
@@ -106,13 +108,17 @@ assert.deepEqual(
   ["shouldLoadAutoMarketSummary", "shouldLoadMarketSummary", "shouldUseAutoMarketSummary", "shouldUseMarketSummary", "shouldUseSimulationClock"],
 );
 assert.deepEqual(
-  pickEnabled(flagsFor("flows-overview", "flows")),
+  pickEnabled(flagsFor("flows-live", "flows")),
   ["shouldLoadAdminFlowOverview", "shouldUseAdminFlowOverview"],
 );
-for (const section of adminGroupSections.flows) {
+assert.deepEqual(
+  pickEnabled(flagsFor("flows-overview", "flows")),
+  ["shouldUseAdminMarketIndex", "shouldUseAdminParticipantFlow"],
+);
+for (const section of adminGroupSections.flows.filter((candidate) => !["flows-live", "flows-overview"].includes(candidate))) {
   assert.deepEqual(
     pickEnabled(flagsFor(section, "flows")),
-    ["shouldLoadAdminFlowOverview", "shouldUseAdminFlowOverview"],
+    ["shouldUseAdminParticipantFlow"],
     `${section} 조회 범위가 시장 흐름 계약과 다릅니다.`,
   );
 }

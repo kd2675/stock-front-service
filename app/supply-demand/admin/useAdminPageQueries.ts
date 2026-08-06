@@ -156,7 +156,7 @@ export function useAdminPageQueries({
     refetchIntervalMs: false,
   }));
   const adminFundFlowBreakdownQuery = useQuery(adminFundFlowBreakdownQueryOptions(accessToken, {
-    enabled: queryFlags.shouldUseAdminFlowOverview,
+    enabled: queryFlags.shouldUseAdminParticipantFlow,
     scope: "RECENT_SIMULATION_DAY",
   }));
   const adminCumulativeFundFlowBreakdownQuery = useQuery(adminFundFlowBreakdownQueryOptions(accessToken, {
@@ -172,12 +172,12 @@ export function useAdminPageQueries({
     refetchIntervalMs: ADMIN_LIVE_SUMMARY_REFETCH_MS,
   }));
   const adminMarketIndexQuery = useQuery(adminMarketIndexQueryOptions(accessToken, {
-    enabled: queryFlags.shouldUseAdminFlowOverview,
+    enabled: queryFlags.shouldUseAdminMarketIndex,
     historyDays: 7,
     refetchIntervalMs: ADMIN_LIVE_SUMMARY_REFETCH_MS,
   }));
   const adminInvestorFlowSummaryQuery = useQuery(adminInvestorFlowSummaryQueryOptions(accessToken, {
-    enabled: queryFlags.shouldUseAdminFlowOverview,
+    enabled: queryFlags.shouldUseAdminParticipantFlow,
     refetchIntervalMs: ADMIN_LIVE_SUMMARY_REFETCH_MS,
   }));
   const adminInvestorFlowHistoryQuery = useQuery(adminInvestorFlowHistoryQueryOptions(accessToken, {
