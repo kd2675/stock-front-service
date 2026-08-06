@@ -381,6 +381,9 @@ export type ScaledMarketRoleCapacityPlan = {
   targetAutoMarketConfigCount: number;
   targetInstitutionPortfolioCount: number;
   targetInstitutionMandateCount: number;
+  targetInstitutionGrossParticipationRate: number;
+  minimumInstitutionBuyParticipationRate: number;
+  minimumInstitutionSellParticipationRate: number;
   changeReason: string;
   createdBy: string;
   createdAt: string;

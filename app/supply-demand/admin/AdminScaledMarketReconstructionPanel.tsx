@@ -1067,7 +1067,13 @@ export function AdminScaledMarketReconstructionPanel({
                 rolePlan.targetInstitutionPortfolioCount,
               )}곳/${formatInteger(
                 rolePlan.targetInstitutionMandateCount,
-              )}개 위임 · ${formatCount(
+              )}개 위임 · 기관 gross ${formatPercent(
+                rolePlan.targetInstitutionGrossParticipationRate,
+              )} (시장 한쪽 분모 · BUY ${formatPercent(
+                rolePlan.minimumInstitutionBuyParticipationRate,
+              )} · SELL ${formatPercent(
+                rolePlan.minimumInstitutionSellParticipationRate,
+              )} 최소) · ${formatCount(
                 rolePlan.targetDailyVolume,
                 "주",
               )}`

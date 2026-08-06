@@ -255,6 +255,49 @@ export function AdminAutoParticipantV4OperationsPanel({ accessToken }: Props) {
             />
           </div>
 
+          <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-7">
+            <Metric
+              label="기관 BUY / SELL"
+              value={calibration.institutionParticipationObserved
+                ? `${formatQuantity(calibration.institutionBuyQuantity)} / ${formatQuantity(calibration.institutionSellQuantity)}`
+                : "관측 전"}
+            />
+            <Metric
+              label="기관 BUY 비율"
+              value={calibration.institutionParticipationObserved
+                ? `${formatPercent(calibration.institutionBuyParticipationRate)} / 최소 ${formatPercent(calibration.minimumInstitutionBuyParticipationRate)}`
+                : "관측 전"}
+            />
+            <Metric
+              label="기관 SELL 비율"
+              value={calibration.institutionParticipationObserved
+                ? `${formatPercent(calibration.institutionSellParticipationRate)} / 최소 ${formatPercent(calibration.minimumInstitutionSellParticipationRate)}`
+                : "관측 전"}
+            />
+            <Metric
+              label="기관 gross / 시장 한쪽"
+              value={calibration.institutionParticipationObserved
+                ? `${formatPercent(calibration.institutionGrossParticipationRate)} / 목표 ${formatPercent(calibration.targetInstitutionGrossParticipationRate)}`
+                : "관측 전"}
+            />
+            <Metric
+              label="기관 계정측 구성 비중"
+              value={calibration.institutionParticipationObserved
+                ? formatPercent(calibration.institutionAccountSideShareRate)
+                : "관측 전"}
+            />
+            <Metric
+              label="기관 목표 달성률"
+              value={calibration.institutionParticipationObserved
+                ? formatPercent(calibration.institutionGrossAttainmentRate)
+                : "관측 전"}
+            />
+            <Metric
+              label="기관 계약 판정"
+              value={institutionParticipationLabel(calibration)}
+            />
+          </div>
+
           {calibration.blockers.length > 0 ? (
             <div className="mt-3 border-l-2 border-amber-300/70 bg-amber-300/[0.06] px-3 py-2">
               <p className="text-xs font-black text-amber-100">
@@ -368,6 +411,16 @@ function turnoverBandLabel(
   if (status === "WITHIN") return "목표 범위";
   if (status === "ABOVE") return "목표 상한 초과";
   return "관측 전";
+}
+
+function institutionParticipationLabel(
+  calibration: AutoParticipantV4Operations["calibrationReadiness"],
+) {
+  if (!calibration.institutionParticipationObserved) return "관측 전";
+  const sideMinimumsAttained = calibration.institutionBuyMinimumAttained
+    && calibration.institutionSellMinimumAttained;
+  if (!sideMinimumsAttained) return "방향별 최소 미달";
+  return calibration.institutionGrossTargetAttained ? "목표 충족" : "최소 충족 · 목표 미달";
 }
 
 function formatDateTime(value: string | null | undefined) {

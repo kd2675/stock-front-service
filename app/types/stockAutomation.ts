@@ -1240,6 +1240,20 @@ export type AutoParticipantV4Operations = {
     autoSubmittedOrderCount: number;
     autoCancelledOrderCount: number;
     basisOrderContractViolationCount: number;
+    targetInstitutionGrossParticipationRate: number;
+    minimumInstitutionBuyParticipationRate: number;
+    minimumInstitutionSellParticipationRate: number;
+    institutionBuyQuantity: number;
+    institutionSellQuantity: number;
+    institutionBuyParticipationRate: number;
+    institutionSellParticipationRate: number;
+    institutionGrossParticipationRate: number;
+    institutionAccountSideShareRate: number;
+    institutionGrossAttainmentRate: number;
+    institutionGrossTargetAttained: boolean;
+    institutionBuyMinimumAttained: boolean;
+    institutionSellMinimumAttained: boolean;
+    institutionParticipationObserved: boolean;
     nextRevisionAllowed: boolean;
     blockers: string[];
     symbols: Array<{
