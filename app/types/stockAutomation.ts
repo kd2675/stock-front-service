@@ -123,7 +123,7 @@ export type AutoParticipantProfileType =
   | "OBSERVER";
 
 export type RecurringCashIntervalUnit = "SECOND" | "MINUTE" | "HOUR" | "DAY" | "MONTH" | "YEAR";
-export type AutoParticipantBehaviorModelVersion = "V4";
+export type AutoParticipantBehaviorModelVersion = "V5";
 export type AutoParticipantLifecycleScope = "CURRENT" | "WITHDRAWN";
 export type AutoParticipantProfilePricingMode = "DIRECTIONAL" | "PASSIVE_POST_ONLY";
 export type AutoParticipantProfileExitMode = "SIGNAL_DRIVEN" | "TAKE_PROFIT_FIRST" | "HOLD_LOSSES";
@@ -1156,7 +1156,7 @@ export type AutoParticipantProfileConfig = {
   updatedAt?: string | null;
 };
 
-export type AutoParticipantV4Operations = {
+export type AutoParticipantV5Operations = {
   simulationTradeDate: string;
   policies: Array<{
     policyVersion: number;
@@ -1218,9 +1218,7 @@ export type AutoParticipantV4Operations = {
     basisBusinessDate?: string | null;
     targetSymbolCount: number;
     observedSymbolCount: number;
-    engineParticipantCount: number;
-    representedParticipantCount: number;
-    populationWeight: number;
+    participantCount: number;
     observedParticipantStateCount: number;
     activeParticipantCount: number;
     participantIdentityMismatchCount: number;
@@ -1239,6 +1237,20 @@ export type AutoParticipantV4Operations = {
     sessionCloseCancelledOrderCount: number;
     autoSubmittedOrderCount: number;
     autoCancelledOrderCount: number;
+    autoQuantityTargetLower: number;
+    autoQuantityTargetUpper: number;
+    autoSubmittedQuantity: number;
+    autoSubmissionBandStatus: "BELOW" | "WITHIN" | "ABOVE" | "NOT_AVAILABLE";
+    autoExecutedBuyQuantity: number;
+    autoExecutedSellQuantity: number;
+    autoExecutedGrossQuantity: number;
+    autoExecutionBandStatus: "BELOW" | "WITHIN" | "ABOVE" | "NOT_AVAILABLE";
+    targetAutoSubmittedOrderCount: number;
+    autoSubmittedOrderCountLower: number;
+    autoSubmittedOrderCountUpper: number;
+    autoOrderCountBandStatus: "BELOW" | "WITHIN" | "ABOVE" | "NOT_AVAILABLE";
+    autoSubmittingParticipantCount: number;
+    autoCancelledRemainingQuantity: number;
     basisOrderContractViolationCount: number;
     targetInstitutionGrossParticipationRate: number;
     minimumInstitutionBuyParticipationRate: number;
@@ -1278,6 +1290,23 @@ export type AutoParticipantV4Operations = {
       shareStructureMatched: boolean;
     }>;
   };
+};
+
+export type AutoParticipantV5PolicySchedulePayload = {
+  effectiveTradeDate: string;
+  changeReason: string;
+  basisCloseRunId: number | null;
+  basisBusinessDate: string | null;
+  basisContractVersion: number | null;
+  basisPolicyVersion: number | null;
+  attentionRateScale: number;
+  decisionThresholdOffset: number;
+  quantityScale: number;
+  surpriseRateScale: number;
+  cancellationThresholdOffset: number;
+  maxOrdersPerParticipantPerDay: number;
+  maxOpenOrdersPerParticipant: number;
+  maxChildNotionalRate: number;
 };
 
 export type AutoMarketStatus = {

@@ -4,7 +4,7 @@ import { calculateChangeRate } from "@/app/lib/priceMath";
 import { stockKeys } from "@/app/lib/react-query/stockKeys";
 import type {
   BatchJobRuntimeStatus,
-  AutoParticipantV4Operations,
+  AutoParticipantV5Operations,
   InstitutionPortfolio,
   LiquidityProviderMandate,
   Price,
@@ -14,12 +14,12 @@ import type {
   UnderwritingContract,
 } from "@/app/types/stock";
 
-export function setAutoParticipantV4OperationsQueryData(
+export function setAutoParticipantV5OperationsQueryData(
   queryClient: QueryClient,
-  operations: AutoParticipantV4Operations,
+  operations: AutoParticipantV5Operations,
 ) {
-  queryClient.setQueryData<AutoParticipantV4Operations>(
-    stockKeys.autoParticipantV4Operations(),
+  queryClient.setQueryData<AutoParticipantV5Operations>(
+    stockKeys.autoParticipantV5Operations(),
     operations,
   );
 }

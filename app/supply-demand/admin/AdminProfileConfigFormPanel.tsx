@@ -43,10 +43,10 @@ export function AdminProfileConfigFormPanel({
     <>
       <ProfilePolicySection
         title="행동 모델"
-        description="일반 자동 참여자는 V4만 사용합니다. 정책 변경은 다음 개장 전 활성화되며 장중 난수 흐름을 바꾸지 않습니다."
+        description="V5는 이전 행동 모델을 상속하지 않는 독립 엔진입니다. 정책 변경은 다음 개장 전 활성화되며 이미 시작된 장중 난수 흐름은 바꾸지 않습니다."
       >
         <div className="rounded-md border border-white/10 bg-black/15 px-3 py-2 text-xs font-bold leading-5 text-stock-subtle">
-          V4 · 인간 사고 모듈, 확률적 관심, 단일 종목 선택, 거래 불변조건 검증, 피로·재진입
+          V5 · 27개 고유 프로필 알고리즘, 상황별 선택 사고, 제한된 의외성, 1계좌·1주문·1수량 원장
         </div>
       </ProfilePolicySection>
 
@@ -63,7 +63,7 @@ export function AdminProfileConfigFormPanel({
 
       <ProfilePolicySection
         title="주문 실행"
-        description="V4의 관심 시각과 이벤트당 단일 주문은 활성 정책과 인간 사고 모듈이 정합니다. 여기서는 프로필별 신호 실행 강도·가격·청산·재고·TTL·수량 성향만 조정합니다."
+        description="V5의 관심 시각과 이벤트당 단일 주문은 해당 프로필 알고리즘이 그 시점에 선택한 사고만으로 정합니다. 여기서는 신호 실행 강도·가격·청산·재고·TTL·수량 성향을 조정합니다."
       >
         <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-3">
           <DarkSelect label="가격 생성 모드" value={draft.pricingMode} onChange={(value) => draftSetters.setPricingMode(value as typeof draft.pricingMode)}>
@@ -82,7 +82,7 @@ export function AdminProfileConfigFormPanel({
           ))}
         </div>
         <p className="mt-3 text-xs font-bold leading-5 text-stock-subtle">
-          자발적 관심 이벤트는 최대 한 건만 주문합니다. 수량은 프로필 성향으로 먼저 정하고 수수료 포함 가용 현금·예약되지 않은 보유수량·종목 주문상한·전용 예산 같은 거래 불변조건만 검증합니다. 시장 방향이나 전체 주문량을 맞추기 위한 별도 가드는 적용하지 않습니다.
+          자발적 관심 이벤트는 최대 한 건만 주문합니다. 수량은 프로필 성향으로 먼저 정하고 수수료 포함 가용 현금·예약되지 않은 보유수량·종목 주문상한·전용 예산 같은 거래 불변조건을 검증합니다. 목표 범위는 완료장 감사 기준이며 개별 주문에 대표인구 배수나 강제 체결을 적용하지 않습니다.
         </p>
       </ProfilePolicySection>
 

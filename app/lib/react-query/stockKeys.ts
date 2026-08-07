@@ -70,9 +70,9 @@ export const stockKeys = {
     "rebase-preview",
   ] as const,
   autoMarketStatus: () => [...stockKeys.market(), "auto-market"] as const,
-  autoParticipantV4Operations: () => [
+  autoParticipantV5Operations: () => [
     ...stockKeys.autoMarketStatus(),
-    "v4",
+    "v5",
     "operations",
   ] as const,
   autoMarketRegimeHistoryRoot: () => [...stockKeys.autoMarketStatus(), "regime-history"] as const,

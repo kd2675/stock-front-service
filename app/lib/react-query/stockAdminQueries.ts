@@ -14,7 +14,7 @@ import {
   getAdminUserFundFlow,
   getAutoMarketRegimeHistoryRange,
   getAutoParticipants,
-  getAutoParticipantV4Operations,
+  getAutoParticipantV5Operations,
   getAutoParticipantWithdrawalAudits,
   getAutoParticipantOverviews,
   getAutoParticipantPerformanceSummary,
@@ -54,14 +54,14 @@ function adminAuthenticatedQueryOptions<TData>(
   });
 }
 
-export function autoParticipantV4OperationsQueryOptions(
+export function autoParticipantV5OperationsQueryOptions(
   token: string | null,
   options: { enabled?: boolean } = {},
 ) {
   return adminSnapshotQueryOptions(token, {
-    queryKey: stockKeys.autoParticipantV4Operations(),
-    request: getAutoParticipantV4Operations,
-    fallbackMessage: "자동 참여자 V4 운영 상태를 조회하지 못했습니다.",
+    queryKey: stockKeys.autoParticipantV5Operations(),
+    request: getAutoParticipantV5Operations,
+    fallbackMessage: "자동 참여자 V5 운영 상태를 조회하지 못했습니다.",
     enabled: options.enabled,
     refetchInterval: 10_000,
     staleTime: 5_000,

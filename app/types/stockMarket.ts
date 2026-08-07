@@ -134,8 +134,7 @@ export type ScaledMarketContract = {
   activatedAt?: string | null;
   population?: {
     engineParticipantCount: number;
-    representedParticipantCount: number;
-    populationWeight: number;
+    targetAutoSubmittedOrderCount: number;
     targetAutoParticipantAum: number;
     targetAutoParticipantAumRate: number;
     capitalBasis: string;
@@ -157,7 +156,7 @@ export type ScaledMarketContract = {
     dailyVolumeMatched: boolean;
     preRebaseSourceContractComplete: boolean;
     populationContractPresent: boolean;
-    populationCountsMatched: boolean;
+    populationContractMatched: boolean;
     reconciled: boolean;
   };
 };
@@ -486,8 +485,7 @@ export type ScaledMarketContractSchedule = {
   targetMarketCapitalization: number;
   targetDailyVolume: number;
   engineParticipantCount: number;
-  representedParticipantCount: number;
-  populationWeight: number;
+  targetAutoSubmittedOrderCount: number;
   scheduleReason: string;
   scheduledBy: string;
   scheduledAt: string;
