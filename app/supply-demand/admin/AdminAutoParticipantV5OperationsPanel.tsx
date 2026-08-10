@@ -118,7 +118,7 @@ export function AdminAutoParticipantV5OperationsPanel({ accessToken }: Props) {
               </h3>
               <p className="mt-1 text-xs font-bold leading-5 text-stock-subtle">
                 시장 거래량은 동일 수량의 BUY·SELL 계좌 원장 한 쌍을 1회만 셉니다(BUY 합계 = SELL 합계 = (BUY+SELL)/2).
-                V5는 {formatNumber(calibration.participantCount)}개 실제 계좌의 주문과 수량을 1:1로 기록하며 대표인구 가중치나 코호트 증폭을 사용하지 않습니다.
+                V5는 {formatNumber(calibration.participantCount)}개 실제 계좌를 같은 수의 실제 참여자로 취급합니다. 각 계좌의 자산·행동·주문·수량은 해당 참여자 본인의 값이며 대표인구 가중치나 코호트 증폭을 사용하지 않습니다.
                 완료장 기준으로 제출 수량·총 체결 참여량·제출 주문 수가 각각 목표의 50%~200% 범위인지 함께 검증합니다.
               </p>
             </div>
