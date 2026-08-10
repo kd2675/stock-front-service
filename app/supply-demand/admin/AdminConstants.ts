@@ -42,7 +42,7 @@ export const BATCH_JOB_RUNTIME_LABELS: Record<string, { label: string; descripti
     description: "자동 참여자와 종목별 자동장 기본값 기준으로 호가를 냅니다.",
   },
   "auto-market-order-expiry": {
-    label: "자동장 주문 만료",
+    label: "자동장 주문 검토·기관 만료",
     description: "자동장이 낸 오래된 미체결 주문을 정리하고 예약 자산을 해제합니다.",
   },
   "liquidity-provider-market": {

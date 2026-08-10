@@ -63,7 +63,7 @@ export function AdminProfileConfigFormPanel({
 
       <ProfilePolicySection
         title="주문 실행"
-        description="V5의 관심 시각과 이벤트당 단일 주문은 해당 프로필 알고리즘이 그 시점에 선택한 사고만으로 정합니다. 여기서는 신호 실행 강도·가격·청산·재고·TTL·수량 성향을 조정합니다."
+        description="V5의 관심 시각과 이벤트당 단일 주문은 해당 프로필 알고리즘이 그 시점에 선택한 사고만으로 정합니다. 여기서는 신호 실행 강도·가격·청산·재고·주문 재검토 시간·수량 성향을 조정합니다."
       >
         <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-3">
           <DarkSelect label="가격 생성 모드" value={draft.pricingMode} onChange={(value) => draftSetters.setPricingMode(value as typeof draft.pricingMode)}>

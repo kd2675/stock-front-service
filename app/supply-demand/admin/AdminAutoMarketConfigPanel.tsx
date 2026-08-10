@@ -382,7 +382,7 @@ function ConfigEditor({
         </DarkSelect>
         <DarkInput label="1회 주문 최대 수량" value={draft.maxOrderQuantity} onChange={draftSetters.setMaxOrderQuantity} placeholder="4" />
         <div className="min-w-0">
-          <DarkInput label="미체결 호가 TTL(시뮬 초)" value={draft.orderTtlSeconds} onChange={draftSetters.setOrderTtlSeconds} placeholder="15" />
+          <DarkInput label="미체결 호가 재검토 기준(시뮬 초)" value={draft.orderTtlSeconds} onChange={draftSetters.setOrderTtlSeconds} placeholder="15" />
           <p className="mt-1 text-[10px] font-bold leading-4 text-admin-placeholder">현실 시간이 아니라 시뮬레이션 시간 기준입니다.</p>
         </div>
       </div>
@@ -605,7 +605,7 @@ function SymbolSelector({
                   <span className={`mt-0.5 block text-lg font-black tabular-nums ${pressureTone(finalPricePressure)}`}>{signed(finalPricePressure)}</span>
                 </span>
                 <span className="text-right text-[10px] font-bold leading-4 text-admin-placeholder">
-                  최대 {config.maxOrderQuantity.toLocaleString()}주<br />TTL {config.orderTtlSeconds}초
+                  최대 {config.maxOrderQuantity.toLocaleString()}주<br />재검토 기준 {config.orderTtlSeconds}초
                 </span>
               </span>
               <span className="mt-3 block h-1.5 overflow-hidden rounded-full bg-white/10">

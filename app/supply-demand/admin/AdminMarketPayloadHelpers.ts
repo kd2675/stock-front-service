@@ -35,7 +35,7 @@ export type AutoMarketDistributionBiasDraftInput = {
   executionAggressionPressure: string;
 };
 
-const AUTO_MARKET_CONFIG_MESSAGE = "자동장 대상 종목, 1~4회 주 랜덤 가중치, 주·보조 분포 편향, 최대 수량과 TTL을 올바르게 입력해 주세요.";
+const AUTO_MARKET_CONFIG_MESSAGE = "자동장 대상 종목, 1~4회 주 랜덤 가중치, 주·보조 분포 편향, 최대 수량과 주문 재검토 기준을 올바르게 입력해 주세요.";
 
 const distributionBiasSchema = z.object({
   pricePressure: integerRange(-100, 100),

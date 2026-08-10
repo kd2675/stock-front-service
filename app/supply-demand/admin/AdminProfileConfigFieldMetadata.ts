@@ -42,7 +42,7 @@ export const PROFILE_CONFIG_EXECUTION_FIELDS = [
   { key: "ordersPerDecisionMultiplier", setterKey: "setOrdersPerDecisionMultiplier", formLabel: "주문 발생 확률(0-5)", summaryLabel: "주문 확률", placeholder: "1", min: 0, max: 5, defaultValue: DEFAULT_PROFILE_MULTIPLIER, suffix: "배" },
   { key: "aggressionMultiplier", setterKey: "setAggressionMultiplier", formLabel: "호가 공격성(0-5)", summaryLabel: "호가 공격성", placeholder: "1", min: 0, max: 5, defaultValue: DEFAULT_PROFILE_MULTIPLIER, suffix: "배" },
   { key: "pricePressureSensitivity", setterKey: "setPricePressureSensitivity", formLabel: "가격 압력 민감도(0-2)", summaryLabel: "가격 민감도", placeholder: "1", min: 0, max: 2, defaultValue: DEFAULT_PROFILE_MULTIPLIER, suffix: "배" },
-  { key: "orderTtlMultiplier", setterKey: "setOrderTtlMultiplier", formLabel: "주문 유지 시간(0.1-10)", summaryLabel: "주문 유지 시간", placeholder: "1", min: 0.1, max: 10, defaultValue: DEFAULT_PROFILE_MULTIPLIER, suffix: "배" },
+  { key: "orderTtlMultiplier", setterKey: "setOrderTtlMultiplier", formLabel: "주문 재검토 시간(0.1-10)", summaryLabel: "주문 재검토 시간", placeholder: "1", min: 0.1, max: 10, defaultValue: DEFAULT_PROFILE_MULTIPLIER, suffix: "배" },
   { key: "quantityMultiplier", setterKey: "setQuantityMultiplier", formLabel: "주문 수량(0=중지)", summaryLabel: "주문 수량", placeholder: "1", min: 0, max: 5, defaultValue: DEFAULT_PROFILE_MULTIPLIER, suffix: "배" },
 ] as const satisfies ReadonlyArray<ProfileConfigNumericField>;
 
