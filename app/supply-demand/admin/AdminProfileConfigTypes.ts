@@ -1,7 +1,6 @@
-import type { AutoParticipantBehaviorModelVersion, AutoParticipantProfileExitMode, AutoParticipantProfileInventoryMode, AutoParticipantProfilePricingMode, AutoParticipantProfileType, RecurringCashIntervalUnit } from "@/app/types/stock";
+import type { AutoParticipantProfileExitMode, AutoParticipantProfileInventoryMode, AutoParticipantProfilePricingMode, AutoParticipantProfileType, RecurringCashIntervalUnit } from "@/app/types/stock";
 
 export type ProfileConfigDraft = {
-  behaviorModelVersion: AutoParticipantBehaviorModelVersion;
   newsWeight: string;
   momentumWeight: string;
   contrarianWeight: string;
@@ -35,7 +34,6 @@ export type ProfileConfigDraftWithType = ProfileConfigDraft & {
 };
 
 export type ProfileConfigDraftSetters = {
-  setBehaviorModelVersion: (value: AutoParticipantBehaviorModelVersion) => void;
   setNewsWeight: (value: string) => void;
   setMomentumWeight: (value: string) => void;
   setContrarianWeight: (value: string) => void;

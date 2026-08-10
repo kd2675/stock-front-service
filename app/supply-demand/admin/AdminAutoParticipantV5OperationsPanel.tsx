@@ -1,285 +1,50 @@
 "use client";
 
-import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-
-import { setAutoParticipantV5OperationsQueryData } from "@/app/lib/react-query/stockCacheUpdates";
 import { autoParticipantV5OperationsQueryOptions } from "@/app/lib/react-query/stockAdminQueries";
-import {
-  scheduleAutoParticipantV5Policy,
-  updateAutoParticipantV5Runtime,
-} from "@/app/lib/stock";
-import type {
-  AutoParticipantV5Operations,
-  AutoParticipantV5PolicySchedulePayload,
-} from "@/app/types/stock";
-import {
-  getAdminActionData,
-  getAdminUnknownErrorMessage,
-} from "@/app/supply-demand/admin/AdminActionResultHelpers";
+import type { AutoParticipantV5Operations } from "@/app/types/stock";
 
 type Props = {
   accessToken: string | null;
 };
 
-type V5PolicyDraft = Pick<
-  AutoParticipantV5PolicySchedulePayload,
-  | "attentionRateScale"
-  | "decisionThresholdOffset"
-  | "quantityScale"
-  | "surpriseRateScale"
-  | "cancellationThresholdOffset"
-  | "maxOrdersPerParticipantPerDay"
-  | "maxOpenOrdersPerParticipant"
-  | "maxChildNotionalRate"
->;
-
-const BASELINE_V5_POLICY: V5PolicyDraft = {
-  attentionRateScale: 1,
-  decisionThresholdOffset: 0,
-  quantityScale: 1,
-  surpriseRateScale: 1,
-  cancellationThresholdOffset: 0,
-  maxOrdersPerParticipantPerDay: 32,
-  maxOpenOrdersPerParticipant: 2,
-  maxChildNotionalRate: 0.05,
-};
-
 export function AdminAutoParticipantV5OperationsPanel({ accessToken }: Props) {
-  const queryClient = useQueryClient();
-  const [changeReason, setChangeReason] = useState("");
-  const [policyReason, setPolicyReason] = useState("");
-  const [effectiveTradeDate, setEffectiveTradeDate] = useState("");
-  const [policyDraft, setPolicyDraft] = useState<V5PolicyDraft>(BASELINE_V5_POLICY);
   const operationsQuery = useQuery(
     autoParticipantV5OperationsQueryOptions(accessToken, {
       enabled: Boolean(accessToken),
     }),
   );
-  const runtimeMutation = useMutation({
-    mutationFn: async (runtimeEnabled: boolean) => {
-      if (!accessToken) throw new Error("관리자 인증이 필요합니다.");
-      const result = await updateAutoParticipantV5Runtime(accessToken, {
-        runtimeEnabled,
-        changeReason: changeReason.trim(),
-      });
-      const action = getAdminActionData(
-        result,
-        "V5 런타임 상태를 변경하지 못했습니다.",
-      );
-      if (!action.ok) {
-        throw new Error(action.message);
-      }
-      return action.data;
-    },
-    onSuccess: (operations) => {
-      setAutoParticipantV5OperationsQueryData(queryClient, operations);
-      setChangeReason("");
-    },
-  });
   const operations = operationsQuery.data;
-  const activePolicy = operations?.policies.find((policy) => policy.status === "ACTIVE");
-  const scheduledPolicy = operations?.policies.find((policy) => policy.status === "SCHEDULED");
+  const codeModel = operations?.codeModel;
   const summary = operations?.dailySummary;
   const calibration = operations?.calibrationReadiness;
-  const activePolicyDraft = parseV5Policy(activePolicy?.policyJson);
-  const policyChangeCount = activePolicyDraft
-    ? countPolicyChanges(activePolicyDraft, policyDraft)
-    : activePolicy
-      ? Number.POSITIVE_INFINITY
-      : 0;
-  const suggestedEffectiveDate = nextCalendarDate(operations?.simulationTradeDate);
-  const requestedEffectiveDate = effectiveTradeDate || suggestedEffectiveDate;
-  const revisionBasisReady = !activePolicy || Boolean(
-    calibration?.nextRevisionAllowed
-      && calibration.basisCloseRunId != null
-      && calibration.basisBusinessDate
-      && calibration.contractVersion != null
-      && calibration.activePolicyVersion != null,
-  );
-  const policyMutation = useMutation({
-    mutationFn: async () => {
-      if (!accessToken) throw new Error("관리자 인증이 필요합니다.");
-      if (!requestedEffectiveDate) throw new Error("적용 거래일을 입력해 주세요.");
-      const result = await scheduleAutoParticipantV5Policy(accessToken, {
-        effectiveTradeDate: requestedEffectiveDate,
-        changeReason: policyReason.trim(),
-        basisCloseRunId: activePolicy ? calibration?.basisCloseRunId ?? null : null,
-        basisBusinessDate: activePolicy ? calibration?.basisBusinessDate ?? null : null,
-        basisContractVersion: activePolicy ? calibration?.contractVersion ?? null : null,
-        basisPolicyVersion: activePolicy ? calibration?.activePolicyVersion ?? null : null,
-        ...policyDraft,
-      });
-      const action = getAdminActionData(
-        result,
-        "V5 정책을 예약하지 못했습니다.",
-      );
-      if (!action.ok) throw new Error(action.message);
-      return action.data;
-    },
-    onSuccess: (nextOperations) => {
-      setAutoParticipantV5OperationsQueryData(queryClient, nextOperations);
-      setPolicyReason("");
-      setEffectiveTradeDate("");
-    },
-  });
-  const policyScheduleEnabled = Boolean(
-    accessToken
-      && !scheduledPolicy
-      && requestedEffectiveDate
-      && policyReason.trim()
-      && revisionBasisReady
-      && (!activePolicy || policyChangeCount === 1),
-  );
 
   return (
     <section className="mb-4 rounded-lg border border-white/10 bg-white/[0.025] p-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.16em] text-admin-accent">V5 runtime</p>
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-admin-accent">V5 code model</p>
           <h2 className="mt-1 text-lg font-black text-white">확률 행동 운영 상태</h2>
           <p className="mt-1 text-xs font-bold leading-5 text-stock-subtle">
-            정책 버전, 일일 잠재 상태, 피로도, 다음 프로필 관심 시각과 주문 메타데이터 계약을 10초마다 확인합니다.
+            V5는 배포 코드에 고정된 단일 행동모델입니다. 장 시작 시 생성·예약·활성화하지 않으며 어드민에서 실행값을 변경하지 않습니다.
+            일일 잠재 상태, 피로도, 다음 프로필 관심 시각과 주문 메타데이터 계약을 10초마다 확인합니다.
             체결 수량은 자동참여자 계좌의 매수와 매도를 합한 계좌측 참여량입니다.
           </p>
         </div>
-        <div className="flex min-w-0 flex-col gap-2 sm:min-w-[360px] sm:flex-row">
-          <input
-            value={changeReason}
-            onChange={(event) => setChangeReason(event.target.value)}
-            placeholder="비상 정지·재개 사유"
-            maxLength={200}
-            className="min-h-11 min-w-0 flex-1 rounded-md border border-white/10 bg-black/20 px-3 text-sm font-bold text-white outline-none focus:border-admin-accent/60"
-          />
-          <button
-            type="button"
-            disabled={!activePolicy || !changeReason.trim() || runtimeMutation.isPending}
-            onClick={() => runtimeMutation.mutate(!(activePolicy?.runtimeEnabled ?? false))}
-            className={`min-h-11 rounded-md px-4 text-sm font-black disabled:opacity-40 ${
-              activePolicy?.runtimeEnabled
-                ? "bg-admin-danger text-white"
-                : "bg-admin-accent text-admin-canvas"
-            }`}
-          >
-            {runtimeMutation.isPending
-              ? "처리 중"
-              : activePolicy?.runtimeEnabled
-                ? "즉시 정지"
-                : "재개"}
-          </button>
-        </div>
-      </div>
-
-      {runtimeMutation.isError ? (
-        <p className="mt-3 text-sm font-bold text-admin-danger">
-          {getAdminUnknownErrorMessage(
-            runtimeMutation.error,
-            "V5 런타임 상태를 변경하지 못했습니다.",
-          )}
-        </p>
-      ) : null}
-
-      <div className="mt-4 border-y border-white/10 bg-black/15 px-3 py-4">
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
-          <div className="max-w-2xl">
-            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-emerald-300">
-              Fresh V5 commissioning
-            </p>
-            <h3 className="mt-1 text-base font-black text-white">
-              {activePolicy ? "완료장 근거 단일 변수 리비전" : "최초 V5 정책 생성"}
-            </h3>
-            <p className="mt-1 text-xs font-bold leading-5 text-stock-subtle">
-              {activePolicy
-                ? "활성 정책을 불러온 뒤 한 항목만 바꿀 수 있습니다. 완료장 캘리브레이션 키는 화면의 최신 원장에서 자동 고정됩니다."
-                : "이전 정책과 상태를 복사하지 않습니다. 아래 중립 기준으로 새 정책을 예약하며 최초 정책은 안전하게 정지 상태로 시작합니다."}
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {activePolicyDraft ? (
-              <button
-                type="button"
-                onClick={() => setPolicyDraft(activePolicyDraft)}
-                className="min-h-10 border border-white/15 px-3 text-xs font-black text-white hover:border-white/30"
-              >
-                현재 정책값 불러오기
-              </button>
-            ) : null}
-            <span className="flex min-h-10 items-center border border-white/10 px-3 text-xs font-black text-stock-subtle">
-              {scheduledPolicy
-                ? `예약됨 · ${scheduledPolicy.effectiveTradeDate}`
-                : activePolicy
-                  ? `변경 항목 ${Number.isFinite(policyChangeCount) ? policyChangeCount : "확인 불가"}개`
-                  : "독립 초기값"}
-            </span>
-          </div>
-        </div>
-
-        <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          <PolicyNumberField label="관심 빈도" value={policyDraft.attentionRateScale} min={0.25} max={3} step={0.05} onChange={(value) => setPolicyDraft((current) => ({ ...current, attentionRateScale: value }))} />
-          <PolicyNumberField label="판단 임계 오프셋" value={policyDraft.decisionThresholdOffset} min={-0.25} max={0.25} step={0.01} onChange={(value) => setPolicyDraft((current) => ({ ...current, decisionThresholdOffset: value }))} />
-          <PolicyNumberField label="수량 배율" value={policyDraft.quantityScale} min={0.25} max={2} step={0.05} onChange={(value) => setPolicyDraft((current) => ({ ...current, quantityScale: value }))} />
-          <PolicyNumberField label="의외성 빈도" value={policyDraft.surpriseRateScale} min={0} max={2} step={0.05} onChange={(value) => setPolicyDraft((current) => ({ ...current, surpriseRateScale: value }))} />
-          <PolicyNumberField label="취소 임계 오프셋" value={policyDraft.cancellationThresholdOffset} min={-0.25} max={0.25} step={0.01} onChange={(value) => setPolicyDraft((current) => ({ ...current, cancellationThresholdOffset: value }))} />
-          <PolicyNumberField label="계좌당 일일 주문 상한" value={policyDraft.maxOrdersPerParticipantPerDay} min={1} max={500} step={1} onChange={(value) => setPolicyDraft((current) => ({ ...current, maxOrdersPerParticipantPerDay: Math.trunc(value) }))} />
-          <PolicyNumberField label="계좌당 동시 주문 상한" value={policyDraft.maxOpenOrdersPerParticipant} min={1} max={10} step={1} onChange={(value) => setPolicyDraft((current) => ({ ...current, maxOpenOrdersPerParticipant: Math.trunc(value) }))} />
-          <PolicyNumberField label="자식 주문 자산 비율" value={policyDraft.maxChildNotionalRate} min={0.001} max={0.25} step={0.001} onChange={(value) => setPolicyDraft((current) => ({ ...current, maxChildNotionalRate: value }))} />
-        </div>
-
-        <div className="mt-3 grid gap-2 md:grid-cols-[180px_minmax(0,1fr)_auto]">
-          <label className="grid gap-1 text-[11px] font-black text-stock-subtle">
-            적용 거래일
-            <input
-              type="date"
-              value={requestedEffectiveDate}
-              min={suggestedEffectiveDate || undefined}
-              onChange={(event) => setEffectiveTradeDate(event.target.value)}
-              className="min-h-11 border border-white/10 bg-black/30 px-3 text-sm font-black text-white outline-none focus:border-emerald-300/60"
-            />
-          </label>
-          <label className="grid gap-1 text-[11px] font-black text-stock-subtle">
-            변경 사유
-            <input
-              value={policyReason}
-              onChange={(event) => setPolicyReason(event.target.value)}
-              maxLength={200}
-              placeholder={activePolicy ? "완료장 근거와 변경 목적" : "V5 독립 최초 정책"}
-              className="min-h-11 min-w-0 border border-white/10 bg-black/30 px-3 text-sm font-bold text-white outline-none focus:border-emerald-300/60"
-            />
-          </label>
-          <button
-            type="button"
-            disabled={!policyScheduleEnabled || policyMutation.isPending}
-            onClick={() => policyMutation.mutate()}
-            className="mt-auto min-h-11 bg-emerald-300 px-5 text-sm font-black text-slate-950 disabled:bg-white/10 disabled:text-white/35"
-          >
-            {policyMutation.isPending ? "예약 중" : activePolicy ? "리비전 예약" : "최초 정책 예약"}
-          </button>
-        </div>
-
-        {!revisionBasisReady && activePolicy ? (
-          <p className="mt-2 text-xs font-bold text-amber-200">
-            완료장 V5 캘리브레이션이 정합 상태가 될 때까지 다음 리비전을 예약할 수 없습니다.
-          </p>
-        ) : null}
-        {activePolicy && policyChangeCount !== 1 ? (
-          <p className="mt-2 text-xs font-bold text-amber-200">
-            현재 활성 정책과 정확히 한 항목만 달라야 합니다.
-          </p>
-        ) : null}
-        {policyMutation.isError ? (
-          <p className="mt-2 text-xs font-bold text-admin-danger">
-            {getAdminUnknownErrorMessage(policyMutation.error, "V5 정책을 예약하지 못했습니다.")}
-          </p>
-        ) : null}
+        <span className="w-fit rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-black text-emerald-200">
+          {codeModel
+            ? `${codeModel.behaviorModelVersion} · 배포 코드 고정`
+            : "코드 모델 확인 중"}
+        </span>
       </div>
 
       {operationsQuery.isError ? (
         <p className="mt-4 text-sm font-bold text-admin-danger">V5 운영 상태를 불러오지 못했습니다.</p>
       ) : (
         <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-9">
-          <Metric label="정책" value={activePolicy ? `v${activePolicy.policyVersion}` : "-"} />
-          <Metric label="런타임" value={activePolicy?.runtimeEnabled ? "실행" : "정지"} />
+          <Metric label="행동모델" value={codeModel?.behaviorModelVersion ?? "-"} />
+          <Metric label="설정 원본" value={codeModel?.configurationSource === "CODE" ? "배포 코드" : "-"} />
           <Metric label="계좌" value={formatNumber(summary?.accountCount)} />
           <Metric label="OFFLINE" value={formatNumber(summary?.offlineAccountCount)} />
           <Metric label="제출 주문" value={formatNumber(summary?.submittedOrderCount)} />
@@ -359,12 +124,12 @@ export function AdminAutoParticipantV5OperationsPanel({ accessToken }: Props) {
             </div>
             <span
               className={`w-fit rounded-full border px-3 py-1 text-xs font-black ${
-                calibration.nextRevisionAllowed
+                calibration.calibrationPassed
                   ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-200"
                   : "border-amber-400/30 bg-amber-400/10 text-amber-200"
               }`}
             >
-              {calibration.nextRevisionAllowed ? "다음 정책 묶음 변경 가능" : "보정 기준 미완성"}
+              {calibration.calibrationPassed ? "완료장 검증 통과" : "완료장 검증 미완성"}
             </span>
           </div>
 
@@ -374,10 +139,10 @@ export function AdminAutoParticipantV5OperationsPanel({ accessToken }: Props) {
               value={calibration.basisBusinessDate ?? "-"}
             />
             <Metric
-              label="계약 / 정책"
+              label="계약 / 행동모델"
               value={
-                calibration.contractVersion && calibration.activePolicyVersion
-                  ? `c${calibration.contractVersion} / v${calibration.activePolicyVersion}`
+                calibration.contractVersion && calibration.codeModelVersion
+                  ? `c${calibration.contractVersion} / V${calibration.codeModelVersion}`
                   : "-"
               }
             />
@@ -503,7 +268,7 @@ export function AdminAutoParticipantV5OperationsPanel({ accessToken }: Props) {
           {calibration.blockers.length > 0 ? (
             <div className="mt-3 border-l-2 border-amber-300/70 bg-amber-300/[0.06] px-3 py-2">
               <p className="text-xs font-black text-amber-100">
-                다음 정책 리비전 차단 사유
+                완료장 검증 차단 사유
               </p>
               <p className="mt-1 break-words text-xs font-bold leading-5 text-amber-100/80">
                 {calibration.blockers.join(" · ")}
@@ -578,81 +343,6 @@ function Metric({ label, value }: { label: string; value: string }) {
       <p className="mt-1 text-sm font-black text-white">{value}</p>
     </div>
   );
-}
-
-function PolicyNumberField({
-  label,
-  value,
-  min,
-  max,
-  step,
-  onChange,
-}: {
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  step: number;
-  onChange: (value: number) => void;
-}) {
-  return (
-    <label className="grid gap-1 text-[11px] font-black text-stock-subtle">
-      {label}
-      <input
-        type="number"
-        value={value}
-        min={min}
-        max={max}
-        step={step}
-        onChange={(event) => {
-          const nextValue = Number(event.target.value);
-          if (Number.isFinite(nextValue)) onChange(nextValue);
-        }}
-        className="min-h-10 border border-white/10 bg-black/30 px-3 text-sm font-black tabular-nums text-white outline-none focus:border-emerald-300/60"
-      />
-    </label>
-  );
-}
-
-function parseV5Policy(policyJson: string | undefined): V5PolicyDraft | null {
-  if (!policyJson) return null;
-  try {
-    const candidate: unknown = JSON.parse(policyJson);
-    if (!isRecord(candidate)) return null;
-    const draft = {
-      attentionRateScale: candidate.attentionRateScale,
-      decisionThresholdOffset: candidate.decisionThresholdOffset,
-      quantityScale: candidate.quantityScale,
-      surpriseRateScale: candidate.surpriseRateScale,
-      cancellationThresholdOffset: candidate.cancellationThresholdOffset,
-      maxOrdersPerParticipantPerDay: candidate.maxOrdersPerParticipantPerDay,
-      maxOpenOrdersPerParticipant: candidate.maxOpenOrdersPerParticipant,
-      maxChildNotionalRate: candidate.maxChildNotionalRate,
-    };
-    return Object.values(draft).every(
-      (value) => typeof value === "number" && Number.isFinite(value),
-    ) ? draft as V5PolicyDraft : null;
-  } catch {
-    return null;
-  }
-}
-
-function countPolicyChanges(left: V5PolicyDraft, right: V5PolicyDraft) {
-  return (Object.keys(left) as Array<keyof V5PolicyDraft>)
-    .filter((key) => left[key] !== right[key])
-    .length;
-}
-
-function nextCalendarDate(value: string | undefined) {
-  if (!value) return "";
-  const date = new Date(`${value}T00:00:00Z`);
-  if (Number.isNaN(date.getTime())) return "";
-  date.setUTCDate(date.getUTCDate() + 1);
-  return date.toISOString().slice(0, 10);
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function formatNumber(value: number | undefined) {

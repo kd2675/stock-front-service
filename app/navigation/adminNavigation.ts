@@ -88,7 +88,7 @@ export const ADMIN_NAVIGATION_GROUPS: readonly AdminNavigationGroup[] = [
       { section: "participants-overview", href: "/admin/participants/overview", label: "프로필별 현황", description: "프로필별 계좌·자산·보유·주문·체결 성과를 요약합니다." },
       { section: "participants-list", href: "/admin/participants/list", label: "참여자 관리", description: "자동 참여자 계정을 조회·등록·대량 생성하고 개별 종목 전략을 관리합니다." },
       { section: "participants-institutions", href: "/admin/participants/institutions", label: "기관 투자자", description: "기관을 한 곳씩 LIVE로 생성하고 운용 유형별 프리셋·AUM·목표 비중과 실제 주문을 검증합니다." },
-      { section: "participants-profiles", href: "/admin/participants/profiles", label: "프로필 정책", description: "프로필별 주문 행동과 가격 반응, 보유·자금 정책을 설정합니다." },
+      { section: "participants-profiles", href: "/admin/participants/profiles", label: "프로필 운영값", description: "코드 고정 V5 모델은 유지하고 프로필별 주문 반응, 보유·자금 운영값을 조정합니다." },
     ],
   },
   {

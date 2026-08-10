@@ -42,8 +42,8 @@ export function AdminProfileConfigFormPanel({
   return (
     <>
       <ProfilePolicySection
-        title="행동 모델"
-        description="V5는 이전 행동 모델을 상속하지 않는 독립 엔진입니다. 정책 변경은 다음 개장 전 활성화되며 이미 시작된 장중 난수 흐름은 바꾸지 않습니다."
+        title="고정 행동모델"
+        description="V5 버전과 27개 프로필 알고리즘은 배포 코드에 이미 고정되어 있습니다. 이 화면은 V5를 선택·예약·활성화하지 않으며, 아래 입력값은 동일 프로필 계좌의 운영 가중치와 자금 흐름만 조정합니다."
       >
         <div className="rounded-md border border-white/10 bg-black/15 px-3 py-2 text-xs font-bold leading-5 text-stock-subtle">
           V5 · 27개 고유 프로필 알고리즘, 상황별 선택 사고, 제한된 의외성, 1계좌·1주문·1수량 원장

@@ -6,8 +6,8 @@ import {
 } from "@/app/supply-demand/admin/AdminConstants";
 import type { ProfileConfigDraft, ProfileConfigDraftSetters } from "@/app/supply-demand/admin/AdminProfileConfigTypes";
 
-export type ProfileConfigNumericKey = Exclude<keyof ProfileConfigDraft, "behaviorModelVersion" | "recurringDepositIntervalUnit" | "pricingMode" | "exitMode" | "inventoryMode">;
-export type ProfileConfigTextSetterKey = Exclude<keyof ProfileConfigDraftSetters, "setBehaviorModelVersion" | "setRecurringDepositIntervalUnit" | "setPricingMode" | "setExitMode" | "setInventoryMode">;
+export type ProfileConfigNumericKey = Exclude<keyof ProfileConfigDraft, "recurringDepositIntervalUnit" | "pricingMode" | "exitMode" | "inventoryMode">;
+export type ProfileConfigTextSetterKey = Exclude<keyof ProfileConfigDraftSetters, "setRecurringDepositIntervalUnit" | "setPricingMode" | "setExitMode" | "setInventoryMode">;
 
 type ProfileConfigNumericField = {
   key: ProfileConfigNumericKey;
@@ -68,7 +68,6 @@ export function buildDefaultProfileConfigDraft(): ProfileConfigDraft {
 
   return {
     ...numericDefaults,
-    behaviorModelVersion: "V5",
     orderMultiplier: DEFAULT_PROFILE_MULTIPLIER,
     decisionFrequencyMultiplier: DEFAULT_PROFILE_MULTIPLIER,
     ordersPerDecisionMultiplier: DEFAULT_PROFILE_MULTIPLIER,

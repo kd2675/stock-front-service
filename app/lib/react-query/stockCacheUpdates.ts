@@ -4,7 +4,6 @@ import { calculateChangeRate } from "@/app/lib/priceMath";
 import { stockKeys } from "@/app/lib/react-query/stockKeys";
 import type {
   BatchJobRuntimeStatus,
-  AutoParticipantV5Operations,
   InstitutionPortfolio,
   LiquidityProviderMandate,
   Price,
@@ -13,16 +12,6 @@ import type {
   StockBatchJobRun,
   UnderwritingContract,
 } from "@/app/types/stock";
-
-export function setAutoParticipantV5OperationsQueryData(
-  queryClient: QueryClient,
-  operations: AutoParticipantV5Operations,
-) {
-  queryClient.setQueryData<AutoParticipantV5Operations>(
-    stockKeys.autoParticipantV5Operations(),
-    operations,
-  );
-}
 
 export function setBatchRuntimeControlQueryData(
   queryClient: QueryClient,

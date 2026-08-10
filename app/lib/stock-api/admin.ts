@@ -6,7 +6,7 @@ import {
   authenticatedPostJson,
   toQuery,
 } from "@/app/lib/stock-api/core";
-import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowBreakdown, AdminFundFlowScope, AdminInvestorFlowHistory, AdminInvestorFlowSummary, AdminMarketIndex, AdminParticipantScope, AdminSymbolFlowList, AdminTotalAssetHistoryPage, AutoMarketDistributionBias, AutoMarketRegimeCountWeights, AutoMarketRegimeHistoryRange, AutoMarketStatus, AutoParticipant, AutoParticipantBehaviorModelVersion, AutoParticipantCashAdjustment, AutoParticipantLifecycleScope, AutoParticipantOverview, AutoParticipantPerformanceBasis, AutoParticipantPerformanceSummary, AutoParticipantProfileExitMode, AutoParticipantProfileInventoryMode, AutoParticipantProfileOverview, AutoParticipantProfilePricingMode, AutoParticipantProfileType, AutoParticipantSymbolConfig, AutoParticipantV5Operations, AutoParticipantV5PolicySchedulePayload, AutoParticipantWithdrawalAudit, BatchJobRuntimeStatus, EodOperationsOverview, EodPhaseRetryResult, InstitutionInvestmentStyle, InstitutionPortfolio, InstitutionPortfolioRecommendation, InstitutionSymbolPolicy, LiquidityProviderMandate, LiquidityProviderPolicyUpdatePayload, LiquidityProviderRecommendation, LiquidityProviderStatusChangePayload, RecurringCashIntervalUnit, ScaledMarketContractSchedule, ScaledMarketOverview, ScaledMarketPriceCapitalRebasePlan, ScaledMarketRebasePreview, ScaledMarketRoleCapacityPlan, ScaledMarketShareRebasePlan, ScaledMarketSymbolMaturityChange, StockBatchJobRun, SystemCustodyOverview, UnderwritingContract, UnderwritingContractRecommendation } from "@/app/types/stock";
+import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowBreakdown, AdminFundFlowScope, AdminInvestorFlowHistory, AdminInvestorFlowSummary, AdminMarketIndex, AdminParticipantScope, AdminSymbolFlowList, AdminTotalAssetHistoryPage, AutoMarketDistributionBias, AutoMarketRegimeCountWeights, AutoMarketRegimeHistoryRange, AutoMarketStatus, AutoParticipant, AutoParticipantCashAdjustment, AutoParticipantLifecycleScope, AutoParticipantOverview, AutoParticipantPerformanceBasis, AutoParticipantPerformanceSummary, AutoParticipantProfileExitMode, AutoParticipantProfileInventoryMode, AutoParticipantProfileOverview, AutoParticipantProfilePricingMode, AutoParticipantProfileType, AutoParticipantSymbolConfig, AutoParticipantV5Operations, AutoParticipantWithdrawalAudit, BatchJobRuntimeStatus, EodOperationsOverview, EodPhaseRetryResult, InstitutionInvestmentStyle, InstitutionPortfolio, InstitutionPortfolioRecommendation, InstitutionSymbolPolicy, LiquidityProviderMandate, LiquidityProviderPolicyUpdatePayload, LiquidityProviderRecommendation, LiquidityProviderStatusChangePayload, RecurringCashIntervalUnit, ScaledMarketContractSchedule, ScaledMarketOverview, ScaledMarketPriceCapitalRebasePlan, ScaledMarketRebasePreview, ScaledMarketRoleCapacityPlan, ScaledMarketShareRebasePlan, ScaledMarketSymbolMaturityChange, StockBatchJobRun, SystemCustodyOverview, UnderwritingContract, UnderwritingContractRecommendation } from "@/app/types/stock";
 
 export type { AdminFundFlowScope } from "@/app/types/stock";
 
@@ -24,7 +24,6 @@ export type StockAutoMarketConfigPayload = {
 };
 
 export type StockAutoParticipantProfileConfigPayload = {
-  behaviorModelVersion: AutoParticipantBehaviorModelVersion;
   newsWeight: number;
   momentumWeight: number;
   contrarianWeight: number;
@@ -697,28 +696,6 @@ export function scheduleScaledMarketContract(
   return authenticatedPostJson<ScaledMarketContractSchedule>(
     token,
     `/api/stock/v1/markets/admin/scaled-market/contracts/${contractVersion}/schedule`,
-    payload,
-  );
-}
-
-export function updateAutoParticipantV5Runtime(
-  token: string,
-  payload: { runtimeEnabled: boolean; changeReason: string },
-) {
-  return authenticatedPatchJson<AutoParticipantV5Operations>(
-    token,
-    "/api/stock/v1/markets/auto-market/v5/runtime",
-    payload,
-  );
-}
-
-export function scheduleAutoParticipantV5Policy(
-  token: string,
-  payload: AutoParticipantV5PolicySchedulePayload,
-) {
-  return authenticatedPostJson<AutoParticipantV5Operations>(
-    token,
-    "/api/stock/v1/markets/auto-market/v5/policies/scheduled",
     payload,
   );
 }

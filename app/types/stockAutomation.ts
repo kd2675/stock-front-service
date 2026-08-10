@@ -1158,21 +1158,11 @@ export type AutoParticipantProfileConfig = {
 
 export type AutoParticipantV5Operations = {
   simulationTradeDate: string;
-  policies: Array<{
-    policyVersion: number;
+  codeModel: {
     behaviorModelVersion: AutoParticipantBehaviorModelVersion;
-    status: "ACTIVE" | "SCHEDULED";
-    effectiveTradeDate: string;
-    runtimeEnabled: boolean;
-    policyJson: string;
-    createdBy: string;
-    createdAt: string;
-    activatedAt?: string | null;
-    retiredAt?: string | null;
-    runtimeChangeReason?: string | null;
-    runtimeChangedBy?: string | null;
-    runtimeChangedAt?: string | null;
-  }>;
+    modelVersion: number;
+    configurationSource: "CODE";
+  };
   dailySummary: {
     accountCount: number;
     offlineAccountCount: number;
@@ -1189,7 +1179,7 @@ export type AutoParticipantV5Operations = {
     accountId: number;
     userKey: string;
     profileType: AutoParticipantProfileType;
-    policyVersion: number;
+    modelVersion: number;
     activityState: "OFFLINE" | "LOW" | "NORMAL" | "HIGH";
     activitySession: string;
     eventSequence: number;
@@ -1213,7 +1203,7 @@ export type AutoParticipantV5Operations = {
   calibrationReadiness: {
     scaledMarketContractActive: boolean;
     contractVersion?: number | null;
-    activePolicyVersion?: number | null;
+    codeModelVersion?: number | null;
     basisCloseRunId?: number | null;
     basisBusinessDate?: string | null;
     targetSymbolCount: number;
@@ -1222,7 +1212,7 @@ export type AutoParticipantV5Operations = {
     observedParticipantStateCount: number;
     activeParticipantCount: number;
     participantIdentityMismatchCount: number;
-    observedPolicyVersion?: number | null;
+    observedModelVersion?: number | null;
     targetDailyVolume: number;
     observedDailyVolume: number;
     dailyVolumeGap: number;
@@ -1266,7 +1256,7 @@ export type AutoParticipantV5Operations = {
     institutionBuyMinimumAttained: boolean;
     institutionSellMinimumAttained: boolean;
     institutionParticipationObserved: boolean;
-    nextRevisionAllowed: boolean;
+    calibrationPassed: boolean;
     blockers: string[];
     symbols: Array<{
       calibrationPriority: number;
@@ -1290,23 +1280,6 @@ export type AutoParticipantV5Operations = {
       shareStructureMatched: boolean;
     }>;
   };
-};
-
-export type AutoParticipantV5PolicySchedulePayload = {
-  effectiveTradeDate: string;
-  changeReason: string;
-  basisCloseRunId: number | null;
-  basisBusinessDate: string | null;
-  basisContractVersion: number | null;
-  basisPolicyVersion: number | null;
-  attentionRateScale: number;
-  decisionThresholdOffset: number;
-  quantityScale: number;
-  surpriseRateScale: number;
-  cancellationThresholdOffset: number;
-  maxOrdersPerParticipantPerDay: number;
-  maxOpenOrdersPerParticipant: number;
-  maxChildNotionalRate: number;
 };
 
 export type AutoMarketStatus = {

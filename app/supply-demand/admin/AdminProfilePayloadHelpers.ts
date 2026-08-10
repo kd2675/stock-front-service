@@ -33,7 +33,6 @@ export function buildProfileConfigPayload(draft: ProfileConfigDraftInput): Admin
   } = numberPayload;
   const payload: ProfileConfigPayload = {
     ...behaviorNumberPayload,
-    behaviorModelVersion: draft.behaviorModelVersion,
     pricingMode: draft.pricingMode,
     exitMode: draft.exitMode,
     inventoryMode: draft.inventoryMode,

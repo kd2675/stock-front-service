@@ -34,7 +34,6 @@ export function useAdminProfileConfigDraftState() {
   }, [applyProfileConfigDraft]);
 
   const draftSetters: ProfileConfigDraftSetters = useMemo(() => ({
-    setBehaviorModelVersion: (value) => setDraftField("behaviorModelVersion", value),
     setNewsWeight: (value) => setDraftField("newsWeight", value),
     setMomentumWeight: (value) => setDraftField("momentumWeight", value),
     setContrarianWeight: (value) => setDraftField("contrarianWeight", value),
