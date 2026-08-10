@@ -6,6 +6,7 @@ export type AutoMarketDistributionBias = {
   volatilityPressure: number;
   liquidityPressure: number;
   executionAggressionPressure: number;
+  newsActivityPressure: number;
 };
 
 export type AutoMarketRegimeCountWeights = {
@@ -22,6 +23,7 @@ export type AutoMarketRegimeModifier = {
   volatilityPressure: number;
   liquidityPressure: number;
   executionAggressionPressure: number;
+  newsActivityPressure: number;
   seed: string;
   createdAt: string;
   updatedAt: string;
@@ -39,6 +41,7 @@ export type AutoMarketDailyRegime = {
   volatilityPressure: number;
   liquidityPressure: number;
   executionAggressionPressure: number;
+  newsActivityPressure: number;
   seed: string;
   currentModifier?: AutoMarketRegimeModifier | null;
   createdAt: string;

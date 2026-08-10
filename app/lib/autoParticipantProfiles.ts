@@ -8,7 +8,7 @@ export type AutoParticipantProfileOption = {
 };
 
 export const AUTO_PARTICIPANT_PROFILE_OPTIONS: AutoParticipantProfileOption[] = [
-  { value: "NEWS_REACTIVE", label: "뉴스 민감형", description: "최근 보고서 방향에 시간 감쇠로 반응", behavior: "최신 종목 보고서의 방향과 작성 후 경과시간을 함께 봅니다. 6시간 반감기로 신호를 줄이며, 약해진 보고서는 주문하지 않습니다." },
+  { value: "NEWS_REACTIVE", label: "뉴스 민감형", description: "인지한 공시·뉴스 방향에 시간 감쇠로 반응", behavior: "계좌별 확률과 지연을 거쳐 인지한 공시·뉴스를 봅니다. 종목 평가 보고서는 2시간 반감기로 줄고, 인지 후에도 주문 여부는 V5가 별도로 판단합니다." },
   { value: "MOMENTUM_FOLLOWER", label: "추세추종형", description: "1시간과 1거래일 추세를 함께 확인", behavior: "1시간 모멘텀과 직전 거래일 수익률의 방향이 일치할 때만 추세를 따라 주문합니다." },
   { value: "CONTRARIAN", label: "역추세형", description: "3·5거래일 과도한 움직임에 역행", behavior: "3거래일과 5거래일 수익률이 함께 과도하게 하락하면 매수하고, 함께 과도하게 상승하면 보유분을 매도합니다." },
   { value: "LOSS_AVERSE", label: "손실회피형", description: "손실 중인 종목 매도를 꺼림", behavior: "평균단가 대비 손실이면 추가 매수로 뒤집지 않고 주문을 쉬어 손실 확정을 미룹니다. 물타기 행동은 물타기형 프로필이 담당합니다." },

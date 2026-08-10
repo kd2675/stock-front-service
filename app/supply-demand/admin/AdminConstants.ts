@@ -37,6 +37,14 @@ export const BATCH_JOB_RUNTIME_LABELS: Record<string, { label: string; descripti
     label: "주식 이벤트 처리",
     description: "배당, 증자, 분할, 상장폐지 같은 이벤트를 반영합니다.",
   },
+  "market-news-storyline-generation": {
+    label: "자동 뉴스 흐름 생성",
+    description: "종목별 새 뉴스 흐름과 진행 중인 후속 뉴스를 느린 주기로 생성합니다.",
+  },
+  "market-news-due-publication": {
+    label: "예약 뉴스 공개·인지",
+    description: "공개 시각이 된 뉴스의 종목 신호를 만들고 자동 참여자의 인지 상태를 반영합니다.",
+  },
   "auto-market": {
     label: "자동장 주문 생성",
     description: "자동 참여자와 종목별 자동장 기본값 기준으로 호가를 냅니다.",
@@ -76,6 +84,8 @@ export const SUPPLY_DEMAND_BATCH_JOB_NAMES = new Set([
   "institution-market",
   "auto-participant-cash-flow",
   "corporate-actions",
+  "market-news-storyline-generation",
+  "market-news-due-publication",
   "portfolio-settlement",
 ]);
 

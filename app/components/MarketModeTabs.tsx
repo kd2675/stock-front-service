@@ -6,7 +6,7 @@ export type MarketMode = PublicRouteId;
 
 export default function MarketModeTabs({ active }: { active: MarketMode }) {
   return (
-    <nav aria-label="투자 화면" className="grid grid-cols-5 gap-1 rounded-lg bg-stock-surface-strong p-1">
+    <nav aria-label="투자 화면" className="grid grid-cols-6 gap-1 rounded-lg bg-stock-surface-strong p-1">
       {PUBLIC_NAVIGATION_ITEMS.map((tab) => {
         const selected = tab.id === active;
 

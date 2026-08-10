@@ -160,6 +160,7 @@ function mapDistributionBiasToDraft(bias: AutoMarketConfig["primaryDistributionB
     volatilityPressure: String(bias.volatilityPressure),
     liquidityPressure: String(bias.liquidityPressure),
     executionAggressionPressure: String(bias.executionAggressionPressure),
+    newsActivityPressure: String(bias.newsActivityPressure),
   };
 }
 

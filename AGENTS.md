@@ -16,12 +16,14 @@
 - `/orders`
 - `/portfolio`
 - `/research`
+- `/news`
 - `/corporate-actions`
 - `/admin/**`
 - `/admin/funds/custody` (탈퇴·유통 대기·잠금 시스템 보관계정과 휴면 자동 참여자 원장)
 - `/admin/market/liquidity-providers` (종목별 권장 LP 수치, LP 단건 준비·다음 안전 개장일 생성 및 재개 예약·즉시 중단과 현재/예약 정책·재고 밴드·일일 한도 감사)
 - `/admin/participants/institutions` (권장 기관 개수·운용 유형별 생성 프리셋, 기관 단건 LIVE 생성, 입금 계좌·가용/예약 현금·AUM 감사, 현금 입금·회수, 다음 개장 정책·종목 위임 예약, 결정·주문 감사)
 - `/admin/corporate/underwriting` (발행 대기 종목별 인수계정·계약 즉시 생성, 다음 안전 개장일 유한 공급 예약과 감사)
+- `/admin/corporate/news` (구조화 사실의 공개·예약, append-only 정정·철회 이력)
 - `/admin/flows/live`, `/admin/flows`, `/admin/flows/auto-participants`, `/admin/flows/institutions`, `/admin/flows/users`, `/admin/flows/others` (독립 `시장 흐름` 업무 영역의 실시간·종합·자동참여자·기관·개인·기타 페이지)
 
 이전 `/supply-demand`, `/reports`, `/supply-demand/admin/**` 주소는 `next.config.ts`에서 위 canonical route로 redirect합니다.
@@ -31,6 +33,7 @@
 - `app/page.tsx`
 - `app/login/page.tsx`
 - `app/corporate-actions/page.tsx`
+- `app/news/page.tsx`
 - `app/trade/page.tsx`
 - `app/orders/page.tsx`
 - `app/research/page.tsx`

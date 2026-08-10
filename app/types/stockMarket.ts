@@ -673,6 +673,102 @@ export type InstrumentReport = {
   createdAt: string;
 };
 
+export type MarketNewsFactType =
+  | "ANALYST_OPINION"
+  | "INITIAL_ISSUE"
+  | "CAPITAL_INCREASE"
+  | "CASH_DIVIDEND"
+  | "STOCK_SPLIT"
+  | "BONUS_ISSUE"
+  | "STOCK_DIVIDEND"
+  | "DELISTING"
+  | "LARGE_CONTRACT"
+  | "CONTRACT_TERMINATION"
+  | "PRODUCTION_HALT"
+  | "LITIGATION"
+  | "MANAGEMENT_CHANGE";
+
+export type MarketNewsJsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | MarketNewsJsonValue[]
+  | { [key: string]: MarketNewsJsonValue };
+
+export type MarketNewsPublicationStatus = "SCHEDULED" | "PUBLISHED" | "RETRACTED";
+export type MarketNewsPublicationType = "DISCLOSURE" | "FLASH" | "FULL_ARTICLE" | "CORRECTION" | "RETRACTION";
+
+export type MarketNews = {
+  publicationId: number;
+  factId: number;
+  lineageKey: string;
+  revisionNo: number;
+  factType: MarketNewsFactType;
+  scopeType: "MARKET" | "SYMBOL";
+  scopeKey: string;
+  sourceType: "ISSUER_DISCLOSURE" | "EXCHANGE_DISCLOSURE" | "ANALYST_REPORT" | "ADMIN_STRUCTURED_FACT" | "AUTOMATIC_STORYLINE";
+  certainty: "CONFIRMED" | "ESTIMATED" | "UNCONFIRMED";
+  direction: "POSITIVE" | "NEUTRAL" | "NEGATIVE" | "UNCERTAIN";
+  materiality: number;
+  payload: MarketNewsJsonValue;
+  occurredAt: string;
+  embargoUntil: string;
+  factStatus: "ACTIVE" | "CORRECTED" | "RETRACTED";
+  publicationType: MarketNewsPublicationType;
+  headline: string;
+  summary: string;
+  body: string;
+  sourceLabel: string;
+  publicationStatus: MarketNewsPublicationStatus;
+  publishedAt?: string | null;
+  createdBy: string;
+  createdAt: string;
+};
+
+export type MarketNewsCreatePayload = {
+  factType: MarketNewsFactType;
+  scopeType: "MARKET" | "SYMBOL";
+  scopeKey: string;
+  sourceType: MarketNews["sourceType"];
+  certainty: MarketNews["certainty"];
+  direction: MarketNews["direction"];
+  materiality: number;
+  payload: { [key: string]: MarketNewsJsonValue };
+  occurredAt?: string | null;
+  embargoUntil?: string | null;
+  publicationType: Exclude<MarketNewsPublicationType, "CORRECTION" | "RETRACTION">;
+  headline: string;
+  summary: string;
+  body: string;
+  sourceLabel: string;
+  idempotencyKey?: string | null;
+};
+
+export type MarketNewsStoryline = {
+  symbol: string;
+  storylineSequence: number;
+  storylineKey?: string | null;
+  status: "IDLE" | "ACTIVE";
+  patternType?: "SHOCK_DECAY" | "ISOLATED_EVENT" | "CASCADE" | "GRADUAL_BUILD" | null;
+  direction?: "POSITIVE" | "NEGATIVE" | "MIXED" | null;
+  stageNo: number;
+  revisionNo: number;
+  initialMateriality: number;
+  remainingMateriality: number;
+  followUpProbability: number;
+  reversalProbability: number;
+  startedAt?: string | null;
+  plannedEndAt?: string | null;
+  nextEventAt?: string | null;
+  cooldownUntil?: string | null;
+  lastEvaluatedAt?: string | null;
+  generatorVersion: string;
+  generatorSeed: string;
+  optimisticVersion: number;
+  updatedAt: string;
+};
+
 export type InstrumentDailyMarketSnapshot = {
   tradeCount: number;
   volume: number;

@@ -82,5 +82,6 @@ function createNeutralDistributionBiasDraft() {
     volatilityPressure: "0",
     liquidityPressure: "0",
     executionAggressionPressure: "0",
+    newsActivityPressure: "0",
   };
 }

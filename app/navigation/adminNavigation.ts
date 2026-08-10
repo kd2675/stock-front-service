@@ -24,6 +24,7 @@ export type AdminSection =
   | "corporate-underwriting"
   | "corporate-actions"
   | "corporate-history"
+  | "corporate-news"
   | "corporate-reports"
   | "system-eod"
   | "system-jobs";
@@ -99,6 +100,7 @@ export const ADMIN_NAVIGATION_GROUPS: readonly AdminNavigationGroup[] = [
       { section: "corporate-underwriting", href: "/admin/corporate/underwriting", label: "상장 인수기관", description: "발행 대기 종목별 인수계정과 계약을 하나씩 생성하고 권장 공급 한도를 확인합니다." },
       { section: "corporate-actions", href: "/admin/corporate/actions", label: "기업 이벤트 등록", description: "증자·배당·분할·상장폐지의 일정과 처리 조건을 등록합니다." },
       { section: "corporate-history", href: "/admin/corporate/history", label: "이벤트 처리 이력", description: "종목별 기업 이벤트의 진행 상태와 처리 결과를 조회합니다." },
+      { section: "corporate-news", href: "/admin/corporate/news", label: "공시·뉴스", description: "구조화된 시장 사실을 공개·예약하고 정정·철회 이력을 관리합니다." },
       { section: "corporate-reports", href: "/admin/corporate/reports", label: "종목 보고서", description: "투자자에게 공개하고 자동장 신호에 반영할 종목 보고서를 관리합니다." },
     ],
   },

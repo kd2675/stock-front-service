@@ -6,6 +6,7 @@ import type {
 } from "@/app/lib/validation/adminSchemas";
 import { AdminCorporateActionHistoryPanel } from "@/app/supply-demand/admin/AdminCorporateActionHistoryPanel";
 import { AdminInstrumentReportPanel, type InstrumentReportDraft, type InstrumentReportDraftSetters } from "@/app/supply-demand/admin/AdminInstrumentReportPanel";
+import { AdminMarketNewsPanel } from "@/app/supply-demand/admin/AdminMarketNewsPanel";
 import { AdminStockEventPanel, type StockEventDraft, type StockEventDraftSetters } from "@/app/supply-demand/admin/AdminStockEventPanel";
 import type { AdminSection } from "@/app/supply-demand/admin/AdminNavigationConfig";
 import type { CorporateAction, InstrumentReport, OrderBookInstrument } from "@/app/types/stock";
@@ -91,6 +92,10 @@ export function AdminEventsSection({
         onRetry={onRetryCorporateActions}
       />
     );
+  }
+
+  if (activeSection === "corporate-news") {
+    return <AdminMarketNewsPanel instruments={instruments} />;
   }
 
   return (

@@ -59,6 +59,7 @@ const PRESSURE_FIELDS: Array<{
   { key: "volatilityPressure", label: "변동성", negative: "안정", positive: "확대" },
   { key: "liquidityPressure", label: "유동성", negative: "희소", positive: "풍부" },
   { key: "executionAggressionPressure", label: "체결 공격성", negative: "수동", positive: "적극" },
+  { key: "newsActivityPressure", label: "뉴스 활동성", negative: "조용", positive: "활발" },
 ];
 
 const REGIME_COUNT_WEIGHT_FIELDS: Array<{
@@ -311,6 +312,7 @@ function AutoMarketDailyRegimeCell({ regime }: { regime?: AutoMarketDailyRegime 
     volatilityPressure: 0,
     liquidityPressure: 0,
     executionAggressionPressure: 0,
+    newsActivityPressure: 0,
   };
   const finalValues = Object.fromEntries(PRESSURE_FIELDS.map((field) => [
     field.key,

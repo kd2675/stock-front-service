@@ -35,7 +35,7 @@ export default function AutoSignalGuide() {
         <div className="rounded-md bg-black/20 px-3 py-3 text-xs font-bold leading-5 text-admin-muted">
           <p className="font-black text-white">실제 적용 순서</p>
           <p className="mt-1">
-            참여자·종목 설정값을 그대로 활동 강도로 사용합니다. 최신 보고서 점수는 활동 강도를 바꾸지 않고 프로필의 뉴스 민감도만큼 별도 가격 방향 압력에 반영됩니다.
+            참여자·종목 설정값을 그대로 활동 강도로 사용합니다. 공개 뉴스를 인지한 계좌만 프로필의 뉴스 민감도만큼 가격 방향 압력에 반영하며, 뉴스가 활동량을 직접 늘리지는 않습니다.
           </p>
         </div>
         <div className="rounded-md border border-admin-warning/20 bg-admin-warning/[0.06] px-3 py-3 text-xs font-bold leading-5 text-[#d8c49c]">
@@ -137,7 +137,7 @@ const ORDER_BEHAVIOR_GUIDE_ITEMS = [
     scale: "-100~100",
     low: "− 하락·매도 우세",
     high: "+ 상승·매수 우세",
-    description: "매수·매도 선택 확률과 주문 호가의 중심을 움직입니다. 호가는 고정 틱 수가 아니라 현재가 대비 비율로 이동하며, 최신 종목 보고서 점수도 프로필의 뉴스 민감도만큼 이 축에 추가됩니다.",
+    description: "매수·매도 선택 확률과 주문 호가의 중심을 움직입니다. 호가는 고정 틱 수가 아니라 현재가 대비 비율로 이동하며, 계좌가 인지한 공시·뉴스의 감쇠 압력도 프로필의 뉴스 민감도만큼 이 축에 추가됩니다.",
     caution: "호가 중심의 기본 이동률은 압력 100 기준 0.6%이며 변동성 반영 후에도 0.8%로 제한됩니다. 현재가를 직접 변경하지는 않습니다.",
   },
   {

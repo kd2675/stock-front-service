@@ -51,6 +51,7 @@ const PRESSURE_FIELDS: Array<{ key: PressureKey; label: string }> = [
   { key: "volatilityPressure", label: "변동" },
   { key: "liquidityPressure", label: "유동" },
   { key: "executionAggressionPressure", label: "공격" },
+  { key: "newsActivityPressure", label: "뉴스" },
 ];
 
 const WINDOW_TIMES = Array.from({ length: 24 }, (_, index) => {
@@ -257,6 +258,10 @@ function buildEffectiveWindows(day: AutoMarketRegimeHistoryDay) {
       executionAggressionPressure: calculateFinal(
         dailyRegime.executionAggressionPressure,
         modifier.executionAggressionPressure,
+      ),
+      newsActivityPressure: calculateFinal(
+        dailyRegime.newsActivityPressure,
+        modifier.newsActivityPressure,
       ),
     }];
   });

@@ -6,7 +6,7 @@ import {
   authenticatedPostJson,
   toQuery,
 } from "@/app/lib/stock-api/core";
-import type { AutoMarketStatus, CapitalIncreaseOfferingType, CashDividendGuidance, CorporateAction, CorporateActionEntitlement, CorporateActionType, Instrument, InstrumentMarketReport, InstrumentReport, MarketSessionStatus, MarketType, OrderBook, OrderBookCandle, OrderBookCandleInterval, OrderBookInstrument, OrderBookMarketStatus, OrderBookRecentExecution, OrderBookTradeSummary, Price, PriceTick, Ranking, SimulationClock, SimulationClockJumpAction, SymbolMarketConfig } from "@/app/types/stock";
+import type { AutoMarketStatus, CapitalIncreaseOfferingType, CashDividendGuidance, CorporateAction, CorporateActionEntitlement, CorporateActionType, Instrument, InstrumentMarketReport, InstrumentReport, MarketNews, MarketNewsCreatePayload, MarketNewsStoryline, MarketSessionStatus, MarketType, OrderBook, OrderBookCandle, OrderBookCandleInterval, OrderBookInstrument, OrderBookMarketStatus, OrderBookRecentExecution, OrderBookTradeSummary, Price, PriceTick, Ranking, SimulationClock, SimulationClockJumpAction, SymbolMarketConfig } from "@/app/types/stock";
 
 export type StockOrderBookInstrumentCreatePayload = {
   symbol: string;
@@ -142,6 +142,39 @@ export function subscribeCorporateAction(
 
 export function getInstrumentReports(symbol: string) {
   return getJson<InstrumentReport[]>(`/api/stock/v1/markets/order-book-instruments/${encodeURIComponent(symbol)}/reports`);
+}
+
+export function getMarketNews(symbol?: string, limit = 50) {
+  const query = toQuery({ symbol, limit });
+  return getJson<MarketNews[]>(`/api/stock/v1/markets/news${query}`);
+}
+
+export function getAdminMarketNews(token: string, limit = 100) {
+  return authenticatedGetJson<MarketNews[]>(token, `/api/stock/v1/markets/admin/news?limit=${limit}`);
+}
+
+export function getAdminMarketNewsStorylines(token: string) {
+  return authenticatedGetJson<MarketNewsStoryline[]>(token, "/api/stock/v1/markets/admin/news/storylines");
+}
+
+export function createMarketNews(token: string, payload: MarketNewsCreatePayload) {
+  return authenticatedPostJson<MarketNews>(token, "/api/stock/v1/markets/admin/news", payload);
+}
+
+export function correctMarketNews(token: string, publicationId: number, payload: MarketNewsCreatePayload) {
+  return authenticatedPostJson<MarketNews>(
+    token,
+    `/api/stock/v1/markets/admin/news/${publicationId}/corrections`,
+    payload,
+  );
+}
+
+export function retractMarketNews(token: string, publicationId: number, reason: string) {
+  return authenticatedPostJson<MarketNews>(
+    token,
+    `/api/stock/v1/markets/admin/news/${publicationId}/retraction`,
+    { reason },
+  );
 }
 
 export function publishInstrumentReport(

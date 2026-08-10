@@ -229,6 +229,13 @@ export async function invalidateInstrumentReportQueries(
   ));
 }
 
+export async function invalidateMarketNewsQueries(queryClient: QueryClient) {
+  await invalidateQueryGroup(queryClient, [
+    stockKeys.marketNewsRoot(),
+    stockKeys.adminMarketNewsRoot(),
+  ]);
+}
+
 export async function invalidateBatchRuntimeControlQueries(queryClient: QueryClient) {
   await invalidateQuery(queryClient, stockKeys.batchJobRuntimeControls());
 }
