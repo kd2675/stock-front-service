@@ -1,8 +1,8 @@
-import { deleteJson, getJson, patchJson, postJson, type ApiResult } from "@/app/lib/api";
+import { deleteJson, getJson, IS_GATEWAY_MODE, patchJson, postJson, type ApiResult } from "@/app/lib/api";
 import { clearAccessToken, getUserFromToken, notifyAuthExpired, refreshAccessToken } from "@/app/lib/auth";
 
 export function authHeaders(token: string): Record<string, string> {
-  const user = getUserFromToken(token);
+  const user = IS_GATEWAY_MODE ? null : getUserFromToken(token);
   return {
     Authorization: `Bearer ${token}`,
     ...(user?.userKey ? { "X-User-Key": user.userKey } : {}),

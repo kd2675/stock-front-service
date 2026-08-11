@@ -114,7 +114,7 @@ NEXT_PUBLIC_AUTH_API_URL=http://localhost:9000
 - 공급/수요 관리자 화면의 유상증자는 주주배정 또는 일반공모만 지원합니다. 두 방식 모두 발행수·발행가·청약 시작/마감일·납입일·신주상장일을 입력하고, 주주배정에만 권리락일을 입력합니다. 보유자 snapshot이 필요한 주주배정·현금배당·무상증자·주식배당의 권리락일은 현재 시뮬레이션 날짜보다 미래만 허용합니다. 액면분할은 효력일, 현금배당은 1주당 배당금/배당락일/지급일, 무상증자/주식배당은 배정 주식수/권리락일/신주상장일을 입력합니다.
 - 공급/수요 관리자 화면은 선택 종목의 기업 이벤트 이력을 조회합니다.
 - 공급/수요 관리자 화면은 주문장 종목별 평가 보고서를 발행, 수정, 삭제할 수 있습니다. 보고서에는 1~10 점수와 상승/하락 이유를 입력하며, batch 자동장은 최신 활성 보고서 점수를 장 시작 시 생성된 일일 방향/자산 선호와 자동 참여자 성향에 함께 사용합니다.
-- local-direct에서는 stock-back이 JWT를 직접 해석하지 않으므로 프론트가 access token payload의 `X-User-Key`, `X-User-Role`을 함께 붙입니다. Gateway 모드에서는 gateway가 같은 헤더를 다시 주입합니다.
+- local-direct에서는 stock-back이 JWT를 직접 해석하지 않으므로 프론트가 access token payload의 `X-User-Key`, `X-User-Role`을 함께 붙입니다. Gateway 모드에서는 프론트가 내부 사용자 헤더를 보내지 않고 gateway가 검증된 JWT claim으로 다시 주입합니다.
 - 실제 주식시장 기능 확장 범위와 우선순위는 `../stock-back-service/STOCK_MARKET_FEATURE_ROADMAP.md`를 기준으로 봅니다.
 - 기능별 현재 구현, 코드 위치, 다음 개발 순서는 `../stock-back-service/docs/market-simulation/00-overview.md`부터 확인합니다.
 - 프론트 코드 파일별 책임은 `../stock-back-service/docs/market-simulation/13-code-ownership-map.md`, 기능별 변경 순서는 `../stock-back-service/docs/market-simulation/14-feature-change-playbooks.md`를 기준으로 봅니다.

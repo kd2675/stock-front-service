@@ -5,17 +5,17 @@ const DEFAULT_GATEWAY_API_BASE = "http://localhost:8080";
 const DEFAULT_DIRECT_STOCK_API_BASE = "http://localhost:20480";
 const DEFAULT_DIRECT_AUTH_API_BASE = "http://localhost:9000";
 
-const isGatewayMode = API_MODE === "gateway";
+export const IS_GATEWAY_MODE = API_MODE === "gateway";
 
 export const STOCK_API_BASE =
   process.env.NEXT_PUBLIC_STOCK_API_URL ??
   process.env.NEXT_PUBLIC_API_URL ??
-  (isGatewayMode ? DEFAULT_GATEWAY_API_BASE : DEFAULT_DIRECT_STOCK_API_BASE);
+  (IS_GATEWAY_MODE ? DEFAULT_GATEWAY_API_BASE : DEFAULT_DIRECT_STOCK_API_BASE);
 
 export const AUTH_API_BASE =
   process.env.NEXT_PUBLIC_AUTH_API_URL ??
   process.env.NEXT_PUBLIC_API_URL ??
-  (isGatewayMode ? DEFAULT_GATEWAY_API_BASE : DEFAULT_DIRECT_AUTH_API_BASE);
+  (IS_GATEWAY_MODE ? DEFAULT_GATEWAY_API_BASE : DEFAULT_DIRECT_AUTH_API_BASE);
 
 export const API_BASE = STOCK_API_BASE;
 export const STOCK_CLIENT_ID = "stock-front-service";

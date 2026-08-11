@@ -14,6 +14,8 @@ assert.equal(buildLoginPath("/admin?tab=market", true), "/login?next=%2Fadmin%3F
 const callbackSource = await readFile(new URL("../app/auth/callback/page.tsx", import.meta.url), "utf8");
 const loginSource = await readFile(new URL("../app/login/LoginClient.tsx", import.meta.url), "utf8");
 const formSource = await readFile(new URL("../app/login/LoginFormPanel.tsx", import.meta.url), "utf8");
+const apiSource = await readFile(new URL("../app/lib/api.ts", import.meta.url), "utf8");
+const stockApiCoreSource = await readFile(new URL("../app/lib/stock-api/core.ts", import.meta.url), "utf8");
 
 assert.doesNotMatch(callbackSource, /location\.hash|fragment\.get\("token"\)|setAccessToken\(/);
 assert.match(callbackSource, /ensureAccessToken\(\)/);
@@ -22,5 +24,8 @@ assert.match(loginSource, /authStatus === "unknown"/);
 assert.match(loginSource, /window\.location\.replace\(/);
 assert.match(formSource, /<form/);
 assert.match(formSource, /type="submit"/);
+assert.match(apiSource, /export const IS_GATEWAY_MODE = API_MODE === "gateway"/);
+assert.match(stockApiCoreSource, /IS_GATEWAY_MODE \? null : getUserFromToken\(token\)/);
+assert.match(stockApiCoreSource, /Authorization: `Bearer \$\{token\}`/);
 
 console.log("Stock authentication routing checks passed.");
