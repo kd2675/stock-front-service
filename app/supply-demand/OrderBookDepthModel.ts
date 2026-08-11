@@ -1,6 +1,7 @@
 import type { OrderBookLevel } from "@/app/types/stock";
 
-export const ORDER_BOOK_VISIBLE_LEVELS = 8;
+export const ORDER_BOOK_VISIBLE_LEVELS = 10;
+export const STACKED_ORDER_BOOK_VISIBLE_LEVELS = 6;
 
 export type OrderBookSideType = "bid" | "ask";
 export type FlashingOrderBookLevel = { price: number; side: OrderBookSideType; nonce: number } | null;
@@ -11,6 +12,8 @@ export type OrderBookDepthModel = {
   fixedBids: (CumulativeOrderBookLevel | null)[];
   stackedAsks: (CumulativeOrderBookLevel | null)[];
   stackedBids: (CumulativeOrderBookLevel | null)[];
+  maxAskQuantity: number;
+  maxBidQuantity: number;
   maxQuantity: number;
   totalAskQuantity: number;
   totalBidQuantity: number;
@@ -22,18 +25,26 @@ export function buildOrderBookDepthModel(orderBook: { bids: OrderBookLevel[]; as
   const bids = sortBidLevels(orderBook?.bids ?? []);
   const fixedAsks = addCumulativeQuantity(toFixedOrderBookLevels(asks));
   const fixedBids = addCumulativeQuantity(toFixedOrderBookLevels(bids));
+  const stackedAsks = [...fixedAsks.slice(0, STACKED_ORDER_BOOK_VISIBLE_LEVELS)].reverse();
+  const stackedBids = fixedBids.slice(0, STACKED_ORDER_BOOK_VISIBLE_LEVELS);
   const totalAskQuantity = sumQuantity(asks);
   const totalBidQuantity = sumQuantity(bids);
   return {
     fixedAsks,
     fixedBids,
-    stackedAsks: [...fixedAsks].reverse(),
-    stackedBids: fixedBids,
+    stackedAsks,
+    stackedBids,
+    maxAskQuantity: maxQuantity(asks.slice(0, STACKED_ORDER_BOOK_VISIBLE_LEVELS)),
+    maxBidQuantity: maxQuantity(bids.slice(0, STACKED_ORDER_BOOK_VISIBLE_LEVELS)),
     maxQuantity: Math.max(1, ...asks.map((level) => level.quantity), ...bids.map((level) => level.quantity)),
     totalAskQuantity,
     totalBidQuantity,
     imbalance: totalAskQuantity <= 0 ? 0 : totalBidQuantity / totalAskQuantity,
   };
+}
+
+function maxQuantity(levels: OrderBookLevel[]) {
+  return Math.max(1, ...levels.map((level) => level.quantity));
 }
 
 export function resolveQuantityRate(level: Pick<OrderBookLevel, "quantity"> | null, maxQuantity: number) {

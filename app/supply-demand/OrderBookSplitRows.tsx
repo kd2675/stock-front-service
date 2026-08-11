@@ -31,12 +31,11 @@ export function OrderBookSide({
         <h3 className={`text-base font-black ${color}`}>{title}</h3>
         <span className="shrink-0 text-xs font-bold text-stock-subtle">고정 {ORDER_BOOK_VISIBLE_LEVELS}호가</span>
       </div>
-      <div className="mt-3 grid h-[376px] grid-rows-[24px_repeat(8,40px)] gap-1 overflow-hidden">
-        <div className="grid grid-cols-[minmax(78px,1fr)_minmax(58px,0.9fr)_minmax(58px,0.9fr)_42px] items-center gap-2 px-3 text-xs font-bold text-stock-subtle sm:grid-cols-[100px_minmax(0,1fr)_minmax(0,1fr)_52px]">
+      <div className="mt-3 grid h-[464px] grid-rows-[24px_repeat(10,40px)] gap-1 overflow-hidden">
+        <div className="grid grid-cols-[minmax(88px,1fr)_minmax(72px,0.9fr)_minmax(72px,0.9fr)] items-center gap-2 px-3 text-xs font-bold text-stock-subtle sm:grid-cols-[112px_minmax(0,1fr)_minmax(0,1fr)]">
           <span>가격</span>
           <span className="text-right">잔량</span>
           <span className="text-right">누적</span>
-          <span className="text-right">주문</span>
         </div>
         {levels.map((level, index) => (
           <OrderBookRow
@@ -84,7 +83,7 @@ function OrderBookRow({
           onPriceSelect(level.price, side);
         }
       }}
-      className="relative grid h-10 min-w-0 grid-cols-[minmax(78px,1fr)_minmax(58px,0.9fr)_minmax(58px,0.9fr)_42px] items-center gap-2 overflow-hidden rounded-md bg-stock-surface-muted px-3 text-left text-xs transition enabled:cursor-pointer enabled:hover:bg-[#eef6ff] enabled:focus:outline-none enabled:focus-visible:bg-[#eef6ff] disabled:cursor-default sm:grid-cols-[100px_minmax(0,1fr)_minmax(0,1fr)_52px] sm:text-sm"
+      className="relative grid h-10 min-w-0 grid-cols-[minmax(88px,1fr)_minmax(72px,0.9fr)_minmax(72px,0.9fr)] items-center gap-2 overflow-hidden rounded-md bg-stock-surface-muted px-3 text-left text-xs transition enabled:cursor-pointer enabled:hover:bg-[#eef6ff] enabled:focus:outline-none enabled:focus-visible:bg-[#eef6ff] disabled:cursor-default sm:grid-cols-[112px_minmax(0,1fr)_minmax(0,1fr)] sm:text-sm"
     >
       {level ? (
         <span
@@ -108,9 +107,6 @@ function OrderBookRow({
       </span>
       <span className={`relative z-20 min-w-0 truncate text-right font-bold tabular-nums ${level ? "text-admin-placeholder" : "text-stock-disabled"}`} title={level ? `누적 ${formatNumber(level.cumulativeQuantity)}주` : undefined}>
         {level ? formatNumber(level.cumulativeQuantity) : "-"}
-      </span>
-      <span className={`relative z-20 min-w-0 truncate text-right font-bold tabular-nums ${level ? "text-stock-subtle" : "text-stock-disabled"}`} title={level ? `${formatNumber(level.orderCount)}건` : undefined}>
-        {level ? formatNumber(level.orderCount) : "-"}
       </span>
     </button>
   );

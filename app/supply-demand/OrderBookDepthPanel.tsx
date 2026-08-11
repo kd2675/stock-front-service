@@ -14,6 +14,7 @@ type OrderBookDepthPanelProps = {
   flashingLevel: FlashingOrderBookLevel;
   layout: "split" | "stacked";
   orderBook: { bids: OrderBookLevel[]; asks: OrderBookLevel[] } | null;
+  priceLimitBase: number;
   onFlashEnd: () => void;
   onLayoutChange: (layout: "split" | "stacked") => void;
   onPriceSelect: (price: number, side: OrderBookSideType) => void;
@@ -24,6 +25,7 @@ export function OrderBookDepthPanel({
   flashingLevel,
   layout,
   orderBook,
+  priceLimitBase,
   onFlashEnd,
   onLayoutChange,
   onPriceSelect,
@@ -68,6 +70,7 @@ export function OrderBookDepthPanel({
           currentPrice={currentPrice}
           depth={depth}
           flashingLevel={flashingLevel}
+          priceLimitBase={priceLimitBase}
           onFlashEnd={onFlashEnd}
           onPriceSelect={onPriceSelect}
         />

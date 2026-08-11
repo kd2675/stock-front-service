@@ -105,7 +105,7 @@ export function SupplyDemandSideColumn({
   onSubmitOrder,
 }: SupplyDemandSideColumnProps) {
   return (
-    <aside className="space-y-5">
+    <aside className="min-w-0 space-y-5">
       <OrderTicketPanel
         estimatedOrderAmount={estimatedOrderAmount}
         isMarketOpen={isSelectedMarketOpen}

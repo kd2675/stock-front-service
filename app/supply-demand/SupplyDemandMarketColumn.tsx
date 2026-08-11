@@ -57,7 +57,7 @@ export function SupplyDemandMarketColumn({
   onSelectInstrument,
 }: SupplyDemandMarketColumnProps) {
   return (
-    <div className="space-y-5">
+    <div className="min-w-0 space-y-5">
       <SelectedOrderBookInstrumentPanel
         instruments={instruments}
         isSelectedMarketOpen={isSelectedMarketOpen}
@@ -74,6 +74,7 @@ export function SupplyDemandMarketColumn({
         flashingLevel={flashingOrderBookLevel}
         layout={orderBookLayout}
         orderBook={orderBook}
+        priceLimitBase={selectedInstrument.priceLimitBase}
         onFlashEnd={onFlashEnd}
         onLayoutChange={onLayoutChange}
         onPriceSelect={onPriceSelect}
