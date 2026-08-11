@@ -74,14 +74,17 @@ export function MarketChartPanel({
           </div>
         </div>
 
-        <div className={expanded ? "mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_220px]" : "mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_180px]"}>
+        <div className={expanded ? "mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_220px]" : "mt-4 grid gap-3"}>
           <MarketCandleChart key={interval} candles={candles} expanded={expanded} interval={interval} isLoading={isLoading} />
-          <div className="grid content-start gap-2 rounded-md bg-stock-surface-muted p-3 text-sm">
-            <StatusRow label="2시간 체결" value={summary ? `${formatNumber(summary.todayExecutionCount)}건` : "-"} />
-            <StatusRow label="2시간 거래량" value={`${formatNumber(summary?.todayVolume ?? 0)}주`} />
-            <StatusRow label="2시간 거래대금" value={formatWon(summary?.todayTurnover)} />
-            <StatusRow label="VWAP" value={formatWon(summary?.vwap)} />
-            <StatusRow label="최근 체결" value={summary?.lastExecutedAt ? formatTime(summary.lastExecutedAt) : "-"} />
+          <div className={expanded
+            ? "grid content-start gap-2 rounded-md bg-stock-surface-muted p-3 text-sm"
+            : "grid grid-cols-2 gap-px overflow-hidden rounded-md bg-stock-divider sm:grid-cols-5"}
+          >
+            <StatusRow compact={!expanded} label="2시간 체결" value={summary ? `${formatNumber(summary.todayExecutionCount)}건` : "-"} />
+            <StatusRow compact={!expanded} label="2시간 거래량" value={`${formatNumber(summary?.todayVolume ?? 0)}주`} />
+            <StatusRow compact={!expanded} label="2시간 거래대금" value={formatWon(summary?.todayTurnover)} />
+            <StatusRow compact={!expanded} label="VWAP" value={formatWon(summary?.vwap)} />
+            <StatusRow compact={!expanded} label="최근 체결" value={summary?.lastExecutedAt ? formatTime(summary.lastExecutedAt) : "-"} />
           </div>
         </div>
       </section>
@@ -89,7 +92,16 @@ export function MarketChartPanel({
   );
 }
 
-function StatusRow({ label, value }: { label: string; value: string }) {
+function StatusRow({ compact = false, label, value }: { compact?: boolean; label: string; value: string }) {
+  if (compact) {
+    return (
+      <div className="min-w-0 bg-stock-surface-muted px-3 py-2.5">
+        <p className="text-xs font-bold text-stock-subtle">{label}</p>
+        <p className="mt-1 truncate text-sm font-black tabular-nums text-stock-ink" title={value}>{value}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center justify-between gap-3 text-sm">
       <span className="font-bold text-stock-muted">{label}</span>

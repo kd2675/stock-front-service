@@ -18,6 +18,7 @@ export function SelectedOrderBookInstrumentPanel({
   selectedOrderBookConfig,
   summary,
   selectedSymbol,
+  onClearSelectedInstrument,
   onSelectInstrument,
 }: {
   instruments: OrderBookInstrument[];
@@ -27,38 +28,49 @@ export function SelectedOrderBookInstrumentPanel({
   selectedOrderBookConfig?: SymbolMarketConfig;
   summary: OrderBookTradeSummary | null;
   selectedSymbol: string;
+  onClearSelectedInstrument: () => void;
   onSelectInstrument: (symbol: string) => void;
 }) {
   return (
-    <div className="rounded-lg border border-stock-border bg-white p-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="text-sm font-bold text-stock-muted">종목</p>
-          <h2 className="mt-1 text-xl font-black">{`${selectedInstrument.name} ${selectedInstrument.symbol}`}</h2>
+    <div className="rounded-lg border border-stock-border bg-white p-3 shadow-[var(--shadow-panel)] sm:p-4">
+      <div className="stock-instrument-summary grid gap-3">
+        <div className="stock-instrument-identity min-w-0">
+          <p className="text-xs font-bold text-stock-subtle">SELECTED INSTRUMENT</p>
+          <h2 className="mt-1 truncate text-lg font-black sm:text-xl">{`${selectedInstrument.name} ${selectedInstrument.symbol}`}</h2>
         </div>
-        <select
-          value={selectedSymbol}
-          onChange={(event) => onSelectInstrument(event.target.value)}
-          className="rounded-md border border-stock-border-strong bg-white px-3 py-2 text-sm font-bold"
-        >
-          <option value="" disabled>등록된 종목 없음</option>
-          {instruments.map((instrument) => (
-            <option key={instrument.symbol} value={instrument.symbol}>
-              {instrument.name}
-            </option>
-          ))}
-        </select>
-      </div>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Metric label="현재가" value={formatWon(selectedInstrument.currentPrice)} />
-        <Metric label="제한 기준가" value={formatWon(selectedInstrument.priceLimitBase)} />
-        <Metric label="장 상태" value={formatEffectiveMarketSessionStatus(selectedOrderBookConfig?.marketStatus, isSelectedMarketOpen)} tone={isSelectedMarketOpen ? "blue" : "red"} />
-        <Metric label="2시간 거래량" value={`${formatNumber(summary?.todayVolume ?? 0)}주`} />
-        <Metric label="2시간 거래대금" value={formatWon(summary?.todayTurnover)} />
-        <Metric label="VWAP" value={formatWon(summary?.vwap)} />
-        <Metric label="고가 / 저가" value={`${formatRoundedPriceOrDash(summary?.highPrice)} / ${formatRoundedPriceOrDash(summary?.lowPrice)}`} />
-        <Metric label="평균 체결량" value={formatAverageExecutionQuantity(summary)} />
+        <div className="stock-instrument-controls grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+          <select
+            value={selectedSymbol}
+            onChange={(event) => onSelectInstrument(event.target.value)}
+            className="min-w-0 rounded-md border border-stock-border-strong bg-white px-3 py-2 text-sm font-bold"
+          >
+            <option value="" disabled>등록된 종목 없음</option>
+            {instruments.map((instrument) => (
+              <option key={instrument.symbol} value={instrument.symbol}>
+                {instrument.name}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={onClearSelectedInstrument}
+            className="h-10 shrink-0 rounded-md bg-stock-surface-strong px-3 text-xs font-black text-stock-text-secondary"
+          >
+            종목 목록
+          </button>
+        </div>
+
+        <div className="stock-instrument-metrics grid grid-cols-2 gap-px overflow-hidden rounded-md bg-stock-divider sm:grid-cols-4 xl:grid-cols-8">
+          <Metric label="현재가" value={formatWon(selectedInstrument.currentPrice)} />
+          <Metric label="제한 기준가" value={formatWon(selectedInstrument.priceLimitBase)} />
+          <Metric label="장 상태" value={formatEffectiveMarketSessionStatus(selectedOrderBookConfig?.marketStatus, isSelectedMarketOpen)} tone={isSelectedMarketOpen ? "blue" : "red"} />
+          <Metric label="2시간 거래량" value={`${formatNumber(summary?.todayVolume ?? 0)}주`} />
+          <Metric label="2시간 거래대금" value={formatWon(summary?.todayTurnover)} />
+          <Metric label="VWAP" value={formatWon(summary?.vwap)} />
+          <Metric label="고가 / 저가" value={`${formatRoundedPriceOrDash(summary?.highPrice)} / ${formatRoundedPriceOrDash(summary?.lowPrice)}`} />
+          <Metric label="평균 체결량" value={formatAverageExecutionQuantity(summary)} />
+        </div>
       </div>
 
       {message ? <p className="mt-4 rounded-md bg-stock-danger-surface px-3 py-2 text-sm font-bold text-stock-danger-strong">{message}</p> : null}
@@ -102,37 +114,6 @@ export function AutoMarketStatusPanel({
   );
 }
 
-export function AutoMarketConfigListPanel({
-  configs,
-  onSelectInstrument,
-}: {
-  configs: AutoMarketConfig[];
-  onSelectInstrument: (symbol: string) => void;
-}) {
-  return (
-    <div className="rounded-lg border border-stock-border bg-white p-4">
-      <h3 className="text-base font-black">종목별 자동장</h3>
-      <div className="mt-3 divide-y divide-stock-divider">
-        {configs.length ? configs.map((config) => (
-          <button
-            key={config.symbol}
-            type="button"
-            onClick={() => onSelectInstrument(config.symbol)}
-            className="grid w-full grid-cols-[minmax(0,1fr)_auto] gap-3 py-3 text-left"
-          >
-            <span className="font-bold">{config.symbol}</span>
-            <span className={config.enabled ? "font-black text-stock-accent" : "font-bold text-stock-subtle"}>
-              {config.enabled ? "가동" : "정지"}
-            </span>
-          </button>
-        )) : (
-          <p className="rounded-md bg-stock-surface-muted px-3 py-4 text-sm font-bold text-stock-subtle">관리자 설정에서 자동장 대상 종목을 먼저 등록하세요.</p>
-        )}
-      </div>
-    </div>
-  );
-}
-
 function signedPressure(value: number) {
   return value > 0 ? `+${value}` : `${value}`;
 }
@@ -140,9 +121,9 @@ function signedPressure(value: number) {
 function Metric({ label, value, tone = "default" }: { label: string; value: string; tone?: "default" | "red" | "blue" }) {
   const toneClass = tone === "red" ? "text-stock-danger" : tone === "blue" ? "text-stock-accent" : "text-stock-ink";
   return (
-    <div className="rounded-md bg-stock-surface-muted p-3">
+    <div className="min-w-0 bg-stock-surface-muted px-3 py-2.5">
       <p className="text-xs font-bold text-stock-subtle">{label}</p>
-      <p className={`mt-1 text-lg font-black tabular-nums ${toneClass}`}>{value}</p>
+      <p className={`mt-1 truncate text-sm font-black tabular-nums ${toneClass}`} title={value}>{value}</p>
     </div>
   );
 }

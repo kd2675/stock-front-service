@@ -60,11 +60,11 @@ export default function TradingTopBar({ active, actions }: { active: MarketMode;
 
   return (
     <div className="relative z-30 border-b border-stock-border bg-white/95 backdrop-blur lg:sticky lg:top-0">
-      <div className="mx-auto grid max-w-7xl gap-3 px-4 py-3 sm:px-5 lg:grid-cols-[auto_minmax(480px,1fr)_auto] lg:items-center lg:px-8">
-        <div className="flex items-center justify-between gap-3 lg:block">
+      <div className="mx-auto grid max-w-7xl gap-3 px-4 py-3 sm:px-5 xl:grid-cols-[auto_minmax(480px,1fr)_auto] xl:items-center xl:px-8">
+        <div className="flex items-center justify-between gap-3 xl:block">
           <StockBrandLink />
           {isAdminRole(user?.role) ? (
-            <Link href="/admin" className="inline-flex h-11 items-center rounded-md bg-stock-accent-surface px-3 text-xs font-black text-stock-accent lg:hidden">
+            <Link href="/admin" className="inline-flex h-11 items-center rounded-md bg-stock-accent-surface px-3 text-xs font-black text-stock-accent xl:hidden">
               운영 관리
             </Link>
           ) : null}
@@ -75,14 +75,14 @@ export default function TradingTopBar({ active, actions }: { active: MarketMode;
         </div>
 
         <div className="flex min-w-0 items-center gap-2">
-          <div ref={accountMenuRef} className="relative min-w-0 flex-1 lg:flex-none">
+          <div ref={accountMenuRef} className="relative min-w-0 flex-1 xl:flex-none">
             <button
               type="button"
               aria-expanded={accountPanelOpen}
               aria-haspopup="dialog"
               aria-controls="trading-account-panel"
               onClick={() => setAccountPanelOpen((open) => !open)}
-              className="flex min-h-11 w-full min-w-0 items-center gap-2 rounded-md border border-transparent bg-stock-surface-strong px-2.5 py-1.5 text-left hover:border-stock-border-strong hover:bg-white lg:w-auto"
+              className="flex min-h-11 w-full min-w-0 items-center gap-2 rounded-md border border-transparent bg-stock-surface-strong px-2.5 py-1.5 text-left hover:border-stock-border-strong hover:bg-white xl:w-auto"
             >
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-white text-xs font-black text-stock-accent shadow-[var(--shadow-panel)]">
                 {initialOf(profile?.username ?? user?.username)}
@@ -111,7 +111,7 @@ export default function TradingTopBar({ active, actions }: { active: MarketMode;
           {actions ? <div className="shrink-0">{actions}</div> : null}
 
           {isAdminRole(user?.role) ? (
-            <Link href="/admin" className="hidden h-11 items-center rounded-md bg-stock-accent-surface px-3 text-sm font-black text-stock-accent lg:inline-flex">
+            <Link href="/admin" className="hidden h-11 items-center rounded-md bg-stock-accent-surface px-3 text-sm font-black text-stock-accent xl:inline-flex">
               운영 관리
             </Link>
           ) : null}

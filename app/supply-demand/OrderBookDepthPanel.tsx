@@ -33,7 +33,7 @@ export function OrderBookDepthPanel({
   const depth = useMemo(() => buildOrderBookDepthModel(orderBook), [orderBook]);
 
   return (
-    <section className="rounded-lg border border-stock-border-strong bg-white p-4 shadow-[var(--shadow-panel)]">
+    <section className="stock-order-book-panel rounded-lg border border-stock-border-strong bg-white p-4 shadow-[var(--shadow-panel)]">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs font-bold text-stock-subtle">ORDER BOOK DEPTH</p>
@@ -61,7 +61,7 @@ export function OrderBookDepthPanel({
       </div>
 
       {layout === "split" ? (
-        <div className="mt-4 grid gap-5 md:grid-cols-2">
+        <div className="stock-order-book-split mt-4 grid gap-5">
           <OrderBookSide title="매도" flashingLevel={flashingLevel} levels={depth.fixedAsks} maxQuantity={depth.maxQuantity} side="ask" onFlashEnd={onFlashEnd} onPriceSelect={onPriceSelect} />
           <OrderBookSide title="매수" flashingLevel={flashingLevel} levels={depth.fixedBids} maxQuantity={depth.maxQuantity} side="bid" onFlashEnd={onFlashEnd} onPriceSelect={onPriceSelect} />
         </div>

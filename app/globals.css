@@ -331,3 +331,122 @@ body:has(.login-screen) .simulation-time-badge {
   opacity: 0;
   animation: order-book-flash-overlay 360ms ease-out;
 }
+
+.stock-trade-workspace {
+  display: grid;
+  gap: 12px;
+}
+
+.stock-trade-core,
+.stock-trade-secondary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+.stock-trade-core {
+  grid-template-areas:
+    "orderbook"
+    "ticket"
+    "chart";
+}
+
+.stock-trade-secondary {
+  grid-template-areas:
+    "tape"
+    "orders"
+    "executions"
+    "status"
+    "events";
+}
+
+.stock-trade-order-book { grid-area: orderbook; }
+.stock-trade-ticket { grid-area: ticket; }
+.stock-trade-chart { grid-area: chart; }
+.stock-trade-tape { grid-area: tape; }
+.stock-trade-orders { grid-area: orders; }
+.stock-trade-executions { grid-area: executions; }
+.stock-trade-status { grid-area: status; }
+.stock-trade-events { grid-area: events; }
+
+.stock-order-book-panel {
+  container-type: inline-size;
+}
+
+@media (min-width: 1280px) {
+  .stock-instrument-summary {
+    grid-template-columns: minmax(180px, 220px) minmax(0, 1fr) 238px;
+    align-items: center;
+  }
+
+  .stock-instrument-identity {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .stock-instrument-metrics {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .stock-instrument-controls {
+    grid-column: 3;
+    grid-row: 1;
+  }
+}
+
+@container (min-width: 700px) {
+  .stock-order-book-split {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 768px) {
+  .stock-trade-core,
+  .stock-trade-secondary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stock-trade-core {
+    grid-template-areas:
+      "orderbook ticket"
+      "chart chart";
+  }
+
+  .stock-trade-secondary {
+    grid-template-areas:
+      "tape orders"
+      "status executions"
+      "events events";
+  }
+}
+
+@media (min-width: 1280px) {
+  .stock-trade-core,
+  .stock-trade-secondary {
+    grid-template-columns: minmax(0, 1fr) 320px 320px;
+    align-items: start;
+  }
+
+  .stock-trade-core {
+    grid-template-areas: "chart orderbook ticket";
+  }
+
+  .stock-trade-secondary {
+    grid-template-areas:
+      "tape status orders"
+      "events status executions";
+  }
+
+  .stock-trade-chart,
+  .stock-trade-order-book,
+  .stock-trade-ticket {
+    align-self: stretch;
+  }
+
+  .stock-trade-chart > section,
+  .stock-trade-order-book > section,
+  .stock-trade-ticket > div {
+    height: 100%;
+  }
+}

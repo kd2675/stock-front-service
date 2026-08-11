@@ -28,7 +28,7 @@ export function StackedOrderBook({
 
   return (
     <div className="mt-4 overflow-hidden rounded-md border border-stock-divider bg-stock-surface-muted">
-      <div className="grid h-9 grid-cols-[minmax(70px,1fr)_minmax(132px,1.35fr)_minmax(70px,1fr)] items-center border-b border-stock-divider px-2 text-[11px] font-bold text-stock-subtle sm:grid-cols-[minmax(140px,1fr)_200px_minmax(140px,1fr)] sm:px-3 sm:text-xs">
+      <div className="grid h-9 grid-cols-[minmax(70px,1fr)_minmax(132px,1.35fr)_minmax(70px,1fr)] items-center border-b border-stock-divider px-2 text-[11px] font-bold text-stock-subtle sm:px-3 sm:text-xs">
         <span className="text-right">매도 잔량</span>
         <span className="text-center">가격 / 등락률</span>
         <span className="text-left">매수 잔량</span>
@@ -99,7 +99,7 @@ function StackedOrderBookRow({
       onClick={() => {
         onPriceSelect(level.price, side);
       }}
-      className={`relative grid h-8 min-w-0 grid-cols-[minmax(70px,1fr)_minmax(132px,1.35fr)_minmax(70px,1fr)] items-center border-b border-stock-divider text-xs transition enabled:cursor-pointer enabled:focus:outline-none sm:grid-cols-[minmax(140px,1fr)_200px_minmax(140px,1fr)] sm:text-sm ${rowHover}`}
+      className={`relative grid h-8 min-w-0 grid-cols-[minmax(70px,1fr)_minmax(132px,1.35fr)_minmax(70px,1fr)] items-center border-b border-stock-divider text-xs transition enabled:cursor-pointer enabled:focus:outline-none sm:text-sm ${rowHover}`}
     >
       {flashNonce !== null ? (
         <span
@@ -148,7 +148,7 @@ function CurrentPriceRow({ currentPrice, priceLimitBase }: { currentPrice: numbe
   return (
     <div
       aria-label={`현재가 ${formatWon(currentPrice)}, 기준가 대비 ${formatSignedPercent(changeRate)}`}
-      className="grid h-11 grid-cols-[minmax(70px,1fr)_minmax(132px,1.35fr)_minmax(70px,1fr)] items-center border-y border-stock-border-strong bg-white sm:grid-cols-[minmax(140px,1fr)_200px_minmax(140px,1fr)]"
+      className="grid h-11 grid-cols-[minmax(70px,1fr)_minmax(132px,1.35fr)_minmax(70px,1fr)] items-center border-y border-stock-border-strong bg-white"
     >
       <span />
       <span className={`flex h-full items-center justify-center gap-2 border-x border-stock-border-strong px-1 font-black tabular-nums ${resolvePriceColor(changeRate)}`}>
@@ -162,7 +162,7 @@ function CurrentPriceRow({ currentPrice, priceLimitBase }: { currentPrice: numbe
 
 function EmptyOrderBookSide({ side }: { side: OrderBookSideType }) {
   return (
-    <div className="grid h-10 grid-cols-[minmax(70px,1fr)_minmax(132px,1.35fr)_minmax(70px,1fr)] items-center border-b border-stock-divider text-xs font-bold text-stock-subtle sm:grid-cols-[minmax(140px,1fr)_200px_minmax(140px,1fr)]">
+    <div className="grid h-10 grid-cols-[minmax(70px,1fr)_minmax(132px,1.35fr)_minmax(70px,1fr)] items-center border-b border-stock-divider text-xs font-bold text-stock-subtle">
       <span />
       <span className="text-center">{side === "ask" ? "매도 잔량 없음" : "매수 잔량 없음"}</span>
       <span />

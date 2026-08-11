@@ -61,7 +61,7 @@ export function OrderBookOrderPreviewPanel({
 export function OrderBookExecutionPreviewPanel({ executions }: { executions: Execution[] }) {
   return (
     <div className="rounded-lg border border-stock-border bg-white p-4">
-      <h3 className="text-base font-black">최근 체결</h3>
+      <h3 className="text-base font-black">내 최근 체결</h3>
       <div className="mt-3 space-y-3">
         {executions.length ? executions.map((execution) => (
           <article key={execution.id} className="rounded-md bg-stock-surface-muted p-3">

@@ -28,11 +28,11 @@ export function MarketCandleChart({ candles, expanded, interval, isLoading }: Ma
   const volumeSeriesRef = useRef<ISeriesApi<"Histogram"> | null>(null);
   const [isLiveFollowing, setIsLiveFollowing] = useState(true);
   const isLiveFollowingRef = useRef(true);
-  const chartHeight = expanded ? 560 : 300;
+  const chartHeight = expanded ? 560 : 250;
   const chartData = useMemo(() => toMarketChartSeriesData(candles), [candles]);
   const priceSummary = useMemo(() => toMarketChartPriceSummary(candles), [candles]);
   const hasEnoughChartData = chartData.candleData.length >= 2;
-  const emptyHeightClass = expanded ? "h-[560px]" : "h-[300px]";
+  const emptyHeightClass = expanded ? "h-[560px]" : "h-[250px]";
 
   useEffect(() => {
     isLiveFollowingRef.current = isLiveFollowing;
@@ -46,7 +46,6 @@ export function MarketCandleChart({ candles, expanded, interval, isLoading }: Ma
 
     const chart = createChart(container, {
       autoSize: true,
-      height: 300,
       layout: {
         background: { color: "#fbfcfd" },
         textColor: "#4e5968",
@@ -129,7 +128,6 @@ export function MarketCandleChart({ candles, expanded, interval, isLoading }: Ma
     candleSeriesRef.current?.setData(chartData.candleData);
     volumeSeriesRef.current?.setData(chartData.volumeData);
     chartRef.current?.applyOptions({
-      height: chartHeight,
       timeScale: {
         barSpacing: expanded ? 12 : 8,
       },
@@ -137,7 +135,7 @@ export function MarketCandleChart({ candles, expanded, interval, isLoading }: Ma
     if (isLiveFollowingRef.current) {
       chartRef.current?.timeScale().fitContent();
     }
-  }, [chartData, chartHeight, expanded]);
+  }, [chartData, expanded]);
 
   const pauseLiveFollowing = () => {
     if (chartRef.current) {
@@ -170,7 +168,7 @@ export function MarketCandleChart({ candles, expanded, interval, isLoading }: Ma
   }
 
   return (
-    <div className="rounded-md border border-stock-divider bg-stock-surface-muted p-3">
+    <div className="min-w-0 overflow-hidden rounded-md border border-stock-divider bg-stock-surface-muted p-3">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0">
           <p className="text-xs font-bold text-stock-subtle">최근 {candles.length}개 구간 · 시뮬레이션 시간 기준</p>

@@ -1,6 +1,6 @@
 import { ASSET_PERCENT_OPTIONS } from "@/app/lib/orderSizing";
 import { formatNumber, formatWon } from "@/app/lib/stockFormatters";
-import { OrderPriceInput, OrderTicketField, OrderTicketInput } from "@/app/supply-demand/OrderTicketControls";
+import { OrderPriceInput, OrderTicketInput } from "@/app/supply-demand/OrderTicketControls";
 import type { OrderBookInstrument, OrderSide, OrderType } from "@/app/types/stock";
 
 export function OrderTicketPanel({
@@ -44,37 +44,31 @@ export function OrderTicketPanel({
   const actionLabel = side === "BUY" ? "매수 주문" : "매도 주문";
 
   return (
-    <div data-order-ticket className="rounded-lg border border-stock-border-strong bg-white p-4 shadow-[var(--shadow-panel)]">
+    <div data-order-ticket className="rounded-lg border border-stock-border-strong bg-white p-3 shadow-[var(--shadow-panel)]">
       <div className="flex min-w-0 items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xs font-bold text-stock-subtle">ORDER TICKET</p>
           <h3 className="mt-1 truncate text-lg font-black">주문장 주문</h3>
+          <p className="mt-1 truncate text-xs font-bold text-stock-subtle">
+            {selectedInstrument ? `${selectedInstrument.name} ${selectedInstrument.symbol} · ${formatWon(selectedInstrument.currentPrice)}` : "종목을 선택하세요"}
+          </p>
         </div>
         <span className={isMarketOpen ? "shrink-0 rounded-sm bg-stock-accent-surface px-2 py-1 text-xs font-black text-stock-accent" : "shrink-0 rounded-sm bg-stock-danger-surface px-2 py-1 text-xs font-black text-stock-danger-strong"}>
           {isMarketOpen ? "주문 가능" : "주문 불가"}
         </span>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-2 rounded-md bg-stock-surface-strong p-1">
+      <div className="mt-3 grid grid-cols-2 gap-2 rounded-md bg-stock-surface-strong p-1">
         <SideButton active={side === "BUY"} side="BUY" onClick={() => onSideChange("BUY")} />
         <SideButton active={side === "SELL"} side="SELL" onClick={() => onSideChange("SELL")} />
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-2">
+      <div className="mt-3 grid grid-cols-2 gap-2">
         <OrderTypeButton active={orderType === "LIMIT"} label="지정가" onClick={() => onOrderTypeChange("LIMIT")} />
         <OrderTypeButton active={orderType === "MARKET"} label="시장가" onClick={() => onOrderTypeChange("MARKET")} />
       </div>
 
-      <div className="mt-4 space-y-3">
-        <OrderTicketField label="종목">
-          <div className="min-w-0 text-right">
-            <p className="truncate text-sm font-black">{selectedInstrument?.name ?? "-"}</p>
-            <p className="mt-0.5 truncate text-xs font-bold text-stock-subtle">{selectedInstrument?.symbol ?? "-"}</p>
-          </div>
-        </OrderTicketField>
-        <OrderTicketField label="현재가">
-          <span className="min-w-0 truncate text-right text-sm font-black tabular-nums">{formatWon(selectedInstrument?.currentPrice)}</span>
-        </OrderTicketField>
+      <div className="mt-3 space-y-3">
         <OrderPriceInput
           disabled={orderType === "MARKET"}
           placeholder={orderType === "MARKET" ? "시장가" : "가격"}
@@ -92,7 +86,7 @@ export function OrderTicketPanel({
         />
       </div>
 
-      <div className="mt-4 rounded-md border border-stock-border p-3">
+      <div className="mt-3 rounded-md border border-stock-border p-3">
         <div className="flex items-center justify-between gap-3 text-xs font-bold text-stock-muted">
           <span>{side === "SELL" ? "보유 비중 주문" : "현금 비중 주문"}</span>
           <span className="min-w-0 truncate text-right tabular-nums">
@@ -119,7 +113,7 @@ export function OrderTicketPanel({
         </div>
       </div>
 
-      <div className="mt-4 rounded-md bg-stock-surface-muted p-3">
+      <div className="mt-3 rounded-md bg-stock-surface-muted p-3">
         <div className="flex items-center justify-between gap-3 text-sm">
           <span className="font-bold text-stock-muted">예상 주문금액</span>
           <span className="min-w-0 truncate text-right font-black tabular-nums">{formatWon(estimatedOrderAmount)}</span>
@@ -134,7 +128,7 @@ export function OrderTicketPanel({
         type="button"
         onClick={onSubmit}
         disabled={placingOrder || !isMarketOpen || !selectedInstrument}
-        className={`mt-4 h-12 w-full rounded-md px-3 text-sm font-black text-white ${actionColor} disabled:bg-stock-disabled disabled:opacity-70`}
+        className={`mt-3 h-12 w-full rounded-md px-3 text-sm font-black text-white ${actionColor} disabled:bg-stock-disabled disabled:opacity-70`}
       >
         {placingOrder ? "접수 중" : actionLabel}
       </button>

@@ -28,7 +28,7 @@ export default function SupplyDemandPage() {
   const queryClient = useQueryClient();
   const { isHydrated, authStatus, user } = useAuthSession();
   const [message, setMessage] = useState<string | null>(null);
-  const [orderBookLayout, setOrderBookLayout] = useState<"split" | "stacked">("split");
+  const [orderBookLayout, setOrderBookLayout] = useState<"split" | "stacked">("stacked");
   const [candleInterval, setCandleInterval] = useState<OrderBookCandleInterval>("1M");
   const [chartExpanded, setChartExpanded] = useState(false);
   const { ticket: orderBookTicket, setTicket: setOrderBookTicket } = useOrderBookTicketState();
@@ -178,10 +178,7 @@ export default function SupplyDemandPage() {
   }
 
   return (
-    <SupplyDemandPageChrome
-      selectedInstrument={selectedInstrument}
-      onClearSelectedInstrument={clearSelectedInstrument}
-    >
+    <SupplyDemandPageChrome selectedInstrument={selectedInstrument}>
       {!selectedInstrument ? (
         <InstrumentSelectionPanel
           isLoading={loading}
@@ -238,6 +235,7 @@ export default function SupplyDemandPage() {
           onCancelOrder={cancelOpenOrder}
           onChartExpandedChange={setChartExpanded}
           onCandleIntervalChange={setCandleInterval}
+          onClearSelectedInstrument={clearSelectedInstrument}
           onFlashEnd={clearFlashingOrderBookLevel}
           onLayoutChange={setOrderBookLayout}
           onLimitPriceChange={updateLimitPrice}
