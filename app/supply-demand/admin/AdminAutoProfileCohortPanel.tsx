@@ -74,6 +74,8 @@ export function AdminAutoProfileCohortPanel({ accessToken }: Props) {
                 <th className="px-3 py-3 text-right">보유 평가액</th>
                 <th className="px-3 py-3 text-right">현재 / 목표 AUM</th>
                 <th className="px-3 py-3 text-right">정책</th>
+                <th className="px-3 py-3 text-right">최근 동적 선택</th>
+                <th className="px-3 py-3 text-right">라우터 근거</th>
                 <th className="px-4 py-3 text-right">상태</th>
               </tr>
             </thead>
@@ -90,6 +92,14 @@ export function AdminAutoProfileCohortPanel({ accessToken }: Props) {
                     <td className="px-3 py-3 text-right tabular-nums">{formatWon(cohort.holdingMarketValue)}</td>
                     <td className="px-3 py-3 text-right tabular-nums">{formatWon(cohort.actualAum)} / {formatWon(cohort.targetAum)}</td>
                     <td className="px-3 py-3 text-right tabular-nums">v{cohort.policyVersion} · ×{cohort.attentionScale.toFixed(2)}</td>
+                    <td className="px-3 py-3 text-right tabular-nums">
+                      <div>{formatDateTime(cohort.lastSelectedAt)}</div>
+                      <div className="mt-1 text-[10px] text-stock-subtle">누적 {formatNumber(cohort.activationCount)}회</div>
+                    </td>
+                    <td className="px-3 py-3 text-right">
+                      <div>{formatActivation(cohort.lastActivationReason, cohort.lastActivationScore)}</div>
+                      <div className="mt-1 font-mono text-[10px] text-stock-subtle">{cohort.lastMarketFingerprint ?? "-"}</div>
+                    </td>
                     <td className={`px-4 py-3 text-right ${cohort.enabled && matches ? "text-emerald-200" : "text-amber-200"}`}>
                       {cohort.enabled && matches ? "정상" : "확인 필요"}
                     </td>
@@ -131,4 +141,28 @@ function formatWon(value: number) {
     return `${(value / 100_000_000).toFixed(1)}억원`;
   }
   return `${formatNumber(value)}원`;
+}
+
+function formatDateTime(value?: string | null) {
+  if (!value) {
+    return "-";
+  }
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return "-";
+  }
+  return new Intl.DateTimeFormat("ko-KR", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(parsed);
+}
+
+function formatActivation(reason?: string | null, score?: number | null) {
+  if (!reason || score == null || !Number.isFinite(score)) {
+    return "-";
+  }
+  return `${reason} · ${(score * 100).toFixed(1)}%`;
 }

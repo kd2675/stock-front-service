@@ -912,6 +912,14 @@ export type AutoProfileCohort = {
   cashAmount: number;
   holdingMarketValue: number;
   actualAum: number;
+  lastEvaluatedAt?: string | null;
+  lastOrderAt?: string | null;
+  lastRouterEvaluatedAt?: string | null;
+  lastSelectedAt?: string | null;
+  lastActivationScore?: number | null;
+  lastActivationReason?: string | null;
+  lastMarketFingerprint?: string | null;
+  activationCount: number;
   enabled: boolean;
   updatedAt: string;
 };
