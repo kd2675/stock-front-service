@@ -80,9 +80,9 @@ export function MarketChartPanel({
             ? "grid content-start gap-2 rounded-md bg-stock-surface-muted p-3 text-sm"
             : "grid grid-cols-2 gap-px overflow-hidden rounded-md bg-stock-divider sm:grid-cols-5"}
           >
-            <StatusRow compact={!expanded} label="2시간 체결" value={summary ? `${formatNumber(summary.todayExecutionCount)}건` : "-"} />
-            <StatusRow compact={!expanded} label="2시간 거래량" value={`${formatNumber(summary?.todayVolume ?? 0)}주`} />
-            <StatusRow compact={!expanded} label="2시간 거래대금" value={formatWon(summary?.todayTurnover)} />
+            <StatusRow compact={!expanded} label="현재 거래일 체결" value={summary ? `${formatNumber(summary.todayExecutionCount)}건` : "-"} />
+            <StatusRow compact={!expanded} label="현재 거래일 거래량" value={`${formatNumber(summary?.todayVolume ?? 0)}주`} />
+            <StatusRow compact={!expanded} label="현재 거래일 거래대금" value={formatWon(summary?.todayTurnover)} />
             <StatusRow compact={!expanded} label="VWAP" value={formatWon(summary?.vwap)} />
             <StatusRow compact={!expanded} label="최근 체결" value={summary?.lastExecutedAt ? formatTime(summary.lastExecutedAt) : "-"} />
           </div>

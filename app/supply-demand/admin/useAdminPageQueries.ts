@@ -8,12 +8,7 @@ import {
   adminInvestorFlowSummaryQueryOptions,
   adminMarketIndexQueryOptions,
   adminUserFundFlowQueryOptions,
-  autoParticipantsQueryOptions,
-  autoParticipantWithdrawalAuditsQueryOptions,
-  autoParticipantOverviewsQueryOptions,
-  autoParticipantPerformanceSummaryQueryOptions,
   autoParticipantProfileOverviewsQueryOptions,
-  autoParticipantSymbolConfigsQueryOptions,
   batchJobRuntimeControlsQueryOptions,
   eodOperationsOverviewQueryOptions,
   institutionPortfolioRecommendationQueryOptions,
@@ -55,7 +50,6 @@ type UseAdminPageQueriesParams = {
   activeAdminTab: AdminTab;
   adminCashFlowPageIndex: number;
   adminStatus: AdminAccessStatus;
-  editingAutoParticipantUserKey: string | null;
   historySymbol: string;
   reportSymbol: string;
   userFundFlowUserKey: string | null;
@@ -67,7 +61,6 @@ export function useAdminPageQueries({
   activeAdminTab,
   adminCashFlowPageIndex,
   adminStatus,
-  editingAutoParticipantUserKey,
   historySymbol,
   reportSymbol,
   userFundFlowUserKey,
@@ -76,7 +69,6 @@ export function useAdminPageQueries({
     activeAdminSection,
     activeAdminTab,
     adminStatus,
-    editingAutoParticipantUserKey,
   });
   const isAdminAllowed = queryFlags.isAdminAllowed;
 
@@ -96,41 +88,6 @@ export function useAdminPageQueries({
     }),
     select: resolveParticipantProfileOverviewSummaries,
   });
-  const autoParticipantLivePerformanceQuery = useQuery(autoParticipantPerformanceSummaryQueryOptions(
-    accessToken,
-    "LIVE_ESTIMATE",
-    { enabled: queryFlags.shouldUseAutoParticipantProfileOverviews },
-  ));
-  const autoParticipantClosedPerformanceQuery = useQuery(autoParticipantPerformanceSummaryQueryOptions(
-    accessToken,
-    "LATEST_CLOSED",
-    { enabled: queryFlags.shouldUseAutoParticipantProfileOverviews },
-  ));
-  const autoParticipantsQuery = useQuery(autoParticipantsQueryOptions(accessToken, {
-    enabled: queryFlags.shouldUseAutoParticipants,
-  }));
-  const dormantAutoParticipantsQuery = useQuery(autoParticipantsQueryOptions(accessToken, {
-    enabled: queryFlags.shouldUseDormantAutoParticipants,
-    lifecycleScope: "WITHDRAWN",
-    refetchIntervalMs: false,
-  }));
-  const dormantAutoParticipantWithdrawalAuditsQuery = useQuery(
-    autoParticipantWithdrawalAuditsQueryOptions(accessToken, {
-      enabled: queryFlags.shouldUseDormantAutoParticipants,
-    }),
-  );
-  const dormantAutoParticipantOverviewsQuery = useQuery(autoParticipantOverviewsQueryOptions(accessToken, {
-    activityScope: "ALL",
-    enabled: queryFlags.shouldUseDormantAutoParticipants,
-    includeHoldings: true,
-    lifecycleScope: "WITHDRAWN",
-    refetchIntervalMs: false,
-  }));
-  const dormantAutoParticipantSymbolConfigsQuery = useQuery(autoParticipantSymbolConfigsQueryOptions(accessToken, {
-    enabled: queryFlags.shouldUseDormantAutoParticipants,
-    lifecycleScope: "WITHDRAWN",
-    refetchIntervalMs: false,
-  }));
   const orderBookInstrumentsQuery = useQuery(orderBookInstrumentsQueryOptions({
     enabled: queryFlags.shouldUseInstrumentDetails,
   }));
@@ -147,12 +104,9 @@ export function useAdminPageQueries({
   const autoMarketDetailsQuery = useQuery(autoMarketStatusQueryOptions({
     enabled: queryFlags.shouldUseAutoMarketDetails,
     includeConfigs: queryFlags.includeConfigs,
-    includeParticipants: queryFlags.includeParticipants,
-    includeParticipantSymbolConfigs: queryFlags.includeParticipantSymbolConfigs,
     includeParticipantProfileConfigs: queryFlags.includeParticipantProfileConfigs,
     includeRuntimeMetrics: false,
     includeSalaryEligibility: false,
-    participantSymbolConfigUserKey: queryFlags.includeParticipantSymbolConfigs ? editingAutoParticipantUserKey ?? undefined : undefined,
     refetchIntervalMs: false,
   }));
   const adminFundFlowBreakdownQuery = useQuery(adminFundFlowBreakdownQueryOptions(accessToken, {
@@ -256,7 +210,6 @@ export function useAdminPageQueries({
     adminSymbolFlowList: null,
     autoMarketDetails: queryFlags.shouldUseAutoMarketDetails ? autoMarketDetailsQuery.data : null,
     autoMarketSummary: queryFlags.shouldUseAutoMarketSummary ? autoMarketSummaryQuery.data : null,
-    autoParticipants: queryFlags.shouldUseAutoParticipants ? autoParticipantsQuery.data : null,
     autoParticipantProfileOverviewSummaries: queryFlags.shouldUseAutoParticipantProfileOverviews ? autoParticipantProfileOverviewsQuery.data : null,
     batchJobRuntimeControls: queryFlags.shouldUseBatchRuntimeControls ? batchJobRuntimeControlsQuery.data : null,
     corporateActions: queryFlags.shouldUseCorporateActions ? corporateActionsQuery.data : null,
@@ -278,9 +231,6 @@ export function useAdminPageQueries({
     adminInvestorFlowSummaryQuery,
     adminMarketIndexQuery,
     autoMarketDetailsQuery,
-    autoParticipantsQuery,
-    autoParticipantLivePerformanceQuery,
-    autoParticipantClosedPerformanceQuery,
     autoParticipantProfileOverviewsQuery,
     autoParticipantProfileOverviewsAllQuery,
     batchJobRuntimeControlsQuery,
@@ -294,10 +244,6 @@ export function useAdminPageQueries({
     underwritingContractRecommendationQuery,
     underwritingContractsQuery,
     corporateActionsQuery,
-    dormantAutoParticipantOverviewsQuery,
-    dormantAutoParticipantsQuery,
-    dormantAutoParticipantSymbolConfigsQuery,
-    dormantAutoParticipantWithdrawalAuditsQuery,
     shouldLoadInstrumentDetails: queryFlags.shouldLoadInstrumentDetails,
     simulationClockQuery,
     userFundFlowQuery,

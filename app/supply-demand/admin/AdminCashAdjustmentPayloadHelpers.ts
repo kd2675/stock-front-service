@@ -1,10 +1,10 @@
 import { z } from "zod";
 
-import type { StockAutoParticipantCashAdjustmentPayload } from "@/app/lib/stock";
+import type { StockAccountCashAdjustmentPayload } from "@/app/lib/stock";
 import { positiveNumber, requiredTrimmedString } from "@/app/lib/validation/zodFormSchemas";
 import type { AdminPayloadResult } from "@/app/supply-demand/admin/AdminPayloadResultTypes";
 
-export type CashAdjustmentPayload = StockAutoParticipantCashAdjustmentPayload;
+export type CashAdjustmentPayload = StockAccountCashAdjustmentPayload;
 export type CashAdjustmentType = CashAdjustmentPayload["adjustmentType"];
 
 export type CashAdjustmentDraftInput = {

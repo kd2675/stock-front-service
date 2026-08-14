@@ -9,8 +9,8 @@ export const CANDLE_INTERVAL_OPTIONS: { value: OrderBookCandleInterval; label: s
   { value: "5M", label: "5분" },
   { value: "15M", label: "15분" },
   { value: "1H", label: "1시간" },
-  { value: "1D", label: "시뮬일(2시간)" },
-  { value: "1W", label: "시뮬주(14시간)" },
+  { value: "1D", label: "시뮬일" },
+  { value: "1W", label: "시뮬주" },
 ];
 
 export type MarketChartSeriesData = {

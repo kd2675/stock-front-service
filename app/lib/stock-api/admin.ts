@@ -1,12 +1,11 @@
 import { normalizeStringList } from "@/app/lib/stringLists";
 import {
-  authenticatedDeleteJson,
   authenticatedGetJson,
   authenticatedPatchJson,
   authenticatedPostJson,
   toQuery,
 } from "@/app/lib/stock-api/core";
-import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowBreakdown, AdminFundFlowScope, AdminInvestorFlowHistory, AdminInvestorFlowSummary, AdminMarketIndex, AdminParticipantScope, AdminSymbolFlowList, AdminTotalAssetHistoryPage, AutoMarketDistributionBias, AutoMarketRegimeCountWeights, AutoMarketRegimeHistoryRange, AutoMarketStatus, AutoParticipant, AutoParticipantCashAdjustment, AutoParticipantLifecycleScope, AutoParticipantOverview, AutoParticipantPerformanceBasis, AutoParticipantPerformanceSummary, AutoParticipantProfileExitMode, AutoParticipantProfileInventoryMode, AutoParticipantProfileOverview, AutoParticipantProfilePricingMode, AutoParticipantProfileType, AutoParticipantSymbolConfig, AutoParticipantV5Operations, AutoParticipantWithdrawalAudit, BatchJobRuntimeStatus, EodOperationsOverview, EodPhaseRetryResult, InstitutionInvestmentStyle, InstitutionPortfolio, InstitutionPortfolioRecommendation, InstitutionSymbolPolicy, LiquidityProviderMandate, LiquidityProviderPolicyUpdatePayload, LiquidityProviderRecommendation, LiquidityProviderStatusChangePayload, RecurringCashIntervalUnit, ScaledMarketContractSchedule, ScaledMarketOverview, ScaledMarketPriceCapitalRebasePlan, ScaledMarketRebasePreview, ScaledMarketRoleCapacityPlan, ScaledMarketShareRebasePlan, ScaledMarketSymbolMaturityChange, StockBatchJobRun, SystemCustodyOverview, UnderwritingContract, UnderwritingContractRecommendation } from "@/app/types/stock";
+import type { AdminCashFlowPage, AdminFlowOverview, AdminFundFlowBreakdown, AdminFundFlowScope, AdminInvestorFlowHistory, AdminInvestorFlowSummary, AdminMarketIndex, AdminParticipantScope, AdminSymbolFlowList, AdminTotalAssetHistoryPage, AutoMarketDistributionBias, AutoMarketRegimeCountWeights, AutoMarketRegimeHistoryRange, AutoMarketStatus, AutoParticipantProfileExitMode, AutoParticipantProfileInventoryMode, AutoParticipantProfileOverview, AutoParticipantProfilePricingMode, AutoParticipantProfileType, AutoParticipantV5Operations, AutoProfileCohort, AutoProfilePopulationContract, BatchJobRuntimeStatus, EodOperationsOverview, EodPhaseRetryResult, InstitutionInvestmentStyle, InstitutionPortfolio, InstitutionPortfolioRecommendation, InstitutionSymbolPolicy, LiquidityProviderMandate, LiquidityProviderPolicyUpdatePayload, LiquidityProviderRecommendation, LiquidityProviderStatusChangePayload, RecurringCashIntervalUnit, ScaledMarketContractSchedule, ScaledMarketOverview, ScaledMarketPriceCapitalRebasePlan, ScaledMarketRebasePreview, ScaledMarketRoleCapacityPlan, ScaledMarketShareRebasePlan, ScaledMarketSymbolMaturityChange, StockBatchJobRun, SystemCustodyOverview, UnderwritingContract, UnderwritingContractRecommendation } from "@/app/types/stock";
 
 export type { AdminFundFlowScope } from "@/app/types/stock";
 
@@ -52,28 +51,6 @@ export type StockAutoParticipantProfileConfigPayload = {
     recurringDepositIntervalValue: number;
     recurringDepositIntervalUnit: RecurringCashIntervalUnit;
   };
-};
-
-export type StockAutoParticipantPayload = {
-  displayName: string;
-  enabled?: boolean;
-  profileType?: AutoParticipantProfileType;
-  behaviorSeed?: string | null;
-  recurringCashAmount?: number | null;
-  recurringCashIntervalValue?: number | null;
-  recurringCashIntervalUnit?: RecurringCashIntervalUnit | null;
-  createAccount?: boolean | null;
-  initialCashAmount?: number | null;
-};
-
-export type StockAutoParticipantSymbolConfigPayload = {
-  enabled?: boolean;
-  intensity?: number;
-};
-
-export type StockAutoParticipantCashAdjustmentPayload = {
-  adjustmentType: "DEPOSIT" | "WITHDRAW";
-  amount: number;
 };
 
 export type InstitutionPortfolioCreatePayload = {
@@ -406,66 +383,26 @@ export function getAdminCashFlows(token: string, page: number, size: number) {
   );
 }
 
-export function getAutoParticipantOverviews(token: string, options?: { activityScope?: AutoParticipantActivityScope; includeHoldings?: boolean; lifecycleScope?: AutoParticipantLifecycleScope; userKeys?: string[] }) {
-  const normalizedUserKeys = normalizeStringList(options?.userKeys);
-  const query = toQuery({
-    activityScope: options?.activityScope,
-    includeHoldings: options?.includeHoldings,
-    lifecycleScope: options?.lifecycleScope,
-    userKeys: normalizedUserKeys,
-  });
-  return authenticatedGetJson<AutoParticipantOverview[]>(token, `/api/stock/v1/markets/auto-market/participants/overviews${query}`);
-}
-
-export function getAutoParticipants(token: string, options?: { lifecycleScope?: AutoParticipantLifecycleScope }) {
-  const query = toQuery({ lifecycleScope: options?.lifecycleScope });
-  return authenticatedGetJson<AutoParticipant[]>(token, `/api/stock/v1/markets/auto-market/participants${query}`);
-}
-
-export function getAutoParticipantWithdrawalAudits(
-  token: string,
-  options?: { userKeys?: string[] },
-) {
-  const normalizedUserKeys = normalizeStringList(options?.userKeys);
-  const query = toQuery({ userKeys: normalizedUserKeys });
-  return authenticatedGetJson<AutoParticipantWithdrawalAudit[]>(
-    token,
-    `/api/stock/v1/markets/auto-market/participants/withdrawal-audits${query}`,
-  );
-}
-
-export function getAutoParticipantSymbolConfigs(
-  token: string,
-  options?: { lifecycleScope?: AutoParticipantLifecycleScope; userKeys?: string[] },
-) {
-  const normalizedUserKeys = normalizeStringList(options?.userKeys);
-  const query = toQuery({
-    lifecycleScope: options?.lifecycleScope,
-    userKeys: normalizedUserKeys,
-  });
-  return authenticatedGetJson<AutoParticipantSymbolConfig[]>(
-    token,
-    `/api/stock/v1/markets/auto-market/participants/symbol-configs${query}`,
-  );
-}
-
 export function getAutoParticipantProfileOverviews(token: string, options?: { activityScope?: AutoParticipantActivityScope; profileTypes?: string[] }) {
   const normalizedProfileTypes = normalizeStringList(options?.profileTypes);
   const query = toQuery({
     activityScope: options?.activityScope,
     profileTypes: normalizedProfileTypes,
   });
-  return authenticatedGetJson<AutoParticipantProfileOverview[]>(token, `/api/stock/v1/markets/auto-market/participants/profile-overviews${query}`);
+  return authenticatedGetJson<AutoParticipantProfileOverview[]>(token, `/api/stock/v1/markets/auto-market/profile-overviews${query}`);
 }
 
-export function getAutoParticipantPerformanceSummary(
-  token: string,
-  basis: AutoParticipantPerformanceBasis,
-) {
-  const query = new URLSearchParams({ basis });
-  return authenticatedGetJson<AutoParticipantPerformanceSummary>(
+export function getAutoProfileCohorts(token: string) {
+  return authenticatedGetJson<AutoProfileCohort[]>(
     token,
-    `/api/stock/v1/markets/auto-market/participants/performance-summary?${query.toString()}`,
+    "/api/stock/v1/markets/auto-market/profile-cohorts",
+  );
+}
+
+export function getAutoProfilePopulationContract(token: string) {
+  return authenticatedGetJson<AutoProfilePopulationContract>(
+    token,
+    "/api/stock/v1/markets/auto-market/profile-population-contract",
   );
 }
 
@@ -696,50 +633,6 @@ export function scheduleScaledMarketContract(
   return authenticatedPostJson<ScaledMarketContractSchedule>(
     token,
     `/api/stock/v1/markets/admin/scaled-market/contracts/${contractVersion}/schedule`,
-    payload,
-  );
-}
-
-export function upsertAutoParticipant(
-  token: string,
-  userKey: string,
-  payload: StockAutoParticipantPayload,
-) {
-  return authenticatedPatchJson<AutoMarketStatus["participants"][number]>(
-    token,
-    `/api/stock/v1/markets/auto-market/participants/${encodeURIComponent(userKey)}`,
-    payload,
-  );
-}
-
-export function withdrawAutoParticipant(token: string, userKey: string) {
-  return authenticatedDeleteJson<AutoMarketStatus["participants"][number]>(
-    token,
-    `/api/stock/v1/markets/auto-market/participants/${encodeURIComponent(userKey)}`,
-  );
-}
-
-export function adjustAutoParticipantCash(
-  token: string,
-  userKey: string,
-  payload: StockAutoParticipantCashAdjustmentPayload,
-) {
-  return authenticatedPostJson<AutoParticipantCashAdjustment>(
-    token,
-    `/api/stock/v1/markets/auto-market/participants/${encodeURIComponent(userKey)}/cash-adjustments`,
-    payload,
-  );
-}
-
-export function updateAutoParticipantSymbolConfig(
-  token: string,
-  userKey: string,
-  symbol: string,
-  payload: StockAutoParticipantSymbolConfigPayload,
-) {
-  return authenticatedPatchJson<AutoMarketStatus["participantSymbolConfigs"][number]>(
-    token,
-    `/api/stock/v1/markets/auto-market/participants/${encodeURIComponent(userKey)}/symbols/${encodeURIComponent(symbol)}`,
     payload,
   );
 }

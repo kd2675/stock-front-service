@@ -165,7 +165,7 @@ export function AdminInstitutionPortfolioPanel({
         <div>
           <h2 className="text-base font-black">기관 포트폴리오·주문 감사</h2>
           <p className="mt-1 max-w-4xl text-xs font-bold leading-5 text-stock-subtle">
-            150명 안팎 자동 참여자와 소수 유저로 구성된 축소 시장 기준입니다. 주·보조 압력은 직접 매수·매도를 강제하지 않고 제한된 목표 비중 변화로만 반영합니다.
+            활성 계약의 실제 자동 참여자와 소수 유저로 구성된 축소 시장 기준입니다. 주·보조 압력은 직접 매수·매도를 강제하지 않고 제한된 목표 비중 변화로만 반영합니다.
           </p>
           <p className="mt-1 max-w-4xl text-[11px] font-bold leading-5 text-admin-quiet">
             생성한 기관은 다음 개장부터 바로 실운영으로 동작합니다. 목표 도달 후 보유 유지, 미체결 포함 예상 포지션, 일일 참여율, 주문 출처와 자기체결 방지를 함께 적용합니다.

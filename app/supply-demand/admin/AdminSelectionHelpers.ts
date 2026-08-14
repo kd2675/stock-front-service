@@ -1,9 +1,6 @@
 import type {
-  AutoParticipant,
-  AutoParticipantOverview,
   AutoParticipantProfileConfig,
   AutoParticipantProfileType,
-  AutoParticipantSymbolConfig,
   OrderBookInstrument,
   OrderBookMarketStatus,
 } from "@/app/types/stock";
@@ -30,31 +27,6 @@ export function resolveSelectedProfileConfig(configs: AutoParticipantProfileConf
   return configs.find((config) => config.profileType === profileType) ?? null;
 }
 
-export function buildAutoParticipantOverviewMap(overviews: AutoParticipantOverview[]) {
-  return new Map(overviews.map((overview) => [overview.userKey, overview]));
-}
-
-export function resolveSelectedAutoParticipant(participants: AutoParticipant[], userKey: string | null) {
-  if (userKey === null) {
-    return null;
-  }
-  return participants.find((participant) => participant.userKey === userKey) ?? null;
-}
-
-export function resolveSelectedAutoParticipantSymbolConfigs(
-  configs: AutoParticipantSymbolConfig[],
-  participant: AutoParticipant | null,
-) {
-  if (participant === null) {
-    return [];
-  }
-  return configs.filter((config) => config.userKey === participant.userKey);
-}
-
-export function resolveParticipantStrategyKey(participant: AutoParticipant | null, symbol: string) {
-  return participant === null ? "" : `${participant.userKey}:${symbol}`;
-}
-
 export function resolveOpenOrderBookConfigCount(options: {
   summary: OrderBookMarketStatus | null;
   fallback: OrderBookMarketStatus | null;
@@ -73,10 +45,6 @@ export function resolveOrderBookInstrumentCount(options: {
   return options.summary?.instrumentCount
     ?? options.fallback?.instrumentCount
     ?? options.instruments.length;
-}
-
-export function resolveParticipantUserKeys(participants: AutoParticipant[]) {
-  return participants.map((participant) => participant.userKey);
 }
 
 export function isKnownOrderBookSymbol(instruments: OrderBookInstrument[], symbol: string) {

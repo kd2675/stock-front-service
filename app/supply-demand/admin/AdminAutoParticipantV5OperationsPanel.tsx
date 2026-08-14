@@ -63,49 +63,6 @@ export function AdminAutoParticipantV5OperationsPanel({ accessToken }: Props) {
         </div>
       )}
 
-      {operations && operations.accountStates.length > 0 ? (
-        <div className="mt-4 overflow-x-auto">
-          <table className="min-w-full text-left text-xs">
-            <thead className="text-stock-subtle">
-              <tr>
-                <th className="px-2 py-2">계좌</th>
-                <th className="px-2 py-2">상태</th>
-                <th className="px-2 py-2">피로</th>
-                <th className="px-2 py-2">주문/체결/취소</th>
-                <th className="px-2 py-2">매수/매도 수량</th>
-                <th className="px-2 py-2">다음 실행</th>
-                <th className="px-2 py-2">최근 결과</th>
-              </tr>
-            </thead>
-            <tbody>
-              {operations.accountStates.slice(0, 20).map((state) => (
-                <tr key={state.accountId} className="border-t border-white/5 font-bold text-white">
-                  <td className="px-2 py-2">{state.userKey}<span className="ml-1 text-stock-subtle">{state.profileType}</span></td>
-                  <td className="px-2 py-2">{state.activityState} · {state.activitySession}</td>
-                  <td className="px-2 py-2">{formatDecimal(state.fatigueScore)}</td>
-                  <td className="px-2 py-2">{state.submittedOrderCount}/{state.observedExecutionCount}/{state.observedCancelCount}</td>
-                  <td className="px-2 py-2 tabular-nums">
-                    {formatNumber(state.observedExecutionBuyQuantity)} / {formatQuantity(state.observedExecutionSellQuantity)}
-                  </td>
-                  <td className="px-2 py-2">
-                    <span>{formatDateTime(state.nextRunAt)}</span>
-                    <span className="ml-1 text-stock-subtle">
-                      {nextRunLabel(state)}
-                    </span>
-                  </td>
-                  <td className="max-w-56 truncate px-2 py-2">{state.lastResultReason ?? state.lastHoldReason ?? "-"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {operations.accountStates.length > 20 ? (
-            <p className="mt-2 text-right text-xs font-bold text-stock-subtle">
-              최근 계좌 ID 순 20개 표시 · 전체 {formatNumber(operations.accountStates.length)}개
-            </p>
-          ) : null}
-        </div>
-      ) : null}
-
       {calibration ? (
         <div className="mt-5 border-t border-white/10 pt-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -118,7 +75,7 @@ export function AdminAutoParticipantV5OperationsPanel({ accessToken }: Props) {
               </h3>
               <p className="mt-1 text-xs font-bold leading-5 text-stock-subtle">
                 시장 거래량은 동일 수량의 BUY·SELL 계좌 원장 한 쌍을 1회만 셉니다(BUY 합계 = SELL 합계 = (BUY+SELL)/2).
-                V5는 {formatNumber(calibration.participantCount)}개 실제 계좌를 같은 수의 실제 참여자로 취급합니다. 각 계좌의 자산·행동·주문·수량은 해당 참여자 본인의 값이며 대표인구 가중치나 코호트 증폭을 사용하지 않습니다.
+                V5는 {formatNumber(calibration.participantCount)}개 실제 계좌의 주문·수량을 원장값 그대로 집계합니다. 계좌별 인구 배율이나 주문수량 배율은 적용하지 않습니다.
                 완료장 기준으로 제출 수량·총 체결 참여량·제출 주문 수가 각각 목표의 50%~200% 범위인지 함께 검증합니다.
               </p>
             </div>
@@ -327,15 +284,6 @@ export function AdminAutoParticipantV5OperationsPanel({ accessToken }: Props) {
   );
 }
 
-function nextRunLabel(
-  state: NonNullable<AutoParticipantV5Operations["accountStates"]>[number],
-) {
-  if (state.nextExecutionRetryAt && state.nextRunAt === state.nextExecutionRetryAt) return "재시도";
-  if (state.nextProfileEvaluationAt && state.nextRunAt === state.nextProfileEvaluationAt) return "프로필 평가";
-  if (state.nextAttentionAt && state.nextRunAt === state.nextAttentionAt) return "자발 관심";
-  return "-";
-}
-
 function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-md border border-white/10 bg-black/15 px-3 py-2">
@@ -397,16 +345,4 @@ function institutionParticipationLabel(
     && calibration.institutionSellMinimumAttained;
   if (!sideMinimumsAttained) return "방향별 최소 미달";
   return calibration.institutionGrossTargetAttained ? "목표 충족" : "최소 충족 · 목표 미달";
-}
-
-function formatDateTime(value: string | null | undefined) {
-  if (!value) return "-";
-  return new Intl.DateTimeFormat("ko-KR", {
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  }).format(new Date(value));
 }

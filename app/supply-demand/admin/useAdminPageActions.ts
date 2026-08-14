@@ -1,8 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 
 import { useAdminAutoMarketConfigActions } from "@/app/supply-demand/admin/useAdminAutoMarketConfigActions";
-import { useAdminAutoParticipantActions } from "@/app/supply-demand/admin/useAdminAutoParticipantActions";
-import { useAdminAutoParticipantStrategyActions } from "@/app/supply-demand/admin/useAdminAutoParticipantStrategyActions";
 import { useAdminBatchActions } from "@/app/supply-demand/admin/useAdminBatchActions";
 import { useAdminCorporateActionActions } from "@/app/supply-demand/admin/useAdminCorporateActionActions";
 import { useAdminDefaultDraftSelections } from "@/app/supply-demand/admin/useAdminDefaultDraftSelections";
@@ -45,7 +43,6 @@ export function useAdminPageActions({
     reloadAutoMarketConfigurationState,
     reloadAutoMarketDetailsState,
     reloadAutoParticipantState,
-    reloadAutoParticipantStrategyState,
     reloadOrderBookMarketState,
     reloadSimulationClockState,
   } = queryInvalidations;
@@ -71,27 +68,6 @@ export function useAdminPageActions({
     symbol: autoConfigSymbol,
   } = drafts.autoMarketConfig;
   const {
-    autoParticipantEditDraftSetters,
-    autoParticipantUserKey,
-    cashAdjustmentAmount,
-    displayName: autoParticipantDisplayName,
-    editingAutoParticipantUserKey,
-    behaviorSeed: autoParticipantBehaviorSeed,
-    enabled: autoParticipantEnabled,
-    profileType: autoParticipantProfileType,
-    recurringCashAmount: autoParticipantRecurringCashAmount,
-    recurringCashIntervalUnit: autoParticipantRecurringCashIntervalUnit,
-    recurringCashIntervalValue: autoParticipantRecurringCashIntervalValue,
-    resetAutoParticipantDraft,
-    setEditingStrategyKey,
-    setStrategyEnabled,
-    strategyEnabled,
-    strategyIntensity,
-    strategySymbol,
-    strategyUserKey,
-  } = drafts.autoParticipant;
-  const { draft: autoParticipantGenerateDraft } = drafts.autoParticipantGenerate;
-  const {
     amount: userCashAdjustmentAmount,
     clearAmount: clearUserCashAdjustmentAmount,
     fundFlowUserKey: userFundFlowUserKey,
@@ -103,7 +79,6 @@ export function useAdminPageActions({
     editingProfileType,
   } = drafts.profileConfig;
   const {
-    autoParticipants,
     instruments,
     shouldLoadInstrumentDetails,
     simulationClockQuery,
@@ -171,37 +146,6 @@ export function useAdminPageActions({
     requireAdminToken,
     setMessage,
   });
-  const autoParticipantActions = useAdminAutoParticipantActions({
-    autoParticipantEditDraftSetters,
-    autoParticipantUserKey,
-    cashAdjustmentAmount,
-    displayName: autoParticipantDisplayName,
-    editingAutoParticipantUserKey,
-    behaviorSeed: autoParticipantBehaviorSeed,
-    enabled: autoParticipantEnabled,
-    existingParticipants: autoParticipants,
-    generateDraft: autoParticipantGenerateDraft,
-    profileType: autoParticipantProfileType,
-    recurringCashAmount: autoParticipantRecurringCashAmount,
-    recurringCashIntervalUnit: autoParticipantRecurringCashIntervalUnit,
-    recurringCashIntervalValue: autoParticipantRecurringCashIntervalValue,
-    reloadAdminCashFlowState,
-    reloadAutoParticipantState,
-    requireAdminToken,
-    resetAutoParticipantDraft,
-    setMessage,
-  });
-  const autoParticipantStrategyActions = useAdminAutoParticipantStrategyActions({
-    reloadAutoParticipantStrategyState,
-    requireAdminToken,
-    setEditingStrategyKey,
-    setMessage,
-    setStrategyEnabled,
-    strategyEnabled,
-    strategyIntensity,
-    strategySymbol,
-    strategyUserKey,
-  });
   const userCashActions = useAdminUserCashActions({
     amount: userCashAdjustmentAmount,
     clearAmount: clearUserCashAdjustmentAmount,
@@ -256,8 +200,6 @@ export function useAdminPageActions({
     ...simulationClockActions,
     ...autoMarketConfigActions,
     ...profileConfigActions,
-    ...autoParticipantActions,
-    ...autoParticipantStrategyActions,
     ...userCashActions,
     ...corporateActionActions,
     ...symbolFlowActions,

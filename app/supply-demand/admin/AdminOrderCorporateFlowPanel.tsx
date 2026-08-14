@@ -18,7 +18,7 @@ export function AdminOrderCorporateFlowPanel({
       <div className="rounded-md border border-white/10 bg-black/20 p-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-sm font-black text-white">주문 흐름</h3>
-          <span className="text-xs font-bold text-stock-subtle">2시간 {formatCount(orderFlow.todayOrderCount, "건")}</span>
+          <span className="text-xs font-bold text-stock-subtle">현재 거래일 {formatCount(orderFlow.todayOrderCount, "건")}</span>
         </div>
         <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
           <FundFlowLine label="대기 주문" value={formatCount(orderFlow.openOrderCount, "건")} />
@@ -26,14 +26,14 @@ export function AdminOrderCorporateFlowPanel({
           <FundFlowLine label="부분체결" value={formatCount(orderFlow.partiallyFilledOrderCount, "건")} />
           <FundFlowLine label="예약 매수금" value={formatWon(orderFlow.reservedBuyCash)} />
           <FundFlowLine label="예약 매도수량" value={formatCount(orderFlow.reservedSellQuantity, "주")} />
-          <FundFlowLine label="2시간 체결/취소/거절" value={`${formatInteger(orderFlow.todayFilledOrderCount)} / ${formatInteger(orderFlow.todayCancelledOrderCount)} / ${formatInteger(orderFlow.todayRejectedOrderCount)}`} />
+          <FundFlowLine label="현재 거래일 체결/취소/거절" value={`${formatInteger(orderFlow.todayFilledOrderCount)} / ${formatInteger(orderFlow.todayCancelledOrderCount)} / ${formatInteger(orderFlow.todayRejectedOrderCount)}`} />
         </div>
       </div>
 
       <div className="rounded-md border border-white/10 bg-black/20 p-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-sm font-black text-white">주식 이벤트 흐름</h3>
-          <span className="text-xs font-bold text-stock-subtle">2시간 생성 {formatCount(corporateActionFlow.todayCreatedCount, "건")}</span>
+          <span className="text-xs font-bold text-stock-subtle">현재 거래일 생성 {formatCount(corporateActionFlow.todayCreatedCount, "건")}</span>
         </div>
         <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
           <FundFlowLine label="진행 중" value={formatCount(corporateActionFlow.pendingCount, "건")} />

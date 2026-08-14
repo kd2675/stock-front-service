@@ -59,8 +59,6 @@ function candleRefetchInterval(interval: OrderBookCandleInterval) {
 
 type AutoMarketStatusIncludeOptions = {
   includeConfigs?: boolean;
-  includeParticipants?: boolean;
-  includeParticipantSymbolConfigs?: boolean;
   includeParticipantProfileConfigs?: boolean;
   includeRuntimeMetrics?: boolean;
   includeSalaryEligibility?: boolean;
@@ -69,8 +67,6 @@ type AutoMarketStatusIncludeOptions = {
 function resolveAutoMarketStatusIncludeOptions(options: AutoMarketStatusIncludeOptions = {}) {
   return {
     includeConfigs: options.includeConfigs ?? true,
-    includeParticipants: options.includeParticipants ?? false,
-    includeParticipantSymbolConfigs: options.includeParticipantSymbolConfigs ?? false,
     includeParticipantProfileConfigs: options.includeParticipantProfileConfigs ?? false,
     includeRuntimeMetrics: options.includeRuntimeMetrics ?? true,
     includeSalaryEligibility: options.includeSalaryEligibility ?? false,
@@ -216,20 +212,12 @@ export function orderBookMarketStatusQueryOptions(options: {
 
 export function autoMarketStatusQueryOptions(options: {
   enabled?: boolean;
-  participantSymbolConfigUserKey?: string;
   refetchIntervalMs?: number | false;
 } & AutoMarketStatusIncludeOptions = {}) {
   const includeOptions = resolveAutoMarketStatusIncludeOptions(options);
-  const participantSymbolConfigUserKey = options.participantSymbolConfigUserKey?.trim() || undefined;
   return stockQueryOptions({
-    queryKey: stockKeys.autoMarketStatusDetails({
-      ...includeOptions,
-      participantSymbolConfigUserKey,
-    }),
-    request: () => getAutoMarketStatus({
-      ...includeOptions,
-      participantSymbolConfigUserKey,
-    }),
+    queryKey: stockKeys.autoMarketStatusDetails(includeOptions),
+    request: () => getAutoMarketStatus(includeOptions),
     fallbackMessage: "자동장 상태를 조회하지 못했습니다.",
     enabled: options.enabled ?? true,
     refetchInterval: options.refetchIntervalMs ?? MARKET_AGGREGATE_REFETCH_MS,
@@ -244,8 +232,6 @@ export function autoMarketSummaryStatusQueryOptions(options: {
 } = {}) {
   const includeOptions = resolveAutoMarketStatusIncludeOptions({
     includeConfigs: false,
-    includeParticipants: false,
-    includeParticipantSymbolConfigs: false,
     includeParticipantProfileConfigs: false,
     includeRuntimeMetrics: options.includeRuntimeMetrics,
     includeSalaryEligibility: options.includeSalaryEligibility,

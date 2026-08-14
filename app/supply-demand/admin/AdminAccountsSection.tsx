@@ -4,21 +4,15 @@ import type { CashAdjustmentType } from "@/app/supply-demand/admin/AdminCashAdju
 import type { AdminSection } from "@/app/supply-demand/admin/AdminNavigationConfig";
 import { ParticipantProfileOverviewPanel } from "@/app/supply-demand/admin/AdminParticipantOverviewPanels";
 import type { ParticipantProfileOverviewSummary } from "@/app/supply-demand/admin/AdminParticipantPolicyHelpers";
-import { SalaryEligibilityPanel } from "@/app/supply-demand/admin/AdminSalaryPanels";
-import type { AdminSalaryEligibilityRowsState } from "@/app/supply-demand/admin/useAdminSalaryEligibilityRows";
 import type {
   AdminCashFlowPage,
-  AutoParticipantPerformanceSummary,
-  BatchJobRuntimeStatus,
   FundFlow,
-  StockBatchJobRun,
 } from "@/app/types/stock";
 
 type AdminAccountsSectionProps = {
   activeSection: AdminSection;
   cashFlowPage: AdminCashFlowPage | null;
   loadingCashFlowPage: boolean;
-  loadingSalaryEligibility: boolean;
   onRefreshCashFlowPage: () => void;
   onRefreshProfileOverviews: () => void;
   onLoadAllProfileOverviews: () => void;
@@ -33,27 +27,18 @@ type AdminAccountsSectionProps = {
   onUserCashAmountChange: (value: string) => void;
   onLoadUserFundFlow: () => void;
   onAdjustUserCash: (adjustmentType: CashAdjustmentType) => void;
-  salaryEligibility: AdminSalaryEligibilityRowsState;
-  salaryEligibilityError: boolean;
-  autoParticipantCashFlowRuntimeControl: BatchJobRuntimeStatus | null;
-  runningCashFlow: boolean;
-  lastCashFlowRun: StockBatchJobRun | null;
-  onRunCashFlow: () => void;
   profileOverviewSummaries: ParticipantProfileOverviewSummary[];
   profileOverviewAllSummaries: ParticipantProfileOverviewSummary[];
   loadingProfileOverviews: boolean;
   loadingProfileOverviewAll: boolean;
   profileOverviewError: boolean;
   profileOverviewAllError: boolean;
-  livePerformanceSummary: AutoParticipantPerformanceSummary | null;
-  closedPerformanceSummary: AutoParticipantPerformanceSummary | null;
 };
 
 export function AdminAccountsSection({
   activeSection,
   cashFlowPage,
   loadingCashFlowPage,
-  loadingSalaryEligibility,
   onRefreshCashFlowPage,
   onRefreshProfileOverviews,
   onLoadAllProfileOverviews,
@@ -68,20 +53,12 @@ export function AdminAccountsSection({
   onUserCashAmountChange,
   onLoadUserFundFlow,
   onAdjustUserCash,
-  salaryEligibility,
-  salaryEligibilityError,
-  autoParticipantCashFlowRuntimeControl,
-  runningCashFlow,
-  lastCashFlowRun,
-  onRunCashFlow,
   profileOverviewSummaries,
   profileOverviewAllSummaries,
   loadingProfileOverviews,
   loadingProfileOverviewAll,
   profileOverviewError,
   profileOverviewAllError,
-  livePerformanceSummary,
-  closedPerformanceSummary,
 }: AdminAccountsSectionProps) {
   if (activeSection === "funds-ledger") {
     return (
@@ -111,30 +88,6 @@ export function AdminAccountsSection({
     );
   }
 
-  if (activeSection === "funds-payroll") {
-    return (
-      <SalaryEligibilityPanel
-        rows={salaryEligibility.visibleRows}
-        totalCount={salaryEligibility.rows.length}
-        pageStart={salaryEligibility.pagination.pageStart}
-        pageEnd={salaryEligibility.pagination.pageEnd}
-        currentPage={salaryEligibility.pagination.boundedPage}
-        totalPages={salaryEligibility.pagination.totalPages}
-        receivableCount={salaryEligibility.summary.receivableCount}
-        policyCount={salaryEligibility.summary.policyCount}
-        accountCheckCount={salaryEligibility.summary.accountCheckCount}
-        excludedCount={salaryEligibility.summary.excludedCount}
-        loading={loadingSalaryEligibility}
-        error={salaryEligibilityError}
-        runtimeControl={autoParticipantCashFlowRuntimeControl}
-        running={runningCashFlow}
-        lastRun={lastCashFlowRun}
-        onPageChange={salaryEligibility.setPage}
-        onRun={onRunCashFlow}
-      />
-    );
-  }
-
   if (activeSection === "participants-overview") {
     return (
       <ParticipantProfileOverviewPanel
@@ -146,8 +99,6 @@ export function AdminAccountsSection({
         loadingAll={loadingProfileOverviewAll}
         allError={profileOverviewAllError}
         onLoadAll={onLoadAllProfileOverviews}
-        livePerformanceSummary={livePerformanceSummary}
-        closedPerformanceSummary={closedPerformanceSummary}
       />
     );
   }

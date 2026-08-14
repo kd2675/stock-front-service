@@ -65,8 +65,8 @@ export function SelectedOrderBookInstrumentPanel({
           <Metric label="현재가" value={formatWon(selectedInstrument.currentPrice)} />
           <Metric label="제한 기준가" value={formatWon(selectedInstrument.priceLimitBase)} />
           <Metric label="장 상태" value={formatEffectiveMarketSessionStatus(selectedOrderBookConfig?.marketStatus, isSelectedMarketOpen)} tone={isSelectedMarketOpen ? "blue" : "red"} />
-          <Metric label="2시간 거래량" value={`${formatNumber(summary?.todayVolume ?? 0)}주`} />
-          <Metric label="2시간 거래대금" value={formatWon(summary?.todayTurnover)} />
+          <Metric label="현재 거래일 거래량" value={`${formatNumber(summary?.todayVolume ?? 0)}주`} />
+          <Metric label="현재 거래일 거래대금" value={formatWon(summary?.todayTurnover)} />
           <Metric label="VWAP" value={formatWon(summary?.vwap)} />
           <Metric label="고가 / 저가" value={`${formatRoundedPriceOrDash(summary?.highPrice)} / ${formatRoundedPriceOrDash(summary?.lowPrice)}`} />
           <Metric label="평균 체결량" value={formatAverageExecutionQuantity(summary)} />
@@ -106,7 +106,7 @@ export function AutoMarketStatusPanel({
         <StatusRow label="선택 종목 장" value={formatEffectiveMarketSessionStatus(selectedOrderBookConfig?.marketStatus, isSelectedOrderBookOpen)} />
         <StatusRow label="주 가격 편향" value={selectedConfig ? signedPressure(selectedConfig.primaryDistributionBias.pricePressure) : "-"} />
         <StatusRow label="자동 참여자" value={autoMarket ? `${autoMarket.enabledParticipantCount}명` : "-"} />
-        <StatusRow label="2시간 자동 계좌 체결 참여 (비동기·보통 30초)" value={autoMarket ? `${autoMarket.todayAutoExecutionCount}건` : "-"} />
+        <StatusRow label="현재 거래일 자동 계좌 체결 참여 (비동기·보통 30초)" value={autoMarket ? `${autoMarket.todayAutoExecutionCount}건` : "-"} />
         <StatusRow label="전체 대기 주문" value={orderBookMarket ? `${orderBookMarket.openOrderCount}건` : "-"} />
         <StatusRow label="마지막 갱신" value={updatedAt ? formatKoKrTimeSecond(updatedAt) : loading ? "조회 중" : "-"} />
       </div>

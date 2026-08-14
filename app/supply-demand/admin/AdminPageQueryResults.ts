@@ -1,8 +1,6 @@
 import {
   EMPTY_AUTO_MARKET_CONFIGS,
-  EMPTY_AUTO_PARTICIPANTS,
   EMPTY_AUTO_PARTICIPANT_PROFILE_CONFIGS,
-  EMPTY_AUTO_PARTICIPANT_SYMBOL_CONFIGS,
   EMPTY_BATCH_JOB_RUNTIME_CONTROLS,
   EMPTY_CORPORATE_ACTIONS,
   EMPTY_INSTRUMENT_REPORTS,
@@ -20,9 +18,7 @@ import type {
   AdminSymbolFlowList,
   AutoMarketConfig,
   AutoMarketStatus,
-  AutoParticipant,
   AutoParticipantProfileConfig,
-  AutoParticipantSymbolConfig,
   BatchJobRuntimeStatus,
   CorporateAction,
   FundFlow,
@@ -39,7 +35,6 @@ type AdminPageQueryResultInput = {
   adminSymbolFlowList: AdminSymbolFlowList | null | undefined;
   autoMarketDetails: AutoMarketStatus | null | undefined;
   autoMarketSummary: AutoMarketStatus | null | undefined;
-  autoParticipants: AutoParticipant[] | null | undefined;
   autoParticipantProfileOverviewSummaries: ParticipantProfileOverviewSummary[] | null | undefined;
   batchJobRuntimeControls: BatchJobRuntimeStatus[] | null | undefined;
   corporateActions: CorporateAction[] | null | undefined;
@@ -57,8 +52,6 @@ export type AdminPageQueryResultData = {
   autoMarketConfigs: AutoMarketConfig[];
   autoMarketSummary: AutoMarketStatus | null;
   autoParticipantProfileOverviewSummaries: ParticipantProfileOverviewSummary[];
-  autoParticipants: AutoParticipant[];
-  autoParticipantSymbolConfigs: AutoParticipantSymbolConfig[];
   batchJobRuntimeControls: BatchJobRuntimeStatus[];
   corporateActions: CorporateAction[];
   instrumentReports: InstrumentReport[];
@@ -86,8 +79,6 @@ export function normalizeAdminPageQueryResults(input: AdminPageQueryResultInput)
     autoMarketConfigs: status?.configs ?? EMPTY_AUTO_MARKET_CONFIGS,
     autoMarketSummary: input.autoMarketSummary ?? null,
     autoParticipantProfileOverviewSummaries: input.autoParticipantProfileOverviewSummaries ?? EMPTY_PARTICIPANT_PROFILE_OVERVIEW_SUMMARIES,
-    autoParticipants: input.autoParticipants ?? status?.participants ?? EMPTY_AUTO_PARTICIPANTS,
-    autoParticipantSymbolConfigs: status?.participantSymbolConfigs ?? EMPTY_AUTO_PARTICIPANT_SYMBOL_CONFIGS,
     batchJobRuntimeControls: input.batchJobRuntimeControls ?? EMPTY_BATCH_JOB_RUNTIME_CONTROLS,
     corporateActions: input.corporateActions ?? EMPTY_CORPORATE_ACTIONS,
     instrumentReports: input.instrumentReports ?? EMPTY_INSTRUMENT_REPORTS,

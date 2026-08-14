@@ -7,7 +7,6 @@ import {
   invalidateAutoMarketConfigurationQueries,
   invalidateAutoMarketDetailsQueries,
   invalidateAutoParticipantAdminQueries,
-  invalidateAutoParticipantStrategyQueries,
   invalidateOrderBookMarketAdminQueries,
   invalidateSimulationClockQueries,
 } from "@/app/lib/react-query/stockInvalidations";
@@ -23,10 +22,6 @@ export function useAdminQueryInvalidations(queryClient: QueryClient) {
 
   const reloadAutoParticipantState = useCallback(() => {
     void invalidateAutoParticipantAdminQueries(queryClient);
-  }, [queryClient]);
-
-  const reloadAutoParticipantStrategyState = useCallback(() => {
-    void invalidateAutoParticipantStrategyQueries(queryClient);
   }, [queryClient]);
 
   const reloadAdminCashFlowState = useCallback(() => {
@@ -51,7 +46,6 @@ export function useAdminQueryInvalidations(queryClient: QueryClient) {
     reloadAutoMarketConfigurationState,
     reloadAutoMarketDetailsState,
     reloadAutoParticipantState,
-    reloadAutoParticipantStrategyState,
     reloadOrderBookMarketState,
     reloadSimulationClockState,
   };

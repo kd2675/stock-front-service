@@ -6,7 +6,6 @@ import {
   activateUnderwritingSupply,
   adjustInstitutionPortfolioCash,
   applyCorporateAction,
-  adjustAutoParticipantCash,
   adjustUserAccountCash,
   cancelOrder,
   cancelOrderPartially,
@@ -31,23 +30,17 @@ import {
   subscribeCorporateAction,
   updateAutoMarketConfig,
   updateAutoParticipantProfileConfig,
-  updateAutoParticipantSymbolConfig,
   updateBatchJobRuntimeControl,
   updateInstitutionPortfolioPolicy,
   updateInstrumentReport,
   updateLiquidityProviderPolicy,
   updateOrderBookInstrumentTradingRules,
   updateMarketStatus,
-  upsertAutoParticipant,
-  withdrawAutoParticipant,
 } from "@/app/lib/stock";
 import type {
   StockAutoMarketConfigPayload,
   StockAccountCashAdjustmentPayload,
-  StockAutoParticipantCashAdjustmentPayload,
-  StockAutoParticipantPayload,
   StockAutoParticipantProfileConfigPayload,
-  StockAutoParticipantSymbolConfigPayload,
   StockBatchJobRuntimeControlPayload,
   StockCorporateActionPayload,
   StockCorporateActionSubscriptionPayload,
@@ -218,32 +211,6 @@ export function adminAdjustUserAccountCashMutationOptions() {
   );
 }
 
-export function adminUpsertAutoParticipantMutationOptions() {
-  return adminMutationOptions(
-    (token, variables: {
-      userKey: string;
-      payload: StockAutoParticipantPayload;
-    }) => upsertAutoParticipant(token, variables.userKey, variables.payload),
-  );
-}
-
-export function adminWithdrawAutoParticipantMutationOptions() {
-  return adminMutationOptions(
-    (token, variables: {
-      userKey: string;
-    }) => withdrawAutoParticipant(token, variables.userKey),
-  );
-}
-
-export function adminAdjustAutoParticipantCashMutationOptions() {
-  return adminMutationOptions(
-    (token, variables: {
-      userKey: string;
-      payload: StockAutoParticipantCashAdjustmentPayload;
-    }) => adjustAutoParticipantCash(token, variables.userKey, variables.payload),
-  );
-}
-
 export function adminApplyCorporateActionMutationOptions() {
   return adminMutationOptions(
     (token, variables: {
@@ -270,16 +237,6 @@ export function adminUpdateAutoParticipantProfileConfigMutationOptions() {
       profileType: AutoParticipantProfileType;
       payload: StockAutoParticipantProfileConfigPayload;
     }) => updateAutoParticipantProfileConfig(token, variables.profileType, variables.payload),
-  );
-}
-
-export function adminUpdateAutoParticipantSymbolConfigMutationOptions() {
-  return adminMutationOptions(
-    (token, variables: {
-      userKey: string;
-      symbol: string;
-      payload: StockAutoParticipantSymbolConfigPayload;
-    }) => updateAutoParticipantSymbolConfig(token, variables.userKey, variables.symbol, variables.payload),
   );
 }
 

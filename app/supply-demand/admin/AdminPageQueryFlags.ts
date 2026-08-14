@@ -5,8 +5,6 @@ type AdminAccessStatus = "checking" | "allowed" | "denied";
 export type AdminPageQueryFlags = {
   includeConfigs: boolean;
   includeParticipantProfileConfigs: boolean;
-  includeParticipants: boolean;
-  includeParticipantSymbolConfigs: boolean;
   isAdminAllowed: boolean;
   isAccountCashSection: boolean;
   isBatchSection: boolean;
@@ -17,12 +15,10 @@ export type AdminPageQueryFlags = {
   shouldUseInstrumentReports: boolean;
   shouldUseSimulationClock: boolean;
   shouldUseBatchRuntimeControls: boolean;
-  shouldUseDormantAutoParticipants: boolean;
   shouldUseEodOverview: boolean;
   shouldLoadAdminFlowOverview: boolean;
   shouldLoadAutoMarketDetails: boolean;
   shouldLoadAutoMarketSummary: boolean;
-  shouldLoadAutoParticipants: boolean;
   shouldLoadAutoParticipantProfileOverviews: boolean;
   shouldLoadInstrumentDetails: boolean;
   shouldLoadMarketSummary: boolean;
@@ -31,7 +27,6 @@ export type AdminPageQueryFlags = {
   shouldUseAdminParticipantFlow: boolean;
   shouldUseAutoMarketDetails: boolean;
   shouldUseAutoMarketSummary: boolean;
-  shouldUseAutoParticipants: boolean;
   shouldUseAutoParticipantProfileOverviews: boolean;
   shouldUseInstrumentDetails: boolean;
   shouldUseInstitutionPortfolios: boolean;
@@ -48,12 +43,10 @@ export function resolveAdminPageQueryFlags({
   activeAdminSection,
   activeAdminTab,
   adminStatus,
-  editingAutoParticipantUserKey,
 }: {
   activeAdminSection: AdminSection;
   activeAdminTab: AdminTab;
   adminStatus: AdminAccessStatus;
-  editingAutoParticipantUserKey: string | null;
 }): AdminPageQueryFlags {
   const isAccountCashSection = activeAdminSection === "funds-accounts";
   const isAdminAllowed = adminStatus === "allowed";
@@ -67,23 +60,14 @@ export function resolveAdminPageQueryFlags({
     || activeAdminSection === "market-instruments"
     || activeAdminSection === "market-auto-market"
     || isFlowSection;
-  const shouldLoadBatchRuntimeControls = activeAdminSection === "system-jobs" || activeAdminSection === "funds-payroll";
-  const shouldLoadAutoParticipants = activeAdminSection === "funds-payroll" || activeAdminSection === "participants-list";
-  const includeParticipants = false;
-  const includeParticipantStrategyDetails = activeAdminSection === "participants-list" && editingAutoParticipantUserKey !== null;
-  const includeConfigs = activeAdminSection === "market-auto-market" || includeParticipantStrategyDetails;
-  const includeParticipantSymbolConfigs = includeParticipantStrategyDetails;
-  const includeParticipantProfileConfigs = activeAdminSection === "funds-payroll" || activeAdminSection === "participants-profiles";
-  const shouldLoadAutoMarketDetails = includeParticipants
-    || includeConfigs
-    || includeParticipantSymbolConfigs
-    || includeParticipantProfileConfigs;
+  const shouldLoadBatchRuntimeControls = activeAdminSection === "system-jobs";
+  const includeConfigs = activeAdminSection === "market-auto-market";
+  const includeParticipantProfileConfigs = activeAdminSection === "participants-profiles";
+  const shouldLoadAutoMarketDetails = includeConfigs || includeParticipantProfileConfigs;
 
   return {
     includeConfigs,
     includeParticipantProfileConfigs,
-    includeParticipants,
-    includeParticipantSymbolConfigs,
     isAccountCashSection,
     isAdminAllowed,
     isBatchSection,
@@ -98,12 +82,10 @@ export function resolveAdminPageQueryFlags({
       || activeAdminSection === "corporate-actions"
     ),
     shouldUseBatchRuntimeControls: isAdminAllowed && shouldLoadBatchRuntimeControls,
-    shouldUseDormantAutoParticipants: isAdminAllowed && activeAdminSection === "funds-custody",
     shouldUseEodOverview: isAdminAllowed && activeAdminSection === "system-eod",
     shouldLoadAdminFlowOverview: isLiveFlowSection,
     shouldLoadAutoMarketDetails,
     shouldLoadAutoMarketSummary: activeAdminSection === "dashboard",
-    shouldLoadAutoParticipants,
     shouldLoadAutoParticipantProfileOverviews: activeAdminSection === "participants-overview",
     shouldLoadInstrumentDetails: activeAdminSection === "market-instruments" || activeAdminTab === "corporate",
     shouldLoadMarketSummary: activeAdminSection === "dashboard" || activeAdminSection === "market-instruments",
@@ -112,7 +94,6 @@ export function resolveAdminPageQueryFlags({
     shouldUseAdminParticipantFlow: isAdminAllowed && isParticipantFlowSection,
     shouldUseAutoMarketDetails: isAdminAllowed && shouldLoadAutoMarketDetails,
     shouldUseAutoMarketSummary: isAdminAllowed && activeAdminSection === "dashboard",
-    shouldUseAutoParticipants: isAdminAllowed && shouldLoadAutoParticipants,
     shouldUseAutoParticipantProfileOverviews: isAdminAllowed && activeAdminSection === "participants-overview",
     shouldUseInstrumentDetails: isAdminAllowed && (activeAdminSection === "market-instruments" || activeAdminTab === "corporate"),
     shouldUseInstitutionPortfolios: isAdminAllowed && activeAdminSection === "participants-institutions",

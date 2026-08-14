@@ -127,40 +127,9 @@ export type AutoParticipantProfileType =
 
 export type RecurringCashIntervalUnit = "SECOND" | "MINUTE" | "HOUR" | "DAY" | "MONTH" | "YEAR";
 export type AutoParticipantBehaviorModelVersion = "V5";
-export type AutoParticipantLifecycleScope = "CURRENT" | "WITHDRAWN";
 export type AutoParticipantProfilePricingMode = "DIRECTIONAL" | "PASSIVE_POST_ONLY";
 export type AutoParticipantProfileExitMode = "SIGNAL_DRIVEN" | "TAKE_PROFIT_FIRST" | "HOLD_LOSSES";
 export type AutoParticipantProfileInventoryMode = "SIGNAL_DRIVEN";
-
-export type AutoParticipant = {
-  userKey: string;
-  displayName: string;
-  enabled: boolean;
-  profileType: AutoParticipantProfileType;
-  behaviorModelVersion: AutoParticipantBehaviorModelVersion;
-  behaviorSeed?: string | null;
-  recurringCashAmount?: number | null;
-  recurringCashIntervalValue?: number | null;
-  recurringCashIntervalUnit?: RecurringCashIntervalUnit | null;
-  accountId?: number | null;
-  accountStatus?: string | null;
-  cashBalance?: number | null;
-  createdAt: string;
-  updatedAt: string;
-  withdrawnAt?: string | null;
-  paydayAvailableBudget: number;
-  dividendAvailableBudget: number;
-  fundingReservedAmount: number;
-  fundingSpentAmount: number;
-  activeFundingBudgetCount: number;
-  trackedPositionCount: number;
-  averageHoldingTradingDays: number;
-  averageDownRoundCount: number;
-  withdrawalReturnedCashAmount: number;
-  withdrawalReturnedShareQuantity: number;
-  withdrawalReturnedSymbolCount: number;
-  accountClosedOnWithdrawal: boolean;
-};
 
 export type AutoParticipantShareTransfer = {
   symbol: string;
@@ -931,6 +900,36 @@ export type AutoParticipantProfileOverview = {
   symbolHoldings: AutoParticipantProfileSymbolHolding[];
 };
 
+export type AutoProfileCohort = {
+  profileType: AutoParticipantProfileType;
+  representedPopulationCount: number;
+  executionAccountCount: number;
+  targetAum: number;
+  targetPartitionCount: number;
+  attentionScale: number;
+  policyVersion: number;
+  activeAccountCount: number;
+  cashAmount: number;
+  holdingMarketValue: number;
+  actualAum: number;
+  enabled: boolean;
+  updatedAt: string;
+};
+
+export type AutoProfilePopulationContract = {
+  contractVersion: number;
+  representedPopulationCount: number;
+  executionAccountCount: number;
+  targetScaledHouseholdEquityAum: number;
+  manualParticipantAumSnapshot: number;
+  targetAutoParticipantAum: number;
+  modelContract:
+    | "PROFILE_COHORT_EXECUTION_SHARDS"
+    | "ACTUAL_ACCOUNT_PROFILE_PARTITIONS";
+  effectiveBusinessDate: string;
+  updatedAt: string;
+};
+
 export type PortfolioReturnRateStatus =
   | "DEFINED"
   | "UNDEFINED_ZERO_CONTRIBUTION"
@@ -1111,14 +1110,6 @@ export type EodPhaseRetryResult = {
   requestedAt: string;
 };
 
-export type AutoParticipantSymbolConfig = {
-  userKey: string;
-  symbol: string;
-  enabled: boolean;
-  intensity: number;
-  updatedAt: string;
-};
-
 export type AutoParticipantProfileConfig = {
   profileType: AutoParticipantProfileType;
   behaviorModelVersion: AutoParticipantBehaviorModelVersion;
@@ -1295,7 +1286,5 @@ export type AutoMarketStatus = {
   openAutoOrderCount: number;
   todayAutoExecutionCount: number;
   configs: AutoMarketConfig[];
-  participants: AutoParticipant[];
-  participantSymbolConfigs: AutoParticipantSymbolConfig[];
   participantProfileConfigs: AutoParticipantProfileConfig[];
 };

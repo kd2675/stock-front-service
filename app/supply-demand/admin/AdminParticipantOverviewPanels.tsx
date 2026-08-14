@@ -9,7 +9,6 @@ import { formatCount, formatDateTime, formatInteger, formatNumber, formatSignedP
 import { ProfileMiniMetric, ProfileOverviewInfoItem } from "@/app/supply-demand/admin/AdminMetricCards";
 import type { ParticipantProfileOverviewSummary } from "@/app/supply-demand/admin/AdminParticipantPolicyHelpers";
 import { resolveParticipantProfileOverviewTotal } from "@/app/supply-demand/admin/AdminParticipantOverviewTotals";
-import type { AutoParticipantPerformanceBasis, AutoParticipantPerformanceSummary } from "@/app/types/stock";
 
 export function ParticipantProfileOverviewPanel({
   summaries,
@@ -20,8 +19,6 @@ export function ParticipantProfileOverviewPanel({
   loadingAll,
   allError,
   onLoadAll,
-  livePerformanceSummary,
-  closedPerformanceSummary,
 }: {
   summaries: ParticipantProfileOverviewSummary[];
   loading: boolean;
@@ -31,16 +28,9 @@ export function ParticipantProfileOverviewPanel({
   loadingAll: boolean;
   allError: boolean;
   onLoadAll: () => void;
-  livePerformanceSummary: AutoParticipantPerformanceSummary | null;
-  closedPerformanceSummary: AutoParticipantPerformanceSummary | null;
 }) {
   const total = useMemo(() => resolveParticipantProfileOverviewTotal(summaries), [summaries]);
   const allTotal = useMemo(() => resolveParticipantProfileOverviewTotal(allSummaries), [allSummaries]);
-  const [performanceBasis, setPerformanceBasis] = useState<AutoParticipantPerformanceBasis>("LIVE_ESTIMATE");
-  const performanceSummary = performanceBasis === "LATEST_CLOSED"
-    ? closedPerformanceSummary
-    : livePerformanceSummary;
-  const performance = performanceSummary?.total ?? null;
   const [showAllModal, setShowAllModal] = useState(false);
   const [selectedProfileType, setSelectedProfileType] = useState("");
   const [selectedAllProfileType, setSelectedAllProfileType] = useState("");
@@ -96,75 +86,10 @@ export function ParticipantProfileOverviewPanel({
         <ProfileMiniMetric label="가동 참여자" value={formatCount(total.enabledCount, "명")} tone="green" />
         <ProfileMiniMetric label="가용 현금" value={formatWon(total.availableCash)} tone="blue" />
         <ProfileMiniMetric label="보유 평가액" value={formatWon(total.holdingMarketValue)} tone="muted" />
-        <ProfileMiniMetric label="2시간 거래대금" value={formatWon(total.todayGrossAmount)} tone="muted" />
+        <ProfileMiniMetric label="최근 시뮬레이션 1일 거래대금" value={formatWon(total.todayGrossAmount)} tone="muted" />
         <ProfileMiniMetric label="대기 주문" value={formatCount(total.openOrderCount, "건")} tone="muted" />
         <ProfileMiniMetric label="대기 매수/매도" value={`${formatInteger(total.openBuyQuantity)} / ${formatInteger(total.openSellQuantity)}주`} tone="muted" />
         <ProfileMiniMetric label="전략" value={`${formatInteger(total.enabledStrategyCount)} / ${formatInteger(total.strategyCount)}`} tone="blue" />
-      </div>
-
-      <div className="mt-4 rounded-md border border-white/10 bg-black/20 p-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-xs font-black text-white">자동 참여자 성과</p>
-            <p className="mt-1 text-[11px] font-bold text-stock-subtle">
-              합산 성과와 계좌 분포를 분리합니다. 계좌 수익률의 단순 평균은 대표값으로 사용하지 않습니다.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {(["LIVE_ESTIMATE", "LATEST_CLOSED"] as const).map((basis) => (
-              <button
-                key={basis}
-                type="button"
-                onClick={() => setPerformanceBasis(basis)}
-                className={[
-                  "min-h-8 rounded-md border px-3 py-1 text-[11px] font-black transition",
-                  performanceBasis === basis
-                    ? "border-admin-accent/70 bg-admin-accent/15 text-admin-accent-soft"
-                    : "border-white/10 text-stock-subtle hover:border-white/30",
-                ].join(" ")}
-              >
-                {basis === "LIVE_ESTIMATE" ? "장중 추정" : "최근 장마감 확정"}
-              </button>
-            ))}
-          </div>
-        </div>
-        <p className="mt-2 text-[11px] font-bold text-stock-subtle">
-          {performanceSummary
-            ? `${performanceSummary.basis === "LIVE_ESTIMATE" ? "장중 추정" : "장마감 확정"} · ${performanceSummary.businessDate ?? "기준일 없음"}${performanceSummary.calculatedAt ? ` · ${formatDateTime(performanceSummary.calculatedAt)}` : ""}`
-            : "성과 기준 데이터를 조회하지 못했습니다."}
-        </p>
-        <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-          <ProfileMiniMetric
-            label="합산 손익"
-            value={performance ? formatWon(performance.totalProfit) : "—"}
-            tone={profitTone(performance?.totalProfit)}
-          />
-          <ProfileMiniMetric
-            label="합산 순입금 대비 수익률"
-            value={formatOptionalPercent(performance?.aggregateReturnRate)}
-            tone={profitTone(performance?.aggregateReturnRate)}
-          />
-          <ProfileMiniMetric
-            label="계좌 중앙 수익률"
-            value={formatOptionalPercent(performance?.medianAccountReturnRate)}
-            tone={profitTone(performance?.medianAccountReturnRate)}
-          />
-          <ProfileMiniMetric
-            label="수익 계좌"
-            value={performance && performance.profitableAccountRate !== null
-              ? `${formatInteger(performance.profitableAccountCount)} / ${formatInteger(performance.eligibleAccountCount)}명 · ${formatNumber(performance.profitableAccountRate)}%`
-              : "—"}
-            tone="green"
-          />
-          <ProfileMiniMetric
-            label="산출 제외"
-            value={performance ? formatCount(performance.undefinedAccountCount, "명") : "—"}
-            tone={performance?.undefinedAccountCount ? "red" : "muted"}
-          />
-        </div>
-        <p className="mt-2 text-[11px] font-bold text-stock-subtle">
-          합산 순입금 대비 수익률 = 합산 손익 ÷ 합산 외부 순입금. 중앙값과 수익 계좌 비율은 순입금이 양수인 계좌만 사용합니다.
-        </p>
       </div>
 
       {selectedSummary ? (
@@ -218,8 +143,8 @@ export function ParticipantProfileOverviewPanel({
               <ProfileMiniMetric label="가동 참여자" value={formatCount(allTotal.enabledCount, "명")} tone="green" />
               <ProfileMiniMetric label="가용 현금" value={formatWon(allTotal.availableCash)} tone="blue" />
               <ProfileMiniMetric label="보유 평가액" value={formatWon(allTotal.holdingMarketValue)} tone="muted" />
-              <ProfileMiniMetric label="합산 손익" value={performance ? formatWon(performance.totalProfit) : "—"} tone={profitTone(performance?.totalProfit)} />
-              <ProfileMiniMetric label="합산 순입금 대비 수익률" value={formatOptionalPercent(performance?.aggregateReturnRate)} tone={profitTone(performance?.aggregateReturnRate)} />
+              <ProfileMiniMetric label="합산 손익" value={formatWon(allTotal.totalProfit)} tone={profitTone(allTotal.totalProfit)} />
+              <ProfileMiniMetric label="전체 체결" value={formatCount(allTotal.todayExecutionCount, "건")} tone="muted" />
             </div>
             {selectedAllSummary ? (
               <div className="mt-4 grid min-w-0 gap-5 xl:grid-cols-[280px_minmax(0,1fr)]">
@@ -295,9 +220,9 @@ const ParticipantProfileOverviewCard = memo(function ParticipantProfileOverviewC
           <p className="font-black tabular-nums text-white">대기 {formatCount(summary.openOrderCount, "건")}</p>
           <p className="mt-1 text-xs font-bold tabular-nums text-stock-subtle">매수/매도 {formatInteger(summary.openBuyOrderCount)} / {formatCount(summary.openSellOrderCount, "건")}</p>
           <p className="mt-1 text-xs font-bold tabular-nums text-stock-subtle">대기 수량 {formatNumber(summary.openBuyQuantity)} / {formatNumber(summary.openSellQuantity)}주</p>
-          <p className="mt-1 text-xs font-bold tabular-nums text-stock-subtle">2시간 {formatInteger(summary.todayExecutionCount)}체결</p>
-          <p className="mt-1 text-xs font-bold tabular-nums text-stock-subtle">2시간 매수/매도 {formatNumber(summary.todayBuyQuantity)} / {formatNumber(summary.todaySellQuantity)}주</p>
-          <p className="mt-1 text-xs font-bold tabular-nums text-stock-subtle">2시간 거래대금 {formatWon(summary.todayGrossAmount)}</p>
+          <p className="mt-1 text-xs font-bold tabular-nums text-stock-subtle">현재 거래일 {formatInteger(summary.todayExecutionCount)}체결</p>
+          <p className="mt-1 text-xs font-bold tabular-nums text-stock-subtle">현재 거래일 매수/매도 {formatNumber(summary.todayBuyQuantity)} / {formatNumber(summary.todaySellQuantity)}주</p>
+          <p className="mt-1 text-xs font-bold tabular-nums text-stock-subtle">현재 거래일 거래대금 {formatWon(summary.todayGrossAmount)}</p>
         </ProfileOverviewInfoItem>
         <ProfileOverviewInfoItem label="전략">
           <p className="font-black tabular-nums text-white">{formatInteger(summary.enabledStrategyCount)} / {formatInteger(summary.strategyCount)}</p>

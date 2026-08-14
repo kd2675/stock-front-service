@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 
@@ -8,14 +7,16 @@ import StockBrandLink from "@/app/components/StockBrandLink";
 import useAuthSession from "@/app/hooks/useAuthSession";
 import { buildAccountRequiredPath } from "@/app/lib/accountRouting";
 import { getAccessTokenForAuthStatus, isAdminRole } from "@/app/lib/auth";
-import { autoParticipantOverviewsQueryOptions, autoParticipantPerformanceSummaryQueryOptions } from "@/app/lib/react-query/stockAdminQueries";
+import {
+  autoParticipantProfileOverviewsQueryOptions,
+} from "@/app/lib/react-query/stockAdminQueries";
 import {
   formatCount,
   formatInteger,
   formatSignedPercent,
   formatWon,
 } from "@/app/supply-demand/admin/AdminFormatters";
-import type { AutoParticipantOverview } from "@/app/types/stock";
+import type { AutoParticipantProfileOverview } from "@/app/types/stock";
 
 const QUICK_LINKS = [
   {
@@ -40,34 +41,28 @@ const QUICK_LINKS = [
     metrics: ["주주배정", "일반공모", "청약"],
   },
   {
-    href: "/admin/participants/list",
+    href: "/admin/participants/overview",
     eyebrow: "PARTICIPANTS",
     title: "자동참여자",
-    description: "각 자동참여자의 현금, 보유 주식, 전략 수, 체결 활동과 성과 순위를 관리합니다.",
-    metrics: ["프로필", "전략", "순위"],
+    description: "15만 개 실제 자동참여자 계좌를 27개 프로필 파티션으로 운용하며, 프로필별 자산·주문·체결 성과를 확인합니다.",
+    metrics: ["27개 프로필", "주문", "체결"],
   },
 ];
-const EMPTY_PARTICIPANT_OVERVIEWS: AutoParticipantOverview[] = [];
+const EMPTY_PROFILE_OVERVIEWS: AutoParticipantProfileOverview[] = [];
 
 export default function StockHomePage() {
   const { authStatus, isHydrated, user } = useAuthSession();
   const isLoggedIn = isHydrated && authStatus === "in";
   const isAdmin = isAdminRole(user?.role);
   const token = getAccessTokenForAuthStatus(authStatus);
-  const participantOverviewsQuery = useQuery(autoParticipantOverviewsQueryOptions(token, {
-    activityScope: "ALL",
+  const profileOverviewsQuery = useQuery(autoParticipantProfileOverviewsQueryOptions(token, {
+    activityScope: "RECENT_SIMULATION_DAY",
     enabled: isAdmin && isLoggedIn,
-    includeHoldings: false,
     refetchIntervalMs: false,
   }));
-  const participantPerformanceQuery = useQuery(autoParticipantPerformanceSummaryQueryOptions(
-    token,
-    "LIVE_ESTIMATE",
-    { enabled: isAdmin && isLoggedIn },
-  ));
-  const participantOverviews = participantOverviewsQuery.data ?? EMPTY_PARTICIPANT_OVERVIEWS;
-  const rankedParticipants = useMemo(() => rankParticipants(participantOverviews), [participantOverviews]);
-  const summary = participantPerformanceQuery.data?.total ?? null;
+  const profiles = profileOverviewsQuery.data ?? EMPTY_PROFILE_OVERVIEWS;
+  const rankedProfiles = rankProfiles(profiles);
+  const summary = summarizeProfiles(profiles);
 
   return (
     <main className="min-h-screen bg-stock-canvas text-stock-ink">
@@ -105,7 +100,7 @@ export default function StockHomePage() {
           </h1>
           <p className="mt-5 max-w-2xl text-base font-semibold leading-7 text-stock-text-tertiary">
             현재 화면은 수요와 공급 주문장, 기업 이벤트, 내 주식, 자동참여자 성과를 중심으로 구성합니다.
-            자동참여자는 계좌별 총자산, 순입금, 손익, 수익률을 기준으로 비교합니다.
+            자동참여자는 개별 계좌를 노출하지 않고 프로필별 총자산, 순입금, 손익, 수익률을 집계해 비교합니다.
           </p>
 
           <div className="mt-8 grid gap-3 sm:grid-cols-3">
@@ -119,11 +114,11 @@ export default function StockHomePage() {
           </div>
         </div>
 
-        <ParticipantRankingPanel
+        <ProfileRankingPanel
           isAdmin={isAdmin}
-          isLoading={participantOverviewsQuery.isFetching}
-          participants={rankedParticipants}
-          queryFailed={participantOverviewsQuery.isError}
+          isLoading={profileOverviewsQuery.isFetching}
+          profiles={rankedProfiles}
+          queryFailed={profileOverviewsQuery.isError}
         />
       </section>
 
@@ -163,15 +158,15 @@ export default function StockHomePage() {
   );
 }
 
-function ParticipantRankingPanel({
+function ProfileRankingPanel({
   isAdmin,
   isLoading,
-  participants,
+  profiles,
   queryFailed,
 }: {
   isAdmin: boolean;
   isLoading: boolean;
-  participants: AutoParticipantOverview[];
+  profiles: AutoParticipantProfileOverview[];
   queryFailed: boolean;
 }) {
   return (
@@ -179,10 +174,10 @@ function ParticipantRankingPanel({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xs font-black tracking-[0.18em] text-admin-accent">RETURN RANKING</p>
-          <h2 className="mt-2 text-2xl font-black">자동참여자 수익률 순위</h2>
+          <h2 className="mt-2 text-2xl font-black">자동매매 프로필 성과</h2>
         </div>
         {isAdmin ? (
-          <Link href="/admin/participants/list" className="rounded-md bg-white px-3 py-2 text-sm font-black text-stock-ink">
+          <Link href="/admin/participants/overview" className="rounded-md bg-white px-3 py-2 text-sm font-black text-stock-ink">
             전체 보기
           </Link>
         ) : null}
@@ -191,7 +186,7 @@ function ParticipantRankingPanel({
       {!isAdmin ? (
         <div className="mt-5 rounded-md border border-white/10 bg-white/[0.06] p-4">
           <p className="text-sm font-bold leading-6 text-admin-muted">
-            자동참여자 성과 순위는 관리자 권한에서 확인합니다. 일반 사용자는 주문장과 내 주식 화면에서 자신의 계좌 성과를 확인할 수 있습니다.
+            자동매매 프로필 성과는 관리자 권한에서 확인합니다. 일반 사용자는 주문장과 내 주식 화면에서 자신의 계좌 성과를 확인할 수 있습니다.
           </p>
         </div>
       ) : null}
@@ -204,10 +199,10 @@ function ParticipantRankingPanel({
 
       {isAdmin ? (
         <div className="mt-5 grid gap-2">
-          {participants.slice(0, 8).map((participant, index) => (
-            <ParticipantRankRow key={participant.userKey} participant={participant} rank={index + 1} />
+          {profiles.slice(0, 8).map((profile, index) => (
+            <ProfileRankRow key={profile.profileType} profile={profile} rank={index + 1} />
           ))}
-          {participants.length === 0 && !isLoading && !queryFailed ? (
+          {profiles.length === 0 && !isLoading && !queryFailed ? (
             <div className="rounded-md border border-white/10 bg-white/[0.06] p-4 text-sm font-bold text-stock-subtle">
               아직 자동참여자 성과 데이터가 없습니다.
             </div>
@@ -223,7 +218,7 @@ function ParticipantRankingPanel({
   );
 }
 
-function ParticipantRankRow({ participant, rank }: { participant: AutoParticipantOverview; rank: number }) {
+function ProfileRankRow({ profile, rank }: { profile: AutoParticipantProfileOverview; rank: number }) {
   return (
     <article className="grid min-w-0 gap-3 rounded-md border border-white/10 bg-white/[0.06] p-3 sm:grid-cols-[44px_minmax(0,1fr)_auto] sm:items-center">
       <div className="flex h-10 w-10 items-center justify-center rounded-md bg-white text-sm font-black text-stock-ink">
@@ -231,17 +226,17 @@ function ParticipantRankRow({ participant, rank }: { participant: AutoParticipan
       </div>
       <div className="min-w-0">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <p className="min-w-0 truncate text-sm font-black">{participant.displayName}</p>
+          <p className="min-w-0 truncate text-sm font-black">{profile.profileType}</p>
           <span className="rounded-sm bg-white/10 px-2 py-1 text-[11px] font-bold text-stock-subtle">
-            {participant.profileType}
+            {formatInteger(profile.accountCount)}개 계좌
           </span>
         </div>
         <p className="mt-1 text-xs font-bold text-stock-subtle">
-          자산 {formatWon(participant.estimatedTotalAsset)} · 손익 {formatWon(participant.totalProfit)} · 체결 {formatInteger(participant.todayExecutionCount)}건
+          자산 {formatWon(profile.estimatedTotalAsset)} · 손익 {formatWon(profile.totalProfit)} · 체결 {formatInteger(profile.todayExecutionCount)}건
         </p>
       </div>
-      <p className={["text-right text-xl font-black tabular-nums", profitClass(participant.returnRate ?? 0)].join(" ")}>
-        {participant.returnRate === null ? "—" : formatSignedPercent(participant.returnRate)}
+      <p className={["text-right text-xl font-black tabular-nums", profitClass(profile.returnRate ?? 0)].join(" ")}>
+        {profile.returnRate === null ? "—" : formatSignedPercent(profile.returnRate)}
       </p>
     </article>
   );
@@ -256,13 +251,24 @@ function HomeMetric({ label, value, tone = 0 }: { label: string; value: string; 
   );
 }
 
-function rankParticipants(participants: AutoParticipantOverview[]) {
-  return [...participants].sort((left, right) => {
+function rankProfiles(profiles: AutoParticipantProfileOverview[]) {
+  return [...profiles].sort((left, right) => {
     if (right.returnRate !== left.returnRate) {
       return (right.returnRate ?? Number.NEGATIVE_INFINITY) - (left.returnRate ?? Number.NEGATIVE_INFINITY);
     }
     return right.totalProfit - left.totalProfit;
   });
+}
+
+function summarizeProfiles(profiles: AutoParticipantProfileOverview[]) {
+  const accountCount = profiles.reduce((sum, profile) => sum + profile.accountCount, 0);
+  const netCashFlow = profiles.reduce((sum, profile) => sum + profile.netCashFlow, 0);
+  const totalProfit = profiles.reduce((sum, profile) => sum + profile.totalProfit, 0);
+  return {
+    accountCount,
+    aggregateReturnRate: netCashFlow > 0 ? (totalProfit * 100) / netCashFlow : null,
+    totalProfit,
+  };
 }
 
 function profitClass(value: number, neutralClassName = "text-white") {

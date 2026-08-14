@@ -129,29 +129,9 @@ export async function invalidateCorporateActionSubscriptionQueries(
 }
 
 export async function invalidateAutoParticipantAdminQueries(queryClient: QueryClient) {
-  await invalidateAutoParticipantStateQueries(queryClient, {
-    includeParticipants: true,
-    includeSummary: true,
-  });
-}
-
-export async function invalidateAutoParticipantStrategyQueries(queryClient: QueryClient) {
-  await invalidateAutoParticipantStateQueries(queryClient);
-}
-
-async function invalidateAutoParticipantStateQueries(
-  queryClient: QueryClient,
-  options: {
-    includeParticipants?: boolean;
-    includeSummary?: boolean;
-  } = {},
-) {
   await invalidateQueryGroup(queryClient, [
     stockKeys.autoMarketStatusDetailsRoot(),
-    ...(options.includeSummary ? [stockKeys.autoMarketSummaryStatusRoot()] : []),
-    ...(options.includeParticipants ? [stockKeys.autoParticipantsRoot()] : []),
-    stockKeys.autoParticipantOverviewsRoot(),
-    stockKeys.autoParticipantSymbolConfigsRoot(),
+    stockKeys.autoMarketSummaryStatusRoot(),
     stockKeys.autoParticipantProfileOverviews(),
   ]);
 }

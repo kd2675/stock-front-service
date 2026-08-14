@@ -14,10 +14,8 @@ export type AdminSection =
   | "flows-others"
   | "funds-accounts"
   | "funds-ledger"
-  | "funds-payroll"
   | "funds-custody"
   | "participants-overview"
-  | "participants-list"
   | "participants-institutions"
   | "participants-profiles"
   | "corporate-instruments"
@@ -56,7 +54,7 @@ export const ADMIN_NAVIGATION_GROUPS: readonly AdminNavigationGroup[] = [
     items: [
       { section: "flows-live", href: "/admin/flows/live", label: "실시간 흐름", description: "현재 주문·체결·취소, 주식 이벤트, 종목별 거래와 최근 현금 원장을 한 화면에서 확인합니다." },
       { section: "flows-overview", href: "/admin/flows", label: "종합", description: "장 지수와 모든 역할의 자산·체결 구성을 함께 분석합니다." },
-      { section: "flows-auto-participants", href: "/admin/flows/auto-participants", label: "자동참여자", description: "프로필 전략으로 주문하는 자동 참여자 계좌의 자산과 체결 흐름을 확인합니다." },
+      { section: "flows-auto-participants", href: "/admin/flows/auto-participants", label: "자동매매", description: "27개 프로필로 운용되는 자동매매 계좌군의 자산과 체결 흐름을 확인합니다." },
       { section: "flows-institutions", href: "/admin/flows/institutions", label: "기관", description: "기관투자자, 유동성 공급자(LP), 발행 인수기관의 자산과 체결을 역할별로 확인합니다." },
       { section: "flows-users", href: "/admin/flows/users", label: "개인(유저)", description: "사용자가 직접 주문하는 개인 계좌의 자산과 체결 흐름을 확인합니다." },
       { section: "flows-others", href: "/admin/flows/others", label: "기타", description: "시스템 보관 계좌의 자산 이동과 예외 잔고를 확인합니다." },
@@ -78,7 +76,6 @@ export const ADMIN_NAVIGATION_GROUPS: readonly AdminNavigationGroup[] = [
     items: [
       { section: "funds-accounts", href: "/admin/funds/accounts", label: "유저 계좌 자금", description: "로그인 유저의 모의투자 계좌를 조회하고 현금을 입금·회수합니다." },
       { section: "funds-ledger", href: "/admin/funds/ledger", label: "현금 원장", description: "모든 계좌의 입금·회수·배당·정기 자금 원장을 조회합니다." },
-      { section: "funds-payroll", href: "/admin/funds/payroll", label: "정기 자금", description: "자동 참여자의 지급 대상과 야간 정기 자금 실행 상태를 관리합니다." },
       { section: "funds-custody", href: "/admin/funds/custody", label: "보관·휴면 자산", description: "시스템 보관계정, 발행 대기·잠금 물량, 탈퇴 참여자 이전 원장을 함께 대사합니다." },
     ],
   },
@@ -86,10 +83,9 @@ export const ADMIN_NAVIGATION_GROUPS: readonly AdminNavigationGroup[] = [
     tab: "participants",
     label: "시장 참여자",
     items: [
-      { section: "participants-overview", href: "/admin/participants/overview", label: "프로필별 현황", description: "프로필별 계좌·자산·보유·주문·체결 성과를 요약합니다." },
-      { section: "participants-list", href: "/admin/participants/list", label: "참여자 관리", description: "자동 참여자 계정을 조회·등록·대량 생성하고 개별 종목 전략을 관리합니다." },
+      { section: "participants-overview", href: "/admin/participants/overview", label: "프로필별 현황", description: "27개 프로필별 실제 계좌·파티션·자산·보유·주문·체결 성과를 요약합니다." },
       { section: "participants-institutions", href: "/admin/participants/institutions", label: "기관 투자자", description: "기관을 한 곳씩 LIVE로 생성하고 운용 유형별 프리셋·AUM·목표 비중과 실제 주문을 검증합니다." },
-      { section: "participants-profiles", href: "/admin/participants/profiles", label: "프로필 운영값", description: "코드 고정 V5 모델은 유지하고 프로필별 주문 반응, 보유·자금 운영값을 조정합니다." },
+      { section: "participants-profiles", href: "/admin/participants/profiles", label: "자동매매 프로필", description: "개별 계정이 아니라 27개 프로필의 주문 반응, 자산·파티션과 행동 운영값을 관리합니다." },
     ],
   },
   {

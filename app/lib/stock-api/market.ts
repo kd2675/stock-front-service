@@ -278,21 +278,15 @@ export function getOrderBookMarketStatus(options?: { includeConfigs?: boolean; i
 
 export function getAutoMarketStatus(options?: {
   includeConfigs?: boolean;
-  includeParticipants?: boolean;
-  includeParticipantSymbolConfigs?: boolean;
   includeParticipantProfileConfigs?: boolean;
   includeRuntimeMetrics?: boolean;
   includeSalaryEligibility?: boolean;
-  participantSymbolConfigUserKey?: string;
 }) {
   const query = toQuery({
     includeConfigs: options?.includeConfigs,
-    includeParticipants: options?.includeParticipants,
-    includeParticipantSymbolConfigs: options?.includeParticipantSymbolConfigs,
     includeParticipantProfileConfigs: options?.includeParticipantProfileConfigs,
     includeRuntimeMetrics: options?.includeRuntimeMetrics,
     includeSalaryEligibility: options?.includeSalaryEligibility,
-    participantSymbolConfigUserKey: options?.participantSymbolConfigUserKey,
   });
   return getJson<AutoMarketStatus>(`/api/stock/v1/markets/auto-market${query}`);
 }

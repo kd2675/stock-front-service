@@ -2,39 +2,11 @@ import type { AutoMarketConfigDraftInput } from "@/app/supply-demand/admin/Admin
 import type { ProfileConfigDraftWithType } from "@/app/supply-demand/admin/AdminProfileConfigTypes";
 import type {
   AutoMarketConfig,
-  AutoParticipant,
   AutoParticipantProfileConfig,
-  AutoParticipantProfileType,
-  AutoParticipantSymbolConfig,
   RecurringCashIntervalUnit,
 } from "@/app/types/stock";
 
 export type ProfileConfigDraftValues = ProfileConfigDraftWithType;
-
-export type AutoParticipantEditValues = {
-  userKey: string;
-  displayName: string;
-  enabled: boolean;
-  profileType: AutoParticipantProfileType;
-  behaviorSeed: string;
-  recurringCashAmount: string;
-  recurringCashIntervalValue: string;
-  recurringCashIntervalUnit: RecurringCashIntervalUnit;
-  cashAdjustmentAmount: string;
-};
-
-export type AutoParticipantStrategyDraftValues = {
-  editingKey: string | null;
-  userKey: string;
-  symbol: string;
-  enabled: boolean;
-  intensity: string;
-};
-
-export type AutoParticipantSelectionDraft = {
-  participant: AutoParticipantEditValues;
-  strategy: AutoParticipantStrategyDraftValues;
-};
 
 export function resolveAutoMarketConfigDraft(config: AutoMarketConfig): AutoMarketConfigDraftInput {
   const regimeCountWeights = config.primaryRegimeCountWeights ?? {
@@ -98,61 +70,6 @@ export function resolveProfileConfigDraft(
   };
 }
 
-export function resolveAutoParticipantSelectionDraft(options: {
-  participant: AutoParticipant;
-  participantSymbolConfigs: AutoParticipantSymbolConfig[];
-  autoMarketConfigs: AutoMarketConfig[];
-  defaultRecurringCashIntervalUnit: RecurringCashIntervalUnit;
-  defaultStrategyIntensity: string;
-}): AutoParticipantSelectionDraft {
-  const firstParticipantStrategy = options.participantSymbolConfigs.find((config) => config.userKey === options.participant.userKey) ?? null;
-  const firstAutoConfig = options.autoMarketConfigs[0] ?? null;
-  const strategy = firstParticipantStrategy
-    ? toStrategyDraft(firstParticipantStrategy)
-    : {
-        editingKey: null,
-        userKey: options.participant.userKey,
-        symbol: firstAutoConfig?.symbol ?? "",
-        enabled: true,
-        intensity: options.defaultStrategyIntensity,
-      };
-
-  return {
-    participant: {
-      userKey: options.participant.userKey,
-      displayName: options.participant.displayName,
-      enabled: options.participant.enabled,
-      profileType: options.participant.profileType,
-      behaviorSeed: options.participant.behaviorSeed ?? "",
-      recurringCashAmount: options.participant.recurringCashAmount == null ? "" : String(options.participant.recurringCashAmount),
-      recurringCashIntervalValue: options.participant.recurringCashIntervalValue == null ? "" : String(options.participant.recurringCashIntervalValue),
-      recurringCashIntervalUnit: options.participant.recurringCashIntervalUnit ?? options.defaultRecurringCashIntervalUnit,
-      cashAdjustmentAmount: "",
-    },
-    strategy,
-  };
-}
-
-export function resolveParticipantStrategySymbolDraft(options: {
-  userKey: string;
-  symbol: string;
-  participantSymbolConfigs: AutoParticipantSymbolConfig[];
-  autoMarketConfigs: AutoMarketConfig[];
-  defaultStrategyIntensity: string;
-}): AutoParticipantStrategyDraftValues {
-  const existingConfig = options.participantSymbolConfigs.find((config) => config.userKey === options.userKey && config.symbol === options.symbol) ?? null;
-  if (existingConfig) {
-    return toStrategyDraft(existingConfig);
-  }
-  return {
-    editingKey: null,
-    userKey: options.userKey,
-    symbol: options.symbol,
-    enabled: true,
-    intensity: options.defaultStrategyIntensity,
-  };
-}
-
 function mapDistributionBiasToDraft(bias: AutoMarketConfig["primaryDistributionBias"]) {
   return {
     pricePressure: String(bias.pricePressure),
@@ -161,15 +78,5 @@ function mapDistributionBiasToDraft(bias: AutoMarketConfig["primaryDistributionB
     liquidityPressure: String(bias.liquidityPressure),
     executionAggressionPressure: String(bias.executionAggressionPressure),
     newsActivityPressure: String(bias.newsActivityPressure),
-  };
-}
-
-export function toStrategyDraft(config: AutoParticipantSymbolConfig): AutoParticipantStrategyDraftValues {
-  return {
-    editingKey: `${config.userKey}:${config.symbol}`,
-    userKey: config.userKey,
-    symbol: config.symbol,
-    enabled: config.enabled,
-    intensity: String(config.intensity),
   };
 }

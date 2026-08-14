@@ -85,52 +85,21 @@ export const stockKeys = {
   autoMarketStatusDetailsRoot: () => [...stockKeys.autoMarketStatus(), "details"] as const,
   autoMarketStatusDetails: (options?: {
     includeConfigs?: boolean;
-    includeParticipants?: boolean;
-    includeParticipantSymbolConfigs?: boolean;
     includeParticipantProfileConfigs?: boolean;
     includeRuntimeMetrics?: boolean;
     includeSalaryEligibility?: boolean;
-    participantSymbolConfigUserKey?: string;
   }) => [
     ...stockKeys.autoMarketStatusDetailsRoot(),
     options?.includeConfigs ?? true,
-    options?.includeParticipants ?? false,
-    options?.includeParticipantSymbolConfigs ?? false,
     options?.includeParticipantProfileConfigs ?? false,
     options?.includeRuntimeMetrics ?? true,
     options?.includeSalaryEligibility ?? false,
-    options?.participantSymbolConfigUserKey ?? "",
   ] as const,
   autoMarketSummaryStatusRoot: () => [...stockKeys.autoMarketStatus(), "summary"] as const,
   autoMarketSummaryStatus: (options?: { includeRuntimeMetrics?: boolean; includeSalaryEligibility?: boolean }) => [
     ...stockKeys.autoMarketSummaryStatusRoot(),
     options?.includeRuntimeMetrics ?? true,
     options?.includeSalaryEligibility ?? false,
-  ] as const,
-  autoParticipantOverviewsRoot: () => [...stockKeys.autoMarketStatus(), "participants", "overviews"] as const,
-  autoParticipantOverviews: (options?: { activityScope?: string; includeHoldings?: boolean; lifecycleScope?: string; userKeys?: string[] }) => [
-    ...stockKeys.autoParticipantOverviewsRoot(),
-    options?.activityScope ?? "RECENT_SIMULATION_DAY",
-    options?.includeHoldings ?? true,
-    options?.lifecycleScope ?? "CURRENT",
-    [...(options?.userKeys ?? [])].sort(),
-  ] as const,
-  autoParticipantsRoot: () => [...stockKeys.autoMarketStatus(), "participants", "list"] as const,
-  autoParticipants: (lifecycleScope = "CURRENT") => [...stockKeys.autoParticipantsRoot(), lifecycleScope] as const,
-  autoParticipantWithdrawalAuditsRoot: () => [
-    ...stockKeys.autoMarketStatus(),
-    "participants",
-    "withdrawal-audits",
-  ] as const,
-  autoParticipantWithdrawalAudits: (userKeys?: string[]) => [
-    ...stockKeys.autoParticipantWithdrawalAuditsRoot(),
-    [...(userKeys ?? [])].sort(),
-  ] as const,
-  autoParticipantSymbolConfigsRoot: () => [...stockKeys.autoMarketStatus(), "participants", "symbol-configs"] as const,
-  autoParticipantSymbolConfigs: (options?: { lifecycleScope?: string; userKeys?: string[] }) => [
-    ...stockKeys.autoParticipantSymbolConfigsRoot(),
-    options?.lifecycleScope ?? "CURRENT",
-    [...(options?.userKeys ?? [])].sort(),
   ] as const,
   autoParticipantProfileOverviews: (options?: { activityScope?: string; profileTypes?: string[] }) => [
     ...stockKeys.autoMarketStatus(),
@@ -139,11 +108,13 @@ export const stockKeys = {
     options?.activityScope ?? "RECENT_SIMULATION_DAY",
     [...(options?.profileTypes ?? [])].sort(),
   ] as const,
-  autoParticipantPerformanceSummary: (basis: string) => [
+  autoProfileCohorts: () => [
     ...stockKeys.autoMarketStatus(),
-    "participants",
-    "performance-summary",
-    basis,
+    "profile-cohorts",
+  ] as const,
+  autoProfilePopulationContract: () => [
+    ...stockKeys.autoMarketStatus(),
+    "profile-population-contract",
   ] as const,
   corporateActionFeedRoot: () => [...stockKeys.market(), "corporate-actions", "feed"] as const,
   corporateActionFeed: (options?: { actionType?: CorporateActionType; limit?: number }) => [

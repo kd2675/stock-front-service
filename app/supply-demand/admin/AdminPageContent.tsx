@@ -2,7 +2,6 @@ import type { ComponentProps } from "react";
 
 import { AdminAccountsSection } from "@/app/supply-demand/admin/AdminAccountsSection";
 import { AdminAutomationSection } from "@/app/supply-demand/admin/AdminAutomationSection";
-import { AdminAutoParticipantManagementPanel } from "@/app/supply-demand/admin/AdminAutoParticipantManagementPanel";
 import { AdminDormantAssetsPanel } from "@/app/supply-demand/admin/AdminDormantAssetsPanel";
 import { AdminEventsSection } from "@/app/supply-demand/admin/AdminEventsSection";
 import { AdminEodSection } from "@/app/supply-demand/admin/AdminEodSection";
@@ -24,7 +23,6 @@ export type AdminPageContentProps = {
   institutionProps: ComponentProps<typeof AdminInstitutionPortfolioPanel> | null;
   marketProps: ComponentProps<typeof AdminMarketSection> | null;
   message: string | null;
-  participantsProps: ComponentProps<typeof AdminAutoParticipantManagementPanel> | null;
   scaledMarketProps: ComponentProps<typeof AdminScaledMarketReconstructionPanel> | null;
   underwritingProps: ComponentProps<typeof AdminUnderwritingContractPanel> | null;
 };
@@ -40,7 +38,6 @@ export function AdminPageContent({
   institutionProps,
   marketProps,
   message,
-  participantsProps,
   scaledMarketProps,
   underwritingProps,
 }: AdminPageContentProps) {
@@ -59,10 +56,6 @@ export function AdminPageContent({
       ) : null}
 
       {eodProps ? <AdminEodSection {...eodProps} /> : null}
-
-      {activeAdminSection === "participants-list" && participantsProps ? (
-        <AdminAutoParticipantManagementPanel {...participantsProps} />
-      ) : null}
 
       {scaledMarketProps ? (
         <AdminScaledMarketReconstructionPanel {...scaledMarketProps} />

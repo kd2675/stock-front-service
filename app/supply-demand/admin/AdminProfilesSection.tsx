@@ -1,4 +1,5 @@
 import AutoSignalGuide from "@/app/supply-demand/admin/AdminSignalGuide";
+import { AdminAutoProfileCohortPanel } from "@/app/supply-demand/admin/AdminAutoProfileCohortPanel";
 import { AdminAutoParticipantV5OperationsPanel } from "@/app/supply-demand/admin/AdminAutoParticipantV5OperationsPanel";
 import { AdminProfileConfigPanel } from "@/app/supply-demand/admin/AdminProfileConfigPanel";
 import type { ProfileConfigDraft, ProfileConfigDraftSetters } from "@/app/supply-demand/admin/AdminProfileConfigTypes";
@@ -31,6 +32,7 @@ export function AdminProfilesSection({
 }: AdminProfilesSectionProps) {
   return (
     <>
+      <AdminAutoProfileCohortPanel accessToken={accessToken} />
       <AdminAutoParticipantV5OperationsPanel accessToken={accessToken} />
       <AutoSignalGuide />
 

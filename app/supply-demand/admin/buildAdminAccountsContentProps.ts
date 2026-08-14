@@ -19,41 +19,25 @@ export function buildAdminAccountsContentProps({
   const {
     adminCashFlowPage,
     adminCashFlowPageQuery,
-    autoMarketDetailsQuery,
-    autoParticipantsQuery,
-    autoParticipantLivePerformanceQuery,
-    autoParticipantClosedPerformanceQuery,
     autoParticipantProfileOverviewsQuery,
     autoParticipantProfileOverviewsAllQuery,
-    batchJobRuntimeControls,
     userFundFlow,
     userFundFlowQuery,
   } = queries;
-  const {
-    participantProfileOverviewSummaries,
-    salaryEligibility,
-  } = derived;
+  const { participantProfileOverviewSummaries } = derived;
   const {
     adjustingUserCashType,
     adjustUserCashBalance,
-    lastCashFlowRun,
     loadUserFundFlow,
-    runAutoParticipantCashFlowNow,
-    runningCashFlow,
   } = actions;
 
   return {
     activeSection: activeAdminSection,
     adjustingUserCashType,
-    autoParticipantCashFlowRuntimeControl: batchJobRuntimeControls.find((control) => control.jobName === "auto-participant-cash-flow") ?? null,
     cashFlowPage: adminCashFlowPage,
-    lastCashFlowRun,
     loadingCashFlowPage: adminCashFlowPageQuery.isFetching,
-    loadingProfileOverviews: autoParticipantProfileOverviewsQuery.isFetching
-      || autoParticipantLivePerformanceQuery.isFetching
-      || autoParticipantClosedPerformanceQuery.isFetching,
+    loadingProfileOverviews: autoParticipantProfileOverviewsQuery.isFetching,
     loadingProfileOverviewAll: autoParticipantProfileOverviewsAllQuery.isFetching,
-    loadingSalaryEligibility: autoParticipantsQuery.isFetching || autoMarketDetailsQuery.isFetching,
     loadingUserFundFlow: userFundFlowQuery.isFetching,
     onAdjustUserCash: (adjustmentType) => void adjustUserCashBalance(adjustmentType),
     onCashFlowPageChange: setAdminCashFlowPageIndex,
@@ -61,24 +45,14 @@ export function buildAdminAccountsContentProps({
     onRefreshCashFlowPage: () => void adminCashFlowPageQuery.refetch(),
     onRefreshProfileOverviews: () => {
       void autoParticipantProfileOverviewsQuery.refetch();
-      void autoParticipantLivePerformanceQuery.refetch();
-      void autoParticipantClosedPerformanceQuery.refetch();
     },
     onLoadAllProfileOverviews: () => void autoParticipantProfileOverviewsAllQuery.refetch(),
-    onRunCashFlow: () => void runAutoParticipantCashFlowNow(),
     onUserCashAmountChange: setUserCashAdjustmentAmount,
     onUserCashKeyChange: setUserCashAdjustmentUserKey,
-    profileOverviewError: autoParticipantProfileOverviewsQuery.isError
-      || autoParticipantLivePerformanceQuery.isError
-      || autoParticipantClosedPerformanceQuery.isError,
+    profileOverviewError: autoParticipantProfileOverviewsQuery.isError,
     profileOverviewAllError: autoParticipantProfileOverviewsAllQuery.isError,
     profileOverviewAllSummaries: autoParticipantProfileOverviewsAllQuery.data ?? [],
     profileOverviewSummaries: participantProfileOverviewSummaries,
-    livePerformanceSummary: autoParticipantLivePerformanceQuery.data ?? null,
-    closedPerformanceSummary: autoParticipantClosedPerformanceQuery.data ?? null,
-    runningCashFlow,
-    salaryEligibility,
-    salaryEligibilityError: autoParticipantsQuery.isError || autoMarketDetailsQuery.isError,
     userCashAmount: userCashAdjustmentAmount,
     userCashKey: userCashAdjustmentUserKey,
     userFundFlow,

@@ -1,6 +1,5 @@
 import type {
   AutoMarketStatus,
-  AutoParticipantOverview,
   AutoParticipantProfileType,
   AutoParticipantProfileOverview,
   BatchJobRuntimeStatus,
@@ -69,6 +68,10 @@ export const BATCH_JOB_RUNTIME_LABELS: Record<string, { label: string; descripti
     label: "정기 자금 지급",
     description: "가동 자동 참여자와 ACTIVE 계좌의 지급 주기를 야간에 확인해 현금을 지급합니다.",
   },
+  "auto-participant-population-expansion": {
+    label: "15만 실제계좌 확장",
+    description: "준비된 자동참여자 확장을 청크로 생성하고 자산 대사 후 실제 계좌로 원자적으로 전환합니다.",
+  },
   "portfolio-settlement": {
     label: "포트폴리오 정산",
     description: "계좌 보유/손익 스냅샷을 정산합니다.",
@@ -83,6 +86,7 @@ export const SUPPLY_DEMAND_BATCH_JOB_NAMES = new Set([
   "issue-underwriter-market",
   "institution-market",
   "auto-participant-cash-flow",
+  "auto-participant-population-expansion",
   "corporate-actions",
   "market-news-storyline-generation",
   "market-news-due-publication",
@@ -91,8 +95,6 @@ export const SUPPLY_DEMAND_BATCH_JOB_NAMES = new Set([
 
 export const ADMIN_CASH_FLOW_PAGE_SIZE = 20;
 export const ADMIN_SYMBOL_FLOW_PREVIEW_SIZE = 8;
-export const ADMIN_PARTICIPANT_PAGE_SIZE = 12;
-export const ADMIN_SALARY_PAGE_SIZE = 20;
 export const ADMIN_LIVE_SUMMARY_REFETCH_MS = 10_000;
 export const ADMIN_EOD_REFETCH_MS = 15_000;
 export const ADMIN_PARTICIPANT_DETAIL_REFETCH_MS = 30_000;
@@ -118,21 +120,13 @@ export const DEFAULT_AUTO_MARKET_MAX_ORDER_QUANTITY = "4";
 export const DEFAULT_AUTO_MARKET_ORDER_TTL_SECONDS = "15";
 export const DEFAULT_AUTO_PARTICIPANT_PROFILE_TYPE: AutoParticipantProfileType = "NOISE_TRADER";
 export const DEFAULT_RECURRING_CASH_INTERVAL_UNIT: RecurringCashIntervalUnit = "DAY";
-export const DEFAULT_AUTO_GENERATE_COUNT = "5";
-export const DEFAULT_AUTO_GENERATE_KEY_PREFIX = "stock-auto-";
-export const DEFAULT_AUTO_GENERATE_DISPLAY_PREFIX = "자동 참여자";
-export const DEFAULT_AUTO_GENERATE_PROFILE_MODE = "ROTATE";
-export const DEFAULT_STRATEGY_INTENSITY = "5";
 export const DEFAULT_PROFILE_WEIGHT = "0";
 export const DEFAULT_PROFILE_MULTIPLIER = "1";
 export const DEFAULT_PROFILE_RECURRING_DEPOSIT_INTERVAL_VALUE = "30";
 
 export const EMPTY_ORDER_BOOK_CONFIGS: OrderBookMarketStatus["configs"] = [];
 export const EMPTY_AUTO_MARKET_CONFIGS: AutoMarketStatus["configs"] = [];
-export const EMPTY_AUTO_PARTICIPANTS: AutoMarketStatus["participants"] = [];
-export const EMPTY_AUTO_PARTICIPANT_SYMBOL_CONFIGS: AutoMarketStatus["participantSymbolConfigs"] = [];
 export const EMPTY_AUTO_PARTICIPANT_PROFILE_CONFIGS: AutoMarketStatus["participantProfileConfigs"] = [];
-export const EMPTY_AUTO_PARTICIPANT_OVERVIEWS: AutoParticipantOverview[] = [];
 export const EMPTY_AUTO_PARTICIPANT_PROFILE_OVERVIEWS: AutoParticipantProfileOverview[] = [];
 export const EMPTY_ORDER_BOOK_INSTRUMENTS: OrderBookInstrument[] = [];
 export const EMPTY_CORPORATE_ACTIONS: CorporateAction[] = [];

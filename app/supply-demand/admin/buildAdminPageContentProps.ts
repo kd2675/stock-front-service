@@ -5,7 +5,6 @@ import { buildAdminAutomationContentProps } from "@/app/supply-demand/admin/buil
 import { buildAdminEventsContentProps } from "@/app/supply-demand/admin/buildAdminEventsContentProps";
 import { buildAdminEodContentProps } from "@/app/supply-demand/admin/buildAdminEodContentProps";
 import { buildAdminMarketContentProps } from "@/app/supply-demand/admin/buildAdminMarketContentProps";
-import { buildAdminParticipantsContentProps } from "@/app/supply-demand/admin/buildAdminParticipantsContentProps";
 
 export function buildAdminPageContentProps(context: AdminPageContentBuilderContext): AdminPageContentProps {
   const isAccountsContent = context.activeAdminTab === "funds" || context.activeAdminSection === "participants-overview";
@@ -21,7 +20,6 @@ export function buildAdminPageContentProps(context: AdminPageContentBuilderConte
   const isMarketContent = context.activeAdminSection === "dashboard"
     || context.activeAdminSection === "market-instruments"
     || context.activeAdminTab === "flows";
-  const isParticipantsContent = context.activeAdminSection === "participants-list";
 
   return {
     activeAdminSection: context.activeAdminSection,
@@ -29,29 +27,11 @@ export function buildAdminPageContentProps(context: AdminPageContentBuilderConte
     accountsProps: isAccountsContent ? buildAdminAccountsContentProps(context) : null,
     automationProps: isAutomationContent ? buildAdminAutomationContentProps(context) : null,
     dormantAssetsProps: isDormantAssetsContent ? {
-      participants: context.queries.dormantAutoParticipantsQuery.data ?? [],
-      overviews: context.queries.dormantAutoParticipantOverviewsQuery.data ?? [],
-      symbolConfigs: context.queries.dormantAutoParticipantSymbolConfigsQuery.data ?? [],
-      withdrawalAudits: context.queries.dormantAutoParticipantWithdrawalAuditsQuery.data ?? [],
       custodyOverview: context.queries.systemCustodyOverviewQuery.data ?? null,
-      loading: context.queries.dormantAutoParticipantsQuery.isFetching
-        || context.queries.dormantAutoParticipantOverviewsQuery.isFetching
-        || context.queries.dormantAutoParticipantSymbolConfigsQuery.isFetching
-        || context.queries.dormantAutoParticipantWithdrawalAuditsQuery.isFetching
-        || context.queries.systemCustodyOverviewQuery.isFetching,
-      error: context.queries.dormantAutoParticipantsQuery.isError
-        || context.queries.dormantAutoParticipantOverviewsQuery.isError
-        || context.queries.dormantAutoParticipantSymbolConfigsQuery.isError
-        || context.queries.dormantAutoParticipantWithdrawalAuditsQuery.isError
-        || context.queries.systemCustodyOverviewQuery.isError,
+      loading: context.queries.systemCustodyOverviewQuery.isFetching,
+      error: context.queries.systemCustodyOverviewQuery.isError,
       onRefresh: () => {
-        void Promise.all([
-          context.queries.dormantAutoParticipantsQuery.refetch(),
-          context.queries.dormantAutoParticipantOverviewsQuery.refetch(),
-          context.queries.dormantAutoParticipantSymbolConfigsQuery.refetch(),
-          context.queries.dormantAutoParticipantWithdrawalAuditsQuery.refetch(),
-          context.queries.systemCustodyOverviewQuery.refetch(),
-        ]);
+        void context.queries.systemCustodyOverviewQuery.refetch();
       },
     } : null,
     eventsProps: isEventsContent ? buildAdminEventsContentProps(context) : null,
@@ -73,7 +53,6 @@ export function buildAdminPageContentProps(context: AdminPageContentBuilderConte
     } : null,
     marketProps: isMarketContent ? buildAdminMarketContentProps(context) : null,
     message: context.message,
-    participantsProps: isParticipantsContent ? buildAdminParticipantsContentProps(context) : null,
     scaledMarketProps: isScaledMarketContent ? {
       accessToken: context.queries.accessToken,
     } : null,
